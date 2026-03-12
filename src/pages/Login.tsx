@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 // Icono de usuario de React Icons
 import { FaUserCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   // 1. Estados originales
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // 2. NUEVO ESTADO: Para manejar mensajes de error (ej: contraseña incorrecta)
   const [errorMensaje, setErrorMensaje] = useState('');
   // 3. NUEVO ESTADO: Para saber si está cargando (para desactivar el botón)
@@ -15,9 +17,9 @@ const LoginPage: React.FC = () => {
 
   // --- LÓGICA DE CONEXIÓN AL SERVIDOR ---
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    setErrorMensaje(''); 
-    setIsLoading(true);  
+    e.preventDefault();
+    setErrorMensaje('');
+    setIsLoading(true);
 
     try {
       const response = await fetch('https://atalayas-backend.onrender.com/api/v1/auth/login', {
@@ -25,38 +27,34 @@ const LoginPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
-          email: email,       
-          password: password  
+          email,
+          password
         }),
       });
 
       // 2. Comprobamos si el servidor nos ha dejado pasar (Código 200)
       if (response.ok) {
         const data = await response.json();
-        
-        // 3. ¡Éxito! Guardamos el tesoro (Token) en el navegador
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('usuarioNombre', data.nombre);
-        localStorage.setItem('rol', data.codigoRol);
-        
-        // (Opcional) Si existe nombreEmpresa, lo guardamos también
-        if(data.nombreEmpresa) {
-           localStorage.setItem('nombreEmpresa', data.nombreEmpresa);
-        }
-
-        // 4. Redirigimos al usuario al panel principal
-        window.location.href = '/dashboard'; 
+        // Los tokens viajan en cookies HttpOnly (el navegador los gestiona solo)
+        // Aquí solo guardamos los datos de display en memoria/contexto
+        // Por ahora navegamos al dashboard pasando los datos del usuario
+        navigate('/dashboard', {
+          state: {
+            nombre: data.nombre,
+            codigoRol: data.codigoRol,
+            nombreEmpresa: data.nombreEmpresa,
+          }
+        });
       } else {
-        // Si no es un 200, el login ha fallado (ej: contraseña mal)
         setErrorMensaje('Correo o contraseña incorrectos. Inténtalo de nuevo.');
       }
     } catch (error) {
-      // Si el servidor no responde o hay un error de red, lo atrapamos aquí
-      console.error("Error conectando al servidor:", error);
+      console.error('Error conectando al servidor:', error);
       setErrorMensaje('No se pudo conectar con el servidor. Verifica tu conexión.');
     } finally {
-      setIsLoading(false); // Terminamos de cargar, pase lo que pase
+      setIsLoading(false);
     }
   };
   // ----------------------------------------------
@@ -66,7 +64,7 @@ const LoginPage: React.FC = () => {
       <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl">
         
         <div className="flex flex-col items-center gap-y-4">
-          <FaUserCircle />
+          <FaUserCircle className="text-blue-950 text-6xl" />
           <h1 className="text-2xl font-bold text-blue-950">Iniciar Sesión</h1>
         </div>
 
@@ -120,7 +118,6 @@ const LoginPage: React.FC = () => {
             </label>
           </div>
 
-          {/* MENSAJE DE ERROR: Se muestra solo si errorMensaje tiene texto */}
           {errorMensaje && (
             <p className="text-red-600 font-semibold text-sm text-center">
               {errorMensaje}
