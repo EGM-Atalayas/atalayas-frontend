@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);  
 
     try {
-      const response = await fetch('http://192.168.1.41:8080/api/v1/auth/login', {
+      const response = await fetch('https://atalayas-backend.onrender.com/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
