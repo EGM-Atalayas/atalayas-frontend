@@ -62,6 +62,8 @@ const LoginPage: React.FC = () => {
   return (
     <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4">
       <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl">
+
+        
         
         <div className="flex flex-col items-center gap-y-4">
           <FaUserCircle className="text-blue-950 text-6xl" />

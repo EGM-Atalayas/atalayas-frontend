@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Header from '../components/Header';
 
 export function ProtectedRoute() {
   const { usuario, setUsuario } = useAuth();
@@ -26,6 +27,7 @@ export function ProtectedRoute() {
           nombre: data.nombre,
           codigoRol: data.codigoRol,
           nombreEmpresa: data.nombreEmpresa,
+          logoEmpresaUrl: data.logoEmpresaUrl,
         });
       })
       .catch(() => {
@@ -44,5 +46,16 @@ export function ProtectedRoute() {
     );
   }
 
-  return usuario ? <Outlet /> : <Navigate to="/login" replace />;
+  if(!usuario){
+    return <Navigate to="/login" replace />;
+  }
+
+  return(
+    <>
+    <Header logoEmpresa={usuario.logoEmpresaUrl} />
+    <main className='min-h-screen bg-slate-50'>
+        <Outlet />
+    </main>
+    </>
+  )
 }

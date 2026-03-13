@@ -5,6 +5,7 @@ interface Usuario {
   nombre: string;
   codigoRol: string;
   nombreEmpresa?: string;
+  logoEmpresaUrl?: string;
 }
 
 interface AuthContextType {
