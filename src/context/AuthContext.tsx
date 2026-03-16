@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 interface Usuario {
@@ -6,6 +6,7 @@ interface Usuario {
   codigoRol: string;
   nombreEmpresa?: string;
   logoEmpresaUrl?: string;
+  activo?: boolean;
 }
 
 interface AuthContextType {
@@ -18,6 +19,35 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const res = await fetch(
+        'https://atalayas-backend.onrender.com/api/v1/auth/me',
+        { credentials: 'include' }
+      );
+
+      if (!res.ok) {
+        setUsuario(null);
+        return;
+      }
+
+      const data: Usuario = await res.json();
+
+      if (!data.activo) {
+        await logout();
+        return;
+      }
+
+      setUsuario(data);
+    } catch {
+      setUsuario(null);
+    }
+  };
 
   const logout = async () => {
     try {

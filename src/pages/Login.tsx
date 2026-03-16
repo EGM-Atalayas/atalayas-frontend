@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // Icono de usuario de React Icons
 import { FaUserCircle } from 'react-icons/fa';
+import { FiArrowLeft } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
@@ -61,17 +62,24 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4">
-      <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl">
+      <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl relative">
 
-        
-        
+        {/* Back Button */}
+<button
+  onClick={() => navigate('/')}
+  className="absolute top-8 left-8 flex items-center gap-2 text-slate-700 font-semibold text-sm hover:text-blue-900 group transition"
+>
+  <FiArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+  Volver
+</button>
+
         <div className="flex flex-col items-center gap-y-4">
           <FaUserCircle className="text-blue-950 text-6xl" />
           <h1 className="text-2xl font-bold text-blue-950">Iniciar Sesión</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-8">
-          
+
           <div className="flex flex-col gap-y-2">
             <label className="font-bold text-sm text-slate-700" htmlFor="email">
               Correo electrónico
