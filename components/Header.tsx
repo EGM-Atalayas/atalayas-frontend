@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Image from "next/image";        
+import logo from "../public/logo.webp";     // ← reemplaza <img>
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +39,11 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
         {/* ── Logo block ── */}
         <div className="flex items-center h-full pr-7 mr-9 gap-0">
           {/* Logo image */}
-          <img src="../src/assets/logo.webp" alt="" className="w-60 h-60 object-contain" />
+          <Image
+                  src={logo}
+                  alt="Logo"
+                  className="h-24 w-auto"
+                />
         </div>
 
         {/* ── Navigation ── */}
