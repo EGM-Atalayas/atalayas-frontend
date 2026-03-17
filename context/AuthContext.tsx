@@ -9,12 +9,14 @@ interface Usuario {
   nombreEmpresa?: string;
   logoEmpresaUrl?: string;
   activo?: boolean;
+  invitado?: boolean;
 }
 
 interface AuthContextType {
   usuario: Usuario | null;
   setUsuario: (u: Usuario | null) => void;
   logout: () => Promise<void>;
+  loginInvitado: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -62,8 +64,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginInvitado = () => {
+  const guestUser: Usuario = {
+    nombre: "Invitado",
+    codigoRol: "INVITADO",
+    invitado: true,
+  };
+
+  setUsuario(guestUser);
+};
+
   return (
-    <AuthContext.Provider value={{ usuario, setUsuario, logout }}>
+    <AuthContext.Provider value={{ usuario, setUsuario, logout, loginInvitado }}>
       {children}
     </AuthContext.Provider>
   );

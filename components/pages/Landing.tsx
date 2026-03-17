@@ -2,11 +2,13 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/Button";
+import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import logo from "../../public/logo.webp";
 
 export default function Landing() {
   const router = useRouter();
+  const { loginInvitado } = useAuth();
 
   return (
     <div className="text-white flex flex-col items-center justify-center gap-y-4 min-h-screen">
@@ -26,6 +28,12 @@ export default function Landing() {
           Empresa
         </Button>
       </div>
+      <Button onClick={() => {
+        loginInvitado();
+        router.push('/dashboard');
+      }}>
+        Entrar como invitado
+      </Button>
     </div>
   );
 }

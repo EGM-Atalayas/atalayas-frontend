@@ -102,26 +102,6 @@ const LoginPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-x-2 mt-1">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="sr-only peer"
-            />
-            <label htmlFor="rememberMe" className="flex items-center gap-x-2 cursor-pointer font-bold text-sm text-slate-700">
-              <span className="h-5 w-5 bg-slate-300 rounded-full border border-slate-400 flex items-center justify-center transition-colors peer-checked:bg-blue-600 peer-checked:border-blue-600">
-                {rememberMe && (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </span>
-              Recordarme
-            </label>
-          </div>
-
           {errorMensaje && (
             <p className="text-red-600 font-semibold text-sm text-center">
               {errorMensaje}
