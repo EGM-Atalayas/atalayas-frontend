@@ -25,10 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
 
   useEffect(() => {
-    checkSession();
+    const isGuest = localStorage.getItem("guest");
+
+    if (isGuest) {
+      loginInvitado();
+    } else {
+      checkSession();
+    }
   }, []);
 
   const checkSession = async () => {
+    if (usuario?.invitado) return; // Si ya tenemos usuario, no hacemos nada
+
     try {
       const res = await fetch(
         `${API_URL}/auth/me`,
@@ -65,14 +73,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginInvitado = () => {
-  const guestUser: Usuario = {
-    nombre: "Invitado",
-    codigoRol: "INVITADO",
-    invitado: true,
-  };
+    const guestUser: Usuario = {
+      nombre: "Invitado",
+      codigoRol: "INVITADO",
+      invitado: true,
+      activo: true,
+    };
 
-  setUsuario(guestUser);
-};
+    localStorage.setItem("guest", "true");
+    setUsuario(guestUser);
+  };
 
   return (
     <AuthContext.Provider value={{ usuario, setUsuario, logout, loginInvitado }}>

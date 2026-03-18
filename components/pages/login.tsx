@@ -9,11 +9,10 @@ import { API_URL } from "@/lib/api"; // ← para usar la URL base del backend
 
 const LoginPage: React.FC = () => {
   const router = useRouter(); // ← reemplaza useNavigate
-  const { setUsuario } = useAuth(); // ← para guardar el usuario en contexto
+  const { setUsuario, loginInvitado } = useAuth(); // ← para guardar el usuario en contexto
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [errorMensaje, setErrorMensaje] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,6 +53,11 @@ const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleInvitado = () => {
+    loginInvitado();
+    router.push("/dashboard");
   };
 
   return (
@@ -107,6 +111,17 @@ const LoginPage: React.FC = () => {
               {errorMensaje}
             </p>
           )}
+
+          <div className="text-center text-sm text-slate-700">
+            ¿No tienes cuenta?{" "}
+            <button
+              type="button"
+              onClick={handleInvitado}
+              className="font-bold text-blue-900 hover:underline"
+            >
+              Entra como invitado
+            </button>
+          </div>
 
           <button
             type="submit"

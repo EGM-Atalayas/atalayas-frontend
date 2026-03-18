@@ -10,6 +10,11 @@ export default function Landing() {
   const router = useRouter();
   const { loginInvitado } = useAuth();
 
+  const handleInvitado = () => {
+    loginInvitado();
+    router.push("/dashboard");
+  };
+
   return (
     <div className="text-white flex flex-col items-center justify-center gap-y-4 min-h-screen">
       <Image
@@ -28,12 +33,15 @@ export default function Landing() {
           Empresa
         </Button>
       </div>
-      <Button onClick={() => {
-        loginInvitado();
-        router.push('/dashboard');
-      }}>
-        Entrar como invitado
-      </Button>
+      <div className="text-center text-sm text-slate-100">
+            <button
+              type="button"
+              onClick={handleInvitado}
+              className="font-bold text-white hover:underline"
+            >
+              Entra como invitado
+            </button>
+          </div>
     </div>
   );
 }
