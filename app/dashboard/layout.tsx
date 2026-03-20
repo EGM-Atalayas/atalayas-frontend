@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header"; 
 import { API_URL } from "@/lib/api";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -57,7 +56,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   return (
     <>
-      <Header logoEmpresa={usuario.logoEmpresaUrl} />
       <main className="min-h-screen bg-slate-50">
         {children}
       </main>
