@@ -112,23 +112,12 @@ const LoginPage: React.FC = () => {
             </p>
           )}
 
-          <div className="text-center text-sm text-slate-700">
-            ¿No tienes cuenta?{" "}
-            <button
-              type="button"
-              onClick={handleInvitado}
-              className="font-bold text-blue-900 hover:underline"
-            >
-              Entra como invitado
-            </button>
-          </div>
-
           <button
             type="submit"
             disabled={isLoading}
             className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-slate-500 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Conectando..." : "Iniciar Sesión"}
+            {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
           </button>
         </form>
       </div>

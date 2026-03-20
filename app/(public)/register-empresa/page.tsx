@@ -1,11 +1,6 @@
-"use client";
-
-import React from "react";
+// src/app/(public)/registerEmpresa/page.tsx
+import RegisterEmpresa from "@/components/pages/RegisterEmpresa";
 
 export default function RegisterEmpresaPage() {
-  return (
-    <div>
-      {/* ...your register empresa form/ui... */}
-    </div>
-  );
+  return <RegisterEmpresa />;
 }

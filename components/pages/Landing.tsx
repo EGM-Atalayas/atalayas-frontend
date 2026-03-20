@@ -29,7 +29,7 @@ export default function Landing() {
         <Button onClick={() => router.push("/login")} className="bg-white">
           Iniciar sesión
         </Button>
-        <Button onClick={() => router.push("/dashboard")} className="bg-white">
+        <Button onClick={() => router.push("/register-empresa")} className="bg-white">
           Empresa
         </Button>
       </div>

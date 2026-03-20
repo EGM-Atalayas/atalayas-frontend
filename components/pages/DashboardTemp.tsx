@@ -9,7 +9,7 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/login"); // ← reemplaza navigate('/login')
+    router.replace("/"); // ← reemplaza navigate('/login')
   };
 
   return (
