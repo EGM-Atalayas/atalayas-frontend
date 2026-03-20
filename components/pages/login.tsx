@@ -112,8 +112,6 @@ const LoginPage: React.FC = () => {
             </p>
           )}
 
-        
-
           <button
             type="submit"
             disabled={isLoading}
