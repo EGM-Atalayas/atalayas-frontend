@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../Header";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type AdminNavItem = "Inicio" | "Empresas" | "Módulos" | "Comunicación" | "Administración";
+import { getNoticias } from "../../lib/api/noticias";
+import type { Noticia } from "../../lib/types/noticias";
+import Link from "next/link";
+import { NAV_ROUTES } from "@/lib/routes";
+import { useRouter } from "next/navigation";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -58,13 +59,18 @@ const activityDot: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminGeneral() {
-  const [activeNav, setActiveNav] = useState<AdminNavItem>("Inicio");
+  const router = useRouter();
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
+
+  useEffect(() => {
+    getNoticias().then((data) => setNoticias(data.slice(0, 3))); // mostrar solo las 3 más recientes
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
       <Header
         defaultActive="Inicio"
-        onNavChange={(item) => setActiveNav(item as AdminNavItem)}
+        onNavChange={(item) => router.push(NAV_ROUTES[item])}
       />
 
       <main className="max-w-7xl mx-auto px-8 py-10">
@@ -120,10 +126,10 @@ export default function AdminGeneral() {
                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${c.onboarding >= 80
-                                ? "bg-emerald-400"
-                                : c.onboarding >= 40
-                                  ? "bg-amber-400"
-                                  : "bg-gray-300"
+                              ? "bg-emerald-400"
+                              : c.onboarding >= 40
+                                ? "bg-amber-400"
+                                : "bg-gray-300"
                               }`}
                             style={{ width: `${c.onboarding}%` }}
                           />
@@ -182,10 +188,10 @@ export default function AdminGeneral() {
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1.5">
                     <div
                       className={`h-full rounded-full ${pct === 100
-                          ? "bg-emerald-400"
-                          : pct >= 60
-                            ? "bg-blue-400"
-                            : "bg-amber-400"
+                        ? "bg-emerald-400"
+                        : pct >= 60
+                          ? "bg-blue-400"
+                          : "bg-amber-400"
                         }`}
                       style={{ width: `${pct}%` }}
                     />
@@ -197,6 +203,46 @@ export default function AdminGeneral() {
               );
             })}
           </div>
+
+        </div>
+        {/* Preview de noticias */}
+        <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-gray-800">Últimas noticias</h2>
+            <Link
+              href="/dashboard/noticias"
+              className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              Ver todas →
+            </Link>
+          </div>
+
+          {noticias.length === 0 ? (
+            <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {noticias.map((n) => (
+                <Link
+                  key={n.anuncio_id}
+                  href="/dashboard/noticias"
+                  className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {n.tag}
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
+                    {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

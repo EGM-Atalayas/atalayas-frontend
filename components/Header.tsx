@@ -70,9 +70,9 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
   const initials = usuario?.nombre ? getInitials(usuario.nombre) : "?";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
   const rolMostrado: Record<string, string> = {
-    ADMIN_GENERAL: "Administrador general",
-    ADMIN_EMPRESA: "Admin empresa",
-    EMPLEADO: "Empleado",
+    ROLE_ADMIN: "Administrador general",
+    ROLE_ADMIN_EMPRESA: "Admin empresa",
+    ROLE_EMPLEADO: "Empleado",
     INVITADO: "Invitado",
   };
 

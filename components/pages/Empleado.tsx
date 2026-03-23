@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../Header";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type EmpleadoNavItem = "Inicio" | "Onboarding" | "Formación" | "Comunicación" | "Administración";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Noticia } from "@/lib/types/noticias";
+import { getNoticias } from "@/lib/api/noticias";
+import { NAV_ROUTES } from "@/lib/routes";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -16,27 +17,6 @@ const onboardingModules = [
   { name: "Formación Específica", status: "en progreso", progress: 25 },
   { name: "Desarrollo Profesional", status: "pendiente", progress: 0 },
   { name: "Recompensas y Ventajas", status: "pendiente", progress: 0 },
-];
-
-const announcements = [
-  {
-    tag: "Evento",
-    title: "Jornada de puertas abiertas — 28 de marzo",
-    body: "EGM Atalayas celebra su jornada anual. Inscríbete antes del 25 de marzo.",
-    date: "20 mar",
-  },
-  {
-    tag: "Ventajas",
-    title: "Nuevas ventajas disponibles en el catálogo",
-    body: "Se han añadido descuentos en guardería y coche compartido. Consulta el catálogo.",
-    date: "18 mar",
-  },
-  {
-    tag: "Formación",
-    title: "Actualización del módulo de PRL",
-    body: "El módulo de Prevención de Riesgos ha sido actualizado con nueva normativa.",
-    date: "15 mar",
-  },
 ];
 
 const perks = [
@@ -69,7 +49,12 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Props) {
-  const [activeNav, setActiveNav] = useState<EmpleadoNavItem>("Inicio");
+  const router = useRouter();
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
+
+  useEffect(() => {
+    getNoticias().then((data) => setNoticias(data.slice(0, 3))); // mostrar solo las 3 más recientes
+  }, []);
 
   const completed = onboardingModules.filter((m) => m.status === "completado").length;
   const totalProgress = Math.round(
@@ -80,14 +65,13 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
       <Header
         defaultActive="Inicio"
-        onNavChange={(item) => setActiveNav(item as EmpleadoNavItem)}
-        logoEmpresa={logoEmpresaUrl}
+        onNavChange={(item) => router.push(NAV_ROUTES[item])}
       />
       <main className="max-w-7xl mx-auto px-8 py-10">
         {/* Page title */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Hola, {usuario?.nombre || "Empleado"} 
+            Hola, {usuario?.nombre || "Empleado"}
           </h1>
           <p className="text-sm text-gray-400 mt-1">
             {nombreEmpresa ?? "Empresa"} · 20 de marzo de 2026
@@ -123,13 +107,12 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        m.status === "completado"
-                          ? "bg-emerald-400"
-                          : m.status === "en progreso"
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado"
+                        ? "bg-emerald-400"
+                        : m.status === "en progreso"
                           ? "bg-blue-400"
                           : "bg-gray-200"
-                      }`}
+                        }`}
                     />
                     <p className="text-xs font-medium text-gray-800">{m.name}</p>
                   </div>
@@ -160,9 +143,8 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
               {perks.map((p) => (
                 <div
                   key={p.name}
-                  className={`border rounded-lg px-3 py-2.5 border-gray-100 ${
-                    !p.available ? "opacity-40" : ""
-                  }`}
+                  className={`border rounded-lg px-3 py-2.5 border-gray-100 ${!p.available ? "opacity-40" : ""
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-1.5">
@@ -180,35 +162,44 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
           </div>
         </div>
 
-        {/* Announcements */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        {/* Preview de noticias */}
+        <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-gray-800">
-              Comunicados de EGM Atalayas
-            </h2>
-            <button className="text-xs text-gray-400 hover:text-gray-700 transition-colors">
-              Ver todos →
-            </button>
+            <h2 className="text-sm font-semibold text-gray-800">Últimas noticias</h2>
+            <Link
+              href="/dashboard/noticias"
+              className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              Ver todas →
+            </Link>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            {announcements.map((a, i) => (
-              <div
-                key={i}
-                className="border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tagColor[a.tag]}`}
-                  >
-                    {a.tag}
+
+          {noticias.length === 0 ? (
+            <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {noticias.map((n) => (
+                <Link
+                  key={n.anuncio_id}
+                  href="/dashboard/noticias"
+                  className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {n.tag}
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
+                    {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
                   </span>
-                  <span className="text-[10px] text-gray-400">{a.date}</span>
-                </div>
-                <h3 className="text-xs font-semibold text-gray-900 mb-1">{a.title}</h3>
-                <p className="text-[11px] text-gray-500 leading-relaxed">{a.body}</p>
-              </div>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
