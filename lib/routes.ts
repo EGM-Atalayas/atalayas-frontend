@@ -4,5 +4,5 @@ export const NAV_ROUTES: Record<string, string> = {
   "Onboarding":     "/dashboard/onboarding",
   "Formación":      "/dashboard/formacion",
   "Comunicación":   "/dashboard/noticias",
-  "Administración": "/dashboard/administracion",
+  "Administración": "/dashboard/admin",
 };
