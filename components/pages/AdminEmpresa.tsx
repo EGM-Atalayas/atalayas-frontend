@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../Header";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type EmpresaNavItem = "Inicio" | "Onboarding" | "Formación" | "Comunicación" | "Administración";
+import { getNoticias } from "@/lib/api/noticias";
+import { Noticia } from "@/lib/types/noticias";
+import { NAV_ROUTES } from "@/lib/routes";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -69,12 +69,20 @@ const urgencyColor: Record<string, string> = {
 interface Props {
   logoEmpresaUrl?: string;
   nombreEmpresa?: string;
+  empresaId?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa }: Props) {
-  const [activeNav, setActiveNav] = useState<EmpresaNavItem>("Inicio");
+export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId }: Props) {
+  const router = useRouter();
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
+
+  useEffect(() => {
+    if (empresaId) {
+      getNoticias(Number(empresaId)).then((data) => setNoticias(data.slice(0, 3)));
+    }
+  }, [empresaId]);
 
   const totalModules = moduleGroups.reduce((acc, g) => acc + g.items.length, 0);
   const publishedModules = moduleGroups.reduce(
@@ -89,7 +97,7 @@ export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa }: Props) {
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
       <Header
         defaultActive="Inicio"
-        onNavChange={(item) => setActiveNav(item as EmpresaNavItem)}
+        onNavChange={(item) => router.push(NAV_ROUTES[item])}
         logoEmpresa={logoEmpresaUrl}
       />
 

@@ -1,48 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
+import { getNoticias } from "@/lib/api/noticias";
+import { Noticia } from "@/lib/types/noticias";
+import { useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Section = "Noticias" | "Ventajas";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
-const news = [
-  {
-    tag: "Evento",
-    title: "Jornada de puertas abiertas — 28 de marzo",
-    body: "EGM Atalayas Ciudad Empresarial celebra su jornada anual. Empresas del parque, futuros colaboradores y comunidad local están invitados.",
-    date: "20 mar 2026",
-  },
-  {
-    tag: "Comunidad",
-    title: "Nueva iniciativa de coche compartido en el parque",
-    body: "Desde este mes, los empleados de las empresas adheridas pueden coordinarse para compartir desplazamientos al área empresarial.",
-    date: "18 mar 2026",
-  },
-  {
-    tag: "Formación",
-    title: "Taller de liderazgo y soft skills — abril 2026",
-    body: "EGM Atalayas organiza un taller de desarrollo profesional abierto a empleados de todas las empresas del parque. Plazas limitadas.",
-    date: "15 mar 2026",
-  },
-  {
-    tag: "Institucional",
-    title: "Bienvenida a tres nuevas empresas al área empresarial",
-    body: "Soluciones TIC Levante, Clínica Dental Atalayas y Construcciones Medvil se han incorporado este mes al ecosistema de EGM Atalayas.",
-    date: "10 mar 2026",
-  },
-  {
-    tag: "Ventajas",
-    title: "Ampliado el catálogo de beneficios corporativos",
-    body: "Nuevos descuentos en restaurantes del entorno, acceso a guardería bonificada y convenios con gimnasios cercanos ya disponibles.",
-    date: "05 mar 2026",
-  },
-];
 
 const perks = [
   {
@@ -97,6 +67,15 @@ const tagColor: Record<string, string> = {
 
 export default function Invitado() {
   const [activeSection, setActiveSection] = useState<Section>("Noticias");
+  const router = useRouter();
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
+
+  useEffect(() => {
+    getNoticias().then((data) =>
+      setNoticias(data.filter((n) => n.visible_invitados && n.activo))
+    );
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
@@ -120,10 +99,9 @@ export default function Invitado() {
                 className={`
                   relative px-4 py-1.5 text-sm font-semibold rounded-md
                   transition-colors duration-150 whitespace-nowrap border-none cursor-pointer
-                  ${
-                    activeSection === s
-                      ? "text-blue-700"
-                      : "text-slate-500 hover:text-blue-700 hover:bg-blue-50"
+                  ${activeSection === s
+                    ? "text-blue-700"
+                    : "text-slate-500 hover:text-blue-700 hover:bg-blue-50"
                   }
                 `}
               >
@@ -158,7 +136,7 @@ export default function Invitado() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        {/* Login nudge banner */}
+        {/* Banner login */}
         <div className="bg-white border border-gray-100 rounded-xl px-5 py-4 flex items-center justify-between mb-8">
           <div>
             <p className="text-sm font-medium text-gray-800">
@@ -181,32 +159,43 @@ export default function Invitado() {
           <>
             <div className="mb-6">
               <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                Noticias del parque
+                Noticias
               </h1>
               <p className="text-sm text-gray-400 mt-1">
-                Comunicados y novedades de EGM Atalayas Ciudad Empresarial
+                Anuncios disponibles para los empleados de EGM Atalayas
               </p>
             </div>
-            <div className="flex flex-col gap-4">
-              {news.map((n, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-xl border border-gray-100 px-5 py-4 hover:border-gray-200 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tagColor[n.tag]}`}
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+
+              {noticias.length === 0 ? (
+                <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {noticias.map((n) => (
+                    <Link
+                      key={n.anuncio_id}
+                      href="/noticias"
+                      className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
                     >
-                      {n.tag}
-                    </span>
-                    <span className="text-[11px] text-gray-400">{n.date}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">{n.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{n.body}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {n.tag}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
+                      </div>
+                      <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
+                        {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </>
+
         )}
 
         {/* ── Ventajas ── */}
@@ -214,7 +203,7 @@ export default function Invitado() {
           <>
             <div className="mb-6">
               <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                Ventajas del parque
+                Ventajas
               </h1>
               <p className="text-sm text-gray-400 mt-1">
                 Beneficios disponibles para los empleados de EGM Atalayas
