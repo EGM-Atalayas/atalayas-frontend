@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "../Header";
 import { getNoticias } from "../../lib/api/noticias";
 import type { Noticia } from "../../lib/types/noticias";
 import Link from "next/link";
-import { NAV_ROUTES } from "@/lib/routes";
 import { useRouter } from "next/navigation";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -68,10 +66,6 @@ export default function AdminGeneral() {
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      <Header
-        defaultActive="Inicio"
-        onNavChange={(item) => router.push(NAV_ROUTES[item])}
-      />
 
       <main className="max-w-7xl mx-auto px-8 py-10">
         {/* Page title */}

@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FiArrowLeft } from "react-icons/fi";
-import { useRouter } from "next/navigation"; // ← único cambio de import
-import { useAuth } from "@/context/AuthContext"; // ← para guardar el usuario
-import { API_URL } from "@/lib/api"; // ← para usar la URL base del backend
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { API_URL } from "@/lib/api";
 
 const LoginPage: React.FC = () => {
-  const router = useRouter(); // ← reemplaza useNavigate
-  const { setUsuario, loginInvitado } = useAuth(); // ← para guardar el usuario en contexto
+  const router = useRouter();
+  const { setUsuario } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,20 +22,16 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
       if (response.ok) {
         const data = await response.json();
 
-        // ← guardamos en el contexto en vez de pasarlo por state de navigate
         setUsuario({
           nombre: data.nombre,
           codigoRol: data.codigoRol,
@@ -43,7 +39,12 @@ const LoginPage: React.FC = () => {
           logoEmpresaUrl: data.logoEmpresaUrl,
         });
 
-        router.push("/dashboard"); // ← reemplaza navigate('/dashboard', { state })
+        // ← redirige según el rol
+        if (data.codigoRol === "SUPERADMIN") { // ← cambia cuando sepas el rol exacto
+          router.push("/superadmin");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
       }
@@ -55,17 +56,12 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleInvitado = () => {
-    loginInvitado();
-    router.push("/dashboard");
-  };
-
   return (
     <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4">
       <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl relative">
 
         <button
-          onClick={() => router.push("/")} // ← reemplaza navigate('/')
+          onClick={() => router.push("/")}
           className="absolute top-8 left-8 flex items-center gap-2 text-slate-700 font-semibold text-sm hover:text-blue-900 group transition"
         >
           <FiArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
@@ -112,14 +108,12 @@ const LoginPage: React.FC = () => {
             </p>
           )}
 
-          
-
           <button
             type="submit"
             disabled={isLoading}
             className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-slate-500 disabled:cursor-not-allowed"
           >
-            {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
+            {isLoading ? "Conectando..." : "Iniciar Sesión"}
           </button>
         </form>
       </div>
