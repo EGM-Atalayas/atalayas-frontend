@@ -10,6 +10,7 @@ interface Usuario {
   logoEmpresaUrl?: string;
   activo?: boolean;
   invitado?: boolean;
+  empresaId?: number;
 }
 
 interface AuthContextType {

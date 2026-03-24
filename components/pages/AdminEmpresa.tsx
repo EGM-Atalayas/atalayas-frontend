@@ -6,6 +6,7 @@ import Header from "../Header";
 import { getNoticias } from "@/lib/api/noticias";
 import { Noticia } from "@/lib/types/noticias";
 import { NAV_ROUTES } from "@/lib/routes";
+import { useAuth } from "@/context/AuthContext";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -76,6 +77,7 @@ interface Props {
 
 export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId }: Props) {
   const router = useRouter();
+  const { usuario } = useAuth();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId 
       <Header
         defaultActive="Inicio"
         onNavChange={(item) => router.push(NAV_ROUTES[item])}
-        logoEmpresa={logoEmpresaUrl}
+        logoEmpresa={usuario?.logoEmpresaUrl}
       />
 
       <main className="max-w-7xl mx-auto px-8 py-10">

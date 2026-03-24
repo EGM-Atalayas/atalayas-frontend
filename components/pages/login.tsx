@@ -31,6 +31,7 @@ const LoginPage: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("DATA DEL LOGIN:", data);
 
         setUsuario({
           nombre: data.nombre,
@@ -39,12 +40,16 @@ const LoginPage: React.FC = () => {
           logoEmpresaUrl: data.logoEmpresaUrl,
         });
 
+
+
         // ← redirige según el rol
-        if (data.codigoRol === "SUPERADMIN") { // ← cambia cuando sepas el rol exacto
+        if (data.codigoRol === "ROLE_ADMIN") {
           router.push("/superadmin");
+        } else if (data.codigoRol === "ROLE_ADMINEMPRESA") {
+          router.push("/dashboard/admin");
         } else {
           router.push("/dashboard");
-        }
+      }
       } else {
         setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
       }
