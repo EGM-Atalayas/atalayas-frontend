@@ -14,10 +14,10 @@ export interface Noticia {
   tag: TagNoticia;
   visible_invitados: boolean;
   activo: boolean;
-  creado_por: number;       // usuario_id del creador
-  empresa_id: number | null; // null = noticia global (Admin General)
-  creado_en: string;        // ISO date
-  actualizado_en: string;   // ISO date
+  creado_por: number;
+  empresa_id: string | null; // ← cambiado a string
+  creado_en: string;
+  actualizado_en: string;
 }
 
 export interface NoticiaInput {
@@ -25,5 +25,5 @@ export interface NoticiaInput {
   cuerpo: string;
   tag: TagNoticia;
   visible_invitados: boolean;
-  empresa_id?: number | null;
+  empresa_id?: string | null; // ← cambiado a string
 }

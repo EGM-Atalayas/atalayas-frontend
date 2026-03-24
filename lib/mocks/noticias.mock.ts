@@ -33,7 +33,7 @@ export const MOCK_NOTICIAS: Noticia[] = [
     visible_invitados: false,
     activo: true,
     creado_por: 2,
-    empresa_id: 1,
+    empresa_id: "8dea9ed5-2803-4f32-b08d-82676e028c52", 
     creado_en: "2026-03-15T08:00:00Z",
     actualizado_en: "2026-03-15T08:00:00Z",
   },

@@ -11,7 +11,7 @@ const USE_MOCK = true; // ← cambia a false cuando el backend esté listo
  * Admin General: devuelve todas las noticias.
  * Admin Empresa: devuelve solo las de su empresa (filtra por empresa_id).
  */
-export async function getNoticias(empresaId?: number): Promise<Noticia[]> {
+export async function getNoticias(empresaId?: string): Promise<Noticia[]> {
   if (USE_MOCK) {
     if (empresaId !== undefined) {
       return mockData.filter(
@@ -21,7 +21,6 @@ export async function getNoticias(empresaId?: number): Promise<Noticia[]> {
     return mockData;
   }
 
-  // TODO: conectar con backend
   const url = empresaId
     ? `${API_URL}/anuncios?empresa_id=${empresaId}`
     : `${API_URL}/anuncios`;

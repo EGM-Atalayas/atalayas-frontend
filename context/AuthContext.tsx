@@ -5,12 +5,17 @@ import type { ReactNode } from 'react';
 
 interface Usuario {
   nombre: string;
+  apellidos?: string;
   codigoRol: string;
   nombreEmpresa?: string;
   logoEmpresaUrl?: string;
   activo?: boolean;
+  empresaId?: string;   
+  usuarioId?: string;
+  email?: string;
+  avatarUrl?: string;
+  nombreRol?: string;
   invitado?: boolean;
-  empresaId?: number;
 }
 
 interface AuthContextType {
