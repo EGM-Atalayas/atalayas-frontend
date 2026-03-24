@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 
 interface Empleado {
   id: string;
@@ -27,7 +28,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const cargarDashboard = async () => {
       try {
-        const response = await fetch("https://atalayas-backend-desarrollo.up.railway.app/api/v1/dashboard/admin/resumen", {
+        const response = await fetch(`${API_URL}/dashboard/admin/resumen`, {
           method: "GET",
           credentials: "include",
         });
