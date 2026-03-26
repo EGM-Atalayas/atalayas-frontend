@@ -35,21 +35,24 @@ const LoginPage: React.FC = () => {
 
         setUsuario({
           nombre: data.nombre,
+          apellidos: data.apellidos,
           codigoRol: data.codigoRol,
           nombreEmpresa: data.nombreEmpresa,
-          logoEmpresaUrl: data.logoEmpresaUrl,
-        });
+          logoEmpresaUrl: data.avatarUrl,
+          empresaId: data.empresaId,
+          usuarioId: data.usuarioId,
+});
 
 
 
         // ← redirige según el rol
         if (data.codigoRol === "ROLE_ADMIN") {
-          router.push("/superadmin");
-        } else if (data.codigoRol === "ROLE_ADMINEMPRESA") {
-          router.push("/dashboard/admin");
-        } else {
-          router.push("/dashboard");
-      }
+            router.push("/superadmin");
+          } else if (data.codigoRol === "ROLE_ADMIN_EMPRESA") { 
+            router.push("/dashboard/admin");
+          } else {
+            router.push("/dashboard");
+          }
       } else {
         setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
       }
@@ -62,7 +65,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4">
+    <div className="bg-[#100D3E] min-h-screen flex items-center justify-center p-4">
       <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl relative">
 
         <button

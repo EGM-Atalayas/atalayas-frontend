@@ -81,10 +81,10 @@ export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId 
   const [noticias, setNoticias] = useState<Noticia[]>([]);
 
   useEffect(() => {
-    if (empresaId) {
-      getNoticias(Number(empresaId)).then((data) => setNoticias(data.slice(0, 3)));
-    }
-  }, [empresaId]);
+  if (usuario?.empresaId) {
+    getNoticias(usuario.empresaId).then((data) => setNoticias(data.slice(0, 3)));
+  }
+}, [usuario?.empresaId]);
 
   const totalModules = moduleGroups.reduce((acc, g) => acc + g.items.length, 0);
   const publishedModules = moduleGroups.reduce(

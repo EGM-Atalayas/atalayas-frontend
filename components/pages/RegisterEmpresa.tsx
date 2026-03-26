@@ -221,7 +221,7 @@ const RegisterEmpresa: React.FC = () => {
   );
 
   return (
-    <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4 py-12">
+    <div className="bg-[#100D3E] min-h-screen flex items-center justify-center p-4 py-12">
       <div className="bg-slate-200 rounded-[2.5rem] p-8 md:p-12 w-full max-w-2xl flex flex-col shadow-2xl relative min-h-125">
         
         {paso < 4 && (
