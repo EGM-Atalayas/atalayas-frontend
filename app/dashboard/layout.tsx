@@ -1,16 +1,16 @@
-// src/components/auth/ProtectedRoute.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
+import Header from "@/components/Header";
+import SuperAdminSidebar from "@/components/ui/SuperAdminSidebar";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { usuario, setUsuario } = useAuth();
   const [verificando, setVerificando] = useState(true);
   const router = useRouter();
 
-  // ✅ Todos los useEffect juntos arriba, antes de cualquier return
   useEffect(() => {
     if (usuario) {
       setVerificando(false);
@@ -42,7 +42,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     if (!verificando && !usuario) {
       router.replace("/login");
     }
-  }, [verificando, usuario]); // ← también movido arriba
+  }, [verificando, usuario]);
 
   if (verificando) {
     return (
@@ -52,13 +52,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!usuario) return null; // ← necesario para evitar el error de antes
+  if (!usuario) return null;
+
+  const esAdmin = usuario.codigoRol === "ROLE_ADMIN_EMPRESA";
 
   return (
-    <>
-      <main className="min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50">
+      {esAdmin && <SuperAdminSidebar />}
+      <main className="flex-1">
         {children}
       </main>
-    </>
+    </div>
   );
 }
