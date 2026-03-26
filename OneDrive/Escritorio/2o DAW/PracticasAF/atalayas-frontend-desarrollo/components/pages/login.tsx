@@ -1,0 +1,124 @@
+// src/components/pages/Login.tsx
+"use client";
+import React, { useState } from "react";
+import { FaUserCircle } from "react-icons/fa";
+import { FiArrowLeft } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { API_URL } from "@/lib/api";
+
+const LoginPage: React.FC = () => {
+  const router = useRouter();
+  const { setUsuario } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMensaje, setErrorMensaje] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMensaje("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        setUsuario({
+          nombre: data.nombre,
+          codigoRol: data.codigoRol,
+          nombreEmpresa: data.nombreEmpresa,
+          logoEmpresaUrl: data.logoEmpresaUrl,
+        });
+
+        // ← redirige según el rol
+        if (data.codigoRol === "ROLE_ADMIN") {
+          router.push("/superadmin");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
+      }
+    } catch (error) {
+      console.error("Error conectando al servidor:", error);
+      setErrorMensaje("No se pudo conectar con el servidor. Verifica tu conexión.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-blue-950 min-h-screen flex items-center justify-center p-4">
+      <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl relative">
+
+        <button
+          onClick={() => router.push("/")}
+          className="absolute top-8 left-8 flex items-center gap-2 text-slate-700 font-semibold text-sm hover:text-blue-900 group transition"
+        >
+          <FiArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Volver
+        </button>
+
+        <div className="flex flex-col items-center gap-y-4">
+          <FaUserCircle className="text-blue-950 text-6xl" />
+          <h1 className="text-2xl font-bold text-blue-950">Iniciar Sesión</h1>
+        </div>
+
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-8">
+          <div className="flex flex-col gap-y-2">
+            <label className="font-bold text-sm text-slate-700" htmlFor="email">
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-slate-300 rounded-full px-6 py-3.5 w-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-y-2">
+            <label className="font-bold text-sm text-slate-700" htmlFor="password">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-slate-300 rounded-full px-6 py-3.5 w-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              required
+            />
+          </div>
+
+          {errorMensaje && (
+            <p className="text-red-600 font-semibold text-sm text-center">
+              {errorMensaje}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-slate-500 disabled:cursor-not-allowed"
+          >
+            {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
