@@ -16,7 +16,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="text-white flex flex-col items-center justify-center gap-y-4 min-h-screen">
+    <div className="bg-[#100D3E] text-white flex flex-col items-center justify-center gap-y-4 min-h-screen">
       <Image
         src={logo}
         alt="Logo"
