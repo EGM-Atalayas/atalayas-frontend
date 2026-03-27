@@ -13,7 +13,7 @@ export default function DashboardPage() {
   if (!usuario) return null; // todavía cargando sesión
 
   if (usuario.codigoRol === "ROLE_ADMIN") return <AdminGeneral />;
-  if (usuario.codigoRol === "ROLE_ADMIN_EMPRESA") return <AdminEmpresa logoEmpresaUrl={usuario.logoEmpresaUrl} nombreEmpresa={usuario.nombreEmpresa} />;
+  if (usuario.codigoRol === "ROLE_ADMIN_EMPRESA") return <AdminEmpresa />;
   if (usuario.codigoRol === "ROLE_EMPLEADO")      return <Empleado logoEmpresaUrl={usuario.logoEmpresaUrl} nombreEmpresa={usuario.nombreEmpresa} usuario={usuario} />;
   if (usuario.codigoRol === "INVITADO")      return <Invitado />;
 

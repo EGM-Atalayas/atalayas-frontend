@@ -136,31 +136,16 @@ export default function AdminEmpresa() {
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
               <div className="h-full bg-gray-900 rounded-full transition-all" style={{ width: `${totalProgress}%` }} />
             </div>
-            <div className="flex flex-col gap-5">
-              {moduleGroups.map((g) => (
-                <div key={g.group}>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    {g.group}
-                  </p>
-                  <div className="flex flex-col gap-1.5">
-                    {g.items.map((item) => (
-                      <div
-                        key={item.name}
-                        onClick={() => router.push(NAV_ROUTES["Formación"])}
-                        className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer px-2 rounded"
-                      >
-                        <p className="text-xs text-gray-700">{item.name}</p>
-                        <span
-                          className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${statusStyle[item.status]}`}
-                        >
-                          {item.status}
-                        </span>
-                      </div>
-                    )}
-                    <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}>
-                      {m.status}
-                    </span>
+            <div className="flex flex-col gap-2">
+              {onboardingModules.map((m) => (
+                <div key={m.name} onClick={() => router.push(NAV_ROUTES["Formación"])} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5 hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado" ? "bg-emerald-400" : m.status === "en progreso" ? "bg-blue-400" : "bg-gray-200"}`} />
+                    <p className="text-xs font-medium text-gray-800">{m.name}</p>
                   </div>
+                  <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}>
+                    {m.status}
+                  </span>
                 </div>
               ))}
             </div>
