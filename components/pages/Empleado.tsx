@@ -99,35 +99,39 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
               />
             </div>
 
+            {/* Next step CTA - Automated Onboarding */}
+            <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
+                  🚀
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Tu siguiente paso</p>
+                  <h3 className="text-sm font-semibold text-slate-800">Calidad y Protocolos comunes</h3>
+                </div>
+              </div>
+              <button 
+                onClick={() => router.push(NAV_ROUTES["Formación"])}
+                className="bg-blue-600 text-white text-[11px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Comenzar ahora →
+              </button>
+            </div>
+
             <div className="flex flex-col gap-2">
               {onboardingModules.map((m) => (
-                <div
-                  key={m.name}
-                  className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5 hover:bg-gray-50/60 transition-colors cursor-pointer"
-                >
+                <div key={m.name} onClick={() => router.push(NAV_ROUTES["Formación"])} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5 hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer group">
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado"
-                        ? "bg-emerald-400"
-                        : m.status === "en progreso"
-                          ? "bg-blue-400"
-                          : "bg-gray-200"
-                        }`}
-                    />
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado" ? "bg-emerald-400" : m.status === "en progreso" ? "bg-blue-400" : "bg-gray-200"}`} />
                     <p className="text-xs font-medium text-gray-800">{m.name}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     {m.status === "en progreso" && (
                       <div className="w-20 h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-blue-400 rounded-full"
-                          style={{ width: `${m.progress}%` }}
-                        />
+                        <div className="h-full bg-blue-400 rounded-full" style={{ width: `${m.progress}%` }} />
                       </div>
                     )}
-                    <span
-                      className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}
-                    >
+                    <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}>
                       {m.status}
                     </span>
                   </div>
@@ -136,28 +140,56 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
             </div>
           </div>
 
-          {/* Perks */}
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
-            <h2 className="text-sm font-semibold text-gray-800 mb-5">Mis ventajas</h2>
-            <div className="flex flex-col gap-3">
-              {perks.map((p) => (
-                <div
-                  key={p.name}
-                  className={`border rounded-lg px-3 py-2.5 border-gray-100 ${!p.available ? "opacity-40" : ""
-                    }`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{p.icon}</span>
-                      <p className="text-xs font-medium text-gray-800">{p.name}</p>
+          {/* Perks / Servicios */}
+          <div className="flex flex-col gap-6">
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <h2 className="text-sm font-semibold text-gray-800 mb-5">Mis Servicios</h2>
+              <div className="flex flex-col gap-3">
+                {perks.map((p) => (
+                  <div
+                    key={p.name}
+                    className={`border rounded-lg px-3 py-2.5 border-gray-100 ${!p.available ? "opacity-40" : ""
+                      }`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">{p.icon}</span>
+                        <p className="text-xs font-medium text-gray-800">{p.name}</p>
+                      </div>
+                      {!p.available && (
+                        <span className="text-[10px] text-gray-400">Próximamente</span>
+                      )}
                     </div>
-                    {!p.available && (
-                      <span className="text-[10px] text-gray-400">Próximamente</span>
-                    )}
+                    <p className="text-[11px] text-gray-400 leading-snug pl-5">{p.desc}</p>
                   </div>
-                  <p className="text-[11px] text-gray-400 leading-snug pl-5">{p.desc}</p>
+                ))}
+              </div>
+            </div>
+
+            {/* Credentials / Carnés - Pliego requirement */}
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-sm font-semibold text-gray-800">Mis Carnés</h2>
+                <span className="bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full border border-emerald-100 font-medium">Todo al día</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-lg shadow-sm border border-gray-100">🏗️</div>
+                  <div className="flex-1">
+                    <p className="text-[11px] font-semibold text-gray-800">Operador Carretilla</p>
+                    <p className="text-[10px] text-gray-400">Expira en 14 meses</p>
+                  </div>
+                  <button className="text-[10px] text-blue-600 font-medium hover:underline">Ver PDF</button>
                 </div>
-              ))}
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 opacity-60">
+                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-lg shadow-sm border border-gray-100">🚑</div>
+                  <div className="flex-1">
+                    <p className="text-[11px] font-semibold text-gray-800">Primeros Auxilios</p>
+                    <p className="text-[10px] text-gray-400">Pendiente de formación</p>
+                  </div>
+                  <button className="text-[10px] text-gray-400 font-medium">Inscribirse</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

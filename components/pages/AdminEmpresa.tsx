@@ -154,7 +154,8 @@ export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId 
                     {g.items.map((item) => (
                       <div
                         key={item.name}
-                        className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0"
+                        onClick={() => router.push(NAV_ROUTES["Formación"])}
+                        className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer px-2 rounded"
                       >
                         <p className="text-xs text-gray-700">{item.name}</p>
                         <span
@@ -183,6 +184,41 @@ export default function AdminEmpresa({ logoEmpresaUrl, nombreEmpresa, empresaId 
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Homologaciones y Carnés — exclusivo AdminEmpresa (Requisito Pliego) */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
+          <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-semibold text-gray-800">Control de Homologaciones y Carnés</h2>
+              <button className="text-[11px] text-blue-600 font-medium hover:underline">Gestionar todos →</button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg">⚠️</span>
+                  <p className="text-xs font-bold text-amber-700 uppercase">Próximas renovaciones</p>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-snug">Hay **3 empleados** con certificados de PRL que expiran en los próximos 30 días.</p>
+              </div>
+              <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg">✅</span>
+                  <p className="text-xs font-bold text-emerald-700 uppercase">Estado General</p>
+                </div>
+                <p className="text-[11px] text-emerald-800 leading-snug">El **92%** de la plantilla tiene la documentación básica en regla y actualizada.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col justify-center items-center text-center">
+             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-3 text-xl">📄</div>
+             <h3 className="text-sm font-semibold text-gray-800 mb-1">Carga Masiva</h3>
+             <p className="text-[11px] text-gray-400 mb-4">Sube múltiples CVs o carnés y la IA los procesará.</p>
+             <button className="w-full py-2 bg-gray-900 text-white text-[11px] font-medium rounded-lg hover:bg-gray-700 transition-colors">
+               Subir documentos
+             </button>
           </div>
         </div>
 

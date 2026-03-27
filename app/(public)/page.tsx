@@ -1,5 +1,5 @@
-import Landing from "@/components/pages/Landing"; // o el contenido directo
+import Invitado from "@/components/pages/Invitado";
 
 export default function LandingPage() {
-  return <Landing />;
+  return <Invitado />;
 }
