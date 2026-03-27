@@ -27,6 +27,7 @@ const perks = [
     name: "Guardería bonificada",
     desc: "Plazas con precio reducido en centro infantil próximo al área empresarial.",
     available: true,
+    hasModal: true,
   },
   {
     icon: "🍽️",
@@ -274,6 +275,75 @@ export default function Invitado() {
           </>
         )}
       </main>
+
+      {/* ── Modal: Guardería bonificada ── */}
+      {modalPerk === "Guardería bonificada" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setModalPerk(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-base font-bold text-gray-900 leading-snug pr-4">
+                Atención para tu Familia
+              </h2>
+              <button
+                onClick={() => setModalPerk(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0 cursor-pointer border-none bg-transparent"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              <span className="font-semibold text-gray-800">Guardería para Niños y Niñas:</span> Sabemos lo importante que es la conciliación familiar. Por ello, disponemos de una ludoteca infantil en Atalayas, ofreciendo un espacio seguro y divertido para los más pequeños, más cerca de tu lugar de trabajo.
+            </p>
+
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-5 text-center">
+              <p className="text-sm font-bold text-emerald-700 mb-1">Centro Infantil Atalayas</p>
+              <p className="text-xs text-emerald-600 font-medium">Matrícula abierta todo el año</p>
+              <div className="mt-2 flex flex-col gap-0.5">
+                <p className="text-xs text-gray-600">Horario flexible · Comida casera y ambiente familiar</p>
+                <p className="text-xs font-semibold text-gray-700 mt-1">Abierto NAVIDAD, SEMANA SANTA Y VERANO</p>
+                <p className="text-xs text-gray-500">Centro Educativo, Ludoteca y Escuela de verano</p>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-3">Ludoteca · hasta los 12 años</p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+                  <p className="text-xs text-gray-700">Media jornada (hasta las 13:00)</p>
+                  <p className="text-xs font-bold text-gray-900">10€ / día</p>
+                </div>
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+                  <p className="text-xs text-gray-700">Jornada completa</p>
+                  <p className="text-xs font-bold text-gray-900">15€ / día</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-3 text-center">Talleres · Clases de repaso · Proyector de cine...</p>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+              <a
+                href="tel:647763389"
+                className="flex items-center justify-center gap-2 bg-gray-50 rounded-xl py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                📞 647 763 389
+              </a>
+              <a
+                href="mailto:laescuelainfantilatalayas@gmail.com"
+                className="flex items-center justify-center gap-2 bg-gray-50 rounded-xl py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                ✉️ laescuelainfantilatalayas@gmail.com
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal: Coche compartido ── */}
       {modalPerk === "Coche compartido" && (
