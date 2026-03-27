@@ -20,6 +20,7 @@ const perks = [
     name: "Coche compartido",
     desc: "Coordina rutas con compañeros del parque y reduce costes de desplazamiento.",
     available: true,
+    hasModal: true,
   },
   {
     icon: "🧒",
@@ -67,6 +68,7 @@ const tagColor: Record<string, string> = {
 
 export default function Invitado() {
   const [activeSection, setActiveSection] = useState<Section>("Noticias");
+  const [modalPerk, setModalPerk] = useState<string | null>(null);
   const router = useRouter();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
 
@@ -84,14 +86,14 @@ export default function Invitado() {
         en lugar del Header con nav de usuario autenticado.
       */}
       <header className="w-full bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center h-full">
-            <Image src={logo} alt="Logo" className="h-24 w-auto" />
+            <Image src={logo} alt="Logo" className="h-10 sm:h-14 w-auto" />
           </div>
 
           {/* Section tabs */}
-          <nav className="flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1">
             {(["Noticias", "Mis Servicios"] as Section[]).map((s) => (
               <button
                 key={s}
@@ -118,16 +120,16 @@ export default function Invitado() {
           </nav>
 
           {/* Auth actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="text-sm font-semibold text-slate-500 hover:text-blue-700 transition-colors px-3 py-1.5"
+              className="text-sm font-semibold text-slate-500 hover:text-blue-700 transition-colors px-2 sm:px-3 py-1.5"
             >
               Iniciar sesión
             </Link>
             <Link
               href="/register-empresa"
-              className="bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+              className="bg-gray-900 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
             >
               Registrar empresa
             </Link>
@@ -135,14 +137,29 @@ export default function Invitado() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      {/* Mobile section tabs */}
+      <div className="sm:hidden bg-white border-b border-slate-200 px-4 flex gap-1">
+        {(["Noticias", "Mis Servicios"] as Section[]).map((s) => (
+          <button
+            key={s}
+            onClick={() => setActiveSection(s)}
+            className={`relative px-4 py-3 text-sm font-semibold transition-colors border-none cursor-pointer
+              ${activeSection === s ? "text-blue-700" : "text-slate-500"}`}
+          >
+            {s}
+            <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-blue-700 transition-all duration-200 ${activeSection === s ? "w-[calc(100%-24px)]" : "w-0"}`} />
+          </button>
+        ))}
+      </div>
+
+      <main className="w-full px-4 sm:px-8 lg:px-12 py-10">
         
         {/* ── Welcome Hero (from Landing) ── */}
-        <section className="bg-[#100D3E] text-white rounded-3xl p-12 mb-10 overflow-hidden relative shadow-xl">
+        <section className="bg-[#100D3E] text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative shadow-xl">
           <div className="relative z-10 flex flex-col items-center text-center">
-            <Image src={logo} alt="Logo" className="h-20 w-auto mb-6 brightness-0 invert" />
-            <h1 className="text-5xl font-extrabold tracking-tight mb-2">Bienvenido</h1>
-            <p className="text-xl font-medium text-blue-200 mb-8 max-w-lg">
+            <Image src={logo} alt="Logo" className="h-16 sm:h-20 w-auto mb-6 brightness-0 invert" />
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2">Bienvenido</h1>
+            <p className="text-base sm:text-xl font-medium text-blue-200 mb-8 max-w-lg">
               Plataforma de Onboarding y Formación de EGM Atalayas Ciudad Empresarial
             </p>
             <div className="flex gap-4">
@@ -226,11 +243,12 @@ export default function Invitado() {
                 Beneficios disponibles para los empleados de EGM Atalayas
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {perks.map((p) => (
                 <div
                   key={p.name}
-                  className={`bg-white rounded-xl border border-gray-100 px-5 py-4 ${!p.available ? "opacity-50" : ""}`}
+                  onClick={() => "hasModal" in p && p.hasModal && p.available ? setModalPerk(p.name) : undefined}
+                  className={`bg-white rounded-xl border border-gray-100 px-5 py-4 ${!p.available ? "opacity-50" : ""} ${"hasModal" in p && p.hasModal && p.available ? "cursor-pointer hover:border-blue-200 hover:shadow-sm transition-all" : ""}`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -241,6 +259,9 @@ export default function Invitado() {
                       <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full shrink-0">
                         Próximamente
                       </span>
+                    )}
+                    {"hasModal" in p && p.hasModal && p.available && (
+                      <span className="text-[10px] text-blue-500 shrink-0">Ver más →</span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed pl-6">{p.desc}</p>
@@ -253,6 +274,79 @@ export default function Invitado() {
           </>
         )}
       </main>
+
+      {/* ── Modal: Coche compartido ── */}
+      {modalPerk === "Coche compartido" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setModalPerk(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-base font-bold text-gray-900 leading-snug pr-4">
+                ¿Cómo funciona la plataforma de compartir coche en Atalayas?
+              </h2>
+              <button
+                onClick={() => setModalPerk(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0 cursor-pointer border-none bg-transparent"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Pasajero */}
+            <div className="mb-6">
+              <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-4">Si eres pasajero</p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">1. Busca</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Elige origen y destino y selecciona el trayecto que más se adapte a tu ruta diaria.</p>
+                  <p className="text-xs text-blue-500 font-medium mt-1">¡Miles de conductores te están esperando!</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">2. Disfruta</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Sólo te queda reservar tu trayecto y disfrutar de él. Te daremos toda la información del conductor para que puedas comunicarte con él.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 my-4" />
+
+            {/* Conductor */}
+            <div className="mb-6">
+              <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-4">Si eres conductor</p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">1. Publica</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Publica la rutina habitual que haces con tu coche. Elige punto de origen y destino, el número de plazas disponibles y el precio de cada una.</p>
+                  <p className="text-xs text-blue-500 font-medium mt-1">¡Y listo! El resto lo gestionamos nosotros.</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">2. Conecta</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Espera a que los pasajeros se pongan en contacto contigo y chatea con ellos para concretar el punto de recogida.</p>
+                  <p className="text-xs text-blue-500 font-medium mt-1">¡Miles de pasajeros te están esperando!</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">3. Disfruta</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Disfruta del viaje y de la compañía.</p>
+                </div>
+              </div>
+            </div>
+
+            <a
+              href="https://www.lokinn.com/compartir-coche/atalayas"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Acceder a la plataforma →
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
