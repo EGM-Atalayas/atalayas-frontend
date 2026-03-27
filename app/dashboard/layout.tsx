@@ -56,16 +56,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   console.log("ROL ACTUAL:", usuario.codigoRol);
   const esSuperAdmin = usuario.codigoRol === "ROLE_ADMIN";
 
-return (
-  <>
-    {esSuperAdmin ? (
-      <div className="flex min-h-screen bg-slate-50">
-        <SuperAdminSidebar />
-        <main className="flex-1">{children}</main>
-      </div>
-    ) : (
-      <>{children}</>
-    )}
-  </>
-);
+  const esAdmin = usuario.codigoRol === "ROLE_ADMIN";
+
+  return (
+    <div className="flex min-h-screen bg-slate-50">
+      {esAdmin && <SuperAdminSidebar />}
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
+  );
 }

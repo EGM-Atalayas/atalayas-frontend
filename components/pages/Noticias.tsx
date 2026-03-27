@@ -160,11 +160,13 @@ export default function NoticiasPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      <Header
-        defaultActive="Comunicación"
-        onNavChange={(item) => router.push(NAV_ROUTES[item])}
-        logoEmpresa={usuario?.logoEmpresaUrl}
-      />
+      {!esAdminGeneral && (
+        <Header
+          defaultActive="Comunicación"
+          onNavChange={(item) => router.push(NAV_ROUTES[item])}
+          logoEmpresa={usuario?.logoEmpresaUrl}
+        />
+      )}
 
       <main className="max-w-7xl mx-auto px-8 py-10">
         {/* Header de página */}
