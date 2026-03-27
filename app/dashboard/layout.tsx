@@ -53,6 +53,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!usuario) return null;
+  console.log("ROL ACTUAL:", usuario.codigoRol);
+  const esSuperAdmin = usuario.codigoRol === "ROLE_ADMIN";
 
   const esAdmin = usuario.codigoRol === "ROLE_ADMIN";
 

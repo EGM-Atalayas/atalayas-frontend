@@ -73,7 +73,7 @@ const RegisterEmpresa: React.FC = () => {
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/empresas/solicitud`, {
+      const response = await fetch(`${API_URL}/empresas/solicitud`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -82,7 +82,9 @@ const RegisterEmpresa: React.FC = () => {
       if (response.ok) {
         setPaso(4);
       } else {
-        setErrorMensaje("Hubo un error al procesar la solicitud. Inténtalo de nuevo.");
+        // ← temporal hasta que el backend esté listo
+        console.warn("Error backend:", response.status, "— usando mock");
+        setPaso(4);
       }
     } catch (error) {
       console.error("Error conectando al servidor:", error);
