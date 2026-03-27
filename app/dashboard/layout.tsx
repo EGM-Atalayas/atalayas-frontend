@@ -54,7 +54,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!usuario) return null;
 
-  const esAdmin = usuario.codigoRol === "ROLE_ADMIN_EMPRESA";
+  const esAdmin = usuario.codigoRol === "ROLE_ADMIN";
 
   return (
     <div className="flex min-h-screen bg-slate-50">
