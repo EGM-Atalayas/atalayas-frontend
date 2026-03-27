@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Section = "Noticias" | "Ventajas";
+type Section = "Noticias" | "Mis Servicios";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -92,7 +92,7 @@ export default function Invitado() {
 
           {/* Section tabs */}
           <nav className="flex items-center gap-1">
-            {(["Noticias", "Ventajas"] as Section[]).map((s) => (
+            {(["Noticias", "Mis Servicios"] as Section[]).map((s) => (
               <button
                 key={s}
                 onClick={() => setActiveSection(s)}
@@ -135,23 +135,40 @@ export default function Invitado() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
-        {/* Banner login */}
-        <div className="bg-white border border-gray-100 rounded-xl px-5 py-4 flex items-center justify-between mb-8">
-          <div>
-            <p className="text-sm font-medium text-gray-800">
-              ¿Eres empleado de una empresa del parque?
+      <main className="max-w-5xl mx-auto px-6 py-10">
+        
+        {/* ── Welcome Hero (from Landing) ── */}
+        <section className="bg-[#100D3E] text-white rounded-3xl p-12 mb-10 overflow-hidden relative shadow-xl">
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <Image src={logo} alt="Logo" className="h-20 w-auto mb-6 brightness-0 invert" />
+            <h1 className="text-5xl font-extrabold tracking-tight mb-2">Bienvenido</h1>
+            <p className="text-xl font-medium text-blue-200 mb-8 max-w-lg">
+              Plataforma de Onboarding y Formación de EGM Atalayas Ciudad Empresarial
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Inicia sesión para acceder a tu formación y contenidos personalizados.
-            </p>
+            <div className="flex gap-4">
+              <Link href="/login" className="bg-white text-[#100D3E] px-6 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg">
+                Iniciar sesión
+              </Link>
+              <Link href="/register-empresa" className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">
+                Registrar empresa
+              </Link>
+            </div>
           </div>
-          <Link
-            href="/login"
-            className="shrink-0 ml-4 bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Iniciar sesión →
-          </Link>
+          {/* Abstract light effects */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20 -ml-20 -mb-20" />
+        </section>
+
+        {/* Banner informativo suave */}
+        <div className="bg-white border border-gray-100 rounded-xl px-6 py-5 flex items-center justify-between mb-8 shadow-sm">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-lg">ℹ️</div>
+             <div>
+               <p className="text-sm font-semibold text-gray-800">Acceso Restringido</p>
+               <p className="text-xs text-gray-400">Si eres empleado, inicia sesión para ver tus cursos y formación personalizada.</p>
+             </div>
+          </div>
+          <Link href="/login" className="text-blue-600 text-sm font-bold hover:underline">Ir a login →</Link>
         </div>
 
         {/* ── Noticias ── */}
@@ -198,12 +215,12 @@ export default function Invitado() {
 
         )}
 
-        {/* ── Ventajas ── */}
-        {activeSection === "Ventajas" && (
+        {/* ── Mis Servicios (asociado a Ventajas) ── */}
+        {activeSection === "Mis Servicios" && (
           <>
             <div className="mb-6">
               <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                Ventajas
+                Mis Servicios
               </h1>
               <p className="text-sm text-gray-400 mt-1">
                 Beneficios disponibles para los empleados de EGM Atalayas
@@ -231,7 +248,7 @@ export default function Invitado() {
               ))}
             </div>
             <p className="text-xs text-gray-400 text-center mt-8">
-              Las ventajas están disponibles para empleados de empresas adheridas a EGM Atalayas Ciudad Empresarial.
+              Estos servicios están disponibles para empleados de empresas adheridas a EGM Atalayas Ciudad Empresarial.
             </p>
           </>
         )}

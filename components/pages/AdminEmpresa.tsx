@@ -136,17 +136,25 @@ export default function AdminEmpresa() {
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
               <div className="h-full bg-gray-900 rounded-full transition-all" style={{ width: `${totalProgress}%` }} />
             </div>
-            <div className="flex flex-col gap-2">
-              {onboardingModules.map((m) => (
-                <div key={m.name} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5 hover:bg-gray-50/60 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado" ? "bg-emerald-400" : m.status === "en progreso" ? "bg-blue-400" : "bg-gray-200"}`} />
-                    <p className="text-xs font-medium text-gray-800">{m.name}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {m.status === "en progreso" && (
-                      <div className="w-20 h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-400 rounded-full" style={{ width: `${m.progress}%` }} />
+            <div className="flex flex-col gap-5">
+              {moduleGroups.map((g) => (
+                <div key={g.group}>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    {g.group}
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {g.items.map((item) => (
+                      <div
+                        key={item.name}
+                        onClick={() => router.push(NAV_ROUTES["Formación"])}
+                        className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer px-2 rounded"
+                      >
+                        <p className="text-xs text-gray-700">{item.name}</p>
+                        <span
+                          className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${statusStyle[item.status]}`}
+                        >
+                          {item.status}
+                        </span>
                       </div>
                     )}
                     <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}>
@@ -172,8 +180,43 @@ export default function AdminEmpresa() {
           </div>
         </div>
 
-        {/* Progreso empleados — exclusivo AdminEmpresa */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
+        {/* Homologaciones y Carnés — exclusivo AdminEmpresa (Requisito Pliego) */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
+          <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-semibold text-gray-800">Control de Homologaciones y Carnés</h2>
+              <button className="text-[11px] text-blue-600 font-medium hover:underline">Gestionar todos →</button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg">⚠️</span>
+                  <p className="text-xs font-bold text-amber-700 uppercase">Próximas renovaciones</p>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-snug">Hay **3 empleados** con certificados de PRL que expiran en los próximos 30 días.</p>
+              </div>
+              <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg">✅</span>
+                  <p className="text-xs font-bold text-emerald-700 uppercase">Estado General</p>
+                </div>
+                <p className="text-[11px] text-emerald-800 leading-snug">El **92%** de la plantilla tiene la documentación básica en regla y actualizada.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col justify-center items-center text-center">
+             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-3 text-xl">📄</div>
+             <h3 className="text-sm font-semibold text-gray-800 mb-1">Carga Masiva</h3>
+             <p className="text-[11px] text-gray-400 mb-4">Sube múltiples CVs o carnés y la IA los procesará.</p>
+             <button className="w-full py-2 bg-gray-900 text-white text-[11px] font-medium rounded-lg hover:bg-gray-700 transition-colors">
+               Subir documentos
+             </button>
+          </div>
+        </div>
+
+        {/* Employee progress */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-gray-800">Progreso de empleados</h2>
             <button onClick={() => router.push("/dashboard/admin")} className="text-xs text-gray-400 hover:text-gray-700 transition-colors">
