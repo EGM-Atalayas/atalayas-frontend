@@ -54,8 +54,6 @@ const LoginPage: React.FC = () => {
         // ← redirige según el rol
         if (data.codigoRol === "ROLE_ADMIN") {
           router.push("/superadmin");
-        } else if (data.codigoRol === "ROLE_ADMIN_EMPRESA") {
-          router.push("/dashboard/admin");
         } else {
           router.push("/dashboard");
         }

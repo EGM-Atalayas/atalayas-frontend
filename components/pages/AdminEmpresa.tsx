@@ -90,21 +90,13 @@ export default function AdminEmpresa() {
       <main className="max-w-7xl mx-auto px-8 py-10">
 
         {/* Page title */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              Hola, {usuario?.nombre ?? "Administrador"}
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {usuario?.nombreEmpresa ?? "Mi empresa"} · 20 de marzo de 2026
-            </p>
-          </div>
-          <button
-            onClick={() => router.push("/dashboard/admin")}
-            className="bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Panel de administración →
-          </button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            Hola, {usuario?.nombre ?? "Administrador"}
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            {usuario?.nombreEmpresa ?? "Mi empresa"} · 20 de marzo de 2026
+          </p>
         </div>
 
         {/* Stats admin — exclusivo AdminEmpresa */}
