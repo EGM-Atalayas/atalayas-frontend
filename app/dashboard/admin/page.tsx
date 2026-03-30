@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<NoticiaInput>({
     titulo: "",
     cuerpo: "",
@@ -35,7 +37,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (usuario?.empresaId) {
-      getNoticias(usuario.empresaId).then(setNoticias);
+      setLoading(true);
+      getNoticias(usuario.empresaId)
+        .then(setNoticias)
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
     }
   }, [usuario?.empresaId]);
 
@@ -49,15 +55,23 @@ export default function AdminPage() {
     if (!form.titulo.trim() || !form.cuerpo.trim()) return;
     const payload = { ...form, empresa_id: usuario?.empresaId ?? null };
 
-    if (editingId) {
-      await editarNoticia(editingId, payload);
-    } else {
-      await crearNoticia(payload);
-    }
+    try {
+      setError("");
+      setLoading(true);
+      if (editingId) {
+        await editarNoticia(editingId, payload);
+      } else {
+        await crearNoticia(payload);
+      }
 
-    const updated = await getNoticias(usuario?.empresaId);
-    setNoticias(updated);
-    resetForm();
+      const updated = await getNoticias(usuario?.empresaId);
+      setNoticias(updated);
+      resetForm();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (n: Noticia) => {
@@ -67,9 +81,17 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id: number) => {
-    await desactivarNoticia(id);
-    const updated = await getNoticias(usuario?.empresaId);
-    setNoticias(updated);
+    try {
+      setError("");
+      setLoading(true);
+      await desactivarNoticia(id);
+      const updated = await getNoticias(usuario?.empresaId);
+      setNoticias(updated);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +103,23 @@ export default function AdminPage() {
       />
 
       <main className="max-w-5xl mx-auto px-8 py-10">
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="text-sm font-semibold text-red-800">Error</p>
+              <p className="text-xs text-red-600 mt-1">{error}</p>
+            </div>
+            <button
+              onClick={() => setError("")}
+              className="ml-auto text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

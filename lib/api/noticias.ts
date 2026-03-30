@@ -8,7 +8,7 @@ import { MOCK_NOTICIAS as mockData } from "../mocks/noticias.mock";
 /**
  * Admin General: devuelve todas las noticias.
  * Admin Empresa: devuelve solo las de su empresa (filtra por empresa_id).
- * Intenta backend primero; si falla, usa mock data.
+ * Intenta backend primero; si falla, usa mock data solo para lectura.
  */
 export async function getNoticias(empresaId?: string): Promise<Noticia[]> {
   try {
@@ -20,7 +20,7 @@ export async function getNoticias(empresaId?: string): Promise<Noticia[]> {
     if (!res.ok) throw new Error("Backend error");
     return res.json();
   } catch {
-    // Fallback a mock data
+    // Fallback a mock data solo para lectura
     if (empresaId !== undefined) {
       return mockData.filter(
         (n) => n.empresa_id === empresaId || n.empresa_id === null
@@ -47,68 +47,49 @@ export async function getNoticiaById(id: number): Promise<Noticia> {
 // ─── POST crear noticia ───────────────────────────────────────────────────────
 
 export async function crearNoticia(data: NoticiaInput): Promise<Noticia> {
-  try {
-    const res = await fetch(`${API_URL}/anuncios`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Backend error");
-    return res.json();
-  } catch {
-    // Fallback: crea en mock local
-    const nueva: Noticia = {
-      anuncio_id: Date.now(),
-      ...data,
-      empresa_id: data.empresa_id ?? null,
-      activo: true,
-      creado_por: 1,
-      creado_en: new Date().toISOString(),
-      actualizado_en: new Date().toISOString(),
-    };
-    mockData.unshift(nueva);
-    return nueva;
+  // Siempre intenta guardar en backend (no fallback a mock)
+  const res = await fetch(`${API_URL}/anuncios`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Error al crear anuncio. Verifica tu conexión e intenta de nuevo.");
   }
+
+  return res.json();
 }
 
 // ─── PUT editar noticia ───────────────────────────────────────────────────────
 
 export async function editarNoticia(id: number, data: Partial<NoticiaInput>): Promise<Noticia> {
-  try {
-    const res = await fetch(`${API_URL}/anuncios/${id}`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Backend error");
-    return res.json();
-  } catch {
-    // Fallback: edita en mock local
-    const idx = mockData.findIndex((n) => n.anuncio_id === id);
-    if (idx === -1) throw new Error("Noticia no encontrada");
-    mockData[idx] = {
-      ...mockData[idx],
-      ...data,
-      actualizado_en: new Date().toISOString(),
-    };
-    return mockData[idx];
+  // Siempre intenta guardar en backend (no fallback a mock)
+  const res = await fetch(`${API_URL}/anuncios/${id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Error al editar anuncio. Verifica tu conexión e intenta de nuevo.");
   }
+
+  return res.json();
 }
 
 // ─── DELETE (desactivar) noticia ──────────────────────────────────────────────
 
 export async function desactivarNoticia(id: number): Promise<void> {
-  try {
-    const res = await fetch(`${API_URL}/anuncios/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Backend error");
-  } catch {
-    // Fallback: desactiva en mock local
-    const idx = mockData.findIndex((n) => n.anuncio_id === id);
-    if (idx !== -1) mockData[idx].activo = false;
+  // Siempre intenta eliminar en backend (no fallback a mock)
+  const res = await fetch(`${API_URL}/anuncios/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    throw new Error("Error al desactivar anuncio. Verifica tu conexión e intenta de nuevo.");
   }
 }
