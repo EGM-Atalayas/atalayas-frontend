@@ -22,12 +22,16 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
+      // Agregamos un delay mínimo de 1.5 segundos para que la animación de carga sea visible
+      const [response] = await Promise.all([
+        fetch(`${API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        }),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
 
       if (response.ok) {
         const data = await response.json();
@@ -41,18 +45,18 @@ const LoginPage: React.FC = () => {
           logoEmpresaUrl: data.avatarUrl,
           empresaId: data.empresaId,
           usuarioId: data.usuarioId,
-});
+        });
 
 
 
         // ← redirige según el rol
         if (data.codigoRol === "ROLE_ADMIN") {
-            router.push("/superadmin");
-          } else if (data.codigoRol === "ROLE_ADMIN_EMPRESA") { 
-            router.push("/dashboard/admin");
-          } else {
-            router.push("/dashboard");
-          }
+          router.push("/superadmin");
+        } else if (data.codigoRol === "ROLE_ADMIN_EMPRESA") {
+          router.push("/dashboard/admin");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
       }
@@ -121,7 +125,7 @@ const LoginPage: React.FC = () => {
             disabled={isLoading}
             className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-slate-500 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Conectando..." : "Iniciar Sesión"}
+            {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
           </button>
         </form>
       </div>

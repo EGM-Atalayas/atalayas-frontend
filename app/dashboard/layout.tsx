@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
-
+import Header from "@/components/Header";
 import SuperAdminSidebar from "@/components/ui/SuperAdminSidebar";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,16 +56,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   console.log("ROL ACTUAL:", usuario.codigoRol);
   const esSuperAdmin = usuario.codigoRol === "ROLE_ADMIN";
 
+  const esAdmin = usuario.codigoRol === "ROLE_ADMIN";
+
   return (
-    <>
-      {esSuperAdmin ? (
-        <div className="flex min-h-screen bg-slate-50">
-          <SuperAdminSidebar />
-          <main className="flex-1">{children}</main>
-        </div>
-      ) : (
-        <>{children}</>
-      )}
-    </>
+    <div className="flex min-h-screen bg-slate-50">
+      {esAdmin && <SuperAdminSidebar />}
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
   );
 }
