@@ -2,7 +2,7 @@
 "use client";
 import React, { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -13,6 +13,8 @@ const LoginPage: React.FC = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [protocol, setProtocol] = useState(""); // Valor por defecto o personalizado
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [errorMensaje, setErrorMensaje] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,7 +30,7 @@ const LoginPage: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, protocol }),
         }),
         new Promise((resolve) => setTimeout(resolve, 1500)),
       ]);
@@ -85,7 +87,7 @@ const LoginPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-blue-950">Iniciar Sesión</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-8">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-6">
           <div className="flex flex-col gap-y-2">
             <label className="font-bold text-sm text-slate-700" htmlFor="email">
               Correo electrónico
@@ -112,6 +114,35 @@ const LoginPage: React.FC = () => {
               className="bg-slate-300 rounded-full px-6 py-3.5 w-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
               required
             />
+          </div>
+
+          {/* Opciones avanzadas */}
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-xs font-semibold text-slate-600 flex items-center gap-1 hover:text-blue-900 transition-colors w-fit px-4 mb-2"
+            >
+              <span className={`transform transition-transform ${showAdvanced ? "rotate-90" : ""}`}>
+                <FiChevronRight />
+              </span>
+              Opciones avanzadas
+            </button>
+
+            {showAdvanced && (
+              <div className="flex flex-col gap-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="font-bold text-xs text-slate-600 px-4" htmlFor="protocol">
+                  POP3 / IMAP
+                </label>
+                <input
+                  type="text"
+                  id="protocol"
+                  value={protocol}
+                  onChange={(e) => setProtocol(e.target.value)}
+                  className="bg-slate-300/50 rounded-full px-6 py-2 w-full text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                />
+              </div>
+            )}
           </div>
 
           {errorMensaje && (
