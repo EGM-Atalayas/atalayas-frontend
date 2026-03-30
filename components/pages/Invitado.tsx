@@ -30,10 +30,11 @@ const perks = [
     hasModal: true,
   },
   {
-    icon: "🍽️",
-    name: "Descuentos en restaurantes",
-    desc: "Precios especiales en establecimientos del entorno para empleados del parque.",
+    icon: "🅿️",
+    name: "Preferencias de parking",
+    desc: "Plazas exclusivas VAO para fomentar el uso compartido del vehículo en el área empresarial.",
     available: true,
+    hasModal: true,
   },
   {
     icon: "🎓",
@@ -341,6 +342,56 @@ export default function Invitado() {
                 ✉️ laescuelainfantilatalayas@gmail.com
               </a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Preferencias de parking ── */}
+      {modalPerk === "Preferencias de parking" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setModalPerk(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-base font-bold text-gray-900 leading-snug pr-4">
+                Plazas de parking VAO en Atalayas
+              </h2>
+              <button
+                onClick={() => setModalPerk(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0 cursor-pointer border-none bg-transparent"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Atalayas ha implementado plazas exclusivas para vehículos de alta ocupación (VAO), enmarcadas en la Línea Estratégica de movilidad sostenible del Plan de Movilidad Urbana de Alicante, respaldada por el Ayuntamiento y EGM Atalayas Ciudad Empresarial.
+            </p>
+
+            <div className="flex flex-col gap-3 mb-5">
+              <div className="flex gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                <span className="text-lg shrink-0">🚗</span>
+                <div>
+                  <p className="text-xs font-semibold text-blue-800 mb-0.5">Complemento al carpooling</p>
+                  <p className="text-xs text-blue-700 leading-relaxed">Las plazas VAO refuerzan la plataforma de coche compartido, recompensando a quienes ya comparten desplazamiento con acceso preferente y menos tiempo buscando aparcamiento.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                <span className="text-lg shrink-0">🌿</span>
+                <div>
+                  <p className="text-xs font-semibold text-emerald-800 mb-0.5">Impacto sostenible</p>
+                  <p className="text-xs text-emerald-700 leading-relaxed">Reducción de emisiones de CO₂, menos vehículos en circulación y mayor habitabilidad en el área empresarial. Parte del proyecto <span className="font-semibold">«Atalayas Circular»</span> y los ODS.</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 text-center">
+              Iniciativa promovida por el Ayuntamiento de Alicante y EGM Atalayas Ciudad Empresarial.
+            </p>
           </div>
         </div>
       )}
