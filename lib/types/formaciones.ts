@@ -9,4 +9,5 @@ export interface Formacion {
   status: FormacionStatus;
   description: string;
   empresa_id?: string | null;
+  pdfUrl?: string | null;
 }

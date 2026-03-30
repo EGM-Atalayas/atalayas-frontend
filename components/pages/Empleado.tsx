@@ -1,30 +1,12 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import Header from "../Header";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Noticia } from "@/lib/types/noticias";
 import { getNoticias } from "@/lib/api/noticias";
+import { getFormaciones } from "@/lib/api/formaciones";
+import { Formacion } from "@/lib/types/formaciones";
 import { NAV_ROUTES } from "@/lib/routes";
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const onboardingModules = [
-  { name: "Identidad Corporativa", status: "completado", progress: 100 },
-  { name: "Prevención de Riesgos Laborales", status: "completado", progress: 100 },
-  { name: "Calidad y Protocolos", status: "en progreso", progress: 60 },
-  { name: "Formación Específica", status: "en progreso", progress: 25 },
-  { name: "Desarrollo Profesional", status: "pendiente", progress: 0 },
-  { name: "Recompensas y Ventajas", status: "pendiente", progress: 0 },
-];
-
-const perks = [
-  { icon: "🚗", name: "Coche compartido", desc: "Coordina rutas con compañeros del parque.", available: true },
-  { icon: "🧒", name: "Guardería bonificada", desc: "Plazas con precio reducido en centro infantil cercano.", available: true },
-  { icon: "🍽️", name: "Descuentos en restaurantes", desc: "Precios especiales en establecimientos del entorno.", available: true },
-  { icon: "🎓", name: "Formación externa", desc: "Cursos homologados con tarifas negociadas.", available: false },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,16 +16,10 @@ const moduleStatusStyle: Record<string, string> = {
   pendiente: "bg-gray-100 text-gray-400 border-gray-200",
 };
 
-const tagColor: Record<string, string> = {
-  Evento: "bg-blue-50 text-blue-600 border-blue-100",
-  Ventajas: "bg-amber-50 text-amber-700 border-amber-100",
-  Formación: "bg-indigo-50 text-indigo-600 border-indigo-100",
-};
-
 interface Props {
   logoEmpresaUrl?: string;
   nombreEmpresa?: string;
-  usuario?: { nombre: string };
+  usuario?: { nombre: string, empresaId?: string };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -51,15 +27,17 @@ interface Props {
 export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Props) {
   const router = useRouter();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
+  const [formaciones, setFormaciones] = useState<Formacion[]>([]);
 
   useEffect(() => {
-    getNoticias().then((data) => setNoticias(data.slice(0, 3))); // mostrar solo las 3 más recientes
-  }, []);
+    getNoticias(usuario?.empresaId).then((data) => setNoticias(data.slice(0, 3)));
+    getFormaciones(usuario?.empresaId).then((data) => setFormaciones(data));
+  }, [usuario?.empresaId]);
 
-  const completed = onboardingModules.filter((m) => m.status === "completado").length;
-  const totalProgress = Math.round(
-    onboardingModules.reduce((acc, m) => acc + m.progress, 0) / onboardingModules.length
-  );
+  // Simulamos campos que no están en el modelo todavía para UI
+  const completed = formaciones.filter((m) => m.status === "completado").length;
+  // Para la demo, calculamos un progreso ficticio basado en el total
+  const totalProgress = formaciones.length > 0 ? Math.round((completed / formaciones.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
@@ -84,10 +62,10 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
           <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold text-gray-800">
-                Mi itinerario de onboarding
+                Mi itinerario de formación y onboarding
               </h2>
               <span className="text-xs text-gray-400">
-                {completed} de {onboardingModules.length} completados
+                {completed} de {formaciones.length} módulos
               </span>
             </div>
 
@@ -99,141 +77,121 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
               />
             </div>
 
-            {/* Next step CTA - Automated Onboarding */}
-            <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
-                  🚀
+            {/* Next step CTA */}
+            {formaciones.find(f => f.status !== "completado") && (
+              <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
+                    🚀
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Tu siguiente paso</p>
+                    <h3 className="text-sm font-semibold text-slate-800">
+                      {formaciones.find(f => f.status !== "completado")?.name}
+                    </h3>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Tu siguiente paso</p>
-                  <h3 className="text-sm font-semibold text-slate-800">Calidad y Protocolos comunes</h3>
-                </div>
+                <button 
+                  onClick={() => router.push(NAV_ROUTES["Formación"])}
+                  className="bg-blue-600 text-white text-[11px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  Continuar →
+                </button>
               </div>
-              <button 
-                onClick={() => router.push(NAV_ROUTES["Formación"])}
-                className="bg-blue-600 text-white text-[11px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                Comenzar ahora →
-              </button>
-            </div>
+            )}
 
             <div className="flex flex-col gap-2">
-              {onboardingModules.map((m) => (
-                <div key={m.name} onClick={() => router.push(NAV_ROUTES["Formación"])} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5 hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer group">
+              {formaciones.map((m) => (
+                <div key={m.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/80 hover:border-gray-200 transition-all group">
                   <div className="flex items-center gap-3">
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado" ? "bg-emerald-400" : m.status === "en progreso" ? "bg-blue-400" : "bg-gray-200"}`} />
-                    <p className="text-xs font-medium text-gray-800">{m.name}</p>
+                    <div className="flex flex-col">
+                      <p className="text-xs font-medium text-gray-800">{m.name}</p>
+                      {m.pdfUrl && (
+                        <a 
+                          href={m.pdfUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-blue-600 hover:underline mt-1 flex items-center gap-1"
+                        >
+                          📄 Descargar material PDF
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {m.status === "en progreso" && (
-                      <div className="w-20 h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-400 rounded-full" style={{ width: `${m.progress}%` }} />
-                      </div>
-                    )}
-                    <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status]}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${moduleStatusStyle[m.status] || moduleStatusStyle.pendiente}`}>
                       {m.status}
                     </span>
+                    <button 
+                      onClick={() => router.push(NAV_ROUTES["Formación"])}
+                      className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Ir →
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Perks / Servicios */}
+          {/* Perks / Servicios - Seccion estática por ahora */}
           <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-800 mb-5">Mis Servicios</h2>
               <div className="flex flex-col gap-3">
-                {perks.map((p) => (
-                  <div
-                    key={p.name}
-                    className={`border rounded-lg px-3 py-2.5 border-gray-100 ${!p.available ? "opacity-40" : ""
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm">{p.icon}</span>
-                        <p className="text-xs font-medium text-gray-800">{p.name}</p>
-                      </div>
-                      {!p.available && (
-                        <span className="text-[10px] text-gray-400">Próximamente</span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-gray-400 leading-snug pl-5">{p.desc}</p>
+                {[
+                  { icon: "🚗", name: "Coche compartido", desc: "Coordina rutas con compañeros" },
+                  { icon: "🍽️", name: "Descuentos locales", desc: "Precios especiales en el parque" },
+                ].map((p, idx) => (
+                  <div key={idx} className="border rounded-lg px-3 py-2.5 border-gray-100 bg-gray-50/30">
+                    <p className="text-xs font-medium text-gray-800">{p.icon} {p.name}</p>
+                    <p className="text-[11px] text-gray-400 leading-snug mt-1">{p.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Credentials / Carnés - Pliego requirement */}
-            <div className="bg-white rounded-xl border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-sm font-semibold text-gray-800">Mis Carnés</h2>
-                <span className="bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full border border-emerald-100 font-medium">Todo al día</span>
-              </div>
+            {/* Carnés */}
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-800 mb-4">Mis Carnés</h2>
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
                   <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-lg shadow-sm border border-gray-100">🏗️</div>
                   <div className="flex-1">
-                    <p className="text-[11px] font-semibold text-gray-800">Operador Carretilla</p>
-                    <p className="text-[10px] text-gray-400">Expira en 14 meses</p>
+                    <p className="text-[11px] font-semibold text-gray-800">P.R.L. Alturas</p>
+                    <p className="text-[10px] text-gray-400">Todo en orden</p>
                   </div>
-                  <button className="text-[10px] text-blue-600 font-medium hover:underline">Ver PDF</button>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 opacity-60">
-                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-lg shadow-sm border border-gray-100">🚑</div>
-                  <div className="flex-1">
-                    <p className="text-[11px] font-semibold text-gray-800">Primeros Auxilios</p>
-                    <p className="text-[10px] text-gray-400">Pendiente de formación</p>
-                  </div>
-                  <button className="text-[10px] text-gray-400 font-medium">Inscribirse</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Preview de noticias */}
-        <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6">
+        {/* Noticias Recientes */}
+        <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-gray-800">Últimas noticias</h2>
-            <Link
-              href="/dashboard/noticias"
-              className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
-            >
-              Ver todas →
-            </Link>
+            <Link href="/dashboard/noticias" className="text-xs text-gray-400 hover:text-gray-700">Ver todas →</Link>
           </div>
 
-          {noticias.length === 0 ? (
-            <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {noticias.map((n) => (
-                <Link
-                  key={n.anuncio_id}
-                  href="/dashboard/noticias"
-                  className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {n.tag}
-                      </span>
-                    </div>
-                    <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
-                  </div>
-                  <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
-                    {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-3">
+            {noticias.map((n) => (
+              <div key={n.anuncio_id} className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{n.tag}</span>
+                  <p className="text-xs font-medium text-gray-800 truncate mt-1">{n.titulo}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
+                </div>
+                <span className="text-[10px] text-gray-400 ml-4">
+                  {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     </div>
   );
 }
+

@@ -71,7 +71,7 @@ export default function NoticiasPage() {
     "Onboarding": "/dashboard/onboarding",
     "Formación": "/dashboard/formacion",
     "Comunicación": "/dashboard/noticias",
-    "Administración": "/dashboard/administracion",
+    "Administración": "/dashboard/admin",
   };
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
