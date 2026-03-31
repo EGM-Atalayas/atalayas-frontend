@@ -215,9 +215,9 @@ export default function AdminGeneral() {
             <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {noticias.map((n) => (
+              {noticias.map((n, idx) => (
                 <Link
-                  key={n.anuncio_id}
+                  key={n.anuncio_id ?? idx}
                   href="/dashboard/noticias"
                   className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
                 >

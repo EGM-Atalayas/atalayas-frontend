@@ -287,9 +287,9 @@ export default function NoticiasPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {noticias.map((n) => (
+            {noticias.map((n, idx) => (
               <div
-                key={n.anuncio_id}
+                key={n.anuncio_id ?? idx}
                 className="bg-white rounded-xl border border-gray-100 px-6 py-4 hover:border-gray-200 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
