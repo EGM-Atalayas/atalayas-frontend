@@ -87,7 +87,12 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
 
         {/* ── Navigation ── */}
         <nav className="flex items-center gap-1 flex-1">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter(item => {
+            if (item === "Administración") {
+              return usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
+            }
+            return true;
+          }).map((item) => (
             <NavButton
               key={item}
               label={item}
@@ -100,7 +105,7 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
         {/* ── Right side ── */}
         <div className="shrink-0 ml-8 flex items-center gap-4">
           {/* Logo empresa */}
-          
+
 
           {/* Separador */}
           <div className="w-px h-5 bg-slate-200" />
