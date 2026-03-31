@@ -260,8 +260,8 @@ function AdminContent() {
                 <p className="text-xs text-gray-400 text-center py-8">No hay anuncios publicados todavía.</p>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {noticias.filter((n) => n.activo).map((n) => (
-                    <div key={n.anuncio_id} className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
+                  {noticias.filter((n) => n.activo).map((n, idx) => (
+                    <div key={n.anuncio_id ?? idx} className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {n.es_global && (
