@@ -39,6 +39,10 @@ const LoginPage: React.FC = () => {
         const data = await response.json();
         console.log("DATA DEL LOGIN:", data);
 
+        if (data.accessToken) {
+          localStorage.setItem("accessToken", data.accessToken);
+        }
+
         setUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,

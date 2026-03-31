@@ -1,59 +1,55 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
-import { Noticia, NoticiaInput, TagNoticia } from "@/lib/types/noticias";
+import { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import { NAV_ROUTES } from "@/lib/routes";
-
-const TAGS: TagNoticia[] = ["Evento", "Formación", "Ventajas", "Comunidad", "Institucional"];
-
-const tagStyle: Record<string, string> = {
-  Evento: "bg-blue-50 text-blue-600 border-blue-100",
-  Comunidad: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Formación: "bg-indigo-50 text-indigo-600 border-indigo-100",
-  Institucional: "bg-gray-100 text-gray-600 border-gray-200",
-  Ventajas: "bg-amber-50 text-amber-700 border-amber-100",
-};
 
 export default function AdminPage() {
   const router = useRouter();
   const { usuario } = useAuth();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<NoticiaInput>({
     titulo: "",
-    cuerpo: "",
-    tag: "Evento",
-    visible_invitados: false,
+    contenido: "",
+    es_global: false,
     empresa_id: null,
   });
 
   useEffect(() => {
-    if (usuario?.empresaId) {
-      setLoading(true);
-      getNoticias(usuario.empresaId)
-        .then(setNoticias)
-        .catch((err) => setError(err.message))
-        .finally(() => setLoading(false));
+    if (usuario) {
+      cargarAnuncios();
     }
   }, [usuario?.empresaId]);
 
+  async function cargarAnuncios() {
+    setLoading(true);
+    try {
+      const data = await getNoticias(usuario?.empresaId);
+      setNoticias(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const resetForm = () => {
-    setForm({ titulo: "", cuerpo: "", tag: "Evento", visible_invitados: false, empresa_id: usuario?.empresaId ?? null });
+    setForm({ titulo: "", contenido: "", es_global: false, empresa_id: usuario?.empresaId ?? null });
     setEditingId(null);
     setShowForm(false);
   };
 
-  const handleSave = async () => {
-    if (!form.titulo.trim() || !form.cuerpo.trim()) return;
-    const payload = { ...form, empresa_id: usuario?.empresaId ?? null };
+  const handleSaveAnuncio = async () => {
+    if (!form.titulo.trim() || !form.contenido.trim()) return;
+    const payload: NoticiaInput = { ...form, empresa_id: usuario?.empresaId ?? null };
 
     try {
       setError("");
@@ -63,9 +59,7 @@ export default function AdminPage() {
       } else {
         await crearNoticia(payload);
       }
-
-      const updated = await getNoticias(usuario?.empresaId);
-      setNoticias(updated);
+      await cargarAnuncios();
       resetForm();
     } catch (err: any) {
       setError(err.message);
@@ -75,18 +69,17 @@ export default function AdminPage() {
   };
 
   const handleEdit = (n: Noticia) => {
-    setForm({ titulo: n.titulo, cuerpo: n.cuerpo, tag: n.tag, visible_invitados: n.visible_invitados, empresa_id: n.empresa_id });
+    setForm({ titulo: n.titulo, contenido: n.contenido, es_global: n.es_global, empresa_id: n.empresa_id });
     setEditingId(n.anuncio_id);
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       setError("");
       setLoading(true);
       await desactivarNoticia(id);
-      const updated = await getNoticias(usuario?.empresaId);
-      setNoticias(updated);
+      await cargarAnuncios();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -154,36 +147,22 @@ export default function AdminPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">Contenido</label>
                 <textarea
-                  value={form.cuerpo}
-                  onChange={(e) => setForm({ ...form, cuerpo: e.target.value })}
+                  value={form.contenido}
+                  onChange={(e) => setForm({ ...form, contenido: e.target.value })}
                   rows={4}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   placeholder="Escribe el contenido del anuncio..."
                 />
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Categoría</label>
-                  <select
-                    value={form.tag}
-                    onChange={(e) => setForm({ ...form, tag: e.target.value as TagNoticia })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {TAGS.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-end gap-2 pb-1">
-                  <input
-                    type="checkbox"
-                    id="visible_invitados"
-                    checked={form.visible_invitados}
-                    onChange={(e) => setForm({ ...form, visible_invitados: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="visible_invitados" className="text-xs text-gray-600">Visible para invitados</label>
-                </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="es_global"
+                  checked={form.es_global}
+                  onChange={(e) => setForm({ ...form, es_global: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="es_global" className="text-xs text-gray-600">Visible para todos (anuncio global)</label>
               </div>
               <div className="flex gap-2 justify-end">
                 <button
@@ -193,8 +172,9 @@ export default function AdminPage() {
                   Cancelar
                 </button>
                 <button
-                  onClick={handleSave}
-                  className="bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={handleSaveAnuncio}
+                  disabled={loading}
+                  className="bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {editingId ? "Guardar cambios" : "Publicar anuncio"}
                 </button>
@@ -206,7 +186,9 @@ export default function AdminPage() {
         {/* Lista de anuncios */}
         <div className="bg-white rounded-xl border border-gray-100 p-6">
           <h2 className="text-sm font-semibold text-gray-800 mb-5">Anuncios publicados</h2>
-          {noticias.filter((n) => n.activo).length === 0 ? (
+          {loading ? (
+            <p className="text-xs text-gray-400 text-center py-8">Cargando...</p>
+          ) : noticias.filter((n) => n.activo).length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-8">No hay anuncios publicados todavía.</p>
           ) : (
             <div className="flex flex-col gap-3">
@@ -214,15 +196,12 @@ export default function AdminPage() {
                 <div key={n.anuncio_id} className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tagStyle[n.tag]}`}>
-                        {n.tag}
-                      </span>
-                      {n.visible_invitados && (
-                        <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Público</span>
+                      {n.es_global && (
+                        <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">Global</span>
                       )}
                     </div>
                     <p className="text-xs font-medium text-gray-800">{n.titulo}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.contenido}</p>
                     <p className="text-[10px] text-gray-300 mt-1">
                       {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
