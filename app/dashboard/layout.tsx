@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
 import SuperAdminSidebar from "@/components/ui/SuperAdminSidebar";
 
@@ -17,18 +17,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       return;
     }
 
-    fetch(`${API_URL}/users/me`, { credentials: "include" })
+    apiFetch(`${API_URL}/users/me`)
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("No autenticado");
       })
       .then((data) => {
-        setUsuario({
-          nombre: data.nombre,
-          codigoRol: data.codigoRol,
-          nombreEmpresa: data.nombreEmpresa,
-          logoEmpresaUrl: data.logoEmpresaUrl,
-        });
+        setUsuario(data);
       })
       .catch(() => {
         setUsuario(null);

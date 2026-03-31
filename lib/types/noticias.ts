@@ -1,29 +1,20 @@
 // lib/types/noticias.ts
 
-export type TagNoticia =
-  | "Evento"
-  | "Formación"
-  | "Ventajas"
-  | "Comunidad"
-  | "Institucional";
-
 export interface Noticia {
-  anuncio_id: number;
+  anuncio_id: string;
   titulo: string;
-  cuerpo: string;
-  tag: TagNoticia;
-  visible_invitados: boolean;
+  contenido: string;
+  es_global: boolean;
   activo: boolean;
-  creado_por: number;
-  empresa_id: string | null; // ← cambiado a string
+  creado_por: string;
+  empresa_id: string | null;
   creado_en: string;
   actualizado_en: string;
 }
 
 export interface NoticiaInput {
   titulo: string;
-  cuerpo: string;
-  tag: TagNoticia;
-  visible_invitados: boolean;
-  empresa_id?: string | null; // ← cambiado a string
+  contenido: string;
+  es_global: boolean;
+  empresa_id?: string | null;
 }

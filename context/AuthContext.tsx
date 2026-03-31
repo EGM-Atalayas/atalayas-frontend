@@ -1,5 +1,5 @@
 "use client";
-import { API_URL } from '@/lib/api';
+import { API_URL, apiFetch } from '@/lib/api';
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -44,10 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (usuario?.invitado) return; // Si ya tenemos usuario, no hacemos nada
 
     try {
-      const res = await fetch(
-        `${API_URL}/auth/me`,
-        { credentials: "include" }
-      );
+      const res = await apiFetch(`${API_URL}/auth/me`);
 
       if (!res.ok) {
         setUsuario(null);
@@ -69,11 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
     } finally {
+      localStorage.removeItem("accessToken");
       setUsuario(null);
     }
   };

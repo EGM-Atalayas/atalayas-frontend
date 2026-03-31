@@ -9,32 +9,15 @@ import {
   editarNoticia,
   desactivarNoticia,
 } from "../../lib/api/noticias";
-import type { Noticia, NoticiaInput, TagNoticia } from "../../lib/types/noticias";
+import type { Noticia, NoticiaInput } from "../../lib/types/noticias";
 import { useRouter } from "next/navigation";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TAGS: TagNoticia[] = [
-  "Evento",
-  "Formación",
-  "Ventajas",
-  "Comunidad",
-  "Institucional",
-];
-
-const tagColor: Record<TagNoticia, string> = {
-  Evento: "bg-blue-50 text-blue-600 border-blue-100",
-  Formación: "bg-indigo-50 text-indigo-600 border-indigo-100",
-  Ventajas: "bg-amber-50 text-amber-700 border-amber-100",
-  Comunidad: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Institucional: "bg-gray-100 text-gray-600 border-gray-200",
-};
-
 const EMPTY_FORM: NoticiaInput = {
   titulo: "",
-  cuerpo: "",
-  tag: "Institucional",
-  visible_invitados: false,
+  contenido: "",
+  es_global: false,
   empresa_id: null,
 };
 
@@ -83,8 +66,7 @@ export default function NoticiasPage() {
   async function cargarNoticias() {
     setLoading(true);
     try {
-      // Admin Empresa solo ve las suyas; Admin General ve todas
-      const empresaId = esAdminGeneral ? undefined : (usuario as any)?.empresaId;
+      const empresaId = esAdminGeneral ? undefined : usuario?.empresaId;
       const data = await getNoticias(empresaId);
       setNoticias(data.filter((n) => n.activo));
     } catch {
@@ -99,7 +81,7 @@ export default function NoticiasPage() {
   function abrirCrear() {
     setForm({
       ...EMPTY_FORM,
-      empresa_id: esAdminGeneral ? null : (usuario as any)?.empresaId ?? null,
+      empresa_id: esAdminGeneral ? null : usuario?.empresaId ?? null,
     });
     setEditando(null);
     setShowForm(true);
@@ -108,9 +90,8 @@ export default function NoticiasPage() {
   function abrirEditar(noticia: Noticia) {
     setForm({
       titulo: noticia.titulo,
-      cuerpo: noticia.cuerpo,
-      tag: noticia.tag,
-      visible_invitados: noticia.visible_invitados,
+      contenido: noticia.contenido,
+      es_global: noticia.es_global,
       empresa_id: noticia.empresa_id,
     });
     setEditando(noticia);
@@ -125,8 +106,8 @@ export default function NoticiasPage() {
   }
 
   async function handleSubmit() {
-    if (!form.titulo.trim() || !form.cuerpo.trim()) {
-      setError("El título y el cuerpo son obligatorios.");
+    if (!form.titulo.trim() || !form.contenido.trim()) {
+      setError("El título y el contenido son obligatorios.");
       return;
     }
     setSubmitting(true);
@@ -146,7 +127,7 @@ export default function NoticiasPage() {
     }
   }
 
-  async function handleDesactivar(id: number) {
+  async function handleDesactivar(id: string) {
     if (!confirm("¿Seguro que quieres eliminar esta noticia?")) return;
     try {
       await desactivarNoticia(id);
@@ -228,51 +209,33 @@ export default function NoticiasPage() {
                 />
               </div>
 
-              {/* Cuerpo */}
+              {/* Contenido */}
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">
                   Descripción <span className="text-red-400">*</span>
                 </label>
                 <textarea
-                  value={form.cuerpo}
-                  onChange={(e) => setForm({ ...form, cuerpo: e.target.value })}
+                  value={form.contenido}
+                  onChange={(e) => setForm({ ...form, contenido: e.target.value })}
                   placeholder="Escribe el contenido del comunicado..."
                   rows={4}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-gray-400 transition-colors resize-none"
                 />
               </div>
 
-              {/* Tag */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Categoría
-                </label>
-                <select
-                  value={form.tag}
-                  onChange={(e) => setForm({ ...form, tag: e.target.value as TagNoticia })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400 transition-colors bg-white"
-                >
-                  {TAGS.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Visible para invitados */}
-              <div className="flex items-center gap-3 pt-5">
+              {/* Visible globalmente */}
+              <div className="col-span-2 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setForm({ ...form, visible_invitados: !form.visible_invitados })}
-                  className={`relative w-9 h-5 rounded-full transition-colors ${form.visible_invitados ? "bg-gray-900" : "bg-gray-200"
-                    }`}
+                  onClick={() => setForm({ ...form, es_global: !form.es_global })}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${form.es_global ? "bg-gray-900" : "bg-gray-200"}`}
                 >
                   <span
-                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${form.visible_invitados ? "left-4.5" : "left-0.5"
-                      }`}
+                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${form.es_global ? "left-4.5" : "left-0.5"}`}
                   />
                 </button>
                 <label className="text-xs text-gray-600">
-                  Visible para invitados (sin sesión)
+                  Visible para todos (anuncio global)
                 </label>
               </div>
             </div>
@@ -333,19 +296,14 @@ export default function NoticiasPage() {
                   <div className="flex-1 min-w-0">
                     {/* Meta */}
                     <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tagColor[n.tag]}`}
-                      >
-                        {n.tag}
-                      </span>
-                      {n.visible_invitados && (
-                        <span className="text-[10px] text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">
-                          Visible para invitados
+                      {n.es_global && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-gray-100 text-gray-600 border-gray-200">
+                          Global
                         </span>
                       )}
                       {esAdminGeneral && n.empresa_id && (
                         <span className="text-[10px] text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">
-                          Empresa #{n.empresa_id}
+                          Empresa #{n.empresa_id.slice(0, 8)}
                         </span>
                       )}
                       <span className="text-[11px] text-gray-400 ml-auto">
@@ -358,7 +316,7 @@ export default function NoticiasPage() {
                       {n.titulo}
                     </h3>
                     <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                      {n.cuerpo}
+                      {n.contenido}
                     </p>
                   </div>
 
