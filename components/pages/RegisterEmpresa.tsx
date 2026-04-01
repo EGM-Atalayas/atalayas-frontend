@@ -53,23 +53,20 @@ const RegisterEmpresa: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMensaje("");
     setIsLoading(true);
 
+    // Payload plano — exactamente como espera SolicitudAltaEmpresaRequest
     const payload = {
-      empresa: {
-        nombre: formData.nombreEmpresa,
-        cif: formData.cif,
-        email_contacto: formData.emailEmpresa,
-      },
-      admin: {
-        nombre: formData.nombreAdmin,
-        apellidos: formData.apellidosAdmin,
-        email: formData.emailAdmin,
-        password: formData.passwordAdmin,
-      },
+      nombreEmpresa: formData.nombreEmpresa,
+      cif: formData.cif,
+      emailContacto: formData.emailEmpresa,
+      nombre: formData.nombreAdmin,
+      apellidos: formData.apellidosAdmin,
+      emailAdmin: formData.emailAdmin,
+      password: formData.passwordAdmin,
     };
 
     try {
@@ -83,11 +80,10 @@ const RegisterEmpresa: React.FC = () => {
         setPaso(4);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setErrorMensaje(errorData.mensaje || `Error del servidor: ${response.status}`);
+        setErrorMensaje(errorData.message || `Error del servidor: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error conectando al servidor:", error);
-      setErrorMensaje("No se ha podido conectar con el servidor. Por favor, revisa tu conexión a internet.");
+      setErrorMensaje("No se ha podido conectar con el servidor.");
     } finally {
       setIsLoading(false);
     }

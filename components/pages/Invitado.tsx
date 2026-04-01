@@ -72,9 +72,9 @@ export default function Invitado() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
 
   useEffect(() => {
-    getNoticias().then((data) =>
-      setNoticias(data.filter((n) => n.esGlobal && n.activo))
-    );
+     getNoticias()
+    .then((data) => setNoticias(data.filter((n) => n.esGlobal && n.activo)))
+    .catch(() => {});
   }, []);
 
 
