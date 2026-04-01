@@ -82,15 +82,12 @@ const RegisterEmpresa: React.FC = () => {
       if (response.ok) {
         setPaso(4);
       } else {
-        // ← temporal hasta que el backend esté listo
-        console.warn("Error backend:", response.status, "— usando mock");
-        setPaso(4);
+        const errorData = await response.json().catch(() => ({}));
+        setErrorMensaje(errorData.mensaje || `Error del servidor: ${response.status}`);
       }
     } catch (error) {
       console.error("Error conectando al servidor:", error);
-      // MOCK DATA: Forzamos el éxito para probar la UI mientras el BE no esté listo
-      console.warn("Usando mock mode: Simulando éxito de la solicitud");
-      setTimeout(() => setPaso(4), 1000); 
+      setErrorMensaje("No se ha podido conectar con el servidor. Por favor, revisa tu conexión a internet.");
     } finally {
       setIsLoading(false);
     }

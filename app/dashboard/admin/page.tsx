@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Header from "@/components/Header";
@@ -7,11 +8,21 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getFormaciones, crearFormacion, editarFormacion, desactivarFormacion } from "@/lib/api/formaciones";
-import { Noticia, NoticiaInput } from "@/lib/types/noticias";
+import FormacionForm from "@/components/FormacionForm";
+import { Noticia, NoticiaInput, TagNoticia } from "@/lib/types/noticias";
 import { Formacion, FormacionCategory } from "@/lib/types/formaciones";
 import { NAV_ROUTES } from "@/lib/routes";
 
+const TAGS: TagNoticia[] = ["Evento", "Formación", "Ventajas", "Comunidad", "Institucional"];
 const FORMACION_CATEGORIES: FormacionCategory[] = ["Onboarding", "Básica", "Específica"];
+
+const tagStyle: Record<string, string> = {
+  Evento: "bg-blue-50 text-blue-600 border-blue-100",
+  Comunidad: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  Formación: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  Institucional: "bg-gray-100 text-gray-600 border-gray-200",
+  Ventajas: "bg-amber-50 text-amber-700 border-amber-100",
+};
 
 export default function AdminPage() {
   return (
@@ -27,100 +38,72 @@ function AdminContent() {
   const { usuario } = useAuth();
   const [activeTab, setActiveTab] = useState<"anuncios" | "formaciones">("anuncios");
 
-  // --- States Anuncios ---
+  // --- States ---
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
-  const [editingAnuncioId, setEditingAnuncioId] = useState<string | null>(null);
-  const [errorAnuncio, setErrorAnuncio] = useState("");
+  const [editingAnuncioId, setEditingAnuncioId] = useState<number | null>(null);
   const [formAnuncio, setFormAnuncio] = useState<NoticiaInput>({
     titulo: "",
-    contenido: "",
-    es_global: false,
+    cuerpo: "",
+    tag: "Evento",
+    visible_invitados: false,
     empresa_id: null,
   });
 
-  // --- States Formaciones ---
   const [formaciones, setFormaciones] = useState<Formacion[]>([]);
   const [showFormFormacion, setShowFormFormacion] = useState(false);
-  const [editingFormacionId, setEditingFormacionId] = useState<number | null>(null);
-  const [formFormacion, setFormFormacion] = useState<Partial<Formacion>>({
-    name: "",
-    category: "Específica",
-    description: "",
-    pdfUrl: "",
-  });
+  const [editingFormacion, setEditingFormacion] = useState<Formacion | null>(null);
 
-  // --- Logic Functions ---
+  // --- Logic Functions (Must be declared before use in useEffect if used in closure) ---
   const refreshData = async () => {
     if (!usuario?.empresaId) return;
     const [news, trainings] = await Promise.all([
       getNoticias(usuario.empresaId),
-      getFormaciones(usuario.empresaId),
+      getFormaciones(usuario.empresaId)
     ]);
     setNoticias(news);
     setFormaciones(trainings);
   };
 
   const resetFormAnuncio = () => {
-    setFormAnuncio({ titulo: "", contenido: "", es_global: false, empresa_id: usuario?.empresaId ?? null });
+    setFormAnuncio({ titulo: "", cuerpo: "", tag: "Evento", visible_invitados: false, empresa_id: usuario?.empresaId ?? null });
     setEditingAnuncioId(null);
     setShowFormAnuncio(false);
-    setErrorAnuncio("");
   };
 
   const handleSaveAnuncio = async () => {
-    if (!formAnuncio.titulo.trim() || !formAnuncio.contenido.trim()) return;
-    const payload: NoticiaInput = { ...formAnuncio, empresa_id: usuario?.empresaId ?? null };
-    try {
-      setErrorAnuncio("");
-      if (editingAnuncioId) {
-        await editarNoticia(editingAnuncioId, payload);
-      } else {
-        await crearNoticia(payload);
-      }
-      await refreshData();
-      resetFormAnuncio();
-    } catch (err: any) {
-      setErrorAnuncio(err.message);
+    if (!formAnuncio.titulo.trim() || !formAnuncio.cuerpo.trim()) return;
+    const payload = { ...formAnuncio, empresa_id: usuario?.empresaId ?? null };
+
+    if (editingAnuncioId) {
+      await editarNoticia(editingAnuncioId, payload);
+    } else {
+      await crearNoticia(payload);
     }
+    refreshData();
+    resetFormAnuncio();
   };
 
   const handleEditAnuncio = (n: Noticia) => {
-    setFormAnuncio({ titulo: n.titulo, contenido: n.contenido, es_global: n.es_global, empresa_id: n.empresa_id });
+    setFormAnuncio({ titulo: n.titulo, cuerpo: n.cuerpo, tag: n.tag, visible_invitados: n.visible_invitados, empresa_id: n.empresa_id });
     setEditingAnuncioId(n.anuncio_id);
     setShowFormAnuncio(true);
   };
 
-  const handleDeleteAnuncio = async (id: string) => {
-    try {
-      await desactivarNoticia(id);
-      await refreshData();
-    } catch (err: any) {
-      setErrorAnuncio(err.message);
-    }
+  const handleDeleteAnuncio = async (id: number) => {
+    await desactivarNoticia(id);
+    refreshData();
   };
 
   const resetFormFormacion = () => {
-    setFormFormacion({ name: "", category: "Específica", description: "", pdfUrl: "", empresa_id: usuario?.empresaId ?? null });
-    setEditingFormacionId(null);
+    setEditingFormacion(null);
     setShowFormFormacion(false);
   };
 
-  const handleSaveFormacion = async () => {
-    if (!formFormacion.name?.trim()) return;
-    const payload = { ...formFormacion, empresa_id: usuario?.empresaId ?? null };
-    if (editingFormacionId) {
-      await editarFormacion(editingFormacionId, payload);
-    } else {
-      await crearFormacion(payload);
-    }
-    refreshData();
-    resetFormFormacion();
-  };
+
 
   const handleEditFormacion = (f: Formacion) => {
-    setFormFormacion({ name: f.name, category: f.category, description: f.description, pdfUrl: f.pdfUrl || "", empresa_id: f.empresa_id });
-    setEditingFormacionId(f.id);
+    setEditingFormacion(f);
     setShowFormFormacion(true);
   };
 
@@ -130,18 +113,22 @@ function AdminContent() {
   };
 
   // --- Effects ---
+
+  // Protection
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
       router.replace("/dashboard");
     }
   }, [usuario, router]);
 
+  // Initial Data Fetch
   useEffect(() => {
     if (usuario?.empresaId) {
       refreshData();
     }
   }, [usuario?.empresaId]);
 
+  // Query Params Handling (Moved here because it depends on formaciones and handleEditFormacion)
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab === "formaciones") {
@@ -150,11 +137,13 @@ function AdminContent() {
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find(x => x.id === Number(editId));
-      if (f) handleEditFormacion(f);
+      if (f) {
+        handleEditFormacion(f);
+      }
     }
   }, [searchParams, formaciones]);
 
-  const isEditingGlobal = !!(showFormFormacion && editingFormacionId && formaciones.find(f => f.id === editingFormacionId)?.empresa_id === null);
+  const isEditingGlobal = showFormFormacion && editingFormacion && editingFormacion.empresa_id === null;
 
   return (
     <div className="min-h-screen bg-[#F7F6F3] font-sans">
@@ -169,14 +158,16 @@ function AdminContent() {
         <div className="flex gap-8 border-b border-gray-200 mb-8">
           <button
             onClick={() => setActiveTab("anuncios")}
-            className={`pb-4 text-sm font-semibold transition-colors relative ${activeTab === "anuncios" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+            className={`pb-4 text-sm font-semibold transition-colors relative ${activeTab === "anuncios" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+              }`}
           >
             Anuncios
             {activeTab === "anuncios" && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600" />}
           </button>
           <button
             onClick={() => setActiveTab("formaciones")}
-            className={`pb-4 text-sm font-semibold transition-colors relative ${activeTab === "formaciones" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+            className={`pb-4 text-sm font-semibold transition-colors relative ${activeTab === "formaciones" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+              }`}
           >
             Formaciones
             {activeTab === "formaciones" && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600" />}
@@ -199,13 +190,6 @@ function AdminContent() {
               </button>
             </div>
 
-            {errorAnuncio && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-                <p className="text-xs text-red-600 flex-1">{errorAnuncio}</p>
-                <button onClick={() => setErrorAnuncio("")} className="text-red-400 hover:text-red-600">✕</button>
-              </div>
-            )}
-
             {showFormAnuncio && (
               <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
                 <h2 className="text-sm font-semibold text-gray-800 mb-4">
@@ -225,22 +209,36 @@ function AdminContent() {
                   <div>
                     <label className="text-xs font-medium text-gray-500 mb-1 block">Contenido</label>
                     <textarea
-                      value={formAnuncio.contenido}
-                      onChange={(e) => setFormAnuncio({ ...formAnuncio, contenido: e.target.value })}
+                      value={formAnuncio.cuerpo}
+                      onChange={(e) => setFormAnuncio({ ...formAnuncio, cuerpo: e.target.value })}
                       rows={4}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                       placeholder="Escribe el contenido del anuncio..."
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="es_global"
-                      checked={formAnuncio.es_global}
-                      onChange={(e) => setFormAnuncio({ ...formAnuncio, es_global: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="es_global" className="text-xs text-gray-600">Visible para todos (anuncio global)</label>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Categoría</label>
+                      <select
+                        value={formAnuncio.tag}
+                        onChange={(e) => setFormAnuncio({ ...formAnuncio, tag: e.target.value as TagNoticia })}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {TAGS.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-end gap-2 pb-1">
+                      <input
+                        type="checkbox"
+                        id="visible_invitados"
+                        checked={formAnuncio.visible_invitados}
+                        onChange={(e) => setFormAnuncio({ ...formAnuncio, visible_invitados: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="visible_invitados" className="text-xs text-gray-600">Visible para invitados</label>
+                    </div>
                   </div>
                   <div className="flex gap-2 justify-end">
                     <button onClick={resetFormAnuncio} className="text-xs font-medium text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -264,12 +262,11 @@ function AdminContent() {
                     <div key={n.anuncio_id ?? idx} className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {n.es_global && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-gray-100 text-gray-600 border-gray-200">Global</span>
-                          )}
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tagStyle[n.tag]}`}>{n.tag}</span>
+                          {n.visible_invitados && <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Público</span>}
                         </div>
                         <p className="text-xs font-medium text-gray-800">{n.titulo}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.contenido}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.cuerpo}</p>
                       </div>
                       <div className="flex items-center gap-2 ml-4 shrink-0">
                         <button onClick={() => handleEditAnuncio(n)} className="text-[11px] text-blue-600 font-medium hover:underline">Editar</button>
@@ -300,71 +297,12 @@ function AdminContent() {
             </div>
 
             {showFormFormacion && (
-              <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-                <h2 className="text-sm font-semibold text-gray-800 mb-4">
-                  {isEditingGlobal ? "Detalles de formación (Global)" : editingFormacionId ? "Editar formación" : "Crear formación"}
-                </h2>
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1 block">Nombre del módulo</label>
-                    <input
-                      type="text"
-                      disabled={isEditingGlobal}
-                      value={formFormacion.name}
-                      onChange={(e) => setFormFormacion({ ...formFormacion, name: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
-                      placeholder="Ej: PRL Avanzado"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1 block">Descripción / Objetivo</label>
-                    <textarea
-                      value={formFormacion.description}
-                      disabled={isEditingGlobal}
-                      onChange={(e) => setFormFormacion({ ...formFormacion, description: e.target.value })}
-                      rows={3}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
-                      placeholder="Describe qué aprenderá el empleado..."
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-gray-500 mb-1 block">Categoría</label>
-                      <select
-                        value={formFormacion.category}
-                        disabled={isEditingGlobal}
-                        onChange={(e) => setFormFormacion({ ...formFormacion, category: e.target.value as FormacionCategory })}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
-                      >
-                        {FORMACION_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-gray-500 mb-1 block">URL del PDF (Material)</label>
-                      <input
-                        type="text"
-                        disabled={isEditingGlobal}
-                        value={formFormacion.pdfUrl || ""}
-                        onChange={(e) => setFormFormacion({ ...formFormacion, pdfUrl: e.target.value })}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
-                        placeholder="https://ejemplo.com/archivo.pdf"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button onClick={resetFormFormacion} className="text-xs font-medium text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      {isEditingGlobal ? "Cerrar" : "Cancelar"}
-                    </button>
-                    {!isEditingGlobal && (
-                      <button onClick={handleSaveFormacion} className="bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        {editingFormacionId ? "Guardar cambios" : "Crear módulo"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <FormacionForm
+                editando={editingFormacion}
+                empresaId={usuario?.empresaId}
+                onSave={() => { resetFormFormacion(); refreshData(); }}
+                onCancel={resetFormFormacion}
+              />
             )}
 
             <div className="bg-white rounded-xl border border-gray-100 p-6">
@@ -431,12 +369,13 @@ function AdminContent() {
                         <td className="py-3 pr-4 italic">{row.form}</td>
                         <td className="py-3 pr-4">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap ${row.status === "Completado" ? "bg-emerald-50 text-emerald-600" :
-                            row.status === "En proceso" ? "bg-blue-50 text-blue-600" : "bg-gray-50 text-gray-400"}`}>
+                            row.status === "En proceso" ? "bg-blue-50 text-blue-600" : "bg-gray-50 text-gray-400"
+                            }`}>
                             {row.status}
                           </span>
                         </td>
                         <td className="py-3 text-right">
-                          <button
+                          <button 
                             onClick={() => alert(`Editando formación de ${row.emp}...`)}
                             className="text-blue-600 font-medium hover:underline whitespace-nowrap ml-4"
                           >
@@ -455,3 +394,5 @@ function AdminContent() {
     </div>
   );
 }
+
+
