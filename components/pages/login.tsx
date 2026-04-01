@@ -1,5 +1,6 @@
 // src/components/pages/Login.tsx
 "use client";
+
 import React, { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
@@ -9,12 +10,11 @@ import { API_URL } from "@/lib/api";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const { setUsuario } = useAuth();
-
+  const { setUsuario, loginInvitado } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [protocol, setProtocol] = useState(""); // Valor por defecto o personalizado
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [protocol, setProtocol] = useState("");
   const [errorMensaje, setErrorMensaje] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +24,6 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Agregamos un delay mínimo de 1.5 segundos para que la animación de carga sea visible
       const [response] = await Promise.all([
         fetch(`${API_URL}/auth/login`, {
           method: "POST",
@@ -38,10 +37,9 @@ const LoginPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
 
-        // La cookie HttpOnly la gestiona el backend automáticamente
+        // La cookie HttpOnly la gestiona el backend automáticamente.
         // No guardamos el token en localStorage — credentials: "include"
-        // se encarga de enviarlo en cada petición
-
+        // se encarga de enviarlo en cada petición.
         setUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,
@@ -60,116 +58,135 @@ const LoginPage: React.FC = () => {
         } else {
           router.push("/dashboard");
         }
-      }
-
-
-
-        // ← redirige según el rol
-        if (data.codigoRol === "ROLE_ADMIN") {
-          router.push("/superadmin");
-        } else {
-          router.push("/dashboard");
-        }
       } else {
         setErrorMensaje("Correo o contraseña incorrectos. Inténtalo de nuevo.");
       }
     } catch (error) {
-      console.error("Error conectando al servidor:", error);
-      setErrorMensaje("No se pudo conectar con el servidor. Verifica tu conexión.");
+      setErrorMensaje("Error de conexión. Verifica tu red e inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleInvitado = () => {
+    loginInvitado();
+    router.push("/dashboard");
+  };
+
   return (
-    <div className="bg-[#100D3E] min-h-screen flex items-center justify-center p-4">
-      <div className="bg-slate-200 rounded-[2.5rem] p-12 w-full max-w-sm flex flex-col items-center gap-y-10 shadow-2xl relative">
+    <div className="min-h-screen bg-[#F7F6F3] flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
 
-        <button
-          onClick={() => router.push("/")}
-          className="absolute top-8 left-8 flex items-center gap-2 text-slate-700 font-semibold text-sm hover:text-blue-900 group transition"
-        >
-          <FiArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Volver
-        </button>
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 
-        <div className="flex flex-col items-center gap-y-4">
-          <FaUserCircle className="text-blue-950 text-6xl" />
-          <h1 className="text-2xl font-bold text-blue-950">Iniciar Sesión</h1>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <FaUserCircle className="text-5xl text-gray-300" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900">Iniciar sesión</h1>
+            <p className="text-sm text-gray-400 mt-1">Accede a tu plataforma de formación</p>
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@empresa.com"
+                required
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
+              />
+            </div>
+
+            {/* Opciones avanzadas */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FiChevronRight
+                  className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                />
+                Opciones avanzadas
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    Protocolo personalizado
+                  </label>
+                  <input
+                    type="text"
+                    value={protocol}
+                    onChange={(e) => setProtocol(e.target.value)}
+                    placeholder="Opcional"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-gray-400 transition-colors"
+                  />
+                </div>
+              )}
+            </div>
+
+            {errorMensaje && (
+              <p className="text-red-600 font-semibold text-sm text-center">
+                {errorMensaje}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-950 text-white font-bold py-3 rounded-xl w-full mt-2 hover:bg-blue-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Conectando..." : "Iniciar Sesión"}
+            </button>
+          </form>
+
+          {/* Separador */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-xs text-gray-300">o</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          {/* Acceso invitado */}
+          <button
+            onClick={handleInvitado}
+            className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors py-2"
+          >
+            <FiArrowLeft className="text-xs" />
+            Continuar como invitado
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-6">
-          <div className="flex flex-col gap-y-2">
-            <label className="font-bold text-sm text-slate-700" htmlFor="email">
-              Correo electrónico
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-slate-300 rounded-full px-6 py-3.5 w-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-y-2">
-            <label className="font-bold text-sm text-slate-700" htmlFor="password">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-slate-300 rounded-full px-6 py-3.5 w-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              required
-            />
-          </div>
-
-          {/* Opciones avanzadas */}
-          <div className="flex flex-col">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-xs font-semibold text-slate-600 flex items-center gap-1 hover:text-blue-900 transition-colors w-fit px-4 mb-2"
-            >
-              <span className={`transform transition-transform ${showAdvanced ? "rotate-90" : ""}`}>
-                <FiChevronRight />
-              </span>
-              Opciones avanzadas
-            </button>
-
-            {showAdvanced && (
-              <div className="flex flex-col gap-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                <label className="font-bold text-xs text-slate-600 px-4" htmlFor="protocol">
-                  POP3 / IMAP
-                </label>
-                <input
-                  type="text"
-                  id="protocol"
-                  value={protocol}
-                  onChange={(e) => setProtocol(e.target.value)}
-                  className="bg-slate-300/50 rounded-full px-6 py-2 w-full text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-                />
-              </div>
-            )}
-          </div>
-
-          {errorMensaje && (
-            <p className="text-red-600 font-semibold text-sm text-center">
-              {errorMensaje}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-slate-500 disabled:cursor-not-allowed"
-          >
-            {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
-          </button>
-        </form>
+        {/* Registro empresa */}
+        <p className="text-center text-xs text-gray-400 mt-4">
+          ¿Tu empresa no está registrada?{" "}
+          <a href="/register-empresa" className="text-blue-600 hover:underline font-medium">
+            Solicitar alta
+          </a>
+        </p>
       </div>
     </div>
   );
