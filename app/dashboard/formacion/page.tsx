@@ -7,18 +7,26 @@ import { useAuth } from "@/context/AuthContext";
 import { NAV_ROUTES } from "@/lib/routes";
 import { getFormaciones } from "@/lib/api/formaciones";
 import { Formacion } from "@/lib/types/formaciones";
+import FormacionForm from "@/components/FormacionForm";
 
 export default function FormacionPage() {
   const router = useRouter();
   const { usuario } = useAuth();
   const [modules, setModules] = useState<Formacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingFormacion, setEditingFormacion] = useState<Formacion | null>(null);
 
-  useEffect(() => {
-    getFormaciones(usuario?.empresaId)
+  const refreshData = () => {
+    setLoading(true);
+    getFormaciones(usuario?.empresaId as string)
       .then((data) => setModules(data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    refreshData();
   }, [usuario?.empresaId]);
 
   const isAdmin = usuario && usuario.codigoRol !== "ROLE_EMPLEADO" && usuario.codigoRol !== "INVITADO";
@@ -33,14 +41,31 @@ export default function FormacionPage() {
             <p className="text-sm text-gray-400 mt-1">Accede a tus cursos y materiales de capacitación técnica y normativa.</p>
           </div>
           {isAdmin && (
-            <button
-              onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-              className="bg-white border border-gray-200 text-gray-700 text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-            >
-              <span>⚙️</span> Gestionar Formaciones
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setEditingFormacion(null); setShowForm(true); }}
+                className="bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+              >
+                + Nueva formación
+              </button>
+              <button
+                onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+                className="bg-white border border-gray-200 text-gray-700 text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              >
+                <span>⚙️</span> Administración
+              </button>
+            </div>
           )}
         </div>
+
+        {showForm && isAdmin && (
+          <FormacionForm
+            editando={editingFormacion}
+            empresaId={usuario?.empresaId as string}
+            onSave={() => { setShowForm(false); refreshData(); }}
+            onCancel={() => setShowForm(false)}
+          />
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -49,21 +74,23 @@ export default function FormacionPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules.map((m) => (
-              <div key={m.id} className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col hover:shadow-md transition-shadow group relative">
-                {isAdmin && (
-                  <button
-                    onClick={() => router.push(`/dashboard/admin?tab=formaciones&edit=${m.id}`)}
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded border border-blue-100 hover:bg-blue-100"
-                    title="Editar esta formación"
-                  >
-                    EDITAR
-                  </button>
-                )}
+            <div key={m.id} className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col hover:shadow-md transition-shadow group">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded transition-colors group-hover:bg-blue-100">
-                    {m.category}
-                  </span>
-                  <StatusBadge status={m.status} />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded transition-colors group-hover:bg-blue-100">
+                      {m.category}
+                    </span>
+                    <StatusBadge status={m.status} />
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setEditingFormacion(m); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 whitespace-nowrap"
+                      title="Editar esta formación"
+                    >
+                      EDITAR
+                    </button>
+                  )}
                 </div>
                 <h3 className="text-sm font-semibold text-gray-800 mb-2">{m.name}</h3>
                 <p className="text-xs text-gray-400 mb-6 flex-1 leading-snug">{m.description}</p>
