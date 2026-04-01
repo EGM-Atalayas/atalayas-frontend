@@ -1,7 +1,8 @@
 "use client";
-import { API_URL, apiFetch } from '@/lib/api';
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+
+import { API_URL, apiFetch } from "@/lib/api";
+import { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
 
 interface Usuario {
   nombre: string;
@@ -10,7 +11,7 @@ interface Usuario {
   nombreEmpresa?: string;
   logoEmpresaUrl?: string;
   activo?: boolean;
-  empresaId?: string;   
+  empresaId?: string;
   usuarioId?: string;
   email?: string;
   avatarUrl?: string;
@@ -32,7 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const isGuest = localStorage.getItem("guest");
-
     if (isGuest) {
       loginInvitado();
     } else {
@@ -41,23 +41,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkSession = async () => {
-    if (usuario?.invitado) return; // Si ya tenemos usuario, no hacemos nada
-
+    if (usuario?.invitado) return;
     try {
       const res = await apiFetch(`${API_URL}/auth/me`);
-
       if (!res.ok) {
         setUsuario(null);
         return;
       }
-
       const data: Usuario = await res.json();
-
       if (!data.activo) {
         await logout();
         return;
       }
-
       setUsuario(data);
     } catch {
       setUsuario(null);
@@ -68,7 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
     } finally {
-      localStorage.removeItem("accessToken");
+      // Limpiamos también el guest por si acaso
+      localStorage.removeItem("guest");
       setUsuario(null);
     }
   };
@@ -80,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       invitado: true,
       activo: true,
     };
-
     localStorage.setItem("guest", "true");
     setUsuario(guestUser);
   };
@@ -94,6 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
+  if (!ctx) throw new Error("useAuth debe usarse dentro de AuthProvider");
   return ctx;
 }

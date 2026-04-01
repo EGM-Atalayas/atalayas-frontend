@@ -37,11 +37,10 @@ const LoginPage: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("DATA DEL LOGIN:", data);
 
-        if (data.accessToken) {
-          localStorage.setItem("accessToken", data.accessToken);
-        }
+        // La cookie HttpOnly la gestiona el backend automáticamente
+        // No guardamos el token en localStorage — credentials: "include"
+        // se encarga de enviarlo en cada petición
 
         setUsuario({
           nombre: data.nombre,
@@ -51,7 +50,17 @@ const LoginPage: React.FC = () => {
           logoEmpresaUrl: data.avatarUrl,
           empresaId: data.empresaId,
           usuarioId: data.usuarioId,
+          email: data.email,
+          activo: data.activo,
         });
+
+        // Redirigir según rol
+        if (data.codigoRol === "ROLE_ADMIN") {
+          router.push("/superadmin");
+        } else {
+          router.push("/dashboard");
+        }
+      }
 
 
 
