@@ -8,12 +8,11 @@ import { getNoticias } from "@/lib/api/noticias";
 import { Noticia } from "@/lib/types/noticias";
 import { useRouter } from "next/navigation";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// ─── TYPES ────────────────────────────────────────────────────────────────────
 type Section = "Noticias" | "Mis Servicios";
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
 
+// ─── DATA ─────────────────────────────────────────────────────────────────────
 const perks = [
   {
     icon: "🚗",
@@ -56,8 +55,7 @@ const perks = [
   },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 const tagColor: Record<string, string> = {
   Evento: "bg-blue-50 text-blue-600 border-blue-100",
   Comunidad: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -66,8 +64,7 @@ const tagColor: Record<string, string> = {
   Ventajas: "bg-amber-50 text-amber-700 border-amber-100",
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
+// ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function Invitado() {
   const [activeSection, setActiveSection] = useState<Section>("Noticias");
   const [modalPerk, setModalPerk] = useState<string | null>(null);
@@ -76,7 +73,7 @@ export default function Invitado() {
 
   useEffect(() => {
     getNoticias().then((data) =>
-      setNoticias(data.filter((n) => n.es_global && n.activo))
+      setNoticias(data.filter((n) => n.esGlobal && n.activo))
     );
   }, []);
 
@@ -156,7 +153,7 @@ export default function Invitado() {
 
       <main className="w-full px-4 sm:px-8 lg:px-12 py-10">
         
-        {/* ── Welcome Hero (from Landing) ── */}
+        {/* ─ Welcome Hero (from Landing) ─ */}
         <section className="bg-[#100D3E] text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative shadow-xl">
           <div className="relative z-10 flex flex-col items-center text-center">
             <Image src={logo} alt="Logo" className="h-16 sm:h-20 w-auto mb-6 brightness-0 invert" />
@@ -207,21 +204,25 @@ export default function Invitado() {
                 <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {noticias.map((n, idx) => (
+                  {noticias.map((n) => (
                     <Link
-                      key={n.anuncio_id ?? idx}
+                      key={n.anuncioId}
                       href="/noticias"
                       className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {n.es_global && <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Global</span>}
+                          {n.esGlobal && (
+                            <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              Global
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.contenido}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.mensaje}</p>
                       </div>
                       <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
-                        {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                        {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
                       </span>
                     </Link>
                   ))}
