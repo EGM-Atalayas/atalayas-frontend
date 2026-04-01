@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Noticia } from "@/lib/types/noticias";
 import { getNoticias } from "@/lib/api/noticias";
-import { getFormaciones } from "@/lib/api/formaciones";
-import { Formacion } from "@/lib/types/formaciones";
+import { getModulosConProgreso } from "@/lib/api/modulos";
+import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { NAV_ROUTES } from "@/lib/routes";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -27,12 +27,15 @@ interface Props {
 export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Props) {
   const router = useRouter();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
-  const [formaciones, setFormaciones] = useState<Formacion[]>([]);
+  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
 
-  useEffect(() => {
-    getNoticias(usuario?.empresaId).then((data) => setNoticias(data.slice(0, 3)));
-    getFormaciones(usuario?.empresaId).then((data) => setFormaciones(data));
-  }, [usuario?.empresaId]);
+
+ useEffect(() => {
+  getNoticias(usuario?.empresaId).then((data) => setNoticias(data.slice(0, 3)));
+  getModulosConProgreso().then((data) =>
+    setFormaciones(data.sort((a, b) => a.orden - b.orden))
+  );
+}, [usuario?.empresaId]);
 
   // Simulamos campos que no están en el modelo todavía para UI
   const completed = formaciones.filter((m) => m.status === "completado").length;
@@ -87,7 +90,7 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
                   <div>
                     <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Tu siguiente paso</p>
                     <h3 className="text-sm font-semibold text-slate-800">
-                      {formaciones.find(f => f.status !== "completado")?.name}
+                      {formaciones.find(f => f.status !== "completado")?.nombre}
                     </h3>
                   </div>
                 </div>
@@ -102,21 +105,14 @@ export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Pro
 
             <div className="flex flex-col gap-2">
               {formaciones.map((m) => (
-                <div key={m.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/80 hover:border-gray-200 transition-all group">
+                <div key={m.moduloId} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/80 hover:border-gray-200 transition-all group">
                   <div className="flex items-center gap-3">
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === "completado" ? "bg-emerald-400" : m.status === "en progreso" ? "bg-blue-400" : "bg-gray-200"}`} />
                     <div className="flex flex-col">
-                      <p className="text-xs font-medium text-gray-800">{m.name}</p>
-                      {m.pdfUrl && (
-                        <a 
-                          href={m.pdfUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[10px] text-blue-600 hover:underline mt-1 flex items-center gap-1"
-                        >
-                          📄 Descargar material PDF
-                        </a>
-                      )}
+                      <p className="text-xs font-medium text-gray-800">{m.nombre}</p>
+                      <div className="flex flex-col">
+                      <p className="text-xs font-medium text-gray-800">{m.nombre}</p>
+                    </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
