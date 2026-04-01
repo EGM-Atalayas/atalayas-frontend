@@ -66,10 +66,12 @@ export default function AdminEmpresa() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
 
   useEffect(() => {
-    if (usuario?.empresaId) {
-      getNoticias(usuario.empresaId).then((data) => setNoticias(data.slice(0, 3)));
-    }
-  }, [usuario?.empresaId]);
+  if (usuario?.empresaId) {
+    getNoticias(usuario.empresaId)
+      .then((data) => setNoticias(data.slice(0, 3)))
+      .catch(() => {});
+  }
+}, [usuario?.empresaId]);
 
   const completed = onboardingModules.filter((m) => m.status === "completado").length;
   const totalProgress = Math.round(
@@ -235,7 +237,7 @@ export default function AdminEmpresa() {
           </table>
         </div>
 
-        {/* Noticias — igual que Empleado.tsx */}
+        {/* Noticias */}
         <div className="bg-white rounded-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-gray-800">Últimas noticias</h2>
@@ -247,17 +249,17 @@ export default function AdminEmpresa() {
             <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {noticias.map((n, idx) => (
-                <Link key={n.anuncio_id ?? idx} href="/dashboard/noticias" className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
+              {noticias.map((n) => (
+                <Link key={n.anuncioId} href="/dashboard/noticias" className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      {n.es_global && <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Global</span>}
+                      {n.esGlobal && <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Global</span>}
                     </div>
                     <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.contenido}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.mensaje}</p>
                   </div>
                   <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
-                    {new Date(n.creado_en).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
                   </span>
                 </Link>
               ))}
