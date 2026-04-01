@@ -266,7 +266,7 @@ export default function AdminEmpresa() {
             </div>
           )}
         </div>
-
+        
       </main>
     </div>
   );
