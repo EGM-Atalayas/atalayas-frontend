@@ -1,20 +1,20 @@
-// lib/types/noticias.ts
-
+// Respuesta de GET /api/v1/anuncios - campos en camelCase como devuelve el backend
 export interface Noticia {
-  anuncio_id: string;
+  anuncioId: string;
   titulo: string;
-  contenido: string;
-  es_global: boolean;
+  mensaje: string;
+  esGlobal: boolean;
   activo: boolean;
-  creado_por: string;
-  empresa_id: string | null;
-  creado_en: string;
-  actualizado_en: string;
+  creadoPor: string;
+  empresaId: string | null;
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
+// Payload de POST /api/v1/anuncios
 export interface NoticiaInput {
   titulo: string;
-  contenido: string;
-  es_global: boolean;
-  empresa_id?: string | null;
+  mensaje: string;
+  esGlobal: boolean;
+  empresaId?: string | null;
 }
