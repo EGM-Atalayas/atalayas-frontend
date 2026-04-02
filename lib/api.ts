@@ -1,7 +1,7 @@
 // lib/api.ts
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-desarrollo.up.railway.app/api/v1";
+  "https://atalayas-backend-production-4777.up.railway.app/api/v1";
 
 /**
  * Wrapper de fetch que incluye credentials: "include" para enviar

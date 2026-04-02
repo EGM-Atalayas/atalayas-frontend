@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
-import { getNoticias } from "@/lib/api/noticias";
+import { API_URL } from "@/lib/api";
 import { Noticia } from "@/lib/types/noticias";
 import { useRouter } from "next/navigation";
 
@@ -70,11 +70,20 @@ export default function Invitado() {
   const [modalPerk, setModalPerk] = useState<string | null>(null);
   const router = useRouter();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
+  const [loadingNoticias, setLoadingNoticias] = useState(true);
 
   useEffect(() => {
-     getNoticias()
-    .then((data) => setNoticias(data.filter((n) => n.esGlobal && n.activo)))
-    .catch(() => {});
+    // Fetch público sin credenciales para invitados
+    fetch(`${API_URL}/anuncios`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al cargar noticias");
+        return res.json();
+      })
+      .then((data: Noticia[]) =>
+        setNoticias(data.filter((n) => n.esGlobal && n.activo))
+      )
+      .catch(() => {})
+      .finally(() => setLoadingNoticias(false));
   }, []);
 
 
@@ -198,39 +207,50 @@ export default function Invitado() {
                 Anuncios disponibles para los empleados de EGM Atalayas
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-6">
 
-              {noticias.length === 0 ? (
+            {loadingNoticias ? (
+              <div className="flex items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                  <p className="text-sm text-gray-400">Cargando noticias...</p>
+                </div>
+              </div>
+            ) : noticias.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-100 p-6">
                 <p className="text-xs text-gray-400">No hay noticias publicadas.</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {noticias.map((n) => (
-                    <Link
-                      key={n.anuncioId}
-                      href="/noticias"
-                      className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
-                    >
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {noticias.map((n) => (
+                  <div
+                    key={n.anuncioId}
+                    className="bg-white rounded-xl border border-gray-100 px-6 py-4 hover:border-gray-200 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-2">
                           {n.esGlobal && (
-                            <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-gray-100 text-gray-600 border-gray-200">
                               Global
                             </span>
                           )}
+                          <span className="text-[11px] text-gray-400 ml-auto">
+                            {new Date(n.creadoEn).toLocaleDateString("es-ES", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
                         </div>
-                        <p className="text-xs font-medium text-gray-800 truncate">{n.titulo}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.mensaje}</p>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1">{n.titulo}</h3>
+                        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{n.mensaje}</p>
                       </div>
-                      <span className="text-[10px] text-gray-400 shrink-0 ml-4 mt-0.5">
-                        {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
-
         )}
 
         {/* ── Mis Servicios (asociado a Ventajas) ── */}
