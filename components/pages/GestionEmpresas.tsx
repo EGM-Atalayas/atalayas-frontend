@@ -117,13 +117,6 @@ const GestionEmpresas: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right flex justify-end gap-3">
-                      <button 
-                        onClick={() => editarEmpresa(empresa.empresaId)}
-                        className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar empresa"
-                      >
-                        <FaEdit size={18} />
-                      </button>
                       
                       <button 
                         onClick={() => toggleEstado(empresa.empresaId, empresa.activo)}
