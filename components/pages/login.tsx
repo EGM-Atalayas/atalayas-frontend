@@ -159,7 +159,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               className="bg-blue-950 text-white font-bold py-3 rounded-xl w-full mt-2 hover:bg-blue-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Conectando..." : "Iniciar Sesión"}
+              {isLoading ? <span className="loading-dots">Conectando</span> : "Iniciar Sesión"}
             </button>
           </form>
 
