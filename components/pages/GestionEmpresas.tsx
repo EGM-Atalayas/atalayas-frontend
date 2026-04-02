@@ -7,10 +7,10 @@ import { getEmpresas, actualizarEstadoEmpresa } from "@/lib/api/empresas";
 
 // Definimos la interfaz basada en tu base de datos
 export interface EmpresaDB {
-  empresa_id: string;
-  nombre_empresa: string;
+  empresaId: string;
+  nombreEmpresa: string;
   cif: string;
-  email_contacto: string;
+  emailContacto: string;
   activo: boolean;
 }
 
@@ -43,7 +43,7 @@ const GestionEmpresas: React.FC = () => {
     
     // Optimistic UI: Actualizamos la tabla visualmente al instante
     setEmpresas(empresas.map((emp) =>
-      emp.empresa_id === id ? { ...emp, activo: nuevoEstado } : emp
+      emp.empresaId === id ? { ...emp, activo: nuevoEstado } : emp
     ));
 
     try {
@@ -54,7 +54,7 @@ const GestionEmpresas: React.FC = () => {
       alert("Hubo un error al guardar el cambio en el servidor.");
       
       setEmpresas(empresas.map((emp) =>
-        emp.empresa_id === id ? { ...emp, activo: estadoActual } : emp
+        emp.empresaId === id ? { ...emp, activo: estadoActual } : emp
       ));
     }
   };
@@ -103,10 +103,10 @@ const GestionEmpresas: React.FC = () => {
                 </tr>
               ) : (
                 empresas.map((empresa) => (
-                  <tr key={empresa.empresa_id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{empresa.nombre_empresa}</td>
+                  <tr key={empresa.empresaId} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">{empresa.nombreEmpresa}</td>
                     <td className="px-6 py-4">{empresa.cif}</td>
-                    <td className="px-6 py-4">{empresa.email_contacto}</td>
+                    <td className="px-6 py-4">{empresa.emailContacto}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         empresa.activo 
@@ -118,7 +118,7 @@ const GestionEmpresas: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right flex justify-end gap-3">
                       <button 
-                        onClick={() => editarEmpresa(empresa.empresa_id)}
+                        onClick={() => editarEmpresa(empresa.empresaId)}
                         className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Editar empresa"
                       >
@@ -126,7 +126,7 @@ const GestionEmpresas: React.FC = () => {
                       </button>
                       
                       <button 
-                        onClick={() => toggleEstado(empresa.empresa_id, empresa.activo)}
+                        onClick={() => toggleEstado(empresa.empresaId, empresa.activo)}
                         className={`p-2 rounded-lg transition-colors ${
                           empresa.activo 
                             ? "text-red-500 hover:text-red-700 hover:bg-red-50" 
