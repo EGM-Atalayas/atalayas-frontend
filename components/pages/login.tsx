@@ -70,11 +70,11 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden" style={{ background: "var(--blanco)" }}>
 
-      {/* ── PANEL IZQUIERDO: Branding ── */}
+      {/* ── PANEL IZQUIERDO: Branding ── oculto en móvil, visible en desktop */}
       <div
-        className="relative flex flex-col justify-between lg:w-[48%] px-10 sm:px-16 lg:px-24 py-12 lg:py-16"
+        className="hidden lg:flex relative flex-col justify-between lg:w-[48%] px-10 sm:px-16 lg:px-24 py-12 lg:py-16"
         style={{
           background: "linear-gradient(160deg, #0c2340 0%, #0a1e35 40%, #081a2e 70%, #0d2847 100%)",
         }}
@@ -97,29 +97,12 @@ const LoginPage: React.FC = () => {
 
         {/* Contenido superior */}
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          {/* Badge */}
-          <div className="mb-6">
-            <span
-              className="inline-block text-[11px] font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full"
-              style={{
-                color: "#4ecca3",
-                background: "rgba(78, 204, 163, 0.08)",
-                border: "1px solid rgba(78, 204, 163, 0.15)",
-              }}
-            >
-              Ciudad Empresarial
-            </span>
-          </div>
 
-          {/* Título */}
-          <h1
-            className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.1] mb-5 tracking-tight"
-            style={{ color: "#ffffff", fontFamily: "'Georgia', 'Times New Roman', serif" }}
-          >
-            Bienvenido a{" "}
-            <br />
-            Atalayas
-          </h1>
+          {/* Logo */}
+          <div className="mb-5 -ml-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="Atalayas" className="h-16 sm:h-40 w-auto brightness-0 invert" />
+          </div>
 
           {/* Subtítulo */}
           <p
@@ -151,15 +134,26 @@ const LoginPage: React.FC = () => {
 
       {/* ── PANEL DERECHO: Formulario ── */}
       <div
-        className="flex-1 flex items-center justify-center px-10 sm:px-16 lg:px-24 py-10 lg:py-0"
-        style={{ background: "#1a1d23" }}
+        className="flex-1 flex flex-col items-center justify-start lg:justify-center px-0 lg:px-24 pt-0 pb-10 lg:py-0 min-h-screen lg:min-h-0"
+        style={{ background: "#ffffff" }}
       >
-        <div className="w-full max-w-md">
+        {/* Branding visible solo en móvil */}
+        <div className="lg:hidden w-full px-6 py-10 mb-2" style={{ background: "linear-gradient(160deg, #0c2340 0%, #0a1e35 40%, #081a2e 70%, #0d2847 100%)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="Atalayas" className="h-20 w-auto mb-4 brightness-0 invert mx-auto block" />
+          <p className="text-base font-medium mb-2" style={{ color: "#4ecca3" }}>
+            Tu espacio de trabajo conectado
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Accede a formación, noticias y ventajas exclusivas para empleados del parque empresarial.
+          </p>
+        </div>
+        <div className="w-full max-w-md px-6 lg:px-0 py-8 lg:py-0">
 
           {/* Título del formulario */}
           <h2
-            className="text-2xl sm:text-3xl font-bold mb-8"
-            style={{ color: "#f0f0f0" }}
+            className="text-2xl sm:text-3xl font-bold mb-8 text-center"
+            style={{ color: "#0f1923" }}
           >
             Iniciar sesión
           </h2>
@@ -171,14 +165,14 @@ const LoginPage: React.FC = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-2"
-                style={{ color: "rgba(255, 255, 255, 0.65)" }}
+                style={{ color: "#3D4A5C" }}
               >
                 Correo electrónico
               </label>
               <div className="relative">
                 <FiMail
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-sm"
-                  style={{ color: "rgba(255, 255, 255, 0.25)" }}
+                  style={{ color: "#6B7A8D" }}
                 />
                 <input
                   type="email"
@@ -188,16 +182,16 @@ const LoginPage: React.FC = () => {
                   required
                   className="w-full pl-11 pr-4 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
                   style={{
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#e8e8e8",
+                    background: "#f5f6f8",
+                    border: "1px solid #C8CDD8",
+                    color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(78, 204, 163, 0.4)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(78, 204, 163, 0.08)";
+                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.target.style.borderColor = "#C8CDD8";
                     e.target.style.boxShadow = "none";
                   }}
                 />
@@ -208,14 +202,14 @@ const LoginPage: React.FC = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-2"
-                style={{ color: "rgba(255, 255, 255, 0.65)" }}
+                style={{ color: "#3D4A5C" }}
               >
                 Contraseña
               </label>
               <div className="relative">
                 <FiLock
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-sm"
-                  style={{ color: "rgba(255, 255, 255, 0.25)" }}
+                  style={{ color: "#6B7A8D" }}
                 />
                 <input
                   type="password"
@@ -225,16 +219,16 @@ const LoginPage: React.FC = () => {
                   required
                   className="w-full pl-11 pr-4 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
                   style={{
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#e8e8e8",
+                    background: "#f5f6f8",
+                    border: "1px solid #C8CDD8",
+                    color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(78, 204, 163, 0.4)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(78, 204, 163, 0.08)";
+                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.target.style.borderColor = "#C8CDD8";
                     e.target.style.boxShadow = "none";
                   }}
                 />
@@ -247,9 +241,9 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex items-center gap-1.5 text-xs transition-colors"
-                style={{ color: "rgba(255, 255, 255, 0.3)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+                style={{ color: "#6B7A8D" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
               >
                 <FiChevronRight
                   className={`transition-transform duration-200 ${showAdvanced ? "rotate-90" : ""}`}
@@ -261,7 +255,7 @@ const LoginPage: React.FC = () => {
                 <div className="mt-3">
                   <label
                     className="block text-xs font-medium mb-1.5"
-                    style={{ color: "rgba(255, 255, 255, 0.5)" }}
+                    style={{ color: "#6B7A8D" }}
                   >
                     Protocolo personalizado
                   </label>
@@ -272,15 +266,15 @@ const LoginPage: React.FC = () => {
                     placeholder="Opcional"
                     className="w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all duration-200"
                     style={{
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      color: "#e8e8e8",
+                      background: "#f5f6f8",
+                      border: "1px solid #C8CDD8",
+                      color: "#0f1923",
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = "rgba(78, 204, 163, 0.4)";
+                      e.target.style.borderColor = "#1B3F7E";
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                      e.target.style.borderColor = "#C8CDD8";
                     }}
                   />
                 </div>
@@ -292,9 +286,9 @@ const LoginPage: React.FC = () => {
               <div
                 className="text-sm text-center py-3 px-4 rounded-lg"
                 style={{
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.2)",
-                  color: "#f87171",
+                  background: "#FDECEA",
+                  border: "1px solid #C84B31",
+                  color: "#C84B31",
                 }}
               >
                 {errorMensaje}
@@ -307,21 +301,15 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               className="w-full py-3.5 mt-1 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed"
               style={{
-                background: isLoading ? "rgba(255,255,255,0.05)" : "transparent",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                color: isLoading ? "rgba(255,255,255,0.4)" : "rgba(255, 255, 255, 0.85)",
+                background: isLoading ? "#C8CDD8" : "#0D1B2E",
+                border: "1px solid #0D1B2E",
+                color: "#ffffff",
               }}
               onMouseEnter={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
-                }
+                if (!isLoading) e.currentTarget.style.background = "#152540";
               }}
               onMouseLeave={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-                }
+                if (!isLoading) e.currentTarget.style.background = "#0D1B2E";
               }}
             >
               {isLoading ? <span className="loading-dots">Conectando</span> : "Entrar"}
@@ -333,9 +321,9 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               className="text-sm transition-colors cursor-pointer"
-              style={{ color: "#4ecca3" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#6ee7b7")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#4ecca3")}
+              style={{ color: "#1B3F7E" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -343,22 +331,22 @@ const LoginPage: React.FC = () => {
 
           {/* Separador */}
           <div className="flex items-center gap-4 my-5">
-            <div className="flex-1 h-px" style={{ background: "rgba(255, 255, 255, 0.08)" }} />
-            <span className="text-xs" style={{ color: "rgba(255, 255, 255, 0.25)" }}>
+            <div className="flex-1 h-px" style={{ background: "#C8CDD8" }} />
+            <span className="text-xs" style={{ color: "#6B7A8D" }}>
               ¿nueva empresa?
             </span>
-            <div className="flex-1 h-px" style={{ background: "rgba(255, 255, 255, 0.08)" }} />
+            <div className="flex-1 h-px" style={{ background: "#C8CDD8" }} />
           </div>
 
           {/* Solicitar alta */}
-          <p className="text-center text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>
+          <p className="text-center text-sm" style={{ color: "#6B7A8D" }}>
             ¿Tu empresa no está registrada?{" "}
             <Link
               href="/register-empresa"
               className="font-medium transition-colors"
-              style={{ color: "#4ecca3" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#6ee7b7")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#4ecca3")}
+              style={{ color: "#1B3F7E" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
             >
               Solicitar alta
             </Link>
@@ -369,9 +357,9 @@ const LoginPage: React.FC = () => {
             <button
               onClick={handleInvitado}
               className="text-xs transition-colors cursor-pointer"
-              style={{ color: "rgba(255, 255, 255, 0.2)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+              style={{ color: "#6B7A8D" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
             >
               ← Continuar como invitado
             </button>
