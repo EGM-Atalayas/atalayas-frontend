@@ -1,8 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --azul-egm: #1B3F7E;
+  --azul-egm-hover: #2A5298;
+  --azul-egm-light: #E8EEF8;
+  --verde-oliva: #8B9A2D;
+  --verde-oliva-hover: #A3B535;
+  --verde-oliva-light: #EEF2D0;
+  --marino: #0D1B2E;
+  --marino-hover: #152540;
+  --blanco: #FFFFFF;
+  --gris-pagina: #F5F6F8;
+  --gris-superficie: #EDEEF1;
+  --gris-borde: #C8CDD8;
+  --texto-primario: #0F1923;
+  --texto-secundario: #3D4A5C;
+  --texto-muted: #6B7A8D;
+  --exito: #2D7D4E;
+  --exito-light: #D4EDDA;
+  --error: #C84B31;
+  --error-light: #FDECEA;
+  --advertencia: #B07D1A;
+  --advertencia-light: #FFF3CD;
+  --info: #5B7FA6;
+  --info-light: #E3ECF5;
 }
 
 @keyframes dots {
@@ -32,7 +53,7 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gris-pagina);
+  color: var(--texto-primario);
+  font-family: var(--font-inter), sans-serif;
 }
