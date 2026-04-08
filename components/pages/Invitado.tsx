@@ -182,7 +182,7 @@ export default function Invitado() {
               ))}
             </div>
             {/* Placeholder imagen comunidad */}
-            <div className="rounded-xl h-52 sm:h-64 w-full" style={{ background: "rgba(255,255,255,0.1)" }} />
+            <div className="rounded-xl h-62 sm:h-94 w-full" style={{ background: "url('/comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />
           </div>
         </div>
       </section>
@@ -192,7 +192,7 @@ export default function Invitado() {
         <h2 className="text-white text-lg sm:text-2xl font-bold mb-2">¿Tu empresa está en Atalayas?</h2>
         <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.6)" }}>Únete a la plataforma del parque empresarial.</p>
         <Link
-          href="/login"
+          href="/register-empresa"
           className="inline-block text-sm font-semibold px-8 py-3 rounded-md transition-colors"
           style={{ border: "1px solid white", color: "white" }}
         >
