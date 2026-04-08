@@ -6,63 +6,26 @@ import Image from "next/image";
 import logo from "@/public/logo.webp";
 import { API_URL } from "@/lib/api";
 import { Noticia } from "@/lib/types/noticias";
-import { useRouter } from "next/navigation";
+import { Playfair_Display } from "next/font/google";
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-const perks = [
-  {
-    icon: "🚗",
-    name: "Coche compartido",
-    desc: "Coordina rutas con compañeros del parque y reduce costes de desplazamiento.",
-    available: true,
-    hasModal: true,
-  },
-  {
-    icon: "🧒",
-    name: "Guardería bonificada",
-    desc: "Plazas con precio reducido en centro infantil próximo al área empresarial.",
-    available: true,
-    hasModal: true,
-  },
-  {
-    icon: "🅿️",
-    name: "Preferencias de parking",
-    desc: "Plazas exclusivas VAO para fomentar el uso compartido del vehículo en el área empresarial.",
-    available: true,
-    hasModal: true,
-  },
-  {
-    icon: "🎓",
-    name: "Formación externa",
-    desc: "Cursos homologados con tarifas negociadas para empresas adheridas.",
-    available: true,
-  },
-  {
-    icon: "🏋️",
-    name: "Gimnasio y bienestar",
-    desc: "Convenios con instalaciones deportivas cercanas al área.",
-    available: false,
-  },
-  {
-    icon: "🎉",
-    name: "Eventos de comunidad",
-    desc: "Team building, jornadas culturales y actividades colectivas del parque.",
-    available: true,
-  },
+const playfair = Playfair_Display({ subsets: ["latin"] });
+
+const comunidadLinks = [
+  { label: "En femenino", sub: "Alicante impulsa el liderazgo femenino en el ámbito empresarial" },
+  { label: "Autobús lanzadera", sub: "Servicio de transporte directo al parque empresarial" },
+  { label: "Coche compartido", sub: "Coordina rutas con compañeros del parque" },
+  { label: "Aparcamiento VAO", sub: "Plazas exclusivas para vehículos de alta ocupación" },
 ];
 
-// ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function Invitado() {
-  const router = useRouter();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
-  const [modalPerk, setModalPerk] = useState<string | null>(null);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   useEffect(() => {
-    // Fetch público sin credenciales para invitados
     fetch(`${API_URL}/anuncios`)
       .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar noticias");
+        if (!res.ok) throw new Error();
         return res.json();
       })
       .then((data: Noticia[]) =>
@@ -72,181 +35,160 @@ export default function Invitado() {
       .finally(() => setLoadingNoticias(false));
   }, []);
 
-
   return (
-    <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      <header className="w-full bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div className="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center h-full">
-            <Image src={logo} alt="Logo" className="h-10 sm:h-14 w-auto" />
-          </div>
+    <div className="min-h-screen bg-white font-sans overflow-x-hidden">
 
-          {/* Auth actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+      {/* ── HEADER ── */}
+      <header className="w-full bg-transparent absolute top-0 left-0 right-0 z-50">
+        <div className="w-full px-5 sm:px-8 h-16 flex items-center justify-between">
+          <Image src={logo} alt="Atalayas" className="h-12 sm:h-16 w-auto brightness-0 invert" />
+
+          {/* Nav desktop */}
+          <nav className="hidden sm:flex items-center gap-6 text-sm text-white/80">
+            <a href="#comunidad" className="hover:text-white transition-colors">Comunidad</a>
+            <a href="#anuncios" className="hover:text-white transition-colors">Anuncios</a>
             <Link
               href="/login"
-              className="bg-gray-900 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              className="bg-white/10 border border-white/30 text-white text-xs font-semibold px-4 py-2 rounded-md hover:bg-white/20 transition-colors uppercase tracking-wide"
             >
               Iniciar sesión
             </Link>
-          </div>
+          </nav>
+
+          {/* Botón hamburguesa mobile */}
+          <button
+            className="sm:hidden text-white p-2"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+            aria-label="Menú"
+          >
+            <div className="w-6 h-0.5 bg-white mb-1.5" />
+            <div className="w-6 h-0.5 bg-white mb-1.5" />
+            <div className="w-6 h-0.5 bg-white" />
+          </button>
         </div>
+
+        {/* Menú mobile desplegable */}
+        {menuAbierto && (
+          <div className="sm:hidden bg-black/90 backdrop-blur-sm px-5 pb-5 flex flex-col">
+            <a href="#anuncios" onClick={() => setMenuAbierto(false)} className="text-white/80 text-sm py-3 border-b border-white/10">Anuncios</a>
+            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-white/80 text-sm py-3 border-b border-white/10">Comunidad</a>
+            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-white text-sm font-semibold py-3">Iniciar sesión →</Link>
+          </div>
+        )}
       </header>
 
-      <main className="w-full px-4 sm:px-8 lg:px-12 py-10">
-        
-        {/* ─ Welcome Hero ─ */}
-        <section className="bg-[#100D3E] text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative shadow-xl text-center">
-          <div className="relative z-10 flex flex-col items-center">
-            <Image src={logo} alt="Logo" className="h-16 sm:h-20 w-auto mb-6 brightness-0 invert" />
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2">Bienvenido</h1>
-            <p className="text-base sm:text-xl font-medium text-blue-200 mb-8 max-w-lg">
-              Plataforma de comunicación, onboarding y formación de EGM Atalayas Ciudad Empresarial
-            </p>
-            <div>
-              <Link href="/login" className="bg-white text-[#100D3E] px-8 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg inline-block">
-                Acceso para empleados
-              </Link>
-            </div>
-          </div>
-          {/* Abstract light effects */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20 -ml-20 -mb-20" />
-        </section>
-
-        {/* ── Comunicados y anuncios ── */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Comunicados y anuncios
-          </h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Información de interés general para la comunidad de EGM Atalayas
+      {/* ── HERO ── */}
+      <section
+        className="relative w-full min-h-[50vh] sm:h-[480px] flex items-end"
+        style={{
+          backgroundImage: "url('/background-invitado.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="relative z-10 px-5 sm:px-10 pt-24 pb-10 sm:pb-14 w-full">
+          <p className="text-white/70 text-[10px] sm:text-xs font-medium mb-2 uppercase tracking-widest">
+            Bienvenidos
           </p>
+          <h1 className="text-white text-2xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight mb-3 leading-tight">
+            Atalayas Ciudad Empresarial
+          </h1>
+          <p className={`${playfair.className} text-white/70 text-lg sm:text-2xl leading-relaxed max-w-4xl`}>
+            Atalayas Ciudad Empresarial es una de las mayores áreas empresariales e industriales de la ciudad de Alicante y su provincia.
+          </p>
+        </div>
+      </section>
+
+      {/* ── ANUNCIOS ── */}
+      <section id="anuncios" className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+        <div className="flex items-center gap-2 mb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Anuncios</h2>
+          <span className="text-gray-400 text-lg">→</span>
         </div>
 
         {loadingNoticias ? (
-          <div className="flex items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="text-sm text-gray-400">Cargando anuncios...</p>
-            </div>
+          <div className="flex items-center justify-center py-16">
+            <div className="w-7 h-7 border-2 border-gray-200 border-t-gray-700 rounded-full animate-spin" />
           </div>
         ) : noticias.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-8 text-center mb-10">
-            <p className="text-sm text-gray-400">No hay comunicados recientes.</p>
-          </div>
+          <p className="text-sm text-gray-400 py-8">No hay anuncios recientes.</p>
         ) : (
-          <div className="flex flex-col gap-4 mb-14">
+          <div className="flex flex-col gap-4">
             {noticias.map((n) => (
               <div
                 key={n.anuncioId}
-                className="bg-white rounded-xl border border-gray-100 px-6 py-5 hover:border-blue-100 transition-all hover:shadow-sm"
+                className="flex flex-col sm:flex-row border border-gray-100 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
               >
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between mb-1">
-                    {n.esGlobal && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-600 border-blue-100 uppercase tracking-wide">
-                        Global
+                {/* Placeholder imagen */}
+                <div className="w-full h-40 sm:w-44 sm:h-auto shrink-0 bg-gray-200" />
+                <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {n.esGlobal && (
+                        <span className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                          Global
+                        </span>
+                      )}
+                      <span className="text-[11px] text-gray-400">
+                        {new Date(n.creadoEn).toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </span>
-                    )}
-                    <span className="text-[11px] text-gray-400 font-medium">
-                      {new Date(n.creadoEn).toLocaleDateString("es-ES", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900 mb-1">{n.titulo}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{n.mensaje}</p>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{n.titulo}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{n.mensaje}</p>
+                  <button className="self-start text-xs font-semibold text-gray-700 border border-gray-200 px-4 py-1.5 rounded-md hover:bg-gray-50 transition-colors">
+                    Seguir leyendo
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
+      </section>
 
-        {/* ── Servicios y ventajas ── */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Servicios y ventajas
-          </h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Beneficios disponibles para todas las empresas y empleados del parque
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {perks.map((p) => (
-            <div
-              key={p.name}
-              onClick={() => "hasModal" in p && p.hasModal && p.available ? setModalPerk(p.name) : undefined}
-              className={`bg-white rounded-xl border border-gray-100 px-5 py-4 ${!p.available ? "opacity-50" : ""} ${"hasModal" in p && p.hasModal && p.available ? "cursor-pointer hover:border-blue-200 hover:shadow-sm transition-all" : ""}`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">{p.icon}</span>
-                  <p className="text-sm font-semibold text-gray-900">{p.name}</p>
+      {/* ── COMUNIDAD ── */}
+      <section id="comunidad" className="relative w-full mt-2" style={{ backgroundImage: "url('/background-comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-8 pt-8 pb-10">
+          <h2 className="text-white text-lg sm:text-xl font-bold mb-6 text-center">Comunidad</h2>
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-6 sm:gap-10 items-start sm:items-center">
+            <div className="flex flex-col divide-y divide-white/10 w-full">
+              {comunidadLinks.map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-3 group cursor-pointer">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <p className="text-white text-sm font-medium group-hover:text-white/80 transition-colors truncate">
+                      {item.label}
+                    </p>
+                    <p className="text-white/40 text-xs mt-0.5 line-clamp-2 break-words">{item.sub}</p>
+                  </div>
+                  <span className="text-white/30 text-sm group-hover:text-white/60 transition-colors shrink-0">→</span>
                 </div>
-                {!p.available && (
-                  <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full shrink-0">
-                    Próximamente
-                  </span>
-                )}
-                {"hasModal" in p && p.hasModal && p.available && (
-                  <span className="text-[10px] text-blue-500 shrink-0">Ver más →</span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 leading-relaxed pl-6">{p.desc}</p>
+              ))}
             </div>
-          ))}
-        </div>
-      </main>
-
-      {/* ── MODALS ── */}
-      {modalPerk === "Guardería bonificada" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setModalPerk(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900 leading-snug">Atención para tu Familia</h2>
-              <button onClick={() => setModalPerk(null)} className="text-gray-400 hover:text-gray-600 text-xl cursor-pointer bg-transparent border-none">✕</button>
-            </div>
-            <p className="text-xs text-gray-500 mb-5">Guardería para Niños y Niñas: Sabemos lo importante que es la conciliación familiar. Por ello, disponemos de una ludoteca infantil en Atalayas, ofreciendo un espacio seguro para los más pequeños.</p>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-5 text-center">
-              <p className="text-sm font-bold text-emerald-700 mb-1">Centro Infantil Atalayas</p>
-              <p className="text-xs text-emerald-600 font-medium">Matrícula abierta todo el año</p>
-            </div>
-            <div className="border-t border-gray-100 pt-4 flex flex-col gap-2 text-center">
-              <p className="text-xs font-semibold text-gray-700">📞 647 763 389</p>
-              <p className="text-xs text-gray-500">laescuelainfantilatalayas@gmail.com</p>
-            </div>
+            {/* Imagen comunidad */}
+            <div className="bg-gray-700 rounded-xl h-44 sm:h-56 w-full" />
           </div>
         </div>
-      )}
+      </section>
 
-      {modalPerk === "Preferencias de parking" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setModalPerk(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900">Plazas de parking VAO</h2>
-              <button onClick={() => setModalPerk(null)} className="text-gray-400 hover:text-gray-600 text-xl cursor-pointer bg-transparent border-none">✕</button>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">Atalayas ha implementado plazas exclusivas para vehículos de alta ocupación (VAO), fomentando la movilidad sostenible en el área empresarial.</p>
-          </div>
-        </div>
-      )}
+      {/* ── CTA ── */}
+      <section className="bg-[#1a1a4e] py-12 sm:py-16 text-center px-5">
+        <h2 className="text-white text-lg sm:text-xl font-bold mb-1">¿Tu empresa está en Atalayas?</h2>
+        <p className="text-white/60 text-sm mb-6">Únete a la plataforma del parque empresarial.</p>
+        <Link
+          href="/login"
+          className="inline-block border border-white text-white text-sm font-semibold px-8 py-2.5 rounded-md hover:bg-white hover:text-[#1a1a4e] transition-colors"
+        >
+          Solicitar alta
+        </Link>
+      </section>
 
-      {modalPerk === "Coche compartido" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setModalPerk(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-6">
-              <h2 className="text-base font-bold text-gray-900">Plataforma de Carpooling</h2>
-              <button onClick={() => setModalPerk(null)} className="text-gray-400 hover:text-gray-600 text-xl cursor-pointer bg-transparent border-none">✕</button>
-            </div>
-            <p className="text-xs text-gray-500 mb-6">Conecta con otros trabajadores del parque para compartir trayecto, ahorrar costes y reducir emisiones.</p>
-            <a href="https://www.lokinn.com/compartir-coche/atalayas" target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-colors">Acceder a la plataforma →</a>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
