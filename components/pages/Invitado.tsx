@@ -31,7 +31,7 @@ export default function Invitado() {
       .then((data: Noticia[]) =>
         setNoticias(data.filter((n) => n.esGlobal && n.activo))
       )
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingNoticias(false));
   }, []);
 
@@ -88,7 +88,7 @@ export default function Invitado() {
         }}
       >
         <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
         <div className="relative z-10 px-5 sm:px-10 pt-24 pb-10 sm:pb-14 w-full">
           <p className="text-white/70 text-[10px] sm:text-xs font-medium mb-2 uppercase tracking-widest">
             Bienvenidos
