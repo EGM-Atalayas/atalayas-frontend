@@ -76,7 +76,7 @@ const LoginPage: React.FC = () => {
       <div
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] px-10 sm:px-16 lg:px-24 py-12 lg:py-16"
         style={{
-          background: "linear-gradient(160deg, #0c2340 0%, #0a1e35 40%, #081a2e 70%, #0d2847 100%)",
+          background: "url('/background-login.jpg') no-repeat center center",
         }}
       >
         {/* Decoración sutil */}
