@@ -92,9 +92,19 @@ const RegisterEmpresa: React.FC = () => {
         setPaso(3); // Éxito
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setErrorMensaje(
-          errorData.message || `Error del servidor: ${response.status}`
-        );
+        console.error("Error 400 from backend:", errorData);
+        
+        // Extract exact message from common backend error formats (e.g. Spring Boot or NestJS)
+        let errMsg = "Error del servidor: 400";
+        if (errorData.message) {
+           errMsg = Array.isArray(errorData.message) ? errorData.message.join(", ") : errorData.message;
+        } else if (errorData.errors) {
+           errMsg = JSON.stringify(errorData.errors);
+        } else if (errorData.error) {
+           errMsg = errorData.error;
+        }
+
+        setErrorMensaje(errMsg);
       }
     } catch (error) {
       setErrorMensaje("No se ha podido conectar con el servidor.");
