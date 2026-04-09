@@ -1,61 +1,69 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
-import SuperAdminSidebar from "@/components/ui/SuperAdminSidebar";
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { usuario, setUsuario } = useAuth();
-  const [verificando, setVerificando] = useState(true);
+  const [verificando, setVerificando]   = useState(true);
   const router = useRouter();
 
+  // Verificamos sesión activa contra el endpoint correcto
   useEffect(() => {
     if (usuario) {
       setVerificando(false);
       return;
     }
 
-    apiFetch(`${API_URL}/users/me`)
+    apiFetch(`${API_URL}/auth/me`)
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("No autenticado");
       })
-      .then((data) => {
-        setUsuario(data);
-      })
-      .catch(() => {
-        setUsuario(null);
-      })
-      .finally(() => {
-        setVerificando(false);
-      });
+      .then((data) => setUsuario(data))
+      .catch(() => setUsuario(null))
+      .finally(() => setVerificando(false));
   }, []);
 
+  // Redirigimos al login si no hay sesión válida
   useEffect(() => {
     if (!verificando && !usuario) {
       router.replace("/login");
     }
   }, [verificando, usuario]);
 
+  // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
     return (
-      <div className="min-h-screen bg-[#100D3E] flex items-center justify-center">
-        <p className="text-white text-xl">Verificando sesión...</p>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--marino)" }}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-7 h-7 border-2 rounded-full animate-spin"
+            style={{
+              borderColor:    "var(--gris-borde)",
+              borderTopColor: "var(--verde-oliva)",
+            }}
+          />
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Verificando sesión...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!usuario) return null;
-  const esSuperAdmin = usuario.codigoRol === "ROLE_ADMIN";
-
-  const esAdmin = usuario.codigoRol === "ROLE_ADMIN";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {esAdmin && <SuperAdminSidebar />}
-      <main className="flex-1">
+    <div className="min-h-screen" style={{ background: "var(--gris-pagina)" }}>
+      <Header />
+      <main className="max-w-7xl mx-auto px-8 py-8">
         {children}
       </main>
     </div>
