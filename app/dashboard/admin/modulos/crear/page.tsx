@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/Header";
 import { API_URL } from "@/lib/api";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
@@ -102,7 +101,7 @@ export default function CrearModuloPage() {
   const [archivosRaw, setArchivosRaw] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [resultadoIA, setResultadoIA] = useState<{ titulo: string; descripcion: string; contenido: string } | null>(null);
-  const [tiposSeleccionados, setTiposSeleccionados] = useState<TipoGeneracion[]>(["formativo"]);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoGeneracion>("formativo");
   const [config, setConfig] = useState<ConfigModulo>({
     nombre: "",
     categoria: "ESPECIFICA",
@@ -140,11 +139,9 @@ export default function CrearModuloPage() {
     setArchivosRaw((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // ── Selección de tipos ──
-  const toggleTipo = (tipo: TipoGeneracion) => {
-    setTiposSeleccionados((prev) =>
-      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
-    );
+  // ── Selección de tipo (única) ──
+  const seleccionarTipo = (tipo: TipoGeneracion) => {
+    setTipoSeleccionado(tipo);
   };
 
   // ── Generación con IA (backend real) ──
@@ -225,10 +222,7 @@ export default function CrearModuloPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--gris-pagina)" }}>
-      <Header />
-
-      <div className="w-full px-4 sm:px-8 lg:px-12 py-8">
+    <div className="w-full">
 
         {/* ── Cabecera ── */}
         <div className="mb-6">
@@ -359,11 +353,11 @@ export default function CrearModuloPage() {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {tiposConfig.map((tipo) => {
-                  const sel = tiposSeleccionados.includes(tipo.id);
+                  const sel = tipoSeleccionado === tipo.id;
                   return (
                     <div
                       key={tipo.id}
-                      onClick={() => toggleTipo(tipo.id)}
+                      onClick={() => seleccionarTipo(tipo.id)}
                       className="rounded-xl p-4 cursor-pointer transition-all flex flex-col gap-2"
                       style={{
                         border: `1.5px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`,
@@ -491,11 +485,11 @@ export default function CrearModuloPage() {
                 }}
               >
                 {generado ? (
-                  <><IconCheck /> Módulo generado</>
+                  <><IconCheck /> Generado</>
                 ) : generando ? (
-                  <><span className="loading-dots">Generando con IA</span></>
+                  <span>Generando…</span>
                 ) : (
-                  <><IconAI /> Generar con IA</>
+                  <><IconAI /> Generar</>
                 )}
               </button>
 
@@ -563,56 +557,48 @@ export default function CrearModuloPage() {
           </div>
         </div>
 
-        {/* ── Sección output tras generación ── */}
+        {/* ── Banner de éxito ── */}
         {generado && (
-          <div className="mt-6 rounded-xl p-5" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-            <p className="text-sm font-semibold mb-4" style={{ color: "var(--texto-primario)" }}>
-              Contenido generado — listo para publicar
-            </p>
-
-            {/* Resultado IA */}
-            {resultadoIA && (
-              <div className="mb-5 rounded-lg p-4" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                <p className="text-base font-bold mb-1" style={{ color: "var(--texto-primario)" }}>{resultadoIA.titulo}</p>
-                <p className="text-sm mb-3" style={{ color: "var(--texto-secundario)" }}>{resultadoIA.descripcion}</p>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--texto-secundario)" }}>{resultadoIA.contenido}</p>
+          <div className="mt-6 rounded-xl p-5" style={{ background: "var(--exito-light)", border: "1.5px solid var(--exito)" }}>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--exito)", color: "#fff" }}>
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
               </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {tiposSeleccionados.map((tipo) => {
-                const t = tiposConfig.find((x) => x.id === tipo)!;
-                return (
-                  <div key={tipo} className="rounded-xl p-4 flex flex-col gap-3" style={{ border: "1px solid var(--gris-borde)" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: t.color, color: t.stroke }}>
-                      {t.icono}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{t.nombre}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                        {tipo === "formativo" ? "5 lecciones · 10 preguntas" :
-                          tipo === "video" ? "Vídeo HD · 12 min" :
-                          tipo === "podcast" ? "Audio MP3 · 8 min" : "PDF · 4 páginas"}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => router.push("/dashboard/admin")}
-                      className="mt-auto text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-70"
-                      style={{ color: "var(--azul-egm)" }}
-                    >
-                      {tipo === "formativo" ? "Publicar módulo" :
-                        tipo === "resumen" ? "Descargar PDF" :
-                        tipo === "video" ? "Ver vídeo" : "Escuchar podcast"}
-                      <IconChevron />
-                    </button>
-                  </div>
-                );
-              })}
+              <div className="flex-1">
+                <p className="text-sm font-bold mb-1" style={{ color: "var(--texto-primario)" }}>
+                  Módulo generado y subido a la plataforma con éxito
+                </p>
+                <p className="text-xs" style={{ color: "var(--texto-secundario)" }}>
+                  El módulo <strong>{resultadoIA?.titulo || config.nombre}</strong> se ha creado correctamente y ya está disponible en la plataforma para ser asignado a los empleados.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/dashboard/admin")}
+                className="shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
+                style={{ background: "var(--exito)", color: "#fff" }}
+              >
+                Ver módulos
+              </button>
             </div>
           </div>
         )}
 
-      </div>
+        {/* ── Contenido generado ── */}
+        {generado && resultadoIA && (
+          <div className="mt-4 rounded-xl p-5" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            <p className="text-sm font-semibold mb-4" style={{ color: "var(--texto-primario)" }}>
+              Contenido generado por IA
+            </p>
+            <div className="rounded-lg p-4" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+              <p className="text-base font-bold mb-1" style={{ color: "var(--texto-primario)" }}>{resultadoIA.titulo}</p>
+              <p className="text-sm mb-3" style={{ color: "var(--texto-secundario)" }}>{resultadoIA.descripcion}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--texto-secundario)" }}>{resultadoIA.contenido}</p>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 }
