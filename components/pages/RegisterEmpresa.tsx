@@ -2,10 +2,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaBuilding, FaUserTie, FaCheckCircle, FaClipboardList } from "react-icons/fa";
-import { FiArrowLeft } from "react-icons/fi";
+import { FaCheckCircle } from "react-icons/fa";
+import { FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
+import Link from "next/link";
+
+const SECTORES = [
+  "Tecnología",
+  "Salud",
+  "Educación",
+  "Finanzas",
+  "Construcción",
+  "Logística",
+  "Comercio",
+  "Industria",
+  "Servicios",
+  "Otro",
+];
 
 const RegisterEmpresa: React.FC = () => {
   const router = useRouter();
@@ -14,28 +28,27 @@ const RegisterEmpresa: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMensaje, setErrorMensaje] = useState("");
 
-  // Estado unificado exactamente con los campos de tu imagen
   const [formData, setFormData] = useState({
     // Paso 1: Empresa
     nombreEmpresa: "",
     cif: "",
-    emailEmpresa: "", // Nuevo campo según la imagen
+    sector: "",
+    emailEmpresa: "",
+    telefono: "",
     // Paso 2: Admin
     nombreAdmin: "",
     apellidosAdmin: "",
     emailAdmin: "",
-    passwordAdmin: "", // Nuevo campo según la imagen
-    // Paso 3: Confirmación
-    terminosAceptados: false,
+    passwordAdmin: "",
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -43,22 +56,21 @@ const RegisterEmpresa: React.FC = () => {
     setErrorMensaje("");
     setPaso((prev) => prev + 1);
   };
-  
+
   const prevStep = () => {
     setErrorMensaje("");
     if (paso === 1) {
-      router.push("/");
+      router.push("/login");
     } else {
       setPaso((prev) => prev - 1);
     }
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMensaje("");
     setIsLoading(true);
 
-    // Payload plano — exactamente como espera SolicitudAltaEmpresaRequest
     const payload = {
       nombreEmpresa: formData.nombreEmpresa,
       cif: formData.cif,
@@ -77,10 +89,12 @@ const RegisterEmpresa: React.FC = () => {
       });
 
       if (response.ok) {
-        setPaso(4);
+        setPaso(3); // Éxito
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setErrorMensaje(errorData.message || `Error del servidor: ${response.status}`);
+        setErrorMensaje(
+          errorData.message || `Error del servidor: ${response.status}`
+        );
       }
     } catch (error) {
       setErrorMensaje("No se ha podido conectar con el servidor.");
@@ -89,167 +103,648 @@ const RegisterEmpresa: React.FC = () => {
     }
   };
 
-  // --- PASO 1: DATOS DE LA EMPRESA ---
+  /* ─── Estilos de los inputs (consistente con login) ─── */
+  const inputStyle: React.CSSProperties = {
+    background: "#f5f6f8",
+    border: "1px solid #C8CDD8",
+    color: "#0f1923",
+    borderRadius: "0.5rem",
+  };
+
+  const inputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "#1B3F7E";
+    e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
+  };
+
+  const inputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "#C8CDD8";
+    e.target.style.boxShadow = "none";
+  };
+
+  /* ─── Stepper del panel izquierdo ─── */
+  const steps = [
+    { num: 1, title: "Datos de la empresa", subtitle: "CIF, sector y contacto" },
+    { num: 2, title: "Administrador", subtitle: "Cuenta de acceso" },
+  ];
+
+  /* ═══════════════════ PASO 1 ═══════════════════ */
   const renderPaso1 = () => (
-    <div className="flex flex-col gap-y-6 animate-fadeIn">
-      <div className="flex items-center gap-3 mb-2">
-        <FaBuilding className="text-blue-950 text-2xl" />
-        <h2 className="text-xl font-bold text-blue-950">Datos de la Empresa</h2>
+    <div className="flex flex-col gap-y-5 transition-opacity duration-300">
+      <div className="mb-2">
+        <h2 className="text-2xl font-bold" style={{ color: "#0f1923" }}>
+          Datos de la empresa
+        </h2>
+        <p className="text-sm mt-1" style={{ color: "#6B7A8D" }}>
+          Información principal de tu empresa
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Nombre Empresa ocupa las dos columnas en escritorio */}
-        <div className="flex flex-col gap-y-2 md:col-span-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="nombreEmpresa">Nombre de la empresa</label>
-          <input type="text" id="nombreEmpresa" name="nombreEmpresa" value={formData.nombreEmpresa} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="cif">CIF</label>
-          <input type="text" id="cif" name="cif" value={formData.cif} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="emailEmpresa">Email de contacto (Empresa)</label>
-          <input type="email" id="emailEmpresa" name="emailEmpresa" value={formData.emailEmpresa} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-      </div>
-      
-      <button 
-        type="button" 
-        onClick={nextStep} 
-        disabled={!formData.nombreEmpresa || !formData.cif || !formData.emailEmpresa} 
-        className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors disabled:bg-slate-400"
-      >
-        Siguiente: Cuenta de Administrador
-      </button>
-    </div>
-  );
-
-  // --- PASO 2: CUENTA DE ADMINISTRADOR ---
-  const renderPaso2 = () => (
-    <div className="flex flex-col gap-y-6 animate-fadeIn">
-      <div className="flex items-center gap-3 mb-2">
-        <FaUserTie className="text-blue-950 text-2xl" />
-        <h2 className="text-xl font-bold text-blue-950">Cuenta de Administrador</h2>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="nombreAdmin">Nombre</label>
-          <input type="text" id="nombreAdmin" name="nombreAdmin" value={formData.nombreAdmin} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="apellidosAdmin">Apellidos</label>
-          <input type="text" id="apellidosAdmin" name="apellidosAdmin" value={formData.apellidosAdmin} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="emailAdmin">Email de Usuario</label>
-          <input type="email" id="emailAdmin" name="emailAdmin" value={formData.emailAdmin} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-        <div className="flex flex-col gap-y-2">
-          <label className="font-bold text-xs text-slate-700 uppercase" htmlFor="passwordAdmin">Contraseña</label>
-          <input type="password" id="passwordAdmin" name="passwordAdmin" value={formData.passwordAdmin} onChange={handleChange} required className="bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-600" />
-        </div>
-      </div>
-
-      <button 
-        type="button" 
-        onClick={nextStep} 
-        disabled={!formData.nombreAdmin || !formData.apellidosAdmin || !formData.emailAdmin || !formData.passwordAdmin} 
-        className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors disabled:bg-slate-400"
-      >
-        Siguiente: Confirmación
-      </button>
-    </div>
-  );
-
-  // --- PASO 3: CONFIRMACIÓN ---
-  const renderPaso3 = () => (
-    <div className="flex flex-col gap-y-6 animate-fadeIn">
-      <div className="flex items-center gap-3 mb-2">
-        <FaClipboardList className="text-blue-950 text-2xl" />
-        <h2 className="text-xl font-bold text-blue-950">Resumen de la Solicitud</h2>
-      </div>
-
-      <div className="bg-white p-6 rounded-2xl flex flex-col gap-4 text-sm text-slate-900">
-        <div>
-          <h3 className="font-bold text-slate-900 border-b border-slate-300 pb-1 mb-2">Empresa</h3>
-          <p><span className="font-semibold mr-1">Nombre:</span> {formData.nombreEmpresa}</p>
-          <p><span className="font-semibold mr-1">CIF:</span> {formData.cif}</p>
-          <p><span className="font-semibold mr-1">Email:</span> {formData.emailEmpresa}</p>
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-900 border-b border-slate-300 pb-1 mb-2">Administrador</h3>
-          <p><span className="font-semibold mr-1">Nombre:</span> {formData.nombreAdmin} {formData.apellidosAdmin}</p>
-          <p><span className="font-semibold mr-1">Email:</span> {formData.emailAdmin}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 mt-2">
-        <input type="checkbox" id="terminosAceptados" name="terminosAceptados" checked={formData.terminosAceptados} onChange={handleChange} className="w-5 h-5 accent-blue-600" />
-        <label htmlFor="terminosAceptados" className="text-sm text-slate-700 cursor-pointer">
-          Acepto los términos y condiciones y la política de privacidad.
+      {/* Nombre de la empresa */}
+      <div className="flex flex-col gap-y-1.5">
+        <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+          Nombre de la empresa
         </label>
+        <input
+          type="text"
+          name="nombreEmpresa"
+          value={formData.nombreEmpresa}
+          onChange={handleChange}
+          placeholder="Empresa S.L."
+          required
+          className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+          style={inputStyle}
+          onFocus={inputFocus}
+          onBlur={inputBlur}
+        />
       </div>
 
-      <button 
-        type="submit" 
-        disabled={!formData.terminosAceptados || isLoading} 
-        className="bg-blue-950 text-white font-bold py-4 rounded-full w-full mt-4 hover:bg-blue-900 transition-colors disabled:bg-slate-400 shadow-lg"
+      {/* CIF + Sector */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            CIF
+          </label>
+          <input
+            type="text"
+            name="cif"
+            value={formData.cif}
+            onChange={handleChange}
+            placeholder="B12345678"
+            required
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+            style={inputStyle}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          />
+        </div>
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            Sector
+          </label>
+          <select
+            name="sector"
+            value={formData.sector}
+            onChange={handleChange}
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200 appearance-none cursor-pointer"
+            style={{
+              ...inputStyle,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7A8D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 14px center",
+              color: formData.sector ? "#0f1923" : "#6B7A8D",
+            }}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          >
+            <option value="" disabled>
+              Seleccionar...
+            </option>
+            {SECTORES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Email + Teléfono */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            Email de contacto
+          </label>
+          <input
+            type="email"
+            name="emailEmpresa"
+            value={formData.emailEmpresa}
+            onChange={handleChange}
+            placeholder="contacto@empresa.com"
+            required
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+            style={inputStyle}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          />
+        </div>
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            Teléfono{" "}
+            <span className="font-normal" style={{ color: "#9CA3AF" }}>
+              (opcional)
+            </span>
+          </label>
+          <input
+            type="tel"
+            name="telefono"
+            value={formData.telefono}
+            onChange={handleChange}
+            placeholder="600 000 000"
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+            style={inputStyle}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          />
+        </div>
+      </div>
+
+      {/* Botón Continuar */}
+      <button
+        type="button"
+        onClick={nextStep}
+        disabled={
+          !formData.nombreEmpresa || !formData.cif || !formData.emailEmpresa
+        }
+        className="w-full py-3.5 mt-3 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        style={{
+          background:
+            !formData.nombreEmpresa || !formData.cif || !formData.emailEmpresa
+              ? "#C8CDD8"
+              : "#0D1B2E",
+          border: "1px solid transparent",
+          color: "#ffffff",
+        }}
+        onMouseEnter={(e) => {
+          if (
+            formData.nombreEmpresa &&
+            formData.cif &&
+            formData.emailEmpresa
+          )
+            e.currentTarget.style.background = "#152540";
+        }}
+        onMouseLeave={(e) => {
+          if (
+            formData.nombreEmpresa &&
+            formData.cif &&
+            formData.emailEmpresa
+          )
+            e.currentTarget.style.background = "#0D1B2E";
+        }}
       >
-        {isLoading ? "Enviando..." : "Registrar Empresa y Administrador"}
+        Continuar <FiArrowRight className="text-base" />
       </button>
     </div>
   );
 
-  // --- PANTALLA DE ÉXITO ---
-  const renderExito = () => (
-    <div className="flex flex-col items-center justify-center gap-y-6 text-center animate-fadeIn py-8">
-      <FaCheckCircle className="text-green-500 text-7xl mb-2" />
-      <h2 className="text-3xl font-bold text-blue-950">¡Solicitud enviada!</h2>
-      <p className="text-slate-600 max-w-sm">
-        Hemos recibido tus datos correctamente. Nuestro equipo validará la información y te contactaremos por email en breve con los pasos a seguir.
-      </p>
-      <button onClick={() => router.push("/")} className="bg-blue-950 text-white font-bold py-3 px-8 rounded-full mt-6 hover:bg-blue-900 transition-colors">
-        Volver al inicio
-      </button>
-    </div>
-  );
+  /* ═══════════════════ PASO 2 ═══════════════════ */
+  const renderPaso2 = () => (
+    <div className="flex flex-col gap-y-5 transition-opacity duration-300">
+      <div className="mb-2">
+        <h2 className="text-2xl font-bold" style={{ color: "#0f1923" }}>
+          Cuenta de administrador
+        </h2>
+        <p className="text-sm mt-1" style={{ color: "#6B7A8D" }}>
+          Datos de acceso para el gestor de la empresa
+        </p>
+      </div>
 
-  return (
-    <div className="bg-[#100D3E] min-h-screen flex items-center justify-center p-4 py-12">
-      <div className="bg-slate-200 rounded-[2.5rem] p-8 md:p-12 w-full max-w-2xl flex flex-col shadow-2xl relative min-h-125">
-        
-        {paso < 4 && (
+      {/* Nombre + Apellidos */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            Nombre
+          </label>
+          <input
+            type="text"
+            name="nombreAdmin"
+            value={formData.nombreAdmin}
+            onChange={handleChange}
+            placeholder="Juan"
+            required
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+            style={inputStyle}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          />
+        </div>
+        <div className="flex flex-col gap-y-1.5">
+          <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+            Apellidos
+          </label>
+          <input
+            type="text"
+            name="apellidosAdmin"
+            value={formData.apellidosAdmin}
+            onChange={handleChange}
+            placeholder="García López"
+            required
+            className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+            style={inputStyle}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
+          />
+        </div>
+      </div>
+
+      {/* Email */}
+      <div className="flex flex-col gap-y-1.5">
+        <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+          Email de administrador
+        </label>
+        <input
+          type="email"
+          name="emailAdmin"
+          value={formData.emailAdmin}
+          onChange={handleChange}
+          placeholder="admin@empresa.com"
+          required
+          className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+          style={inputStyle}
+          onFocus={inputFocus}
+          onBlur={inputBlur}
+        />
+      </div>
+
+      {/* Contraseña */}
+      <div className="flex flex-col gap-y-1.5">
+        <label className="text-sm font-medium" style={{ color: "#3D4A5C" }}>
+          Contraseña
+        </label>
+        <input
+          type="password"
+          name="passwordAdmin"
+          value={formData.passwordAdmin}
+          onChange={handleChange}
+          placeholder="••••••••"
+          required
+          className="w-full px-4 py-3.5 text-sm outline-none transition-all duration-200"
+          style={inputStyle}
+          onFocus={inputFocus}
+          onBlur={inputBlur}
+        />
+      </div>
+
+      {/* Botón Enviar solicitud */}
+      <button
+        type="submit"
+        disabled={
+          !formData.nombreAdmin ||
+          !formData.apellidosAdmin ||
+          !formData.emailAdmin ||
+          !formData.passwordAdmin ||
+          isLoading
+        }
+        className="w-full py-3.5 mt-3 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        style={{
+          background:
+            !formData.nombreAdmin ||
+            !formData.apellidosAdmin ||
+            !formData.emailAdmin ||
+            !formData.passwordAdmin ||
+            isLoading
+              ? "#C8CDD8"
+              : "#0D1B2E",
+          border: "1px solid transparent",
+          color: "#ffffff",
+        }}
+        onMouseEnter={(e) => {
+          if (
+            formData.nombreAdmin &&
+            formData.apellidosAdmin &&
+            formData.emailAdmin &&
+            formData.passwordAdmin &&
+            !isLoading
+          )
+            e.currentTarget.style.background = "#152540";
+        }}
+        onMouseLeave={(e) => {
+          if (
+            formData.nombreAdmin &&
+            formData.apellidosAdmin &&
+            formData.emailAdmin &&
+            formData.passwordAdmin &&
+            !isLoading
+          )
+            e.currentTarget.style.background = "#0D1B2E";
+        }}
+      >
+        {isLoading ? (
+          <span className="loading-dots">Enviando</span>
+        ) : (
           <>
-            <button onClick={prevStep} className="absolute top-8 left-8 flex items-center gap-2 text-slate-700 font-semibold text-sm hover:text-blue-900 group transition z-10">
-              <FiArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              {paso === 1 ? "Volver" : "Atrás"}
-            </button>
-
-            <div className="absolute top-8 right-8 text-sm font-bold text-slate-500 bg-slate-300 px-3 py-1 rounded-full">
-              Paso {paso} de 3
-            </div>
-            
-            <div className="mt-12 mb-8 flex flex-col items-center gap-2">
-              <h1 className="text-3xl font-bold text-blue-950 text-center">Alta de Empresa</h1>
-              <p className="text-slate-600 text-sm text-center">Registra tu organización y tu cuenta de administrador</p>
-            </div>
+            Enviar solicitud <FiArrowRight className="text-base" />
           </>
         )}
+      </button>
+    </div>
+  );
 
-        {errorMensaje && paso < 4 && (
-          <div className="bg-red-100 text-red-600 p-3 rounded-xl border border-red-200 text-sm font-semibold text-center mb-6">
-            {errorMensaje}
+  /* ═══════════════════ ÉXITO ═══════════════════ */
+  const renderExito = () => (
+    <div className="flex flex-col items-center justify-center gap-y-6 text-center py-12 transition-opacity duration-300">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center"
+        style={{ background: "rgba(78, 204, 163, 0.1)" }}
+      >
+        <FaCheckCircle className="text-4xl" style={{ color: "#4ecca3" }} />
+      </div>
+      <h2 className="text-2xl font-bold" style={{ color: "#0f1923" }}>
+        ¡Solicitud enviada!
+      </h2>
+      <p className="text-sm max-w-sm leading-relaxed" style={{ color: "#6B7A8D" }}>
+        Hemos recibido tus datos correctamente. Nuestro equipo validará la
+        información y te contactaremos por email en breve.
+      </p>
+      <button
+        onClick={() => router.push("/login")}
+        className="py-3 px-8 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer mt-2"
+        style={{ background: "#0D1B2E", color: "#ffffff" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#152540")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "#0D1B2E")}
+      >
+        Ir al inicio de sesión
+      </button>
+    </div>
+  );
+
+  /* ═══════════════════ LAYOUT PRINCIPAL ═══════════════════ */
+  return (
+    <div
+      className="min-h-screen lg:h-screen flex flex-col lg:flex-row lg:overflow-hidden"
+      style={{ background: "#ffffff" }}
+    >
+      {/* ── PANEL IZQUIERDO: Branding + Stepper ── */}
+      <div
+        className="hidden lg:flex relative flex-col justify-between lg:w-[42%] px-10 sm:px-16 lg:px-16 py-12 lg:py-16"
+        style={{
+          background: "url('/background-login.jpg') no-repeat center center",
+          backgroundSize: "cover",
+        }}
+      >
+        {/* Decoración sutil */}
+        <div
+          className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-[0.04]"
+          style={{
+            background: "radial-gradient(circle, #3b9a8c 0%, transparent 70%)",
+            transform: "translate(30%, -30%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-[0.03]"
+          style={{
+            background: "radial-gradient(circle, #2563eb 0%, transparent 70%)",
+            transform: "translate(-40%, 40%)",
+          }}
+        />
+
+        {/* Contenido */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          {/* Brand */}
+          <p
+            className="text-xs font-semibold tracking-widest uppercase mb-8"
+            style={{ color: "rgba(255,255,255,0.35)" }}
+          >
+            EGM Atalayas
+          </p>
+
+          {/* Título */}
+          <h1
+            className="text-4xl sm:text-[2.75rem] font-bold leading-tight mb-4"
+            style={{ color: "#ffffff" }}
+          >
+            Registra tu
+            <br />
+            empresa
+          </h1>
+
+          {/* Subtítulo */}
+          <p
+            className="text-sm sm:text-[15px] leading-relaxed max-w-xs mb-14"
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
+            Únete al parque empresarial y accede a todos los servicios de la
+            comunidad.
+          </p>
+
+          {/* Stepper vertical */}
+          <div className="flex flex-col gap-0">
+            {steps.map((step, idx) => {
+              const isActive = paso >= step.num;
+              const isCurrent = paso === step.num;
+              return (
+                <div key={step.num} className="flex items-start gap-4">
+                  {/* Línea + Círculo */}
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+                      style={{
+                        background: isCurrent
+                          ? "#3b82f6"
+                          : isActive
+                          ? "rgba(78,204,163,0.15)"
+                          : "rgba(255,255,255,0.06)",
+                        color: isCurrent
+                          ? "#ffffff"
+                          : isActive
+                          ? "#4ecca3"
+                          : "rgba(255,255,255,0.25)",
+                        border: isCurrent
+                          ? "2px solid #3b82f6"
+                          : "2px solid transparent",
+                      }}
+                    >
+                      {isActive && !isCurrent ? "✓" : step.num}
+                    </div>
+                    {idx < steps.length - 1 && (
+                      <div
+                        className="w-px h-10"
+                        style={{
+                          background: isActive
+                            ? "rgba(78,204,163,0.2)"
+                            : "rgba(255,255,255,0.06)",
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Texto */}
+                  <div className="pt-1">
+                    <p
+                      className="text-sm font-semibold transition-colors duration-300"
+                      style={{
+                        color: isCurrent
+                          ? "#ffffff"
+                          : isActive
+                          ? "rgba(255,255,255,0.7)"
+                          : "rgba(255,255,255,0.3)",
+                      }}
+                    >
+                      {step.title}
+                    </p>
+                    <p
+                      className="text-xs mt-0.5"
+                      style={{
+                        color: isCurrent
+                          ? "rgba(255,255,255,0.45)"
+                          : "rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      {step.subtitle}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        <form onSubmit={paso === 3 ? handleSubmit : (e) => e.preventDefault()} className="flex-1 flex flex-col justify-center">
-          {paso === 1 && renderPaso1()}
-          {paso === 2 && renderPaso2()}
-          {paso === 3 && renderPaso3()}
-          {paso === 4 && renderExito()}
-        </form>
+        {/* Footer */}
+        <div className="relative z-10 mt-8 lg:mt-0">
+          <p
+            className="text-xs tracking-wide"
+            style={{ color: "rgba(255,255,255,0.2)" }}
+          >
+            Solicitud sujeta a revisión por EGM
+          </p>
+        </div>
+      </div>
 
+      {/* ── PANEL DERECHO: Formulario ── */}
+      <div
+        className="flex-1 lg:overflow-y-auto flex flex-col items-center justify-start lg:justify-center px-0 lg:px-16 xl:px-24 py-0 lg:py-12"
+        style={{ background: "#ffffff" }}
+      >
+        {/* Branding visible solo en móvil */}
+        <div
+          className="lg:hidden w-full px-6 py-10 mb-2 relative"
+          style={{
+            background: "url('/background-login.jpg') no-repeat center center",
+            backgroundSize: "cover",
+          }}
+        >
+          {/* Capa oscura extra para legibilidad en móvil si fuera necesario, o podemos dejarlo solo con la imagen */}
+          <div className="absolute inset-0 bg-blue-950/40" />
+          
+          <div className="relative z-10">
+            <p
+              className="text-xs font-semibold tracking-widest uppercase mb-3"
+              style={{ color: "rgba(255,255,255,0.7)" }}
+            >
+              EGM Atalayas
+            </p>
+            <h1
+              className="text-2xl font-bold mb-2"
+              style={{ color: "#ffffff" }}
+            >
+              Registra tu empresa
+            </h1>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.8)" }}
+            >
+              Únete al parque empresarial y accede a todos los servicios.
+            </p>
+
+            {/* Stepper horizontal en móvil */}
+            <div className="flex items-center gap-3 mt-6">
+              {steps.map((step, idx) => {
+                const isCurrent = paso === step.num;
+                const isDone = paso > step.num;
+                return (
+                  <React.Fragment key={step.num}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{
+                          background: isCurrent
+                            ? "#3b82f6"
+                            : isDone
+                            ? "rgba(78,204,163,0.3)"
+                            : "rgba(255,255,255,0.15)",
+                          color: isCurrent
+                            ? "#fff"
+                            : isDone
+                            ? "#4ecca3"
+                            : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        {isDone ? "✓" : step.num}
+                      </div>
+                      <span
+                        className="text-xs font-medium"
+                        style={{
+                          color: isCurrent
+                            ? "#ffffff"
+                            : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        {step.title}
+                      </span>
+                    </div>
+                    {idx < steps.length - 1 && (
+                      <div
+                        className="flex-1 h-px"
+                        style={{ background: "rgba(255,255,255,0.2)" }}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Formulario */}
+        <div className="w-full max-w-lg px-6 lg:px-0 py-8 lg:py-0">
+          {/* Botón volver (solo pasos activos) */}
+          {paso < 3 && (
+            <button
+              onClick={prevStep}
+              className="flex items-center gap-1.5 text-sm mb-8 transition-colors cursor-pointer"
+              style={{ color: "#6B7A8D" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
+            >
+              ← {paso === 1 ? "Iniciar sesión" : "Volver"}
+            </button>
+          )}
+
+          {/* Error */}
+          {errorMensaje && paso < 3 && (
+            <div
+              className="text-sm text-center py-3 px-4 rounded-lg mb-6"
+              style={{
+                background: "#FDECEA",
+                border: "1px solid #C84B31",
+                color: "#C84B31",
+              }}
+            >
+              {errorMensaje}
+            </div>
+          )}
+
+          {/* Contenido del paso */}
+          <form
+            onSubmit={paso === 2 ? handleSubmit : (e) => e.preventDefault()}
+            className="flex-1 flex flex-col justify-center"
+          >
+            {paso === 1 && renderPaso1()}
+            {paso === 2 && renderPaso2()}
+            {paso === 3 && renderExito()}
+          </form>
+
+          {/* Link a login */}
+          {paso < 3 && (
+            <div className="text-center mt-8">
+              <p className="text-sm" style={{ color: "#6B7A8D" }}>
+                ¿Ya tienes cuenta?{" "}
+                <Link
+                  href="/login"
+                  className="font-medium transition-colors"
+                  style={{ color: "#1B3F7E" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "#2A5298")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#1B3F7E")
+                  }
+                >
+                  Iniciar sesión
+                </Link>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
