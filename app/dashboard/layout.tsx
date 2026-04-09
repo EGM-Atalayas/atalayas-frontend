@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { usuario, setUsuario } = useAuth();
-  const [verificando, setVerificando]   = useState(true);
+  const [verificando, setVerificando] = useState(true);
   const router = useRouter();
 
   // Verificamos sesión activa contra el endpoint correcto
@@ -35,6 +35,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [verificando, usuario]);
 
+  // Redirigimos al invitado a la landing — no tiene acceso al dashboard
+  useEffect(() => {
+    if (!verificando && usuario?.codigoRol === "INVITADO") {
+      router.replace("/");
+    }
+  }, [verificando, usuario]);
+
   // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
     return (
@@ -58,7 +65,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!usuario) return null;
+  // Mientras redirige al invitado no renderizamos nada
+  if (!usuario || usuario.codigoRol === "INVITADO") return null;
 
   return (
     <div className="min-h-screen" style={{ background: "var(--gris-pagina)" }}>
