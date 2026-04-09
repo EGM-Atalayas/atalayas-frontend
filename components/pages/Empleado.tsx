@@ -1,230 +1,357 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Header from "../Header";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Noticia } from "@/lib/types/noticias";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import { NAV_ROUTES } from "@/lib/routes";
-
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-const moduleStatusStyle: Record<string, string> = {
-  completado:    "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "en progreso": "bg-blue-50 text-blue-700 border-blue-200",
-  pendiente:     "bg-gray-100 text-gray-400 border-gray-200",
-};
-
-interface Props {
-  logoEmpresaUrl?: string;
-  nombreEmpresa?: string;
-  usuario?: { nombre: string; empresaId?: string };
-}
-
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
-export default function Empleado({ logoEmpresaUrl, nombreEmpresa, usuario }: Props) {
-  const router = useRouter();
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
+export default function Empleado() {
+  const router      = useRouter();
+  const { usuario } = useAuth();
+
+  const [noticias, setNoticias]       = useState<Noticia[]>([]);
   const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
+  const [cargando, setCargando]       = useState(true);
 
   useEffect(() => {
-    getNoticias(usuario?.empresaId)
-      .then((data) => setNoticias(data.slice(0, 3)))
-      .catch(() => {});
+    async function cargarDatos() {
+      try {
+        const [noticiasData, modulosData] = await Promise.all([
+          getNoticias(usuario?.empresaId).catch(() => []),
+          getModulosConProgreso().catch(() => []),
+        ]);
+        setNoticias((noticiasData as Noticia[]).slice(0, 3));
+        setFormaciones(
+          (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden)
+        );
+      } finally {
+        setCargando(false);
+      }
+    }
 
-    getModulosConProgreso()
-      .then((data) => setFormaciones(data.sort((a, b) => a.orden - b.orden)))
-      .catch(() => {});
-  }, [usuario?.empresaId]);
+    if (usuario) cargarDatos();
+  }, [usuario]);
 
-  const completed = formaciones.filter((m) => m.status === "completado").length;
+  const completados = formaciones.filter((m) => m.status === "completado").length;
   const totalProgress =
     formaciones.length > 0
-      ? Math.round((completed / formaciones.length) * 100)
+      ? Math.round((completados / formaciones.length) * 100)
       : 0;
 
+  const siguientePaso = formaciones.find((f) => f.status !== "completado");
+
+  if (cargando) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div
+          className="w-6 h-6 border-2 rounded-full animate-spin"
+          style={{
+            borderColor:    "var(--gris-borde)",
+            borderTopColor: "var(--azul-egm)",
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      <Header
-        defaultActive="Inicio"
-        onNavChange={(item) => router.push(NAV_ROUTES[item])}
-      />
-      <main className="max-w-7xl mx-auto px-8 py-10">
+    <div>
+      {/* Saludo */}
+      <div className="mb-8">
+        <h1
+          className="text-2xl font-semibold tracking-tight"
+          style={{ color: "var(--texto-primario)" }}
+        >
+          Hola, {usuario?.nombre ?? "Empleado"}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+          {usuario?.nombreEmpresa ?? "Mi empresa"} ·{" "}
+          {new Date().toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+      </div>
 
-        {/* Título */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Hola, {usuario?.nombre || "Empleado"}
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {nombreEmpresa ?? "Empresa"} · {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
-          </p>
-        </div>
+      {/* Grid principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-        {/* Grid principal */}
-        <div className="grid grid-cols-3 gap-6 mb-6">
+        {/* Itinerario de formación */}
+        <div
+          className="lg:col-span-2 rounded-xl p-6"
+          style={{
+            background: "var(--blanco)",
+            border:     "1px solid var(--gris-borde)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+              Mi itinerario de formación
+            </h2>
+            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+              {completados} de {formaciones.length} módulos
+            </span>
+          </div>
 
-          {/* Itinerario */}
-          <div className="col-span-2 bg-white rounded-xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-gray-800">
-                Mi itinerario de formación y onboarding
-              </h2>
-              <span className="text-xs text-gray-400">
-                {completed} de {formaciones.length} módulos
-              </span>
-            </div>
+          {/* Barra de progreso */}
+          <div
+            className="h-1.5 rounded-full overflow-hidden mb-5"
+            style={{ background: "var(--gris-superficie)" }}
+          >
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width:      `${totalProgress}%`,
+                background: "var(--verde-oliva)",
+              }}
+            />
+          </div>
 
-            {/* Barra de progreso global */}
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
-              <div
-                className="h-full bg-gray-900 rounded-full transition-all"
-                style={{ width: `${totalProgress}%` }}
-              />
-            </div>
-
-            {/* Siguiente paso */}
-            {formaciones.find((f) => f.status !== "completado") && (
-              <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
-                    🚀
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                      Tu siguiente paso
-                    </p>
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      {formaciones.find((f) => f.status !== "completado")?.nombre}
-                    </h3>
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push(NAV_ROUTES["Formación"])}
-                  className="bg-blue-600 text-white text-[11px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          {/* Siguiente paso */}
+          {siguientePaso && (
+            <div
+              className="mb-5 rounded-xl p-4 flex items-center justify-between"
+              style={{
+                background: "var(--azul-egm-light)",
+                border:     "1px solid var(--gris-borde)",
+              }}
+            >
+              <div>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-wider mb-0.5"
+                  style={{ color: "var(--azul-egm)" }}
                 >
-                  Continuar →
-                </button>
+                  Tu siguiente paso
+                </p>
+                <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                  {siguientePaso.nombre}
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => router.push("/dashboard/formacion")}
+                className="text-xs font-medium px-4 py-2 rounded-lg transition-colors shrink-0 ml-4"
+                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+              >
+                Continuar →
+              </button>
+            </div>
+          )}
 
-            {/* Lista módulos */}
+          {/* Lista de módulos */}
+          {formaciones.length === 0 ? (
+            <p className="text-xs py-6 text-center" style={{ color: "var(--texto-muted)" }}>
+              No hay módulos asignados todavía.
+            </p>
+          ) : (
             <div className="flex flex-col gap-2">
               {formaciones.map((m) => (
                 <div
                   key={m.moduloId}
-                  className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/80 hover:border-gray-200 transition-all group"
+                  className="flex items-center justify-between rounded-lg px-4 py-3 transition-colors"
+                  style={{
+                    border:     "1px solid var(--gris-borde)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        m.status === "completado"
-                          ? "bg-emerald-400"
-                          : m.status === "en progreso"
-                          ? "bg-blue-400"
-                          : "bg-gray-200"
-                      }`}
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        background:
+                          m.status === "completado"
+                            ? "var(--exito)"
+                            : m.status === "en progreso"
+                            ? "var(--azul-egm)"
+                            : "var(--gris-borde)",
+                      }}
                     />
-                    <p className="text-xs font-medium text-gray-800">{m.nombre}</p>
+                    <p className="text-xs font-medium" style={{ color: "var(--texto-primario)" }}>
+                      {m.nombre}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                        moduleStatusStyle[m.status] ?? moduleStatusStyle.pendiente
-                      }`}
-                    >
-                      {m.status}
-                    </span>
-                    <button
-                      onClick={() => router.push(NAV_ROUTES["Formación"])}
-                      className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      Ir →
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Servicios y Carnés */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-800 mb-5">Mis Servicios</h2>
-              <div className="flex flex-col gap-3">
-                {[
-                  { icon: "🚗", name: "Coche compartido", desc: "Coordina rutas con compañeros" },
-                  { icon: "🍽️", name: "Descuentos locales", desc: "Precios especiales en el parque" },
-                ].map((p, idx) => (
-                  <div key={idx} className="border rounded-lg px-3 py-2.5 border-gray-100 bg-gray-50/30">
-                    <p className="text-xs font-medium text-gray-800">{p.icon} {p.name}</p>
-                    <p className="text-[11px] text-gray-400 leading-snug mt-1">{p.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-800 mb-4">Mis Carnés</h2>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-lg shadow-sm border border-gray-100">
-                    🗝️
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[11px] font-semibold text-gray-800">P.R.L. Alturas</p>
-                    <p className="text-[10px] text-gray-400">Todo en orden</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Noticias recientes */}
-        <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-gray-800">Últimas noticias</h2>
-            <Link href="/dashboard/noticias" className="text-xs text-gray-400 hover:text-gray-700">
-              Ver todas →
-            </Link>
-          </div>
-
-          {noticias.length === 0 ? (
-            <p className="text-xs text-gray-400">No hay noticias publicadas aún.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {noticias.map((n) => (
-                <div
-                  key={n.anuncioId}
-                  className="flex items-start justify-between border border-gray-100 rounded-lg px-4 py-3 hover:bg-gray-50/60 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    {n.esGlobal && (
-                      <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        Global
-                      </span>
-                    )}
-                    <p className="text-xs font-medium text-gray-800 truncate mt-1">{n.titulo}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{n.mensaje}</p>
-                  </div>
-                  <span className="text-[10px] text-gray-400 ml-4 shrink-0">
-                    {new Date(n.creadoEn).toLocaleDateString("es-ES", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </span>
+                  <StatusBadge status={m.status} />
                 </div>
               ))}
             </div>
           )}
         </div>
 
-      </main>
+        {/* Panel lateral */}
+        <div className="flex flex-col gap-6">
+
+          {/* Mis servicios */}
+          <div
+            className="rounded-xl p-6"
+            style={{
+              background: "var(--blanco)",
+              border:     "1px solid var(--gris-borde)",
+            }}
+          >
+            <h2 className="text-sm font-semibold mb-4" style={{ color: "var(--texto-primario)" }}>
+              Mis servicios
+            </h2>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: "Coche compartido",  desc: "Coordina rutas con compañeros" },
+                { label: "Descuentos locales", desc: "Precios especiales en el parque" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-lg px-3 py-2.5"
+                  style={{
+                    border:     "1px solid var(--gris-borde)",
+                    background: "var(--gris-pagina)",
+                  }}
+                >
+                  <p className="text-xs font-medium" style={{ color: "var(--texto-primario)" }}>
+                    {s.label}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                    {s.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mis carnés */}
+          <div
+            className="rounded-xl p-6"
+            style={{
+              background: "var(--blanco)",
+              border:     "1px solid var(--gris-borde)",
+            }}
+          >
+            <h2 className="text-sm font-semibold mb-4" style={{ color: "var(--texto-primario)" }}>
+              Mis carnés
+            </h2>
+            <div
+              className="flex items-center gap-3 rounded-lg p-3"
+              style={{
+                background: "var(--gris-pagina)",
+                border:     "1px solid var(--gris-borde)",
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded flex items-center justify-center text-sm shrink-0"
+                style={{
+                  background: "var(--blanco)",
+                  border:     "1px solid var(--gris-borde)",
+                }}
+              >
+                🗝️
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold" style={{ color: "var(--texto-primario)" }}>
+                  P.R.L. Alturas
+                </p>
+                <p className="text-[10px]" style={{ color: "var(--exito)" }}>
+                  Todo en orden
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Últimas noticias */}
+      <div
+        className="rounded-xl p-6"
+        style={{
+          background: "var(--blanco)",
+          border:     "1px solid var(--gris-borde)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+            Últimas noticias
+          </h2>
+          <Link
+            href="/dashboard/noticias"
+            className="text-xs font-medium hover:underline"
+            style={{ color: "var(--azul-egm)" }}
+          >
+            Ver todas →
+          </Link>
+        </div>
+
+        {noticias.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
+            No hay noticias publicadas aún.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {noticias.map((n) => (
+              <div
+                key={n.anuncioId}
+                className="flex items-start justify-between rounded-lg px-4 py-3 transition-colors"
+                style={{
+                  border:     "1px solid var(--gris-borde)",
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <div className="flex-1 min-w-0">
+                  {n.esGlobal && (
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: "var(--azul-egm-light)",
+                        color:      "var(--azul-egm)",
+                      }}
+                    >
+                      EGM Atalayas
+                    </span>
+                  )}
+                  <p className="text-xs font-medium mt-1 truncate" style={{ color: "var(--texto-primario)" }}>
+                    {n.titulo}
+                  </p>
+                  <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>
+                    {n.mensaje}
+                  </p>
+                </div>
+                <span className="text-[10px] ml-4 shrink-0" style={{ color: "var(--texto-muted)" }}>
+                  {new Date(n.creadoEn).toLocaleDateString("es-ES", {
+                    day:   "numeric",
+                    month: "short",
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+// ── SUBCOMPONENTE ─────────────────────────────────────────────────────────────
+function StatusBadge({ status }: { status: string }) {
+  const estilos: Record<string, { bg: string; color: string }> = {
+    completado:    { bg: "var(--exito-light)",      color: "var(--exito)" },
+    "en progreso": { bg: "var(--azul-egm-light)",   color: "var(--azul-egm)" },
+    pendiente:     { bg: "var(--gris-superficie)",  color: "var(--texto-muted)" },
+  };
+
+  const estilo = estilos[status] ?? estilos.pendiente;
+
+  return (
+    <span
+      className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+      style={{ background: estilo.bg, color: estilo.color }}
+    >
+      {status}
+    </span>
   );
 }

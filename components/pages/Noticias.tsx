@@ -1,42 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "../Header";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "../../lib/api/noticias";
 import type { Noticia, NoticiaInput } from "../../lib/types/noticias";
-import { useRouter } from "next/navigation";
-import { NAV_ROUTES } from "@/lib/routes";
 
+// ── CONSTANTES ────────────────────────────────────────────────────────────────
 const EMPTY_FORM: NoticiaInput = {
-  titulo: "",
-  mensaje: "",
-  esGlobal: false,
+  titulo:    "",
+  mensaje:   "",
+  esGlobal:  false,
   empresaId: null,
 };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", {
-    day: "numeric",
+    day:   "numeric",
     month: "short",
-    year: "numeric",
+    year:  "numeric",
   });
 }
 
+// ── COMPONENT ─────────────────────────────────────────────────────────────────
 export default function NoticiasPage() {
   const { usuario } = useAuth();
-  const router = useRouter();
 
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editando, setEditando] = useState<Noticia | null>(null);
-  const [form, setForm] = useState<NoticiaInput>(EMPTY_FORM);
+  const [noticias, setNoticias]   = useState<Noticia[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [showForm, setShowForm]   = useState(false);
+  const [editando, setEditando]   = useState<Noticia | null>(null);
+  const [form, setForm]           = useState<NoticiaInput>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
 
   const esAdminGeneral = usuario?.codigoRol === "ROLE_ADMIN";
-  const esAdmin = esAdminGeneral || usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
+  const esAdmin        = esAdminGeneral || usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
 
   useEffect(() => {
     cargarNoticias();
@@ -46,7 +44,7 @@ export default function NoticiasPage() {
     setLoading(true);
     try {
       const empresaId = esAdminGeneral ? undefined : usuario?.empresaId;
-      const data = await getNoticias(empresaId);
+      const data      = await getNoticias(empresaId);
       setNoticias(data.filter((n) => n.activo));
     } catch {
       setError("No se pudieron cargar las noticias");
@@ -56,19 +54,16 @@ export default function NoticiasPage() {
   }
 
   function abrirCrear() {
-    setForm({
-      ...EMPTY_FORM,
-      empresaId: esAdminGeneral ? null : usuario?.empresaId ?? null,
-    });
+    setForm({ ...EMPTY_FORM, empresaId: esAdminGeneral ? null : usuario?.empresaId ?? null });
     setEditando(null);
     setShowForm(true);
   }
 
   function abrirEditar(noticia: Noticia) {
     setForm({
-      titulo: noticia.titulo,
-      mensaje: noticia.mensaje,
-      esGlobal: noticia.esGlobal,
+      titulo:    noticia.titulo,
+      mensaje:   noticia.mensaje,
+      esGlobal:  noticia.esGlobal,
       empresaId: noticia.empresaId,
     });
     setEditando(noticia);
@@ -115,173 +110,301 @@ export default function NoticiasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      {!esAdminGeneral && (
-        <Header
-          defaultActive="Comunicación"
-          onNavChange={(item) => router.push(NAV_ROUTES[item])}
-          logoEmpresa={usuario?.logoEmpresaUrl}
-        />
+    <>
+      {/* Cabecera */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1
+            className="text-2xl font-semibold tracking-tight"
+            style={{ color: "var(--texto-primario)" }}
+          >
+            Comunicación
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+            {esAdminGeneral
+              ? "Todos los comunicados del parque empresarial"
+              : `Comunicados de ${usuario?.nombreEmpresa ?? "tu empresa"}`}
+          </p>
+        </div>
+        {esAdmin && (
+          <button
+            onClick={abrirCrear}
+            className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+          >
+            + Nuevo anuncio
+          </button>
+        )}
+      </div>
+
+      {/* Error global */}
+      {error && !showForm && (
+        <div
+          className="mb-6 text-xs px-4 py-3 rounded-lg"
+          style={{
+            background: "var(--error-light)",
+            border:     "1px solid var(--error)",
+            color:      "var(--error)",
+          }}
+        >
+          {error}
+        </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-8 py-10">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              Noticias y comunicados
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {esAdminGeneral
-                ? "Todos los comunicados del parque empresarial"
-                : `Comunicados de ${usuario?.nombreEmpresa ?? "tu empresa"}`}
-            </p>
+      {/* Formulario */}
+      {showForm && (
+        <div
+          className="rounded-xl p-6 mb-8"
+          style={{
+            background: "var(--blanco)",
+            border:     "1px solid var(--gris-borde)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+              {editando ? "Editar noticia" : "Nueva noticia"}
+            </h2>
+            <button
+              onClick={cerrarForm}
+              className="text-lg leading-none"
+              style={{ color: "var(--texto-muted)" }}
+            >
+              ×
+            </button>
           </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                Título <span style={{ color: "var(--error)" }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ej: Jornada de puertas abiertas"
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
+                style={{
+                  border:     "1px solid var(--gris-borde)",
+                  background: "var(--blanco)",
+                  color:      "var(--texto-primario)",
+                }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                Descripción <span style={{ color: "var(--error)" }}>*</span>
+              </label>
+              <textarea
+                value={form.mensaje}
+                onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                placeholder="Escribe el contenido del comunicado..."
+                rows={4}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none transition-colors"
+                style={{
+                  border:     "1px solid var(--gris-borde)",
+                  background: "var(--blanco)",
+                  color:      "var(--texto-primario)",
+                }}
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, esGlobal: !form.esGlobal })}
+                className="relative w-9 h-5 rounded-full transition-colors"
+                style={{ background: form.esGlobal ? "var(--azul-egm)" : "var(--gris-superficie)" }}
+              >
+                <span
+                  className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all"
+                  style={{ left: form.esGlobal ? "calc(100% - 18px)" : "2px" }}
+                />
+              </button>
+              <label className="text-xs" style={{ color: "var(--texto-secundario)" }}>
+                Visible para todos (anuncio global)
+              </label>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-xs mt-3" style={{ color: "var(--error)" }}>
+              {error}
+            </p>
+          )}
+
+          <div
+            className="flex items-center justify-end gap-3 pt-4 mt-4"
+            style={{ borderTop: "1px solid var(--gris-superficie)" }}
+          >
+            <button
+              onClick={cerrarForm}
+              className="text-sm px-3 py-1.5 transition-colors"
+              style={{ color: "var(--texto-secundario)" }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50"
+              style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+            >
+              {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar noticia"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Estado cargando */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <div
+            className="w-6 h-6 border-2 rounded-full animate-spin"
+            style={{
+              borderColor:    "var(--gris-borde)",
+              borderTopColor: "var(--azul-egm)",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Estado vacío */}
+      {!loading && noticias.length === 0 && (
+        <div
+          className="flex flex-col items-center justify-center py-20 rounded-xl"
+          style={{
+            background: "var(--blanco)",
+            border:     "1px solid var(--gris-borde)",
+          }}
+        >
+          <p className="text-sm font-medium" style={{ color: "var(--texto-muted)" }}>
+            No hay noticias publicadas
+          </p>
           {esAdmin && (
             <button
               onClick={abrirCrear}
-              className="bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              className="mt-3 text-xs font-medium hover:underline"
+              style={{ color: "var(--azul-egm)" }}
             >
-              + Nueva noticia
+              Crea la primera →
             </button>
           )}
         </div>
+      )}
 
-        {error && !showForm && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 text-xs px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {showForm && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 mb-8">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-sm font-semibold text-gray-800">
-                {editando ? "Editar noticia" : "Nueva noticia"}
-              </h2>
-              <button onClick={cerrarForm} className="text-gray-400 hover:text-gray-700 text-lg leading-none">
-                ×
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Título <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.titulo}
-                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                  placeholder="Ej: Jornada de puertas abiertas"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Descripción <span className="text-red-400">*</span>
-                </label>
-                <textarea
-                  value={form.mensaje}
-                  onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                  placeholder="Escribe el contenido del comunicado..."
-                  rows={4}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-gray-400 transition-colors resize-none"
-                />
-              </div>
-
-              <div className="col-span-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, esGlobal: !form.esGlobal })}
-                  className={`relative w-9 h-5 rounded-full transition-colors ${form.esGlobal ? "bg-gray-900" : "bg-gray-200"}`}
-                >
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${form.esGlobal ? "left-4" : "left-0.5"}`} />
-                </button>
-                <label className="text-xs text-gray-600">Visible para todos (anuncio global)</label>
-              </div>
-            </div>
-
-            {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
-
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-50">
-              <button onClick={cerrarForm} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5">
-                Cancelar
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-gray-900 text-white text-xs font-medium px-5 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50"
-              >
-                {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar noticia"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-sm text-gray-400">Cargando noticias...</p>
-          </div>
-        ) : noticias.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
-            <p className="text-sm font-medium text-gray-400">No hay noticias publicadas</p>
-            {esAdmin && (
-              <button onClick={abrirCrear} className="mt-3 text-xs text-gray-400 hover:text-gray-700">
-                Crea la primera →
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {noticias.map((n) => (
-              <div
-                key={n.anuncioId}
-                className="bg-white rounded-xl border border-gray-100 px-6 py-4 hover:border-gray-200 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      {n.esGlobal && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-gray-100 text-gray-600 border-gray-200">
-                          Global
-                        </span>
-                      )}
-                      {esAdminGeneral && n.empresaId && (
-                        <span className="text-[10px] text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">
-                          Empresa #{n.empresaId.slice(0, 8)}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-gray-400 ml-auto">
-                        {formatDate(n.creadoEn)}
+      {/* Lista de noticias */}
+      {!loading && noticias.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {noticias.map((n) => (
+            <div
+              key={n.anuncioId}
+              className="rounded-xl px-6 py-4 transition-colors"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--gris-superficie)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {n.esGlobal && (
+                      <span
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "var(--azul-egm-light)",
+                          color:      "var(--azul-egm)",
+                        }}
+                      >
+                        EGM Atalayas
                       </span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1 truncate">{n.titulo}</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{n.mensaje}</p>
+                    )}
+                    {!n.esGlobal && (
+                      <span
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "var(--verde-oliva-light)",
+                          color:      "var(--verde-oliva)",
+                        }}
+                      >
+                        Tu empresa
+                      </span>
+                    )}
+                    {esAdminGeneral && n.empresaId && (
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "var(--gris-superficie)",
+                          color:      "var(--texto-muted)",
+                          border:     "1px solid var(--gris-borde)",
+                        }}
+                      >
+                        Empresa #{n.empresaId.slice(0, 8)}
+                      </span>
+                    )}
+                    <span
+                      className="text-[11px] ml-auto"
+                      style={{ color: "var(--texto-muted)" }}
+                    >
+                      {formatDate(n.creadoEn)}
+                    </span>
                   </div>
-
-                  {esAdmin && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => abrirEditar(n)}
-                        className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDesactivar(n.anuncioId)}
-                        className="text-xs text-red-400 hover:text-red-600 border border-red-100 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  )}
+                  <h3
+                    className="text-sm font-semibold mb-1 truncate"
+                    style={{ color: "var(--texto-primario)" }}
+                  >
+                    {n.titulo}
+                  </h3>
+                  <p
+                    className="text-xs leading-relaxed line-clamp-2"
+                    style={{ color: "var(--texto-secundario)" }}
+                  >
+                    {n.mensaje}
+                  </p>
                 </div>
+
+                {esAdmin && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => abrirEditar(n)}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        color:      "var(--texto-secundario)",
+                        border:     "1px solid var(--gris-borde)",
+                        background: "transparent",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDesactivar(n.anuncioId)}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        color:      "var(--error)",
+                        border:     "1px solid var(--error-light)",
+                        background: "transparent",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }

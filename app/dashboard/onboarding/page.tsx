@@ -1,9 +1,7 @@
 "use client";
 
-import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { NAV_ROUTES } from "@/lib/routes";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -18,13 +16,11 @@ export default function OnboardingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] font-sans">
-      <Header defaultActive="Onboarding" onNavChange={(item) => router.push(NAV_ROUTES[item])} />
-      <main className="max-w-3xl mx-auto px-8 py-10">
-        <div className="mb-10 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Tu ruta de incorporación</h1>
-          <p className="text-sm text-gray-400 mt-2">Sigue estos pasos para completar tu llegada a {usuario?.nombreEmpresa || "la empresa"}.</p>
-        </div>
+    <div>
+      <div className="mb-10 text-center">
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Tu ruta de incorporación</h1>
+        <p className="text-sm text-gray-400 mt-2">Sigue estos pasos para completar tu llegada a {usuario?.nombreEmpresa || "la empresa"}.</p>
+      </div>
 
         <div className="relative">
           {/* Línea vertical central */}
@@ -50,7 +46,6 @@ export default function OnboardingPage() {
             ))}
           </div>
         </div>
-      </main>
     </div>
   );
 }

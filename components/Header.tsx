@@ -2,33 +2,19 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import logo from "@/public/logo.webp";
 import { useAuth } from "@/context/AuthContext";
-import { API_URL, apiFetch } from "@/lib/api";
-
+import { apiFetch, API_URL } from "@/lib/api";
+import { NAV_ROUTES, NAV_ITEMS_BY_ROLE } from "@/lib/routes";
 
 // ── TYPES ─────────────────────────────────────────────────────────────────────
-type NavItem = "Inicio" | "Onboarding" | "Formación" | "Comunicación" | "Administración";
-
 interface HeaderProps {
-  defaultActive?: NavItem;
-  onNavChange?: (item: NavItem) => void;
   logoEmpresa?: string;
 }
 
-
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
-const NAV_ITEMS: NavItem[] = [
-  "Inicio",
-  "Onboarding",
-  "Formación",
-  "Comunicación",
-  "Administración",
-];
-
-const POLLING_INTERVAL = 30_000; // 30 segundos
-
+const POLLING_INTERVAL = 30_000;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function getInitials(nombre: string): string {
@@ -39,25 +25,25 @@ function getInitials(nombre: string): string {
     .join("");
 }
 
-
 // ── MAIN HEADER ───────────────────────────────────────────────────────────────
-export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpresa }: HeaderProps) {
-  const [active, setActive] = useState<NavItem>(defaultActive);
-  const [menuOpen, setMenuOpen] = useState(false);
+export default function Header({ logoEmpresa }: HeaderProps) {
+  const [menuOpen, setMenuOpen]   = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [noLeidas, setNoLeidas] = useState(0);
+  const [noLeidas, setNoLeidas]   = useState(0);
 
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef  = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+
+  const router   = useRouter();
+  const pathname = usePathname();
   const { usuario, logout } = useAuth();
 
-  
-  // ── CONTADOR DE NOTIFICACIONES NO LEÍDAS ──────────────────────────────────
-  const fetchContador = useCallback(async () => {
+  // Items de nav según rol — si el rol no está en la tabla, array vacío
+  const navItems = NAV_ITEMS_BY_ROLE[usuario?.codigoRol ?? ""] ?? [];
 
-    // Solo para usuarios autenticados — invitados no tienen notificaciones
-    if (!usuario || usuario.codigoRol === "INVITADO") return;
+  // ── CONTADOR NOTIFICACIONES ───────────────────────────────────────────────
+  const fetchContador = useCallback(async () => {
+    if (!usuario) return;
     try {
       const res = await apiFetch(`${API_URL}/notificaciones/me/contador`);
       if (!res.ok) return;
@@ -68,7 +54,6 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
     }
   }, [usuario]);
 
-  // Carga inicial + polling cada 30s
   useEffect(() => {
     fetchContador();
     const interval = setInterval(fetchContador, POLLING_INTERVAL);
@@ -76,7 +61,6 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
   }, [fetchContador]);
 
   // ── CERRAR DROPDOWNS AL CLICAR FUERA ─────────────────────────────────────
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -90,7 +74,6 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
   // ── MARCAR TODAS COMO LEÍDAS ──────────────────────────────────────────────
   const marcarTodasLeidas = async () => {
     try {
@@ -101,47 +84,43 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
     }
   };
 
-  const handleNavClick = (item: NavItem) => {
-    setActive(item);
-    onNavChange?.(item);
-  };
-
   const handleLogout = async () => {
     await logout();
     router.push("/");
   };
 
-  const initials = usuario?.nombre ? getInitials(usuario.nombre) : "?";
+  const initials      = usuario?.nombre ? getInitials(usuario.nombre) : "?";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
+
   const rolMostrado: Record<string, string> = {
-    ROLE_ADMIN: "Administrador general",
+    ROLE_ADMIN:         "Administrador general",
     ROLE_ADMIN_EMPRESA: "Admin empresa",
-    ROLE_EMPLEADO: "Empleado",
-    INVITADO: "Invitado",
+    ROLE_EMPLEADO:      "Empleado",
   };
 
   return (
-    <header className="w-full bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+    <header
+      className="w-full sticky top-0 z-50"
+      style={{
+        background:   "var(--blanco)",
+        borderBottom: "1px solid var(--gris-borde)",
+      }}
+    >
       <div className="max-w-7xl mx-auto px-8 h-16 flex items-center gap-0">
 
-        {/* Logo EGM */}
-        <div className="flex items-center h-full pr-7 mr-9">
-          <Image src={logo} alt="Logo" className="h-24 w-auto" />
+        {/* Logo */}
+        <div className="flex items-center h-full pr-7 mr-6 shrink-0">
+          <Image src={logo} alt="Atalayas EGM" className="h-24 w-auto" />
         </div>
 
         {/* Navegación */}
         <nav className="flex items-center gap-1 flex-1">
-          {NAV_ITEMS.filter((item) => {
-            if (item === "Administración") {
-              return usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
-            }
-            return true;
-          }).map((item) => (
+          {navItems.map((item) => (
             <NavButton
               key={item}
               label={item}
-              isActive={active === item}
-              onClick={() => handleNavClick(item)}
+              isActive={pathname === NAV_ROUTES[item]}
+              onClick={() => router.push(NAV_ROUTES[item])}
             />
           ))}
         </nav>
@@ -149,91 +128,112 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
         {/* Lado derecho */}
         <div className="shrink-0 ml-8 flex items-center gap-3">
 
-          {/* ── Campana de notificaciones ── */}
-          {usuario && usuario.codigoRol !== "INVITADO" && (
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => {
-                  setNotifOpen((prev) => !prev);
-                  if (!notifOpen && noLeidas > 0) marcarTodasLeidas();
-                }}
-                className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"
-                aria-label="Notificaciones"
-              >
-                {/* Icono campana */}
-                <svg
-                  className="w-5 h-5 text-slate-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+          {/* Campana notificaciones */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => {
+                setNotifOpen((prev) => !prev);
+                if (!notifOpen && noLeidas > 0) marcarTodasLeidas();
+              }}
+              className="relative w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: "var(--texto-secundario)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              aria-label="Notificaciones"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+
+              {/* Badge contador */}
+              {noLeidas > 0 && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none"
+                  style={{ background: "var(--error)" }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-
-                {/* Badge contador */}
-                {noLeidas > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                    {noLeidas > 99 ? "99+" : noLeidas}
-                  </span>
-                )}
-              </button>
-
-              {/* Dropdown notificaciones */}
-              {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <p className="text-xs font-semibold text-slate-800">Notificaciones</p>
-                    <button
-                      onClick={() => router.push("/dashboard/noticias")}
-                      className="text-[11px] text-blue-600 hover:underline font-medium"
-                    >
-                      Ver todas →
-                    </button>
-                  </div>
-                  <div className="py-3 px-4 text-center">
-                    {noLeidas === 0 ? (
-                      <p className="text-xs text-slate-400">Todo al día — sin notificaciones nuevas</p>
-                    ) : (
-                      <p className="text-xs text-slate-500">
-                        Tienes <span className="font-semibold text-slate-800">{noLeidas}</span> notificación{noLeidas !== 1 ? "es" : ""} sin leer
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  {noLeidas > 99 ? "99+" : noLeidas}
+                </span>
               )}
-            </div>
-          )}
+            </button>
+
+            {/* Dropdown notificaciones */}
+            {notifOpen && (
+              <div
+                className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg z-50 overflow-hidden"
+                style={{
+                  background:   "var(--blanco)",
+                  border:       "1px solid var(--gris-borde)",
+                }}
+              >
+                <div
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{ borderBottom: "1px solid var(--gris-superficie)" }}
+                >
+                  <p className="text-xs font-semibold" style={{ color: "var(--texto-primario)" }}>
+                    Notificaciones
+                  </p>
+                  <button
+                    onClick={() => { setNotifOpen(false); router.push("/dashboard/noticias"); }}
+                    className="text-[11px] font-medium hover:underline"
+                    style={{ color: "var(--azul-egm)" }}
+                  >
+                    Ver todas →
+                  </button>
+                </div>
+                <div className="py-3 px-4 text-center">
+                  {noLeidas === 0 ? (
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      Todo al día — sin notificaciones nuevas
+                    </p>
+                  ) : (
+                    <p className="text-xs" style={{ color: "var(--texto-secundario)" }}>
+                      Tienes{" "}
+                      <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>
+                        {noLeidas}
+                      </span>{" "}
+                      notificación{noLeidas !== 1 ? "es" : ""} sin leer
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Separador */}
-          <div className="w-px h-5 bg-slate-200" />
+          <div className="w-px h-5" style={{ background: "var(--gris-borde)" }} />
 
-          {/* Avatar + menú */}
+          {/* Avatar + menú usuario */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-xs font-semibold select-none">
+              {/* Avatar */}
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold select-none overflow-hidden"
+                style={{
+                  background: "var(--azul-egm-light)",
+                  color:      "var(--azul-egm)",
+                  border:     "1px solid var(--gris-borde)",
+                }}
+              >
                 {logoEmpresa ? (
-                  <Image src={logoEmpresa} alt="Logo empresa" className="w-full h-full object-cover rounded-full" width={32} height={32} />
+                  <Image src={logoEmpresa} alt="Logo empresa" width={32} height={32} className="object-cover" />
                 ) : (
                   initials
                 )}
               </div>
-              <span className="text-sm font-semibold text-slate-700 max-w-30 truncate">
+
+              <span className="text-sm font-semibold max-w-[120px] truncate" style={{ color: "var(--texto-primario)" }}>
                 {nombreMostrado}
               </span>
+
               <svg
-                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                style={{ color: "var(--texto-muted)" }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -241,36 +241,48 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
 
             {/* Dropdown usuario */}
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-md py-1 z-50">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-800 truncate">{nombreMostrado}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+              <div
+                className="absolute right-0 mt-2 w-56 rounded-xl shadow-md py-1 z-50"
+                style={{
+                  background: "var(--blanco)",
+                  border:     "1px solid var(--gris-borde)",
+                }}
+              >
+                {/* Info usuario */}
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--gris-superficie)" }}>
+                  <p className="text-xs font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+                    {nombreMostrado}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--texto-muted)" }}>
                     {rolMostrado[usuario?.codigoRol ?? ""] ?? usuario?.codigoRol}
                   </p>
                   {usuario?.nombreEmpresa && (
-                    <p className="text-[11px] text-slate-400 truncate">{usuario.nombreEmpresa}</p>
+                    <p className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>
+                      {usuario.nombreEmpresa}
+                    </p>
                   )}
                 </div>
 
+                {/* Acciones */}
                 <div className="py-1">
                   <button
                     onClick={() => { setMenuOpen(false); router.push("/dashboard"); }}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm transition-colors"
+                    style={{ color: "var(--texto-secundario)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     Mi perfil
                   </button>
-                  <button
-                    onClick={() => { setMenuOpen(false); router.push("/dashboard"); }}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
-                  >
-                    Configuración
-                  </button>
                 </div>
 
-                <div className="border-t border-slate-100 py-1">
+                <div className="py-1" style={{ borderTop: "1px solid var(--gris-superficie)" }}>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors font-medium"
+                    className="w-full text-left px-4 py-2 text-sm font-medium transition-colors"
+                    style={{ color: "var(--error)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     Cerrar sesión
                   </button>
@@ -279,41 +291,45 @@ export default function Header({ defaultActive = "Inicio", onNavChange, logoEmpr
             )}
           </div>
         </div>
-
       </div>
     </header>
   );
 }
 
-
 // ── NAVBUTTON ─────────────────────────────────────────────────────────────────
 interface NavButtonProps {
-  label: string;
+  label:    string;
   isActive: boolean;
-  onClick: () => void;
+  onClick:  () => void;
 }
 
 function NavButton({ label, isActive, onClick }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`
-        relative px-4 py-1.5 text-sm font-semibold rounded-md
-        transition-colors duration-150 whitespace-nowrap border-none cursor-pointer
-        ${isActive
-          ? "text-blue-700"
-          : "text-slate-500 hover:text-blue-700 hover:bg-blue-50"
-        }
-      `}
+      className="relative px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 whitespace-nowrap border-none cursor-pointer"
+      style={{
+        color:      isActive ? "var(--azul-egm)"      : "var(--texto-secundario)",
+        background: isActive ? "var(--azul-egm-light)" : "transparent",
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) e.currentTarget.style.background = "var(--gris-superficie)";
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) e.currentTarget.style.background = "transparent";
+      }}
     >
       {label}
-      <span
-        className={`
-          absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-blue-700
-          transition-all duration-200
-          ${isActive ? "w-[calc(100%-24px)]" : "w-0"}
-        `}
-      />
+      {/* Indicador activo */}
+      {isActive && (
+        <span
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+          style={{
+            width:      "calc(100% - 24px)",
+            background: "var(--azul-egm)",
+          }}
+        />
+      )}
     </button>
   );
 }
