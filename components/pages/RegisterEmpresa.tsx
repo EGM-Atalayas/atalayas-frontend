@@ -475,10 +475,10 @@ const RegisterEmpresa: React.FC = () => {
     >
       {/* ── PANEL IZQUIERDO: Branding + Stepper ── */}
       <div
-        className="hidden lg:flex relative flex-col justify-between lg:w-[42%] px-10 sm:px-16 lg:px-16 py-12 lg:py-16"
+        className="hidden lg:flex relative flex-col justify-between lg:w-[48%] px-10 sm:px-16 lg:px-16 py-12 lg:py-16"
         style={{
-          background: "url('/background-login.jpg') no-repeat center center",
-          backgroundSize: "cover",
+          background: "url('/background-empresa.jpg') no-repeat center",
+          backgroundSize: "cover"
         }}
       >
         {/* Decoración sutil */}
@@ -618,7 +618,7 @@ const RegisterEmpresa: React.FC = () => {
         <div
           className="lg:hidden w-full px-6 py-10 mb-2 relative"
           style={{
-            background: "url('/background-login.jpg') no-repeat center center",
+            background: "url('/background-empresa.jpg') no-repeat center center",
             backgroundSize: "cover",
           }}
         >

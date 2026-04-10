@@ -138,7 +138,7 @@ const LoginPage: React.FC = () => {
         style={{ background: "#ffffff" }}
       >
         {/* Branding visible solo en móvil */}
-        <div className="lg:hidden w-full px-6 py-10 mb-2" style={{ background: "linear-gradient(160deg, #0c2340 0%, #0a1e35 40%, #081a2e 70%, #0d2847 100%)" }}>
+        <div className="lg:hidden w-full px-6 py-10 mb-2" style={{ background: "url('/background-login.jpg')" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="h-20 w-auto mb-4 brightness-0 invert mx-auto block" />
           <p className="text-base font-medium mb-2" style={{ color: "#4ecca3" }}>
