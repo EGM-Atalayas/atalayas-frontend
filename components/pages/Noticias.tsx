@@ -18,7 +18,7 @@ interface Comunicado {
 
 const EMPTY_FORM: NoticiaInput = {
   titulo:    "",
-  mensaje:   "",
+  contenido: "",
   esGlobal:  false,
   empresaId: null,
 };
