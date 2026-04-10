@@ -87,7 +87,7 @@ export default function Invitado() {
           <p className={`${playfair.className} text-lg sm:text-xl leading-relaxed max-w-2xl mb-8`} style={{ color: "rgba(255,255,255,0.7)" }}>
             La plataforma digital de incorporación y formación empresarial para las empresas del parque industrial de Atalayas, Alicante.
           </p>
-          <Link href="/login" className="text-base font-semibold px-8 py-4 rounded-md inline-block" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
+          <Link href="/login" className="sm:hidden text-base font-semibold px-8 py-4 rounded-md inline-block" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
             Entrar a la plataforma
           </Link>
         </div>
@@ -118,9 +118,6 @@ export default function Invitado() {
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--texto-muted)" }}>
                 EGM Atalayas publica comunicados oficiales sobre eventos, servicios y novedades del parque empresarial. Accede con tu cuenta para verlos en tiempo real.
               </p>
-              <Link href="/login" className="text-sm font-semibold px-5 py-2.5 rounded-md inline-block" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
-                Entrar a la plataforma
-              </Link>
             </div>
             <div className="hidden sm:block w-px self-stretch" style={{ background: "var(--gris-borde)" }} />
             <div className="hidden sm:flex flex-col gap-3 w-64 shrink-0">
@@ -225,9 +222,6 @@ export default function Invitado() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link href="/register-empresa" className="text-sm font-semibold px-7 py-3 rounded-md" style={{ background: "var(--blanco)", color: "var(--azul-egm)" }}>
               Solicitar alta
-            </Link>
-            <Link href="/login" className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
-              Ya tengo cuenta &#8594;
             </Link>
           </div>
         </div>
