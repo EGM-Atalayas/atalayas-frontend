@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
-// import { API_URL, apiFetch } from "@/lib/api"; // Descomentar cuando se conecten los endpoints
+import { API_URL, apiFetch } from "@/lib/api";
 
 function getInitials(nombre: string, apellidos: string = ""): string {
   const n = nombre ? nombre[0] : "";
@@ -13,7 +13,7 @@ function getInitials(nombre: string, apellidos: string = ""): string {
 }
 
 export default function PerfilPage() {
-  const { usuario } = useAuth();
+  const { usuario, setUsuario } = useAuth();
 
   const [nombre, setNombre] = useState("");
   const [apellidos, setApellidos] = useState("");
@@ -38,18 +38,47 @@ export default function PerfilPage() {
   }, [usuario]);
 
   const handleGuardarInformacion = async () => {
+    if (!usuario?.usuarioId) {
+      alert("Error: No se pudo obtener el ID del usuario.");
+      return;
+    }
+    
     setLoadingInfo(true);
     try {
-      // TODO: Verificar que el endpoint PATCH /api/v1/usuarios/{id} existe en el backend antes de conectarlo
-      console.log("TODO: Realizar PATCH a /api/v1/usuarios/" + (usuario?.usuarioId || "me"), {
-        nombre,
-        apellidos,
-        puesto
+      const payload: any = { nombre, apellidos };
+      if (puesto) payload.puesto = puesto;
+
+      const res = await apiFetch(`${API_URL}/usuarios/${usuario.usuarioId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
       });
-      alert("Cambios de información personal guardados (simulado).");
+
+      if (!res.ok) {
+        let errorMsg = `Error ${res.status}: en la respuesta del servidor.`;
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) errorMsg = errorData.message;
+        } catch (e) {
+          errorMsg = res.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
+
+      const updatedUser = await res.json();
+      
+      // Actualizamos el contexto con la nueva información
+      const finalUser = updatedUser || {};
+      setUsuario({ 
+        ...usuario, 
+        ...finalUser, 
+        nombre: finalUser.nombre || nombre, 
+        apellidos: finalUser.apellidos || apellidos 
+      });
+
+      alert("Información personal guardada correctamente en la base de datos.");
     } catch (error) {
       console.error(error);
-      alert("Error al guardar la información.");
+      alert(error instanceof Error ? error.message : "Error al guardar la información. Comprueba la conexión o la ruta de la API.");
     } finally {
       setLoadingInfo(false);
     }
@@ -66,15 +95,36 @@ export default function PerfilPage() {
     }
     setLoadingPass(true);
     try {
-      // TODO: Verificar endpoint de cambio de contraseña e integrarlo.
-      console.log("TODO: Endpoint para cambiar contraseña");
-      alert("Contraseña cambiada con éxito (simulado).");
+      const id = usuario?.usuarioId;
+      if (!id) throw new Error("ID de usuario no disponible.");
+
+      // Enviamos la contraseña actual y la nueva al mismo endpoint (comúnmente usado o ajustar a ruta correcta)
+      const res = await apiFetch(`${API_URL}/usuarios/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          passwordActual: pwdActual,
+          password: pwdNueva
+        }),
+      });
+
+      if (!res.ok) {
+        let errorMsg = `Error ${res.status}: al actualizar la contraseña.`;
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) errorMsg = errorData.message;
+        } catch (e) {
+          errorMsg = res.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
+
+      alert("Contraseña modificada correctamente en la base de datos.");
       setPwdActual("");
       setPwdNueva("");
       setPwdConfirmar("");
     } catch (error) {
       console.error(error);
-      alert("Error al cambiar la contraseña.");
+      alert(error instanceof Error ? error.message : "Error al cambiar la contraseña. Asegúrate de que la contraseña actual es correcta.");
     } finally {
       setLoadingPass(false);
     }
