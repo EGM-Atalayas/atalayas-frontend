@@ -13,7 +13,7 @@ import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 
 const EMPTY_ANUNCIO: NoticiaInput = {
-  titulo: "", mensaje: "", esGlobal: false, empresaId: null,
+  titulo: "", contenido: "", esGlobal: false, empresaId: null,
 };
 
 const ROL_EMPLEADO_ID = "6251ef28-e6a3-4a3b-8121-e622da855d86";
@@ -171,7 +171,7 @@ function AdminContent() {
   };
 
   const handleSaveAnuncio = async () => {
-    if (!formAnuncio.titulo.trim() || !formAnuncio.mensaje.trim()) return;
+    if (!formAnuncio.titulo.trim() || !formAnuncio.contenido.trim()) return;
     try {
       if (editingAnuncioId) {
         await editarNoticia(editingAnuncioId, formAnuncio);
@@ -184,7 +184,7 @@ function AdminContent() {
   };
 
   const handleEditAnuncio = (n: Noticia) => {
-    setFormAnuncio({ titulo: n.titulo, mensaje: n.mensaje, esGlobal: n.esGlobal, empresaId: n.empresaId });
+    setFormAnuncio({ titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal, empresaId: n.empresaId });
     setEditingAnuncioId(n.anuncioId);
     setShowFormAnuncio(true);
   };
@@ -619,8 +619,8 @@ function AdminContent() {
                   <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
                     Contenido <span style={{ color: "var(--error)" }}>*</span>
                   </label>
-                  <textarea value={formAnuncio.mensaje}
-                    onChange={(e) => setFormAnuncio({ ...formAnuncio, mensaje: e.target.value })}
+                  <textarea value={formAnuncio.contenido}
+                    onChange={(e) => setFormAnuncio({ ...formAnuncio, contenido: e.target.value })}
                     rows={4} placeholder="Escribe el contenido del anuncio..."
                     className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
                     style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }} />
@@ -675,7 +675,7 @@ function AdminContent() {
                         )}
                       </div>
                       <p className="text-xs font-medium" style={{ color: "var(--texto-primario)" }}>{n.titulo}</p>
-                      <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{n.mensaje}</p>
+                      <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{n.contenido}</p>
                     </div>
                     <div className="flex items-center gap-3 ml-4 shrink-0">
                       <button onClick={() => handleEditAnuncio(n)}

@@ -89,7 +89,7 @@ export default function ComunicacionPage() {
   }
 
   function abrirEditar(n: Noticia) {
-    setForm({ titulo: n.titulo, mensaje: n.mensaje, esGlobal: n.esGlobal, empresaId: n.empresaId });
+    setForm({ titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal, empresaId: n.empresaId });
     setEditando(n);
     setShowForm(true);
     setError(null);
@@ -103,7 +103,7 @@ export default function ComunicacionPage() {
   }
 
   async function handleSubmit() {
-    if (!form.titulo.trim() || !form.mensaje.trim()) {
+    if (!form.titulo.trim() || !form.contenido.trim()) {
       setError("El título y el contenido son obligatorios");
       return;
     }
@@ -169,8 +169,12 @@ export default function ComunicacionPage() {
           {/* Descripción */}
           <div
             className="flex items-start gap-3 rounded-xl px-5 py-4 mb-6"
-            style={{ background: "var(--azul-egm-light)", border: "1px solid var(--azul-egm)" }}
-          >
+            style={{
+              background: "var(--azul-egm-light)",
+              borderLeft: "3px solid var(--azul-egm)",
+              border:     "1px solid rgba(27,63,126,0.15)",
+            }}
+          >       
             <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24"
               stroke="currentColor" strokeWidth={2} style={{ color: "var(--azul-egm)" }}>
               <path strokeLinecap="round" strokeLinejoin="round"
@@ -200,7 +204,11 @@ export default function ComunicacionPage() {
                 <div
                   key={c.comunicadoId}
                   className="rounded-xl px-6 py-5"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+                  style={{
+                    background:  "var(--blanco)",
+                    border:      "1px solid var(--gris-borde)",
+                    borderLeft:  "3px solid var(--azul-egm)",
+                  }}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -288,8 +296,8 @@ export default function ComunicacionPage() {
                     Contenido <span style={{ color: "var(--error)" }}>*</span>
                   </label>
                   <textarea
-                    value={form.mensaje}
-                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                    value={form.contenido}
+                    onChange={(e) => setForm({ ...form, contenido: e.target.value })}
                     placeholder="Escribe el contenido del anuncio..."
                     rows={4}
                     className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
@@ -339,7 +347,11 @@ export default function ComunicacionPage() {
                 <div
                   key={n.anuncioId}
                   className="rounded-xl px-6 py-5"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+                  style={{
+                    background:  "var(--blanco)",
+                    border:      "1px solid var(--gris-borde)",
+                    borderLeft:  "3px solid var(--verde-oliva)",
+                  }}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -358,7 +370,7 @@ export default function ComunicacionPage() {
                         {n.titulo}
                       </h3>
                       <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--texto-secundario)" }}>
-                        {n.mensaje}
+                        {n.contenido}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
