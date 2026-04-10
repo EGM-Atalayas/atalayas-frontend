@@ -318,7 +318,7 @@ export default function Empleado() {
                     {n.titulo}
                   </p>
                   <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>
-                    {n.mensaje}
+                    {n.contenido}
                   </p>
                 </div>
                 <span className="text-[10px] ml-4 shrink-0" style={{ color: "var(--texto-muted)" }}>
