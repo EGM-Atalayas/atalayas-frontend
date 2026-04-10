@@ -93,21 +93,24 @@ const IconChevron = () => (
 );
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
-const ROLES_PERMITIDOS = ["ROLE_ADMIN", "ROLE_ADMIN_EMPRESA"];
+const ROLES_BLOQUEADOS = ["ROLE_EMPLEADO", "INVITADO"];
 
 export default function CrearModuloPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const { usuario } = useAuth();
 
-  // Protección por rol: solo ADMIN y ADMIN_EMPRESA
+  // Protección: empleados e invitados no tienen acceso
   useEffect(() => {
-    if (usuario && !ROLES_PERMITIDOS.includes(usuario.codigoRol)) {
+    if (usuario && ROLES_BLOQUEADOS.includes(usuario.codigoRol)) {
       router.replace("/dashboard");
     }
   }, [usuario]);
 
-  if (!usuario || !ROLES_PERMITIDOS.includes(usuario.codigoRol)) return null;
+  // No renderizar hasta que el usuario esté cargado
+  if (!usuario) return null;
+  // Si es rol bloqueado, no mostrar nada mientras redirige
+  if (ROLES_BLOQUEADOS.includes(usuario.codigoRol)) return null;
 
   const [paso, setPaso] = useState<Paso>(1);
   const [archivos, setArchivos] = useState<ArchivoSubido[]>([]);
