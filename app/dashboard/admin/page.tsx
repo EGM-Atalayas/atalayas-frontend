@@ -704,7 +704,7 @@ function AdminContent() {
               <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Administra los módulos formativos de tu empresa</p>
             </div>
             <button
-              onClick={() => { resetFormModulo(); setShowFormModulo(true); }}
+              onClick={() => router.push("/dashboard/admin/modulos/crear")}
               className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
               style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}

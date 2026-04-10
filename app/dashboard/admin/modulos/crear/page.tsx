@@ -189,10 +189,11 @@ export default function CrearModuloPage() {
     }, 1200);
 
     try {
+      // 1. Generar contenido con IA desde el archivo
       const formData = new FormData();
-      formData.append("archivo", archivosRaw[0]); // first file
+      formData.append("archivo", archivosRaw[0]);
 
-      const res = await fetch(`${API_URL}/ai/generar-desde-archivo`, {
+      const resIA = await fetch(`${API_URL}/ai/generar-desde-archivo`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -200,16 +201,36 @@ export default function CrearModuloPage() {
 
       clearInterval(interval);
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!resIA.ok) throw new Error(`HTTP ${resIA.status}`);
 
-      const data = await res.json();
-      setResultadoIA({
-        titulo: data.titulo || config.nombre,
-        descripcion: data.descripcion || "",
-        contenido: data.contenido || "",
+      const dataIA = await resIA.json();
+      const titulo    = dataIA.titulo      || config.nombre;
+      const descripcion = dataIA.descripcion || "";
+      const contenido = dataIA.contenido   || "";
+
+      setResultadoIA({ titulo, descripcion, contenido });
+      setProgreso(90);
+      setMensajeProgreso("Guardando módulo en la plataforma…");
+
+      // 2. Guardar el módulo en la plataforma via POST /api/v1/modulos
+      const resModulo = await fetch(`${API_URL}/modulos`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre:          titulo,
+          descripcion:     descripcion,
+          tipoModulo:      "ESPECIALIZADO_IA",
+          esEspecializadoIa: true,
+          activo:          true,
+          empresaId:       usuario?.empresaId ?? null,
+        }),
       });
+
+      if (!resModulo.ok) throw new Error(`Guardar módulo: HTTP ${resModulo.status}`);
+
       setProgreso(100);
-      setMensajeProgreso("¡Módulo generado correctamente!");
+      setMensajeProgreso("¡Módulo creado y guardado correctamente!");
       setGenerado(true);
       setPaso(4);
     } catch (err) {
@@ -591,7 +612,7 @@ export default function CrearModuloPage() {
                 </p>
               </div>
               <button
-                onClick={() => router.push("/dashboard/admin")}
+                onClick={() => router.push("/dashboard/formacion")}
                 className="shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
                 style={{ background: "var(--exito)", color: "#fff" }}
               >
