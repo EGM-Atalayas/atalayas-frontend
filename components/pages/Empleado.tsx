@@ -277,7 +277,7 @@ export default function Empleado() {
             Últimas noticias
           </h2>
           <Link
-            href="/dashboard/noticias"
+            href=""
             className="text-xs font-medium hover:underline"
             style={{ color: "var(--azul-egm)" }}
           >
