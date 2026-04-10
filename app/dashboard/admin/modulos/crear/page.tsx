@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Paso = 1 | 2 | 3 | 4;
@@ -92,9 +93,21 @@ const IconChevron = () => (
 );
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
+const ROLES_PERMITIDOS = ["ROLE_ADMIN", "ROLE_ADMIN_EMPRESA"];
+
 export default function CrearModuloPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { usuario } = useAuth();
+
+  // Protección por rol: solo ADMIN y ADMIN_EMPRESA
+  useEffect(() => {
+    if (usuario && !ROLES_PERMITIDOS.includes(usuario.codigoRol)) {
+      router.replace("/dashboard");
+    }
+  }, [usuario]);
+
+  if (!usuario || !ROLES_PERMITIDOS.includes(usuario.codigoRol)) return null;
 
   const [paso, setPaso] = useState<Paso>(1);
   const [archivos, setArchivos] = useState<ArchivoSubido[]>([]);
