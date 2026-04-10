@@ -163,7 +163,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
                     Notificaciones
                   </p>
                   <button
-                    onClick={() => { setNotifOpen(false); router.push("/dashboard/noticias"); }}
+                    onClick={() => { setNotifOpen(false); router.push("/dashboard/comunicacion"); }}
                     className="text-[11px] font-medium hover:underline"
                     style={{ color: "var(--azul-egm)" }}
                   >
