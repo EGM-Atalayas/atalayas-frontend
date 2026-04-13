@@ -31,8 +31,8 @@ export default function FooterCTA() {
 
   return (
     <footer
-      className="relative w-full min-h-screen overflow-hidden flex flex-col items-center justify-center"
-      style={{ background: "#000000", color: "white" }}
+      className="relative w-full overflow-hidden flex flex-col items-center justify-center"
+      style={{ background: "#000000", color: "white", minHeight: "60vh" }}
     >
       {/* Background video */}
       <video
@@ -47,6 +47,9 @@ export default function FooterCTA() {
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60" style={{ backdropFilter: "blur(2px)" }} />
+
+      {/* Fade superior — mezcla con LogoLoop */}
+      <div className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #0D1B2E, transparent)" }} />
 
       {/* Decorative gradients */}
       <div
@@ -74,7 +77,7 @@ export default function FooterCTA() {
 
       {/* Content */}
       <div
-        className="relative z-10 max-w-5xl mx-auto flex flex-col items-center text-center mt-20 space-y-12 px-6"
+        className="relative z-10 max-w-5xl mx-auto flex flex-col items-center text-center mt-12 space-y-8 px-6 py-12"
       >
         {/* Pre-headline */}
         <motion.p
@@ -82,7 +85,7 @@ export default function FooterCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-3xl sm:text-5xl text-white leading-[1.1]"
+          className="text-xl sm:text-3xl text-white leading-[1.1]"
           style={{ fontFamily: "'Instrument Serif', serif" }}
         >
           Únete a Atalayas
@@ -94,10 +97,10 @@ export default function FooterCTA() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-6xl sm:text-8xl font-semibold leading-[0.9] tracking-tighter"
+          className="text-4xl sm:text-6xl font-semibold leading-[0.9] tracking-tighter"
           style={{
             fontFamily: "'Instrument Sans', sans-serif",
-            fontSize: "clamp(3.5rem, 10vw, 136px)",
+            fontSize: "clamp(2rem, 6vw, 72px)",
             background: "linear-gradient(to bottom, #ffffff, #ffffff, #b4c0ff)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -113,7 +116,7 @@ export default function FooterCTA() {
           whileInView={{ opacity: 0.7 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-lg sm:text-[20px] leading-[1.65] max-w-xl"
+          className="text-sm sm:text-base leading-[1.65] max-w-xl"
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
         >
           Digitaliza la incorporación y formación interna de tu equipo en minutos. Sin conocimientos técnicos.
