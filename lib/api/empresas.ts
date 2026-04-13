@@ -13,17 +13,18 @@ export async function getEmpresas(): Promise<EmpresaDB[]> {
   return response.json();
 }
 
-// Cambiar estado de una empresa (Activar/Desactivar)
-export async function actualizarEstadoEmpresa(id: string, nuevoEstado: boolean): Promise<void> {
+export async function actualizarEstadoEmpresa(id: string, estadoAEnviar: string): Promise<void> {
   const response = await apiFetch(`${API_URL}/empresas/${id}/estado`, {
-    method: "PATCH", // O PUT, dependiendo de cómo lo hayas definido en tu backend
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ activo: nuevoEstado }),
+    body: JSON.stringify({ nuevoEstado: estadoAEnviar }), 
   });
 
   if (!response.ok) {
-    throw new Error("Error al cambiar el estado de la empresa");
+    const errorData = await response.json().catch(() => ({}));
+    console.error("🚨 RESPUESTA DEL BACKEND:", errorData);
+    throw new Error(errorData.message || errorData.error || "Error al actualizar el estado en el servidor");
   }
 }
