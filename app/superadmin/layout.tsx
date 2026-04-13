@@ -1,15 +1,16 @@
-import SuperAdminRoute from "@/components/auth/SuperAdminRoute";
-import SuperAdminSidebar from "@/components/ui/SuperAdminSidebar";
+import React from "react";
+import SuperAdminHeader from "@/components/ui/SuperAdminHeader";
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SuperAdminRoute>
-      <div className="flex min-h-screen bg-[#F7F6F3]">
-        <SuperAdminSidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </SuperAdminRoute>
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+      {/* El Header maestro con toda la navegación */}
+      <SuperAdminHeader />
+      
+      {/* El contenido de las páginas (las tablas, gráficas, etc) */}
+      <main className="flex-1 w-full overflow-y-auto">
+        {children}
+      </main>
+    </div>
   );
 }

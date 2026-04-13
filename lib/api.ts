@@ -8,13 +8,14 @@ export const API_URL =
  * automáticamente la cookie HttpOnly de autenticación en cada petición
  * No necesita token manual, el backend lo lee de la cookie
  */
-export function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export const apiFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, {
-    credentials: "include",
     ...options,
+    // ¡ESTA ES LA LÍNEA QUE SALVARÁ TU VIDA!
+    credentials: "include", 
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...options.headers,
     },
   });
-}
+};
