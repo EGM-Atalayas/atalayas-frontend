@@ -6,6 +6,8 @@ import Image from "next/image";
 import logo from "@/public/logo.webp";
 import { API_URL } from "@/lib/api";
 import { Playfair_Display } from "next/font/google";
+import LogoLoop from "@/components/ui/LogoLoop";
+import FooterCTA from "@/components/ui/FooterCTA";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
@@ -46,51 +48,95 @@ export default function Invitado() {
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
 
-      {/* HEADER */}
-      <header className="w-full absolute top-0 left-0 right-0 z-50">
-        <div className="w-full px-6 sm:px-10 h-20 flex items-center justify-between">
-          <Image src={logo} alt="Atalayas EGM" className="h-12 sm:h-16 w-auto brightness-0 invert" />
-          <nav className="hidden sm:flex items-center gap-8">
-            <a href="#noticias" className="text-base font-medium tracking-wide" style={{ color: "rgba(255,255,255,0.9)" }}>Noticias</a>
-            <a href="#comunidad" className="text-base font-medium tracking-wide" style={{ color: "rgba(255,255,255,0.9)" }}>Comunidad</a>
-            <Link href="/login" className="text-base font-semibold px-7 py-3 rounded-md" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>Entrar</Link>
-          </nav>
-          <button className="sm:hidden text-white p-2 flex flex-col gap-1.5" onClick={() => setMenuAbierto(!menuAbierto)} aria-label="Menu">
+      {/* ══════════════════════════════════════════════════════════════════════
+          HERO — fullscreen background image with cinematic typography
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative w-full min-h-screen flex flex-col overflow-hidden">
+
+        {/* Background image */}
+        <img
+          src="/background-invitado.jpg"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.52)" }} />
+
+        {/* ── Navigation ─────────────────────────────────────────────── */}
+        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+          {/* Logo */}
+          <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
+
+          {/* Nav links — desktop only */}
+          <div className="hidden md:flex items-center justify-center gap-8">
+            <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
+            <a href="#noticias" className="text-2xl text-white/50 hover:text-white transition-colors">Noticias</a>
+            <a href="#comunidad" className="text-2xl text-white/50 hover:text-white transition-colors">Comunidad</a>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden text-white p-2 flex flex-col gap-1.5"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+            aria-label="Menu"
+          >
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
           </button>
-        </div>
+        </nav>
+
+        {/* Mobile menu */}
         {menuAbierto && (
-          <div className="sm:hidden px-6 pb-6 flex flex-col" style={{ background: "var(--marino)" }}>
-            <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3" style={{ color: "rgba(255,255,255,0.8)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
-            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3" style={{ color: "rgba(255,255,255,0.8)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
-            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3" style={{ color: "var(--blanco)" }}>Entrar</Link>
+          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
+            <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
+            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
+            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
           </div>
         )}
-      </header>
 
-      {/* HERO */}
-      <section
-        className="relative w-full min-h-[100svh] sm:min-h-[75vh] flex items-end"
-        style={{ backgroundImage: "url('/background-invitado.jpg')", backgroundSize: "cover", backgroundPosition: "center 30%" }}
-      >
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.15) 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 45%)" }} />
-        <div className="relative z-10 w-full px-6 sm:px-12 pb-14 sm:pb-20">
-          <p className="text-xs font-semibold mb-3 uppercase tracking-[0.2em]" style={{ color: "var(--verde-oliva-hover)" }}>
-            Bienvenido
-          </p>
-          <h1 className="text-white text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 leading-tight">
-            Atalayas Ciudad Empresarial
+        {/* ── Hero content ───────────────────────────────────────────── */}
+        <div className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
+          <h1
+            className="text-7xl sm:text-[9rem] md:text-[12rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
+            style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
+          >
+            Atalayas Ciudad Empresarial.
           </h1>
-          <p className={`${playfair.className} text-lg sm:text-xl leading-relaxed max-w-2xl mb-8`} style={{ color: "rgba(255,255,255,0.7)" }}>
+
+          <p className={`${playfair.className} text-white/60 text-xl sm:text-2xl max-w-3xl mt-8 leading-relaxed animate-fade-rise-delay`}>
             La plataforma digital de incorporación y formación empresarial para las empresas del parque industrial de Atalayas, Alicante.
           </p>
-          <Link href="/login" className="sm:hidden text-base font-semibold px-8 py-4 rounded-md inline-block" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
-            Entrar a la plataforma
+
+          <Link
+            href="/login"
+            className="liquid-glass rounded-full px-14 py-5 text-xl text-white mt-12 hover:scale-[1.03] transition-transform animate-fade-rise-delay-2 inline-flex items-center justify-center"
+            style={{ background: "rgba(59, 130, 246, 0.25)" }}
+          >
+            Iniciar Sesión
           </Link>
         </div>
+      </section>
+
+      {/* LOGO LOOP */}
+      <section className="w-full py-10 sm:py-14" style={{ background: "var(--gris-pagina)", borderTop: "1px solid var(--gris-borde)", borderBottom: "1px solid var(--gris-borde)" }}>
+        <p className="text-center text-xs font-semibold uppercase tracking-widest mb-8" style={{ color: "var(--texto-muted)" }}>
+          Empresas del parque
+        </p>
+        <LogoLoop
+          speed={35}
+          size={40}
+          gap={80}
+          logos={[
+            { src: "/logo.webp", alt: "EGM Atalayas" },
+            { src: "/logo.webp", alt: "Empresa 2" },
+            { src: "/logo.webp", alt: "Empresa 3" },
+            { src: "/logo.webp", alt: "Empresa 4" },
+            { src: "/logo.webp", alt: "Empresa 5" },
+            { src: "/logo.webp", alt: "Empresa 6" },
+          ]}
+        />
       </section>
 
       {/* NOTICIAS */}
@@ -162,70 +208,48 @@ export default function Invitado() {
       </section>
 
       {/* COMUNIDAD */}
-        <section
+      <section
         id="comunidad"
         className="relative w-full mt-2"
         style={{ backgroundImage: "url('/background-comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
-        >
+      >
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-12 py-12 sm:py-20">
-            <h2 className="text-white text-2xl sm:text-3xl font-bold mb-8 text-center">Comunidad</h2>
-            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
+          <h2 className="text-white text-2xl sm:text-3xl font-bold mb-8 text-center">Comunidad</h2>
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
             <div className="flex flex-col divide-y w-full" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                {comunidadItems.map((item) => (
+              {comunidadItems.map((item) => (
                 <div key={item.label} className="flex items-center justify-between py-4 group cursor-pointer">
-                    <div className="flex-1 min-w-0 pr-4">
+                  <div className="flex-1 min-w-0 pr-4">
                     <p className="text-white text-lg font-medium">{item.label}</p>
                     <p className={`${playfair.className} text-base mt-0.5 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
-                    </div>
-                    <span className="text-sm shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
+                  </div>
+                  <span className="text-sm shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
                 </div>
-                ))}
+              ))}
             </div>
             <div className="hidden sm:flex flex-col gap-4 justify-center">
-                {[
+              {[
                 { numero: "+150", label: "Empresas en el parque" },
                 { numero: "+8.000", label: "Empleados directos" },
                 { numero: "25", label: "Años de gestión" },
-                ].map((s) => (
+              ].map((s) => (
                 <div
-                    key={s.label}
-                    className="rounded-xl px-6 py-4"
-                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
+                  key={s.label}
+                  className="rounded-xl px-6 py-4"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
                 >
-                    <p className="text-white text-3xl font-extrabold leading-none">{s.numero}</p>
-                    <p className={`${playfair.className} text-sm mt-1.5`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
+                  <p className="text-white text-3xl font-extrabold leading-none">{s.numero}</p>
+                  <p className={`${playfair.className} text-sm mt-1.5`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
                 </div>
-                ))}
+              ))}
             </div>
-            </div>
-        </div>
-        </section>
-
-      {/* CTA FINAL */}
-      {/* TODO: sustituir background-invitado.jpg por imagen diferente cuando este disponible */}
-      <section
-        className="relative w-full py-20 sm:py-28"
-        style={{ backgroundImage: "url('/background-invitado.jpg')", backgroundSize: "cover", backgroundPosition: "center 60%" }}
-      >
-        <div className="absolute inset-0" style={{ background: "rgba(13,27,46,0.88)" }} />
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--verde-oliva-hover)" }}>
-            Únete a Atalayas
-          </p>
-          <h2 className="text-white text-2xl sm:text-4xl font-bold mb-4 leading-tight">
-            ¿Tu empresa está en el parque empresarial?
-          </h2>
-          <p className={`${playfair.className} text-lg mb-8 leading-relaxed`} style={{ color: "rgba(255,255,255,0.6)" }}>
-            Digitaliza la incorporación y formación interna de tu equipo en minutos. Sin conocimientos técnicos.
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/register-empresa" className="text-sm font-semibold px-7 py-3 rounded-md" style={{ background: "var(--blanco)", color: "var(--azul-egm)" }}>
-              Solicitar alta
-            </Link>
           </div>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <FooterCTA />
 
     </div>
   );
