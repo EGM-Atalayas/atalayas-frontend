@@ -71,7 +71,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
       <Header />
-      <main className="max-w-7xl mx-auto px-8 pb-8">
+      <main className="pb-2">
+
         {children}
       </main>
     </div>
