@@ -1,0 +1,84 @@
+"use client";
+
+import { useAuth } from "@/context/AuthContext";
+import SplitText from "@/components/ui/SplitText";
+import GradientText from "@/components/ui/GradientText";
+
+interface DashboardHeroProps {
+  prefijo?: string;    // texto en Instrument Sans light, ej: "Centro de "
+  titulo:   string;    // texto en Instrument Serif italic, ej: "Formación."
+}
+
+export default function DashboardHero({ prefijo, titulo }: DashboardHeroProps) {
+  const { usuario } = useAuth();
+
+  return (
+    <div
+      className="relative overflow-hidden flex items-center"
+      style={{ minHeight: "280px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
+    >
+      <img
+        src="/background-dashboard.jpg"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: "center 40%" }}
+      />
+      <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.60)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
+
+      <div className="relative z-10 w-full px-10 lg:px-16 py-14">
+        <p
+          className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+          style={{ color: "var(--verde-oliva-hover)" }}
+        >
+          {usuario?.nombreEmpresa ?? "Mi empresa"}
+          <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
+          {new Date().toLocaleDateString("es-ES", {
+            weekday: "long", day: "numeric", month: "long",
+          }).replace(/^\w/, (c) => c.toUpperCase())}
+        </p>
+
+        <div className="leading-none flex flex-wrap items-baseline gap-x-3">
+          {prefijo && (
+            <span
+              className="text-white"
+              style={{
+                fontSize:      "clamp(3rem, 6vw, 4rem)",
+                fontFamily:    "'Instrument Sans', sans-serif",
+                fontWeight:    300,
+                letterSpacing: "-0.03em",
+              }}
+            >
+              {prefijo}
+            </span>
+          )}
+          <GradientText
+            style={{
+              fontSize:      "clamp(3rem, 6vw, 5rem)",
+              fontFamily:    "'Instrument Serif', serif",
+              fontStyle:     "italic",
+              fontWeight:    400,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            <SplitText
+              text={titulo}
+              tag="span"
+              textAlign="left"
+              delay={40}
+              duration={0.9}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 50 }}
+              to={{ opacity: 1, y: 0 }}
+              threshold={0.1}
+              rootMargin="0px"
+            />
+          </GradientText>
+        </div>
+      </div>
+    </div>
+  );
+}

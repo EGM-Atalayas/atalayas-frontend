@@ -8,6 +8,9 @@ import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
+import SplitText from "@/components/ui/SplitText";
+import GradientText from "@/components/ui/GradientText";
+import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -108,6 +111,38 @@ export default function Empleado() {
   const noticiasEGM     = noticias.filter((n) => n.esGlobal);
   const noticiasEmpresa = noticias.filter((n) => !n.esGlobal);
 
+  // Transforma Noticia[] → ComunicadoItem[] para el carrusel
+  const carouselItems: ComunicadoItem[] = noticias.length > 0
+    ? noticias.map((n) => ({
+        id:       n.anuncioId,
+        titulo:   n.titulo,
+        mensaje:  n.contenido,
+        fecha:    n.creadoEn,
+        tipo:     n.esGlobal ? "egm" : "empresa",
+      }))
+    : [
+        { id: "m1", tipo: "egm", categoria: "Novedades", fecha: "2026-04-10T09:00:00Z",
+          titulo: "Apertura del nuevo espacio de coworking en el Edificio A",
+          mensaje: "El nuevo espacio cuenta con 40 puestos, salas de reuniones y zona de descanso. Disponible desde el 1 de mayo.",
+          imagenUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80" },
+        { id: "m2", tipo: "egm", categoria: "Eventos", fecha: "2026-04-08T10:30:00Z",
+          titulo: "Jornada de networking: Empresas del Parque — Mayo 2026",
+          mensaje: "15 de mayo en el Salón de Actos del Edificio Central a partir de las 18:00h. Confirmad asistencia antes del 10 de mayo.",
+          imagenUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80" },
+        { id: "m3", tipo: "egm", categoria: "Avisos", fecha: "2026-04-05T08:00:00Z",
+          titulo: "Mantenimiento programado del parking — 20 de abril",
+          mensaje: "Trabajos de mantenimiento en parking exterior de 08:00 a 14:00h. Plazas zona B inhabilitadas.",
+          imagenUrl: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&q=80" },
+        { id: "m4", tipo: "egm", categoria: "Novedades", fecha: "2026-03-28T11:00:00Z",
+          titulo: "Nueva cafetería disponible en el Edificio C",
+          mensaje: "Horario 07:30–16:30h, menú del día con descuento para empleados del parque.",
+          imagenUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80" },
+        { id: "m5", tipo: "egm", categoria: "Avisos", fecha: "2026-03-20T09:00:00Z",
+          titulo: "Actualización del protocolo de acceso con tarjeta",
+          mensaje: "A partir del 25 de abril se renovará el sistema de control de acceso. Solicita tu nueva tarjeta en recepción.",
+          imagenUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" },
+      ];
+
   if (cargando) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -152,26 +187,37 @@ export default function Empleado() {
               <span
                 className="text-white"
                 style={{
-                  fontSize:   "clamp(3.5rem, 7vw, 4.5rem)",
-                  fontFamily: "'Instrument Sans', sans-serif",
-                  fontWeight: 300,
+                  fontSize:      "clamp(3.5rem, 7vw, 4.5rem)",
+                  fontFamily:    "'Instrument Sans', sans-serif",
+                  fontWeight:    300,
                   letterSpacing: "-0.03em",
                 }}
               >
                 Hola,{" "}
               </span>
-              <span
-                className="text-white"
+              <GradientText
                 style={{
                   fontSize:      "clamp(3.5rem, 7vw, 6rem)",
                   fontFamily:    "'Instrument Serif', serif",
                   fontStyle:     "italic",
                   fontWeight:    400,
-                  letterSpacing: "-0.01em",          
+                  letterSpacing: "-0.01em",
                 }}
               >
-                {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-              </span>
+                <SplitText
+                  text={usuario?.nombre?.split(" ")[0] ?? "Empleado"}
+                  tag="span"
+                  textAlign="left"
+                  delay={40}
+                  duration={0.9}
+                  ease="power3.out"
+                  splitType="chars"
+                  from={{ opacity: 0, y: 60 }}
+                  to={{ opacity: 1, y: 0 }}
+                  threshold={0.1}
+                  rootMargin="0px"
+                />
+              </GradientText>
             </div>
 
             {siguientePaso && (
@@ -239,39 +285,22 @@ export default function Empleado() {
 
         {/* ── FILA 1: COMUNICACIONES (2/3) + SERVICIOS (1/3) ── */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 
             {/* COMUNICACIONES — 2/3 */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 flex flex-col">
               <TituloSeccion letras>Comunicaciones</TituloSeccion>
-
-              {noticias.length === 0 ? (
-                <div className="flex items-center justify-between rounded-2xl px-7 py-6"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-                      Sin comunicaciones todavía
-                    </p>
-                    <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>
-                      Aquí aparecerán los comunicados de EGM y los anuncios de tu empresa
-                    </p>
-                  </div>
-                  <Link href="/dashboard/comunicacion"
-                    className="text-xs font-semibold hover:underline shrink-0 ml-4"
-                    style={{ color: "var(--azul-egm)" }}>
-                    Ver →
-                  </Link>
-                </div>
-              ) : (
-                <SeccionComunicaciones
-                  noticiasEGM={noticiasEGM}
-                  noticiasEmpresa={noticiasEmpresa}
-                />
-              )}
+              <ComunicadosCarousel
+                items={carouselItems}
+                autoplay
+                autoplayDelay={4500}
+                pauseOnHover
+                loop
+              />
             </div>
 
             {/* SERVICIOS DEL PARQUE — 1/3 */}
-            <div>
+            <div className="flex flex-col">
               <TituloSeccion letras>Servicios</TituloSeccion>
               <div className="rounded-2xl overflow-hidden"
                 style={{ background: "var(--azul-egm)" }}>
@@ -293,11 +322,11 @@ export default function Empleado() {
                           {s.icono}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold truncate"
+                          <p className="text-sm font-semibold truncate"
                             style={{ color: s.activo ? "white" : "rgba(255,255,255,0.3)" }}>
                             {s.label}
                           </p>
-                          <p className="text-[11px] truncate"
+                          <p className="text-xs truncate"
                             style={{ color: s.activo ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)" }}>
                             {s.desc}
                           </p>
@@ -340,14 +369,14 @@ export default function Empleado() {
             <TituloSeccion noMargin>Mi itinerario</TituloSeccion>
             <div className="flex items-center gap-5">
               {hayProgreso && (
-                <span className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                <span className="text-base" style={{ color: "var(--texto-muted)" }}>
                   <span style={{ color: "var(--texto-primario)", fontWeight: 700 }}>{completados}</span>
                   /{formaciones.length} completados
                 </span>
               )}
               {hayModulos && (
                 <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-sm font-semibold hover:underline"
+                  className="text-base font-semibold hover:underline"
                   style={{ color: "var(--azul-egm)" }}>
                   Ver todo →
                 </button>
@@ -378,10 +407,10 @@ export default function Empleado() {
                 </svg>
               </div>
               <div>
-                <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
+                <p className="text-lg font-semibold" style={{ color: "var(--texto-primario)" }}>
                   Aún no tienes módulos asignados
                 </p>
-                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                <p className="text-base mt-0.5" style={{ color: "var(--texto-muted)" }}>
                   Tu empresa configurará el itinerario formativo en breve
                 </p>
               </div>
@@ -419,14 +448,14 @@ export default function Empleado() {
                 <div className="w-2 h-2 rounded-full shrink-0"
                   style={{ background: "var(--verde-oliva)" }} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                  <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
                     {item.label}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                  <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>
                     {item.desc}
                   </p>
                 </div>
-                <span className="ml-auto text-[10px] font-medium shrink-0 px-2 py-0.5 rounded-full"
+                <span className="ml-auto text-xs font-medium shrink-0 px-2 py-0.5 rounded-full"
                   style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
                   Próx.
                 </span>
@@ -450,7 +479,7 @@ function TituloSeccion({ children, noMargin, letras }: {
     <h2
       className={noMargin ? "" : "mb-6"}
       style={{
-        fontSize:      "clamp(1.6rem, 2.2vw, 2.2rem)",
+        fontSize:      "clamp(2rem, 2.8vw, 2.8rem)",
         fontFamily:    "'Instrument Serif', serif",
         fontWeight:    400,
         color:         "var(--texto-primario)",
@@ -475,11 +504,11 @@ function SeccionComunicaciones({ noticiasEGM, noticiasEmpresa }: {
       {/* Cabecera */}
       <div className="flex items-center justify-between px-6 py-4"
         style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
-        <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
+        <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>
           Últimas comunicaciones
         </h2>
         <Link href="/dashboard/comunicacion"
-          className="text-xs font-semibold hover:underline"
+          className="text-sm font-semibold hover:underline"
           style={{ color: "var(--azul-egm)" }}>
           Ver todas →
         </Link>
@@ -515,7 +544,7 @@ function ColumnaNoticia({ tipo, noticias, conBorde }: {
       {/* Etiqueta de columna */}
       <div className="flex items-center gap-2 mb-4">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: acento }} />
-        <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: acento }}>
+        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: acento }}>
           {label}
         </p>
       </div>
@@ -535,15 +564,15 @@ function ColumnaNoticia({ tipo, noticias, conBorde }: {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold" style={{ color: "var(--texto-primario)" }}>
+                <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
                   {n.titulo}
                 </p>
-                <p className="text-[11px] mt-0.5 line-clamp-2 leading-relaxed"
+                <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed"
                   style={{ color: "var(--texto-muted)" }}>
                   {n.contenido}
                 </p>
               </div>
-              <span className="text-[10px] shrink-0 mt-0.5 whitespace-nowrap"
+              <span className="text-xs shrink-0 mt-0.5 whitespace-nowrap"
                 style={{ color: "var(--texto-muted)" }}>
                 {formatFecha(n.creadoEn)}
               </span>
@@ -584,17 +613,17 @@ function TarjetaModulo({ modulo, index, onClick }: {
       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
     >
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-bold shrink-0"
         style={{ background: tipo.bg, color: tipo.text }}>
         {String(index + 1).padStart(2, "0")}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+        <p className="text-base font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
           {modulo.nombre}
         </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{tipo.label}</p>
+        <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{tipo.label}</p>
       </div>
-      <span className="text-[11px] font-semibold px-3 py-1 rounded-full shrink-0"
+      <span className="text-xs font-semibold px-3 py-1 rounded-full shrink-0"
         style={{ background: status.bg, color: status.text }}>
         {status.label}
       </span>

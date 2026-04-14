@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import UserMenu from "@/components/ui/UserMenu";
+import NotifMenu from "@/components/ui/NotifMenu";
 import logo from "@/public/logo.webp";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
@@ -19,13 +21,8 @@ function getInitials(nombre: string): string {
 }
 
 export default function Header({ logoEmpresa }: HeaderProps) {
-  const [menuOpen, setMenuOpen]     = useState(false);
-  const [notifOpen, setNotifOpen]   = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [noLeidas, setNoLeidas]     = useState(0);
-
-  const menuRef  = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
 
   const router   = useRouter();
   const pathname = usePathname();
@@ -49,14 +46,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchContador]);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const marcarTodasLeidas = async () => {
     try {
@@ -77,6 +66,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
   const initials       = usuario?.nombre ? getInitials(usuario.nombre) : "?";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
+
 
   const rolMostrado: Record<string, string> = {
     ROLE_ADMIN:         "Administrador general",
@@ -129,171 +119,25 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         <div className="ml-auto flex items-center gap-2">
 
           {/* Campana */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => {
-                setNotifOpen((prev) => !prev);
-                if (!notifOpen && noLeidas > 0) marcarTodasLeidas();
-              }}
-              className="relative flex items-center justify-center rounded-lg transition-colors"
-              style={{ width: "40px", height: "40px", color: "rgba(255,255,255,0.7)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              aria-label="Notificaciones"
-            >
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {noLeidas > 0 && (
-                <span
-                  className="absolute top-1.5 right-1.5 min-w-[16px] h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none"
-                  style={{ background: "var(--error)" }}
-                >
-                  {noLeidas > 99 ? "99+" : noLeidas}
-                </span>
-              )}
-            </button>
-
-            {/* Dropdown notificaciones */}
-            {notifOpen && (
-              <div
-                className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg z-[200] overflow-hidden"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-              >
-                <div className="flex items-center justify-between px-4 py-3"
-                  style={{ borderBottom: "1px solid var(--gris-superficie)" }}>
-                  <p className="text-xs font-semibold" style={{ color: "var(--texto-primario)" }}>
-                    Notificaciones
-                  </p>
-                  <button
-                    onClick={() => { setNotifOpen(false); router.push("/dashboard/comunicacion"); }}
-                    className="text-[11px] font-medium hover:underline"
-                    style={{ color: "var(--azul-egm)" }}
-                  >
-                    Ver todas →
-                  </button>
-                </div>
-                <div className="py-3 px-4 text-center">
-                  {noLeidas === 0 ? (
-                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                      Todo al día — sin notificaciones nuevas
-                    </p>
-                  ) : (
-                    <p className="text-xs" style={{ color: "var(--texto-secundario)" }}>
-                      Tienes{" "}
-                      <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>
-                        {noLeidas}
-                      </span>{" "}
-                      notificación{noLeidas !== 1 ? "es" : ""} sin leer
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <NotifMenu
+            noLeidas={noLeidas}
+            onVerTodas={() => router.push("/dashboard/comunicacion")}
+            onMarcarLeidas={marcarTodasLeidas}
+          />
 
           {/* Divisor */}
           <div className="hidden sm:block w-px h-6"
             style={{ background: "rgba(255,255,255,0.2)" }} />
 
           {/* Avatar + menú — solo desktop */}
-          <div className="hidden sm:block relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <div
-                className="rounded-full flex items-center justify-center font-bold select-none shrink-0 text-sm overflow-hidden"
-                style={{
-                  width:      "36px",
-                  height:     "36px",
-                  background: "rgba(255,255,255,0.15)",
-                  color:      "var(--blanco)",
-                  border:     "2px solid rgba(255,255,255,0.5)",
-                }}
-              >
-                {logoEmpresa ? (
-                  <Image src={logoEmpresa} alt="Logo empresa" width={36} height={36}
-                    className="object-cover rounded-full" />
-                ) : initials}
-              </div>
-
-              <span className="text-sm font-semibold max-w-[110px] truncate"
-                style={{ color: "rgba(255,255,255,0.9)" }}>
-                {nombreMostrado}
-              </span>
-
-              <svg
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                style={{ color: "rgba(255,255,255,0.5)" }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {/* Dropdown usuario */}
-            {menuOpen && (
-              <div
-                className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-1 z-[200]"
-                style={{ background: "var(--marino)", border: "1px solid rgba(255,255,255,0.1)" }}
-              >
-                <div className="px-4 py-3 flex items-center gap-3"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  <div
-                    className="rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden"
-                    style={{
-                      width:      "32px",
-                      height:     "32px",
-                      background: "rgba(255,255,255,0.15)",
-                      color:      "var(--blanco)",
-                      border:     "2px solid rgba(255,255,255,0.3)",
-                    }}
-                  >
-                    {initials}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
-                      {nombreMostrado}
-                    </p>
-                    {usuario?.nombreEmpresa && (
-                      <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.45)" }}>
-                        {usuario.nombreEmpresa}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="py-1">
-                  <button
-                    onClick={() => { setMenuOpen(false); router.push("/dashboard/perfil"); }}
-                    className="w-full text-left px-4 py-2 text-sm transition-colors"
-                    style={{ color: "rgba(255,255,255,0.75)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    Mi perfil
-                  </button>
-                </div>
-
-                <div className="py-1" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm font-medium transition-colors"
-                    style={{ color: "#f87171" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.1)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <UserMenu
+            nombreMostrado={nombreMostrado}
+            empresaNombre={usuario?.nombreEmpresa}
+            initials={initials}
+            logoEmpresa={logoEmpresa}
+            onPerfil={() => router.push("/dashboard/perfil")}
+            onCerrarSesion={handleLogout}
+          />
 
           {/* Hamburguesa — solo móvil */}
           <button
@@ -424,10 +268,10 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
       onMouseLeave={handleMouseLeave}
       className="relative flex items-center px-5 whitespace-nowrap border-none cursor-pointer h-full"
       style={{
-        fontSize:   "14px",
-        fontWeight: isActive ? 600 : 400,
+        fontSize:   "18px",
+        fontWeight: isActive ? 700 : 600,
         color:      isActive
-          ? "var(--blanco)"
+          ? "var(--verde-oliva-hover)"
           : hovered
           ? "rgba(255,255,255,0.95)"
           : "rgba(255,255,255,0.6)",
