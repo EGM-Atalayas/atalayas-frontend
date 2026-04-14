@@ -120,21 +120,21 @@ export default function Invitado() {
       </section>
 
       {/* NOTICIAS */}
-      <section id="noticias" className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-24">
+      <section id="noticias" className="w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
         {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-px" style={{ background: "var(--azul-egm)" }} />
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
+        <div className="mb-14">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
+            <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
             Mantente al día<br />con Atalayas
           </h2>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-10">
           {/* Featured card */}
-          <Link href="/login" className="relative rounded-2xl overflow-hidden flex-shrink-0 lg:w-[48%] min-h-[340px] sm:min-h-[420px] group block">
+          <Link href="/login" className="relative rounded-2xl overflow-hidden flex-shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
             <Image
               src="/background-invitado.jpg"
               alt="Noticia destacada"
@@ -142,28 +142,28 @@ export default function Invitado() {
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
-            <div className="absolute bottom-0 left-0 p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-4 h-px bg-white/60" />
-                <span className="text-xs text-white/70 font-medium uppercase tracking-wider">Destacado</span>
+            <div className="absolute bottom-0 left-0 p-8 sm:p-10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-5 h-px bg-white/60" />
+                <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
               </div>
-              <h3 className="text-white text-xl sm:text-2xl font-bold leading-snug max-w-sm">
+              <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
                 EGM Atalayas lanza su nueva plataforma digital para empresas del parque
               </h3>
             </div>
-            <div className="absolute top-4 right-4">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm text-white text-sm">↗</div>
+            <div className="absolute top-5 right-5">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm text-white text-base">↗</div>
             </div>
           </Link>
 
           {/* Right column */}
           <div className="flex-1 flex flex-col">
             {/* Category tabs */}
-            <div className="flex items-center gap-6 mb-6 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            <div className="flex items-center gap-8 mb-8 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
               {["Noticias", "Eventos", "Comunicados", "Convocatorias"].map((tab, i) => (
-                <div key={tab} className="flex items-center gap-1 pb-3 shrink-0 cursor-pointer" style={{ borderBottom: i === 0 ? "2px solid var(--azul-egm)" : "2px solid transparent", marginBottom: "-1px" }}>
-                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>{tab}</span>
-                  <span className="text-xs" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
+                <div key={tab} className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer" style={{ borderBottom: i === 0 ? "2px solid var(--azul-egm)" : "2px solid transparent", marginBottom: "-1px" }}>
+                  <span className="text-base font-medium whitespace-nowrap" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>{tab}</span>
+                  <span className="text-sm" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
                 </div>
               ))}
             </div>
@@ -190,19 +190,19 @@ export default function Invitado() {
                   day: "03", month: "Abr", year: "2026",
                 },
               ].map((item) => (
-                <Link href="/login" key={item.title} className="flex gap-4 py-5 group items-start">
-                  <div className="relative w-24 h-16 sm:w-28 sm:h-18 rounded-lg overflow-hidden shrink-0">
+                <Link href="/login" key={item.title} className="flex gap-6 py-7 group items-start">
+                  <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
                     <Image src={item.img} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold mb-1.5 px-2 py-0.5 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
-                    <h4 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
-                    <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
+                    <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
+                    <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
+                    <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
                   </div>
-                  <div className="shrink-0 text-right ml-2">
-                    <p className="text-2xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
-                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
-                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
+                  <div className="shrink-0 text-right ml-3">
+                    <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
+                    <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
                   </div>
                 </Link>
               ))}
@@ -220,17 +220,19 @@ export default function Invitado() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
         {/* Fade inferior hacia el LogoLoop */}
         <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, #0a1628)" }} />
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-12 py-12 sm:py-20">
-          <h2 className="text-white text-2xl sm:text-3xl font-bold mb-8 text-center">Comunidad</h2>
+        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-32 sm:py-52">
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight mb-14 text-right" style={{ color: "white" }}>
+            Nuestra<br />Comunidad
+          </h2>
           <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
             <div className="flex flex-col divide-y w-full" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
               {comunidadItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between py-4 group cursor-pointer">
+                <div key={item.label} className="flex items-center justify-between py-6 group cursor-pointer">
                   <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-white text-lg font-medium">{item.label}</p>
-                    <p className={`${playfair.className} text-base mt-0.5 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
+                    <p className="text-white text-2xl sm:text-3xl font-medium">{item.label}</p>
+                    <p className={`${playfair.className} text-lg sm:text-xl mt-1 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
                   </div>
-                  <span className="text-sm shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
+                  <span className="text-xl shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
                 </div>
               ))}
             </div>
@@ -245,8 +247,8 @@ export default function Invitado() {
                   className="rounded-xl px-6 py-4"
                   style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
                 >
-                  <p className="text-white text-3xl font-extrabold leading-none">{s.numero}</p>
-                  <p className={`${playfair.className} text-sm mt-1.5`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
+                  <p className="text-white text-5xl font-extrabold leading-none">{s.numero}</p>
+                  <p className={`${playfair.className} text-base mt-2`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
