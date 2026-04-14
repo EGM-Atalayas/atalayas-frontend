@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Ocultar scrollbar nativo */
+html, body, * {
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Edge */
+}
+
 :root {
   --azul-egm: #1B3F7E;
   --azul-egm-hover: #2A5298;
