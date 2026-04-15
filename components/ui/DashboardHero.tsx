@@ -5,20 +5,21 @@ import SplitText from "@/components/ui/SplitText";
 import GradientText from "@/components/ui/GradientText";
 
 interface DashboardHeroProps {
-  prefijo?: string;    // texto en Instrument Sans light, ej: "Centro de "
-  titulo:   string;    // texto en Instrument Serif italic, ej: "Formación."
+  prefijo?:     string;    // texto en Poppins bold, ej: "Centro de "
+  titulo:       string;    // texto en Instrument Serif italic, ej: "Formación."
+  imagenFondo?: string;    // ruta relativa a /public, por defecto background-dashboard.jpg
 }
 
-export default function DashboardHero({ prefijo, titulo }: DashboardHeroProps) {
+export default function DashboardHero({ prefijo, titulo, imagenFondo = "/background-dashboard.jpg" }: DashboardHeroProps) {
   const { usuario } = useAuth();
 
   return (
     <div
       className="relative overflow-hidden flex items-center"
-      style={{ minHeight: "280px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
+      style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
     >
       <img
-        src="/background-dashboard.jpg"
+        src={imagenFondo}
         alt=""
         aria-hidden
         className="absolute inset-0 w-full h-full object-cover"
@@ -46,7 +47,7 @@ export default function DashboardHero({ prefijo, titulo }: DashboardHeroProps) {
               className="text-white"
               style={{
                 fontSize:      "clamp(3rem, 6vw, 4rem)",
-                fontFamily:    "'Instrument Sans', sans-serif",
+                fontFamily:    "var(--font-poppins), sans-serif",
                 fontWeight:    300,
                 letterSpacing: "-0.03em",
               }}

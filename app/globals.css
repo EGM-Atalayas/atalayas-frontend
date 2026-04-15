@@ -91,7 +91,7 @@ body::-webkit-scrollbar,
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -105,5 +105,5 @@ body::-webkit-scrollbar,
 body {
   background: var(--gris-pagina);
   color: var(--texto-primario);
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-poppins), var(--font-inter), sans-serif;
 }
