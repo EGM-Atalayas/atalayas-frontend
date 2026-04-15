@@ -230,27 +230,18 @@ export default function ComunicadosCarousel({
         </motion.div>
       </div>
 
-      {/* Dots + link */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          {items.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => setPosition(loop ? i + 1 : i)}
-              animate={{ scale: activeIndex === i ? 1.3 : 1, opacity: activeIndex === i ? 1 : 0.35 }}
-              transition={{ duration: 0.15 }}
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "var(--azul-egm)" }}
-            />
-          ))}
-        </div>
-        <Link
-          href="/dashboard/comunicacion"
-          className="text-sm font-semibold hover:underline"
-          style={{ color: "var(--azul-egm)" }}
-        >
-          Ver todas →
-        </Link>
+      {/* Dots centrados */}
+      <div className="flex items-center justify-center gap-2">
+        {items.map((_, i) => (
+          <motion.button
+            key={i}
+            onClick={() => setPosition(loop ? i + 1 : i)}
+            animate={{ scale: activeIndex === i ? 1.3 : 1, opacity: activeIndex === i ? 1 : 0.35 }}
+            transition={{ duration: 0.15 }}
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "var(--azul-egm)" }}
+          />
+        ))}
       </div>
     </div>
   );
