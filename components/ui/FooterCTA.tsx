@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import LineWaves from "@/components/ui/LineWaves";
+import SplitText from "@/components/ui/SplitText";
 
 const HEADING = "¿Tu empresa está en el parque empresarial?";
 
@@ -33,10 +34,10 @@ export default function FooterCTA() {
       {/* Dark overlay */}
       <div className="absolute inset-0 z-[1] bg-black/55" />
 
-      {/* Fade superior — mezcla con LogoLoop */}
+      {/* Fade superior — mezcla con sección anterior */}
       <div
-        className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-[2]"
-        style={{ background: "linear-gradient(to bottom, #0D1B2E, transparent)" }}
+        className="absolute top-0 left-0 right-0 h-40 pointer-events-none z-[50]"
+        style={{ background: "linear-gradient(to bottom, #000000, transparent)" }}
       />
 
       {/* Content */}
@@ -52,19 +53,27 @@ export default function FooterCTA() {
           </p>
 
           {/* Main headline */}
-          <h2
-            className="font-semibold leading-[1] tracking-tighter text-white"
+          <SplitText
+            text={HEADING}
+            tag="h2"
+            textAlign="center"
+            delay={30}
+            duration={1}
+            ease="power3.out"
+            splitType="chars"
+            from={{ opacity: 0, y: 50 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.1}
+            rootMargin="-50px"
             style={{
               fontFamily: "'Instrument Sans', sans-serif",
               fontSize: "clamp(2rem, 6vw, 72px)",
-              background: "linear-gradient(to bottom, #ffffff, #ffffff, #b4c0ff)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              fontWeight: 600,
+              lineHeight: 1,
+              letterSpacing: "-0.03em",
+              color: "#ffffff",
             }}
-          >
-            {HEADING}
-          </h2>
+          />
 
           {/* Subheadline */}
           <p
