@@ -190,7 +190,7 @@ export default function ComunicacionPage() {
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div className="w-full">
-      <DashboardHero titulo="Comunicación." />
+      <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.jpg" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
       {/* Selector de sección — solo visible para admins */}

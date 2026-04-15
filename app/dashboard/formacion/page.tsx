@@ -60,7 +60,7 @@ export default function FormacionPage() {
 
   return (
     <div className="w-full">
-      <DashboardHero prefijo="Centro de " titulo="Formación." />
+      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.jpg" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
       {isAdmin && (
