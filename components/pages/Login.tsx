@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FiChevronRight, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiChevronRight, FiChevronLeft, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -90,62 +90,21 @@ const LoginPage: React.FC = () => {
 
       {/* ── PANEL IZQUIERDO: Branding ── oculto en móvil, visible en desktop */}
       <div
-        className="hidden lg:flex relative flex-col justify-between lg:w-[48%] px-10 sm:px-16 lg:px-24 py-12 lg:py-16"
+        className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
         style={{
-          background: "url('/background-login.jpg') no-repeat center center",
+          background:     "url('/background-login.jpg') no-repeat center center",
+          backgroundSize: "cover",
         }}
       >
-        {/* Decoración sutil */}
-        <div
-          className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-[0.04]"
-          style={{
-            background: "radial-gradient(circle, #3b9a8c 0%, transparent 70%)",
-            transform: "translate(30%, -30%)",
-          }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-[0.03]"
-          style={{
-            background: "radial-gradient(circle, #2563eb 0%, transparent 70%)",
-            transform: "translate(-40%, 40%)",
-          }}
-        />
+        {/* Sombreado muy leve */}
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
 
-        {/* Contenido superior */}
-        <div className="relative z-10 flex-1 flex flex-col justify-center">
-
-          {/* Logo */}
-          <div className="mb-5 -ml-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt="Atalayas" className="h-16 sm:h-40 w-auto brightness-0 invert" />
-          </div>
-
-          {/* Subtítulo */}
-          <p
-            className="text-base sm:text-lg font-medium mb-4"
-            style={{ color: "#4ecca3" }}
-          >
-            Tu espacio de trabajo conectado
-          </p>
-
-          {/* Descripción */}
-          <p
-            className="text-sm sm:text-[15px] leading-relaxed max-w-md"
-            style={{ color: "rgba(255, 255, 255, 0.5)" }}
-          >
-            Accede a formación, noticias y ventajas exclusivas para empleados del parque empresarial.
-          </p>
+        {/* Logo */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="Atalayas" className="h-32 sm:h-44 w-auto brightness-0 invert" />
         </div>
 
-        {/* Footer */}
-        <div className="relative z-10 mt-8 lg:mt-0">
-          <p
-            className="text-xs tracking-wide"
-            style={{ color: "rgba(255, 255, 255, 0.25)" }}
-          >
-            EGM Atalayas · Área empresarial
-          </p>
-        </div>
       </div>
 
       {/* ── PANEL DERECHO: Formulario ── */}
@@ -154,22 +113,32 @@ const LoginPage: React.FC = () => {
         style={{ background: "#ffffff" }}
       >
         {/* Branding visible solo en móvil */}
-        <div className="lg:hidden w-full px-6 py-10 mb-2" style={{ background: "url('/background-login.jpg')" }}>
+        <div className="lg:hidden w-full px-6 py-12 mb-2 relative flex flex-col items-center"
+          style={{ background: "url('/background-login.jpg') center/cover no-repeat" }}>
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="Atalayas" className="h-20 w-auto mb-4 brightness-0 invert mx-auto block" />
-          <p className="text-base font-medium mb-2" style={{ color: "#4ecca3" }}>
-            Tu espacio de trabajo conectado
-          </p>
-          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Accede a formación, noticias y ventajas exclusivas para empleados del parque empresarial.
-          </p>
+          <img src="/logo.webp" alt="Atalayas" className="relative z-10 h-20 w-auto brightness-0 invert" />
         </div>
+
         <div className="w-full max-w-md px-6 lg:px-0 py-8 lg:py-0">
+
+          {/* Volver */}
+          <div className="mb-6">
+            <button
+              onClick={() => router.push("/")}
+              className="flex items-center gap-1.5 text-sm transition-colors cursor-pointer"
+              style={{ color: "#1B3F7E" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+            >
+              <FiChevronLeft size={15} /> Volver
+            </button>
+          </div>
 
           {/* Título del formulario */}
           <h2
-            className="text-2xl sm:text-3xl font-bold mb-8 text-center"
-            style={{ color: "#0f1923" }}
+            className="text-4xl sm:text-5xl font-bold mb-5 text-center"
+            style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}
           >
             Iniciar sesión
           </h2>
@@ -180,14 +149,14 @@ const LoginPage: React.FC = () => {
             {/* Campo Email */}
             <div>
               <label
-                className="block text-sm font-medium mb-2"
+                className="block text-base font-medium mb-2"
                 style={{ color: "#3D4A5C" }}
               >
                 Correo electrónico
               </label>
               <div className="relative">
                 <FiMail
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
                   style={{ color: "#6B7A8D" }}
                 />
                 <input
@@ -196,10 +165,10 @@ const LoginPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@empresa.com"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 text-base rounded-lg transition-all duration-200 outline-none"
                   style={{
                     background: "#f5f6f8",
-                    border: "1px solid #C8CDD8",
+                    border: "1px solid rgba(27,63,126,0.22)",
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
@@ -207,7 +176,7 @@ const LoginPage: React.FC = () => {
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#C8CDD8";
+                    e.target.style.borderColor = "rgba(27,63,126,0.22)";
                     e.target.style.boxShadow = "none";
                   }}
                 />
@@ -217,14 +186,14 @@ const LoginPage: React.FC = () => {
             {/* Campo Contraseña */}
             <div>
               <label
-                className="block text-sm font-medium mb-2"
+                className="block text-base font-medium mb-2"
                 style={{ color: "#3D4A5C" }}
               >
                 Contraseña
               </label>
               <div className="relative">
                 <FiLock
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
                   style={{ color: "#6B7A8D" }}
                 />
                 <input
@@ -233,10 +202,10 @@ const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-11 pr-11 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 text-base rounded-lg transition-all duration-200 outline-none"
                   style={{
                     background: "#f5f6f8",
-                    border: "1px solid #C8CDD8",
+                    border: "1px solid rgba(27,63,126,0.22)",
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
@@ -244,7 +213,7 @@ const LoginPage: React.FC = () => {
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#C8CDD8";
+                    e.target.style.borderColor = "rgba(27,63,126,0.22)";
                     e.target.style.boxShadow = "none";
                   }}
                 />
@@ -267,43 +236,46 @@ const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-1.5 text-xs transition-colors self-start"
-                style={{ color: "#6B7A8D" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
+                className="flex items-center gap-2 text-sm font-medium transition-colors self-start"
+                style={{ color: "#1B3F7E" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
               >
                 <FiChevronRight
+                  size={16}
                   className={`transition-transform duration-200 ${showAdvanced ? "rotate-90" : ""}`}
                 />
                 Opciones avanzadas
               </button>
 
               {showAdvanced && (
-                <div className="mt-1">
-                  <label
-                    className="block text-xs font-medium mb-1.5"
-                    style={{ color: "#6B7A8D" }}
-                  >
-                    Protocolo personalizado
-                  </label>
-                  <input
-                    type="text"
-                    value={protocol}
-                    onChange={(e) => setProtocol(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all duration-200"
-                    style={{
-                      background: "#f5f6f8",
-                      border: "1px solid #C8CDD8",
-                      color: "#0f1923",
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#1B3F7E";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#C8CDD8";
-                    }}
-                  />
+                <div className="rounded-xl px-5 py-5 flex flex-col gap-4"
+                  style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.15)" }}>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#3D4A5C" }}>
+                      Protocolo personalizado
+                    </label>
+                    <input
+                      type="text"
+                      value={protocol}
+                      onChange={(e) => setProtocol(e.target.value)}
+                      placeholder="Opcional"
+                      className="w-full px-4 py-3.5 text-sm rounded-lg outline-none transition-all duration-200"
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid rgba(27,63,126,0.22)",
+                        color: "#0f1923",
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "#1B3F7E";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "rgba(27,63,126,0.22)";
+                        e.target.style.boxShadow = "none";
+                      }}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -325,9 +297,10 @@ const LoginPage: React.FC = () => {
                     </svg>
                   )}
                 </div>
-                <span className="text-xs transition-colors" style={{ color: "#6B7A8D" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")} onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}>
-                  Recordar mi correo
+                <span className="text-sm transition-colors" style={{ color: "#6B7A8D" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")} onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}>
+                  Recordar contraseña
                 </span>
+
               </label>
             </div>
 
@@ -349,17 +322,20 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 mt-1 rounded-lg text-sm font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed"
               style={{
-                background: isLoading ? "#C8CDD8" : "#0D1B2E",
-                border: "1px solid #0D1B2E",
-                color: "#ffffff",
+                background:           isLoading ? "rgba(27,63,126,0.5)" : "rgba(27,63,126,0.82)",
+                border:               "1px solid rgba(255,255,255,0.18)",
+                color:                "#ffffff",
+                backdropFilter:       "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)",
               }}
               onMouseEnter={(e) => {
-                if (!isLoading) e.currentTarget.style.background = "#152540";
+                if (!isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.95)";
               }}
               onMouseLeave={(e) => {
-                if (!isLoading) e.currentTarget.style.background = "#0D1B2E";
+                if (!isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.82)";
               }}
             >
               {isLoading ? <span className="loading-dots">Conectando</span> : "Entrar"}
@@ -367,7 +343,7 @@ const LoginPage: React.FC = () => {
           </form>
 
           {/* Olvidaste contraseña */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-4">
             <button
               type="button"
               className="text-sm transition-colors cursor-pointer"
@@ -379,34 +355,42 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Separador */}
-          <div className="flex items-center gap-4 my-5">
-            <div className="flex-1 h-px" style={{ background: "#C8CDD8" }} />
-            <span className="text-xs" style={{ color: "#6B7A8D" }}>
-              ¿nueva empresa?
-            </span>
-            <div className="flex-1 h-px" style={{ background: "#C8CDD8" }} />
+          {/* ── Zona Nueva empresa ── */}
+          <div className="mt-10 rounded-2xl overflow-hidden relative"
+            style={{ background: "linear-gradient(135deg, #4a7cc9 0%, #2d5494 100%)" }}>
+            <div className="relative px-6 py-6 flex flex-col items-center gap-3 text-center">
+              <div>
+                <p className="text-lg font-semibold leading-snug" style={{ color: "#ffffff" }}>
+                  ¿Tu empresa aún no está en Atalayas?
+                </p>
+                <p className="text-sm leading-relaxed mt-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  Regístrala y accede a la plataforma del parque empresarial.
+                </p>
+              </div>
+              <Link
+                href="/register-empresa"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                style={{
+                  background:           "rgba(255,255,255,0.15)",
+                  border:               "1px solid rgba(255,255,255,0.3)",
+                  color:                "#ffffff",
+                  backdropFilter:       "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
+              >
+                Solicitar alta de empresa →
+              </Link>
+            </div>
           </div>
 
-          {/* Solicitar alta */}
-          <p className="text-center text-sm" style={{ color: "#6B7A8D" }}>
-            ¿Tu empresa no está registrada?{" "}
-            <Link
-              href="/register-empresa"
-              className="font-medium transition-colors"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
-            >
-              Solicitar alta
-            </Link>
-          </p>
-
           {/* Acceso invitado */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-3">
             <button
               onClick={handleInvitado}
-              className="text-xs transition-colors cursor-pointer"
+              className="text-sm transition-colors cursor-pointer"
               style={{ color: "#6B7A8D" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
