@@ -24,75 +24,58 @@ const comunidadItems = [
   {
     label: "En Femenino",
     sub: "Liderazgo e igualdad en el entorno empresarial",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-      </svg>
-    ),
+    imagen: "/logo-en-femenino.png",
+    bg: "#8878c8",
+    icono: null,
   },
   {
     label: "Autobús lanzadera",
     sub: "Servicio de transporte directo al parque empresarial",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-      </svg>
-    ),
+    imagen: "/autobus.jpg",
+    bg: null,
+    icono: null,
   },
   {
     label: "Coche compartido",
     sub: "Coordina rutas con compañeros del parque",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
-    ),
+    imagen: "/coche-compartido.jpg",
+    bg: null,
+    icono: null,
   },
   {
     label: "Aparcamiento VAO",
     sub: "Plazas exclusivas para vehículos de alta ocupación",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    imagen: "/aparcamiento-vao.png",
+    bg: null,
+    icono: null,
   },
   {
-    label: "Eventos empresariales",
+    label: "Empresarios de hoy y de mañana",
     sub: "Networking y actividades entre empresas del parque",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
+    imagen: "/empresas-hoy.jpg",
+    bg: null,
+    icono: null,
   },
   {
-    label: "Team building",
-    sub: "Iniciativas colectivas e integración entre equipos",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    label: "Proyecto empresas solidarias",
+    sub: "Más de 44.000 personas ya han sido beneficiadas.",
+    imagen: "/empresas-solidarias.png",
+    bg: "#ffffff",
+    icono: null,
   },
   {
-    label: "Sostenibilidad",
-    sub: "Iniciativas verdes y responsabilidad ambiental",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
+    label: "Voy en bici al trabajo",
+    sub: "Semana de la movilidad",
+    imagen: "/trabajo-bici.jpg",
+    bg: null,
+    icono: null,
   },
   {
-    label: "Salud y bienestar",
-    sub: "Programas de bienestar para todos los empleados",
-    icono: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    ),
+    label: "Atalayas circular",
+    sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
+    imagen: "/atalayas-circular.jpg",
+    bg: null,
+    icono: null,
   },
 ];
 
@@ -292,7 +275,10 @@ export default function Invitado() {
             { src: "/logo-aliaxis.png", alt: "Empresa 3" },
             { src: "/logo-blinker.png", alt: "Empresa 4" },
             { src: "/logo-seur.png", alt: "Empresa 5" },
-            { src: "/logo-famosa.png", alt: "Empresa 6" },
+            { src: "/logo-gofre.png", alt: "Empresa 6" },
+            { src: "/logo-itae.png", alt: "Empresa 7" },
+            { src: "/logo-pompadour.png", alt: "Empresa 8" },
+            { src: "/logo-sprinter.png", alt: "Empresa 9" },
           ]}
         />
       </section>
@@ -314,27 +300,42 @@ export default function Invitado() {
             {comunidadItems.map((item) => (
               <div
                 key={item.label}
-                className="aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer group transition-all duration-200 hover:scale-[1.02]"
+                className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
                 style={{
-                  background: "rgba(255,255,255,0.07)",
+                  background: 'bg' in item && item.bg ? item.bg as string : "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.14)",
-                  backdropFilter: "blur(8px)",
+                  backdropFilter: 'bg' in item ? undefined : "blur(8px)",
                 }}
               >
-                {/* Icono */}
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}
-                >
-                  {item.icono}
-                </div>
+                {/* Imagen (En Femenino) */}
+                {(item.label === "Autobús lanzadera" || item.label === "Coche compartido" || item.label === "Aparcamiento VAO" || item.label === "Empresarios de hoy y de mañana" || item.label === "Voy en bici al trabajo" || item.label === "Atalayas circular") && 'imagen' in item && item.imagen ? (
+                  <>
+                    <img src={item.imagen as string} alt={item.label}
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                    <div className="absolute inset-0 rounded-2xl bg-black/40" />
+                    <div className="flex-1" />
+                  </>
+                ) : item.label !== "Autobús lanzadera" && item.label !== "Coche compartido" && item.label !== "Aparcamiento VAO" && item.label !== "Empresarios de hoy y de mañana" && item.label !== "Voy en bici al trabajo" && item.label !== "Atalayas circular" && 'imagen' in item && item.imagen ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <img src={item.imagen as string} alt={item.label}
+                      className="w-full h-full object-contain p-3" />
+                  </div>
+                ) : (
+                  /* Icono */
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}
+                  >
+                    {item.icono}
+                  </div>
+                )}
 
                 {/* Texto */}
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-semibold leading-snug text-white">
+                <div className="flex flex-col gap-1 relative z-10">
+                  <p className="text-sm font-semibold leading-snug" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
                     {item.label}
                   </p>
-                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
                     {item.sub}
                   </p>
                 </div>
