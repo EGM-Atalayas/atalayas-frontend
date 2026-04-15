@@ -128,10 +128,13 @@ export default function ComunicadosCarousel({
     return [items[items.length - 1], ...items, items[0]];
   }, [items, loop]);
 
-  const [position, setPosition]   = useState(loop ? 1 : 0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isJumping, setIsJumping] = useState(false);
-  const [isAnimating, setIsAnim]  = useState(false);
+  const [position, setPosition]       = useState(loop ? 1 : 0);
+  const [isHovered, setIsHovered]     = useState(false);
+  const [isJumping, setIsJumping]     = useState(false);
+  const [isAnimating, setIsAnim]      = useState(false);
+  // Track autoplay: running → stops after one full cycle → shows arrows
+  const [autoplayDone, setAutoplayDone] = useState(false);
+  const autoplayCycles                  = useRef(0);
   const x = useMotionValue(-(loop ? 1 : 0) * trackOffset);
 
   // Reset on items change
@@ -139,17 +142,30 @@ export default function ComunicadosCarousel({
     const start = loop ? 1 : 0;
     setPosition(start);
     x.set(-start * trackOffset);
+    autoplayCycles.current = 0;
+    setAutoplayDone(false);
   }, [items.length, loop]);
 
-  // Autoplay
+  // Autoplay — stops after one full cycle
   useEffect(() => {
-    if (!autoplay || itemsForRender.length <= 1) return;
+    if (!autoplay || autoplayDone || itemsForRender.length <= 1) return;
     if (pauseOnHover && isHovered) return;
     const t = setInterval(() => {
-      setPosition((p) => Math.min(p + 1, itemsForRender.length - 1));
+      setPosition((p) => {
+        const next = p + 1;
+        // Reached the last clone → one full cycle done
+        if (next >= itemsForRender.length - 1) {
+          autoplayCycles.current += 1;
+          if (autoplayCycles.current >= 1) {
+            clearInterval(t);
+            setAutoplayDone(true);
+          }
+        }
+        return Math.min(next, itemsForRender.length - 1);
+      });
     }, autoplayDelay);
     return () => clearInterval(t);
-  }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length]);
+  }, [autoplay, autoplayDone, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length]);
 
   const effectiveTrans = isJumping ? { duration: 0 } : SPRING;
 
@@ -157,6 +173,7 @@ export default function ComunicadosCarousel({
     if (!loop || itemsForRender.length <= 1) { setIsAnim(false); return; }
     if (position === itemsForRender.length - 1) {
       setIsJumping(true);
+      // If autoplay just finished its last jump, land on first real item
       setPosition(1); x.set(-trackOffset);
       requestAnimationFrame(() => { setIsJumping(false); setIsAnim(false); });
       return;
@@ -170,18 +187,27 @@ export default function ComunicadosCarousel({
     setIsAnim(false);
   }
 
+  function navigate(dir: 1 | -1) {
+    setPosition((p) => {
+      const next = p + dir;
+      const max  = itemsForRender.length - 1;
+      if (loop) return Math.max(0, Math.min(next, max));
+      return Math.max(1, Math.min(next, items.length));
+    });
+  }
+
   function onDragEnd(_: unknown, info: PanInfo) {
     const { offset, velocity } = info;
     const dir =
       offset.x < -DRAG_BUFFER || velocity.x < -VELOCITY_THRESH ? 1
       : offset.x > DRAG_BUFFER || velocity.x > VELOCITY_THRESH ? -1 : 0;
     if (!dir) return;
-    setPosition((p) => Math.max(0, Math.min(p + dir, itemsForRender.length - 1)));
+    navigate(dir as 1 | -1);
   }
 
   const activeIndex = items.length === 0 ? 0
     : loop ? (position - 1 + items.length) % items.length
-    : Math.min(position, items.length - 1);
+    : Math.min(position - 1, items.length - 1);
 
   const dragConstraints = loop ? undefined : {
     left:  -trackOffset * Math.max(itemsForRender.length - 1, 0),
@@ -191,14 +217,58 @@ export default function ComunicadosCarousel({
   if (items.length === 0) return null;
 
   return (
-    <div className="w-full flex flex-col gap-4 h-full">
+    <div className="w-full flex-1 min-h-0 flex flex-col">
       {/* Carousel track */}
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-2xl flex-1"
+        style={{ minHeight: "320px" }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Flechas — aparecen cuando el autoplay termina */}
+        <motion.button
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: autoplayDone ? 1 : 0, x: autoplayDone ? 0 : -8, pointerEvents: autoplayDone ? "auto" : "none" }}
+          transition={{ duration: 0.4, ease: [0.33, 1, 0.68, 1] }}
+          onClick={() => navigate(-1)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}
+          aria-label="Anterior"
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0, x: 8 }}
+          animate={{ opacity: autoplayDone ? 1 : 0, x: autoplayDone ? 0 : 8, pointerEvents: autoplayDone ? "auto" : "none" }}
+          transition={{ duration: 0.4, ease: [0.33, 1, 0.68, 1] }}
+          onClick={() => navigate(1)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(6px)" }}
+          aria-label="Siguiente"
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </motion.button>
+
+        {/* Dots — sobre la tarjeta */}
+        <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-20">
+          {items.map((_, i) => (
+            <motion.button
+              key={i}
+              onClick={() => setPosition(loop ? i + 1 : i)}
+              animate={{ scale: activeIndex === i ? 1.3 : 1, opacity: activeIndex === i ? 1 : 0.4 }}
+              transition={{ duration: 0.15 }}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: "#fff" }}
+            />
+          ))}
+        </div>
+
         <motion.div
           className="flex h-full"
           drag={isAnimating ? false : "x"}
@@ -230,28 +300,6 @@ export default function ComunicadosCarousel({
         </motion.div>
       </div>
 
-      {/* Dots + link */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          {items.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => setPosition(loop ? i + 1 : i)}
-              animate={{ scale: activeIndex === i ? 1.3 : 1, opacity: activeIndex === i ? 1 : 0.35 }}
-              transition={{ duration: 0.15 }}
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "var(--azul-egm)" }}
-            />
-          ))}
-        </div>
-        <Link
-          href="/dashboard/comunicacion"
-          className="text-sm font-semibold hover:underline"
-          style={{ color: "var(--azul-egm)" }}
-        >
-          Ver todas →
-        </Link>
-      </div>
     </div>
   );
 }

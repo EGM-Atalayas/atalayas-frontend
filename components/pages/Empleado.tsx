@@ -289,7 +289,7 @@ export default function Empleado() {
 
             {/* COMUNICACIONES — 2/3 */}
             <div className="lg:col-span-2 flex flex-col">
-              <TituloSeccion letras>Comunicaciones</TituloSeccion>
+              <div className="mb-6"><TituloSeccion noMargin letras>Comunicaciones</TituloSeccion></div>
               <ComunicadosCarousel
                 items={carouselItems}
                 autoplay
@@ -301,10 +301,32 @@ export default function Empleado() {
 
             {/* SERVICIOS DEL PARQUE — 1/3 */}
             <div className="flex flex-col">
-              <TituloSeccion letras>Servicios</TituloSeccion>
-              <div className="rounded-2xl overflow-hidden"
-                style={{ background: "var(--azul-egm)" }}>
-                <div className="p-5 flex flex-col gap-2">
+              <div className="mb-6"><TituloSeccion noMargin letras>Servicios</TituloSeccion></div>
+              <div
+                className="rounded-2xl overflow-hidden flex-1 relative"
+                style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
+              >
+                {/* Glow decorativo */}
+                <div className="absolute pointer-events-none" style={{
+                  top: "-60px", left: "-60px", width: "240px", height: "240px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)",
+                }} />
+
+                {/* Mini cabecera */}
+                <div className="relative px-4 pt-4 pb-3 flex items-center justify-between"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest"
+                    style={{ color: "rgba(255,255,255,0.38)" }}>
+                    Servicios del parque
+                  </p>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: "rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {SERVICIOS.filter(s => s.activo).length} / {SERVICIOS.length} activos
+                  </span>
+                </div>
+
+                <div className="relative p-4 flex flex-col gap-2">
                   {SERVICIOS.map((s) => {
                     const item = (
                       <div
@@ -360,6 +382,13 @@ export default function Empleado() {
               </div>
             </div>
 
+          </div>
+          <div className="flex justify-start mt-3">
+            <Link href="/dashboard/comunicacion"
+              className="text-sm font-semibold hover:underline"
+              style={{ color: "var(--azul-egm)" }}>
+              Ver todas →
+            </Link>
           </div>
         </section>
 
