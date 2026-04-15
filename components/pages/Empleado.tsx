@@ -289,14 +289,7 @@ export default function Empleado() {
 
             {/* COMUNICACIONES — 2/3 */}
             <div className="lg:col-span-2 flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <TituloSeccion noMargin letras>Comunicaciones</TituloSeccion>
-                <Link href="/dashboard/comunicacion"
-                  className="text-sm font-semibold hover:underline"
-                  style={{ color: "var(--azul-egm)" }}>
-                  Ver todas →
-                </Link>
-              </div>
+              <div className="mb-6"><TituloSeccion noMargin letras>Comunicaciones</TituloSeccion></div>
               <ComunicadosCarousel
                 items={carouselItems}
                 autoplay
@@ -308,7 +301,7 @@ export default function Empleado() {
 
             {/* SERVICIOS DEL PARQUE — 1/3 */}
             <div className="flex flex-col">
-              <TituloSeccion letras>Servicios</TituloSeccion>
+              <div className="mb-6"><TituloSeccion noMargin letras>Servicios</TituloSeccion></div>
               <div
                 className="rounded-2xl overflow-hidden flex-1 relative"
                 style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
@@ -420,6 +413,13 @@ export default function Empleado() {
               </div>
             </div>
 
+          </div>
+          <div className="flex justify-start mt-3">
+            <Link href="/dashboard/comunicacion"
+              className="text-sm font-semibold hover:underline"
+              style={{ color: "var(--azul-egm)" }}>
+              Ver todas →
+            </Link>
           </div>
         </section>
 
