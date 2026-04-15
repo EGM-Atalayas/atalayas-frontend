@@ -1,8 +1,8 @@
 // src/components/pages/Login.tsx
 "use client";
 
-import React, { useState } from "react";
-import { FiChevronRight, FiMail, FiLock } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiChevronRight, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -13,7 +13,17 @@ const LoginPage: React.FC = () => {
   const { setUsuario, loginInvitado } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberEmail(true);
+    }
+  }, []);
   const [protocol, setProtocol] = useState("");
   const [errorMensaje, setErrorMensaje] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +34,12 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
+      if (rememberEmail) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
       const [response] = await Promise.all([
         fetch(`${API_URL}/auth/login`, {
           method: "POST",
@@ -212,12 +228,12 @@ const LoginPage: React.FC = () => {
                   style={{ color: "#6B7A8D" }}
                 />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 text-sm rounded-lg transition-all duration-200 outline-none"
                   style={{
                     background: "#f5f6f8",
                     border: "1px solid #C8CDD8",
@@ -232,15 +248,26 @@ const LoginPage: React.FC = () => {
                     e.target.style.boxShadow = "none";
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm focus:outline-none"
+                  style={{ color: "#6B7A8D" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
               </div>
             </div>
 
-            {/* Opciones avanzadas */}
-            <div>
+            {/* Opciones avanzadas y Recordarme */}
+            <div className="flex flex-col gap-3">
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-1.5 text-xs transition-colors"
+                className="flex items-center gap-1.5 text-xs transition-colors self-start"
                 style={{ color: "#6B7A8D" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
@@ -252,7 +279,7 @@ const LoginPage: React.FC = () => {
               </button>
 
               {showAdvanced && (
-                <div className="mt-3">
+                <div className="mt-1">
                   <label
                     className="block text-xs font-medium mb-1.5"
                     style={{ color: "#6B7A8D" }}
@@ -279,6 +306,29 @@ const LoginPage: React.FC = () => {
                   />
                 </div>
               )}
+
+              <label className="flex items-center gap-2 cursor-pointer group w-max">
+                <div className="relative flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={rememberEmail}
+                    onChange={(e) => setRememberEmail(e.target.checked)}
+                    className="w-4 h-4 rounded cursor-pointer appearance-none outline-none transition-all"
+                    style={{
+                      border: rememberEmail ? "1px solid #1B3F7E" : "1px solid #C8CDD8",
+                      background: rememberEmail ? "#1B3F7E" : "#f5f6f8",
+                    }}
+                  />
+                  {rememberEmail && (
+                    <svg className="w-3 h-3 text-white absolute pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-xs transition-colors" style={{ color: "#6B7A8D" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")} onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}>
+                  Recordar mi correo
+                </span>
+              </label>
             </div>
 
             {/* Error */}

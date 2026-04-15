@@ -119,9 +119,146 @@ export default function Invitado() {
         </div>
       </section>
 
+      {/* NOTICIAS */}
+      <section id="noticias" className="w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
+        {/* Header */}
+        <div className="mb-14">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
+            <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
+          </div>
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
+            Mantente al día<br />con Atalayas
+          </h2>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-10">
+          {/* Featured card */}
+          <Link href="/login" className="relative rounded-2xl overflow-hidden flex-shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
+            <Image
+              src="/background-invitado.jpg"
+              alt="Noticia destacada"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
+            <div className="absolute bottom-0 left-0 p-8 sm:p-10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-5 h-px bg-white/60" />
+                <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
+              </div>
+              <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
+                EGM Atalayas lanza su nueva plataforma digital para empresas del parque
+              </h3>
+            </div>
+            <div className="absolute top-5 right-5">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm text-white text-base">↗</div>
+            </div>
+          </Link>
+
+          {/* Right column */}
+          <div className="flex-1 flex flex-col">
+            {/* Category tabs */}
+            <div className="flex items-center gap-8 mb-8 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+              {["Noticias", "Eventos", "Comunicados", "Convocatorias"].map((tab, i) => (
+                <div key={tab} className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer" style={{ borderBottom: i === 0 ? "2px solid var(--azul-egm)" : "2px solid transparent", marginBottom: "-1px" }}>
+                  <span className="text-base font-medium whitespace-nowrap" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>{tab}</span>
+                  <span className="text-sm" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Article list */}
+            <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
+              {[
+                {
+                  img: "/background-comunidad.jpg",
+                  title: "Jornada de networking: conecta con +150 empresas del parque",
+                  tag: "Evento",
+                  day: "18", month: "Abr", year: "2026",
+                },
+                {
+                  img: "/background-invitado.jpg",
+                  title: "Nuevos servicios de transporte lanzadera desde Alicante",
+                  tag: "Noticia",
+                  day: "10", month: "Abr", year: "2026",
+                },
+                {
+                  img: "/background-comunidad.jpg",
+                  title: "Convocatoria: Programa de formación para pymes del parque empresarial",
+                  tag: "Convocatoria",
+                  day: "03", month: "Abr", year: "2026",
+                },
+              ].map((item) => (
+                <Link href="/login" key={item.title} className="flex gap-6 py-7 group items-start">
+                  <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
+                    <Image src={item.img} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
+                    <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
+                    <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
+                  </div>
+                  <div className="shrink-0 text-right ml-3">
+                    <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
+                    <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* COMUNIDAD */}
+      <section
+        id="comunidad"
+        className="relative w-full mt-2"
+        style={{ backgroundImage: "url('/background-comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
+      >
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
+        {/* Fade inferior hacia el LogoLoop */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, #0a1628)" }} />
+        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-32 sm:py-52">
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight mb-14 text-right" style={{ color: "white" }}>
+            Nuestra<br />Comunidad
+          </h2>
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
+            <div className="flex flex-col divide-y w-full" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+              {comunidadItems.map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-6 group cursor-pointer">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="text-white text-2xl sm:text-3xl font-medium">{item.label}</p>
+                    <p className={`${playfair.className} text-lg sm:text-xl mt-1 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
+                  </div>
+                  <span className="text-xl shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
+                </div>
+              ))}
+            </div>
+            <div className="hidden sm:flex flex-col gap-4 justify-center">
+              {[
+                { numero: "+150", label: "Empresas en el parque" },
+                { numero: "+8.000", label: "Empleados directos" },
+                { numero: "25", label: "Años de gestión" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-xl px-6 py-4"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
+                >
+                  <p className="text-white text-5xl font-extrabold leading-none">{s.numero}</p>
+                  <p className={`${playfair.className} text-base mt-2`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* LOGO LOOP */}
-      <section className="w-full py-10 sm:py-14" style={{ background: "var(--gris-pagina)", borderTop: "1px solid var(--gris-borde)", borderBottom: "1px solid var(--gris-borde)" }}>
-        <p className="text-center text-xs font-semibold uppercase tracking-widest mb-8" style={{ color: "var(--texto-muted)" }}>
+      <section className="relative w-full py-10 sm:py-14" style={{ background: "linear-gradient(to bottom, #0a1628 0%, #0D1B2E 40%)" }}>
+        <p className="text-center text-xs font-semibold uppercase tracking-widest mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
           Empresas del parque
         </p>
         <LogoLoop
@@ -137,115 +274,6 @@ export default function Invitado() {
             { src: "/logo.webp", alt: "Empresa 6" },
           ]}
         />
-      </section>
-
-      {/* NOTICIAS */}
-      <section id="noticias" className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-16 sm:py-20">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--verde-oliva)" }}>Actualidad</p>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--texto-primario)" }}>Noticias del parque</h2>
-          </div>
-          <Link href="/login" className="text-sm font-medium hidden sm:block hover:underline" style={{ color: "var(--azul-egm)" }}>
-            Ver todas &#8594;
-          </Link>
-        </div>
-
-        {loadingComunicados ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-          </div>
-        ) : comunicados.length === 0 ? (
-          <div className="rounded-xl p-10 sm:p-14 flex flex-col sm:flex-row items-center gap-8" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--texto-primario)" }}>
-                Pronto aquí, las últimas novedades
-              </h3>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--texto-muted)" }}>
-                EGM Atalayas publica comunicados oficiales sobre eventos, servicios y novedades del parque empresarial. Accede con tu cuenta para verlos en tiempo real.
-              </p>
-            </div>
-            <div className="hidden sm:block w-px self-stretch" style={{ background: "var(--gris-borde)" }} />
-            <div className="hidden sm:flex flex-col gap-3 w-64 shrink-0">
-              {["Jornadas de networking", "Nuevos servicios del parque", "Actualización de normativa"].map((t) => (
-                <div key={t} className="rounded-lg px-4 py-3 flex items-center gap-3" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--azul-egm)" }} />
-                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{t}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-5">
-            {comunicados.map((c) => (
-              <div key={c.comunicadoId} className="flex flex-col sm:flex-row rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-                {c.imagenUrl ? (
-                  <div className="w-full h-44 sm:w-52 sm:h-auto shrink-0 relative">
-                    <Image src={c.imagenUrl} alt={c.titulo} fill className="object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-full h-44 sm:w-52 sm:h-auto shrink-0" style={{ background: "var(--gris-superficie)" }} />
-                )}
-                <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>EGM Atalayas</span>
-                      <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                        {new Date(c.fechaPublicacion).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-bold mb-1" style={{ color: "var(--texto-primario)" }}>{c.titulo}</h3>
-                    <p className="text-sm leading-relaxed line-clamp-3" style={{ color: "var(--texto-secundario)" }}>{c.mensaje}</p>
-                  </div>
-                  <Link href="/login" className="self-start text-xs font-semibold px-4 py-2 rounded-md" style={{ color: "var(--azul-egm)", border: "1px solid var(--gris-borde)" }}>
-                    Seguir leyendo &#8594;
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* COMUNIDAD */}
-      <section
-        id="comunidad"
-        className="relative w-full mt-2"
-        style={{ backgroundImage: "url('/background-comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
-      >
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-12 py-12 sm:py-20">
-          <h2 className="text-white text-2xl sm:text-3xl font-bold mb-8 text-center">Comunidad</h2>
-          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
-            <div className="flex flex-col divide-y w-full" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-              {comunidadItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between py-4 group cursor-pointer">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-white text-lg font-medium">{item.label}</p>
-                    <p className={`${playfair.className} text-base mt-0.5 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
-                  </div>
-                  <span className="text-sm shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
-                </div>
-              ))}
-            </div>
-            <div className="hidden sm:flex flex-col gap-4 justify-center">
-              {[
-                { numero: "+150", label: "Empresas en el parque" },
-                { numero: "+8.000", label: "Empleados directos" },
-                { numero: "25", label: "Años de gestión" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl px-6 py-4"
-                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
-                >
-                  <p className="text-white text-3xl font-extrabold leading-none">{s.numero}</p>
-                  <p className={`${playfair.className} text-sm mt-1.5`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* FOOTER */}
