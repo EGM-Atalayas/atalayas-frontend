@@ -16,6 +16,45 @@ function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
+// ── TIPOS Y MOCK FORMACIONES ──────────────────────────────────────────────────
+type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal: number };
+
+const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
+  { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
+    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al parque.",
+    tipoModulo: "IDENTIDAD", orden: 1, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4 },
+  { moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",
+    descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",
+    tipoModulo: "DESARROLLO", orden: 2, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 5, completadosLocal: 0 },
+  { moduloId: "mock-3", nombre: "PRL — Prevención de Riesgos Laborales",
+    descripcion: "Formación obligatoria en seguridad, higiene y prevención de riesgos en el trabajo.",
+    tipoModulo: "BASICA", orden: 3, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "completado", totalItems: 4, completadosLocal: 4 },
+  { moduloId: "mock-4", nombre: "Digitalización y Herramientas Colaborativas",
+    descripcion: "Aprende a usar las herramientas digitales del entorno laboral moderno.",
+    tipoModulo: "ESPECIFICA", orden: 4, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 8, completadosLocal: 0 },
+];
+
+const LS_KEY = "egm_formacion_progress";
+
+function loadProgress(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "{}"); } catch { return {}; }
+}
+function saveProgress(map: Record<string, number>) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch { /* noop */ }
+}
+function applyProgress(base: FormacionLocal[], map: Record<string, number>): FormacionLocal[] {
+  return base.map((f) => {
+    const c   = map[f.moduloId] ?? f.completadosLocal;
+    const pct = c / f.totalItems;
+    const st  = pct >= 1 ? "completado" : c > 0 ? "en progreso" : "pendiente";
+    return { ...f, completadosLocal: c, status: st };
+  });
+}
+
 const SERVICIOS = [
   {
     label:  "Coche compartido",
@@ -79,9 +118,10 @@ export default function Empleado() {
   const router      = useRouter();
   const { usuario } = useAuth();
 
-  const [noticias, setNoticias]       = useState<Noticia[]>([]);
-  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
-  const [cargando, setCargando]       = useState(true);
+  const [noticias, setNoticias]               = useState<Noticia[]>([]);
+  const [formaciones, setFormaciones]         = useState<ModuloConProgreso[]>([]);
+  const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
+  const [cargando, setCargando]               = useState(true);
 
   useEffect(() => {
     async function cargarDatos() {
@@ -91,9 +131,12 @@ export default function Empleado() {
           getModulosConProgreso().catch(() => []),
         ]);
         setNoticias((noticiasData as Noticia[]).slice(0, 6));
-        setFormaciones(
-          (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden)
-        );
+        const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
+        setFormaciones(real);
+        // Si la API no devuelve módulos, usar mock con progreso de localStorage
+        if (real.length === 0) {
+          setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
+        }
       } finally {
         setCargando(false);
       }
@@ -101,12 +144,30 @@ export default function Empleado() {
     if (usuario) cargarDatos();
   }, [usuario]);
 
-  const completados   = formaciones.filter((m) => m.status === "completado").length;
-  const totalProgress = formaciones.length > 0
-    ? Math.round((completados / formaciones.length) * 100)
+  // Avanzar progreso en una unidad (mock)
+  const avanzarModulo = (moduloId: string) => {
+    setFormacionesLocal((prev) => {
+      const map = loadProgress();
+      const m   = prev.find((f) => f.moduloId === moduloId);
+      if (!m || m.completadosLocal >= m.totalItems) return prev;
+      const next = Math.min(m.completadosLocal + 1, m.totalItems);
+      map[moduloId] = next;
+      saveProgress(map);
+      return applyProgress(MOCK_FORMACIONES_BASE, map);
+    });
+  };
+
+  // Usa datos reales si existen, si no los mocks con localStorage
+  const formDisplay: FormacionLocal[] = formaciones.length > 0
+    ? formaciones.map((f) => ({ ...f, totalItems: 0, completadosLocal: 0 }))
+    : formacionesLocal;
+
+  const completados   = formDisplay.filter((m) => m.status === "completado").length;
+  const totalProgress = formDisplay.length > 0
+    ? Math.round((completados / formDisplay.length) * 100)
     : 0;
-  const siguientePaso = formaciones.find((f) => f.status !== "completado");
-  const hayModulos    = formaciones.length > 0;
+  const siguientePaso = formDisplay.find((f) => f.status !== "completado");
+  const hayModulos    = formDisplay.length > 0;
   const hayProgreso   = hayModulos && completados > 0;
   const noticiasEGM     = noticias.filter((n) => n.esGlobal);
   const noticiasEmpresa = noticias.filter((n) => !n.esGlobal);
@@ -171,9 +232,8 @@ export default function Empleado() {
         <div className="absolute inset-0"
           style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
 
-        <div className="relative z-10 w-full px-10 lg:px-16 py-16 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6"
+        <div className="relative z-10 w-full px-10 lg:px-16 py-16">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
               style={{ color: "var(--verde-oliva-hover)" }}>
               {usuario?.nombreEmpresa ?? "Mi empresa"}
               <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
@@ -182,8 +242,7 @@ export default function Empleado() {
               }).replace(/^\w/, (c) => c.toUpperCase())}
             </p>
 
-            {/* Tipografía diferenciada: "Hola," en Poppins, nombre en Serif italic */}
-            <div className="leading-none mb-1" style={{ marginBottom: siguientePaso ? "2.5rem" : "0" }}>
+            <div className="leading-none flex flex-wrap items-center gap-x-3">
               <span
                 className="text-white"
                 style={{
@@ -193,7 +252,7 @@ export default function Empleado() {
                   letterSpacing: "-0.03em",
                 }}
               >
-                Hola,{" "}
+                Hola,
               </span>
               <GradientText
                 style={{
@@ -202,6 +261,7 @@ export default function Empleado() {
                   fontStyle:     "italic",
                   fontWeight:    400,
                   letterSpacing: "-0.01em",
+                  lineHeight:    1,
                 }}
               >
                 <SplitText
@@ -219,62 +279,6 @@ export default function Empleado() {
                 />
               </GradientText>
             </div>
-
-            {siguientePaso && (
-              <div className="inline-flex items-center gap-4 rounded-2xl px-6 py-4"
-                style={{
-                  background:     "rgba(255,255,255,0.08)",
-                  border:         "1px solid rgba(255,255,255,0.14)",
-                  backdropFilter: "blur(12px)",
-                  maxWidth:       "520px",
-                }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "var(--verde-oliva)" }}>
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" strokeWidth={2.2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-                    style={{ color: "var(--verde-oliva-hover)" }}>
-                    Siguiente paso
-                  </p>
-                  <p className="text-base font-semibold text-white truncate">
-                    {siguientePaso.nombre}
-                  </p>
-                </div>
-                <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-sm font-bold px-5 py-2.5 rounded-xl shrink-0 whitespace-nowrap transition-opacity"
-                  style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                  Continuar →
-                </button>
-              </div>
-            )}
-          </div>
-
-          {hayProgreso && (
-            <div className="flex flex-row lg:flex-col gap-4 shrink-0">
-              <div className="rounded-2xl px-8 py-6 text-center"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", backdropFilter: "blur(10px)", minWidth: "150px" }}>
-                <p className="text-white leading-none"
-                  style={{ fontSize: "3.8rem", fontFamily: "'Instrument Serif', serif" }}>
-                  {totalProgress}<span style={{ fontSize: "2rem", color: "var(--verde-oliva-hover)" }}>%</span>
-                </p>
-                <p className="text-xs uppercase tracking-wider mt-2" style={{ color: "rgba(255,255,255,0.38)" }}>Completado</p>
-              </div>
-              <div className="rounded-2xl px-8 py-6 text-center"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", minWidth: "150px" }}>
-                <p className="text-white leading-none"
-                  style={{ fontSize: "3rem", fontFamily: "'Instrument Serif', serif" }}>
-                  {completados}<span style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.28)" }}>/{formaciones.length}</span>
-                </p>
-                <p className="text-xs uppercase tracking-wider mt-2" style={{ color: "rgba(255,255,255,0.38)" }}>Módulos</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -423,71 +427,6 @@ export default function Empleado() {
           </div>
         </section>
 
-        {/* ── FILA 2: FORMACIÓN — ancho completo ── */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <TituloSeccion noMargin>Mi itinerario</TituloSeccion>
-            <div className="flex items-center gap-5">
-              {hayProgreso && (
-                <span className="text-base" style={{ color: "var(--texto-muted)" }}>
-                  <span style={{ color: "var(--texto-primario)", fontWeight: 700 }}>{completados}</span>
-                  /{formaciones.length} completados
-                </span>
-              )}
-              {hayModulos && (
-                <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-base font-semibold hover:underline"
-                  style={{ color: "var(--azul-egm)" }}>
-                  Ver todo →
-                </button>
-              )}
-            </div>
-          </div>
-
-          {hayModulos && (
-            <div className="h-px w-full mb-6 rounded-full overflow-hidden"
-              style={{ background: "var(--gris-borde)" }}>
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width:      `${totalProgress}%`,
-                  background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)",
-                }} />
-            </div>
-          )}
-
-          {!hayModulos ? (
-            <div className="flex items-center gap-5 px-8 py-6 rounded-2xl"
-              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-lg font-semibold" style={{ color: "var(--texto-primario)" }}>
-                  Aún no tienes módulos asignados
-                </p>
-                <p className="text-base mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                  Tu empresa configurará el itinerario formativo en breve
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {formaciones.map((m, i) => (
-                <TarjetaModulo
-                  key={m.moduloId}
-                  modulo={m}
-                  index={i}
-                  onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
 
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
@@ -558,6 +497,65 @@ export default function Empleado() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* ── MI ITINERARIO FORMATIVO ── */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <TituloSeccion noMargin>Mi itinerario</TituloSeccion>
+            <div className="flex items-center gap-5">
+              {hayProgreso && (
+                <span className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                  <span className="font-bold" style={{ color: "var(--texto-primario)" }}>{completados}</span>
+                  /{formDisplay.length} completados
+                </span>
+              )}
+              {hayModulos && (
+                <button onClick={() => router.push("/dashboard/formacion")}
+                  className="text-sm font-semibold hover:underline"
+                  style={{ color: "var(--azul-egm)" }}>
+                  Ver todo →
+                </button>
+              )}
+            </div>
+          </div>
+
+          {hayProgreso && (
+            <div className="h-1 w-full mb-7 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${totalProgress}%`, background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)" }} />
+            </div>
+          )}
+
+          {!hayModulos ? (
+            <div className="flex items-center gap-5 px-8 py-6 rounded-2xl"
+              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no tienes módulos asignados</p>
+                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Tu empresa configurará el itinerario formativo en breve</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {formDisplay.map((m, i) => (
+                <TarjetaModulo
+                  key={m.moduloId}
+                  modulo={m}
+                  index={i}
+                  esMock={formaciones.length === 0}
+                  onAvanzar={() => avanzarModulo(m.moduloId)}
+                  onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
       </div>
@@ -686,6 +684,7 @@ const TIPO_ACENTO: Record<string, { bg: string; text: string; label: string }> =
   BASICA:      { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", label: "Formación Básica" },
   ESPECIFICA:  { bg: "var(--info-light)",        text: "var(--info)",        label: "Formación Específica" },
   DESARROLLO:  { bg: "var(--advertencia-light)", text: "var(--advertencia)", label: "Desarrollo Profesional" },
+  SEGURIDAD:   { bg: "#FFF1F0",                  text: "#C84B31",            label: "Seguridad Laboral" },
   RECOMPENSAS: { bg: "var(--exito-light)",       text: "var(--exito)",       label: "Recompensas" },
   COMUNIDAD:   { bg: "var(--gris-superficie)",   text: "var(--texto-muted)", label: "Comunidad" },
 };
@@ -696,70 +695,112 @@ const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }>
   pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
 };
 
-function TarjetaModulo({ modulo, index, onClick }: {
-  modulo: ModuloConProgreso; index: number; onClick: () => void;
+function TarjetaModulo({ modulo, index, onClick, onAvanzar, esMock }: {
+  modulo:    FormacionLocal;
+  index:     number;
+  onClick:   () => void;
+  onAvanzar?: () => void;
+  esMock?:   boolean;
 }) {
-  const tipo        = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
-  const status      = STATUS_ESTILO[modulo.status]   ?? STATUS_ESTILO.pendiente;
-  const enProgreso  = modulo.status === "en progreso";
-  const completado  = modulo.status === "completado";
+  const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
+  const status     = STATUS_ESTILO[modulo.status]   ?? STATUS_ESTILO.pendiente;
+  const enProgreso = modulo.status === "en progreso";
+  const completado = modulo.status === "completado";
+  const pendiente  = modulo.status === "pendiente";
+
+  const pct = modulo.totalItems > 0
+    ? Math.round((modulo.completadosLocal / modulo.totalItems) * 100)
+    : completado ? 100 : 0;
+
+  const ctaLabel = completado ? "Repasar" : enProgreso ? "Continuar →" : "Empezar →";
 
   return (
     <div
-      className="flex flex-col rounded-2xl cursor-pointer overflow-hidden transition-all"
+      className="flex flex-col rounded-2xl overflow-hidden transition-all duration-200"
       style={{
-        border:     "1px solid var(--gris-borde)",
-        borderLeft: `3px solid ${tipo.text}`,
+        border:    "1px solid var(--gris-borde)",
         background: "var(--blanco)",
-        boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
       }}
-      onClick={onClick}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background   = "var(--gris-pagina)";
-        (e.currentTarget as HTMLElement).style.boxShadow   = "0 4px 16px rgba(0,0,0,0.08)";
-        (e.currentTarget as HTMLElement).style.transform   = "translateY(-1px)";
+        (e.currentTarget as HTMLElement).style.boxShadow  = "0 6px 20px rgba(0,0,0,0.09)";
+        (e.currentTarget as HTMLElement).style.transform  = "translateY(-2px)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background  = "var(--blanco)";
-        (e.currentTarget as HTMLElement).style.boxShadow  = "0 1px 4px rgba(0,0,0,0.04)";
-        (e.currentTarget as HTMLElement).style.transform  = "translateY(0)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
+        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
       }}
     >
-      <div className="flex items-center gap-4 px-5 py-4">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
-          style={{ background: tipo.bg, color: tipo.text, fontFamily: "var(--font-poppins), sans-serif" }}
-        >
-          {String(index + 1).padStart(2, "0")}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
-            {modulo.nombre}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{tipo.label}</p>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+      {/* Acento de color superior */}
+      <div className="h-1 w-full" style={{ background: completado ? "var(--exito)" : tipo.text, opacity: completado ? 0.6 : 1 }} />
+
+      <div className="flex flex-col flex-1 p-5 gap-3">
+        {/* Fila superior: número + tipo */}
+        <div className="flex items-center justify-between gap-2">
           <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ background: status.text }}
-          />
-          <span className="text-xs font-medium" style={{ color: status.text }}>
-            {status.label}
+            className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+            style={{ background: tipo.bg, color: tipo.text }}
+          >
+            {tipo.label}
+          </span>
+          <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: "var(--texto-muted)" }}>
+            {String(index + 1).padStart(2, "0")}
           </span>
         </div>
-      </div>
-      {(enProgreso || completado) && (
-        <div className="h-[3px] w-full" style={{ background: "var(--gris-superficie)" }}>
-          <div
-            className="h-full transition-all duration-700"
-            style={{
-              width:      completado ? "100%" : "50%",
-              background: tipo.text,
-              opacity:    completado ? 0.45 : 1,
-            }}
-          />
+
+        {/* Título */}
+        <p className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: "var(--texto-primario)" }}>
+          {modulo.nombre}
+        </p>
+
+        {/* Descripción */}
+        {modulo.descripcion && (
+          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--texto-muted)" }}>
+            {modulo.descripcion}
+          </p>
+        )}
+
+        {/* Progreso */}
+        <div className="mt-auto pt-1 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: status.text }} />
+              <span className="text-[11px] font-medium" style={{ color: status.text }}>{status.label}</span>
+            </div>
+            {modulo.totalItems > 0 && (
+              <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>
+                {modulo.completadosLocal}/{modulo.totalItems}
+              </span>
+            )}
+          </div>
+          {/* Barra */}
+          <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--gris-superficie)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width:      `${pct}%`,
+                background: completado ? "var(--exito)" : tipo.text,
+                opacity:    completado ? 0.7 : 1,
+              }}
+            />
+          </div>
         </div>
-      )}
+
+        {/* CTA */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          className="w-full mt-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
+          style={{
+            background: completado ? "var(--gris-superficie)" : tipo.bg,
+            color:      completado ? "var(--texto-muted)"     : tipo.text,
+            border:     `1px solid ${completado ? "var(--gris-borde)" : tipo.text}20`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.75"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+        >
+          {ctaLabel}
+        </button>
+      </div>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
           }).replace(/^\w/, (c) => c.toUpperCase())}
         </p>
 
-        <div className="leading-none flex flex-wrap items-baseline gap-x-3">
+        <div className="leading-none flex flex-wrap items-center gap-x-3">
           {prefijo && (
             <span
               className="text-white"
@@ -62,6 +62,7 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
               fontStyle:     "italic",
               fontWeight:    400,
               letterSpacing: "-0.01em",
+              lineHeight:    1,
             }}
           >
             <SplitText
