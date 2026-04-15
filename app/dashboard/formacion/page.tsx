@@ -9,14 +9,14 @@ import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 // Mock data para demostrar el diseño cuando el backend no devuelve módulos
-const MOCK_MODULES: (ModuloConProgreso & { duracion: string; porcentaje: number })[] = [
-  { moduloId: "1", nombre: "Incorporación y Bienvenida a Atalayas", descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación.", tipoModulo: "IDENTIDAD",   orden: 1, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "en progreso", duracion: "45 min",  porcentaje: 60  },
-  { moduloId: "2", nombre: "Comunicación Efectiva en el Trabajo",   descripcion: "Estrategias para mejorar la comunicación interna y externa.",     tipoModulo: "DESARROLLO",   orden: 2, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente",   duracion: "1 h",    porcentaje: 0   },
-  { moduloId: "3", nombre: "Introducción a Herramientas Digitales",  descripcion: "Uso de las plataformas digitales del parque empresarial.",         tipoModulo: "BASICA",       orden: 3, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "en progreso", duracion: "2 h",    porcentaje: 30  },
-  { moduloId: "4", nombre: "Negociación y Habilidades Directivas",   descripcion: "Técnicas avanzadas de negociación para entornos empresariales.",   tipoModulo: "ESPECIFICA",   orden: 4, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "completado",  duracion: "1.5 h",  porcentaje: 100 },
-  { moduloId: "5", nombre: "Ciberseguridad y Protección de Datos",   descripcion: "Buenas prácticas de seguridad informática y RGPD.",                tipoModulo: "BASICA",       orden: 5, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente",   duracion: "30 min", porcentaje: 0   },
-  { moduloId: "6", nombre: "Gestión de Proyectos con Metodologías Ágiles", descripcion: "Scrum, Kanban y otras metodologías para gestionar tu equipo.", tipoModulo: "DESARROLLO",   orden: 6, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente",   duracion: "2.5 h",  porcentaje: 0   },
-  { moduloId: "7", nombre: "Diversidad e Inclusión en la Empresa",   descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.", tipoModulo: "COMUNIDAD", orden: 7, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "en progreso", duracion: "1 h",    porcentaje: 80  },
+const MOCK_MODULES: ModuloConProgreso[] = [
+  { moduloId: "1", nombre: "Incorporación y Bienvenida a Atalayas",       descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación.", tipoModulo: "IDENTIDAD",  orden: 1, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "2", nombre: "Comunicación Efectiva en el Trabajo",          descripcion: "Estrategias para mejorar la comunicación interna y externa.",        tipoModulo: "DESARROLLO", orden: 2, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "3", nombre: "Introducción a Herramientas Digitales",        descripcion: "Uso de las plataformas digitales del parque empresarial.",            tipoModulo: "BASICA",     orden: 3, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "4", nombre: "Negociación y Habilidades Directivas",         descripcion: "Técnicas avanzadas de negociación para entornos empresariales.",      tipoModulo: "ESPECIFICA", orden: 4, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "5", nombre: "Ciberseguridad y Protección de Datos",         descripcion: "Buenas prácticas de seguridad informática y RGPD.",                   tipoModulo: "BASICA",     orden: 5, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "6", nombre: "Gestión de Proyectos con Metodologías Ágiles", descripcion: "Scrum, Kanban y otras metodologías para gestionar tu equipo.",        tipoModulo: "DESARROLLO", orden: 6, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
+  { moduloId: "7", nombre: "Diversidad e Inclusión en la Empresa",         descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.", tipoModulo: "COMUNIDAD",  orden: 7, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
 ];
 
 // Gradientes por tipo de módulo para las miniaturas
@@ -31,9 +31,25 @@ const TIPO_GRADIENT: Record<string, string> = {
 
 type ModuloEnriquecido = ModuloConProgreso & { duracion: string; porcentaje: number };
 
+const TOTAL_ITEMS_POR_MODULO = 5; // igual que en la página de detalle
+
+function leerPorcentajeLS(moduloId: string): number | null {
+  try {
+    const raw = localStorage.getItem(`egm_modulo_${moduloId}`);
+    if (!raw) return null;
+    const { completados } = JSON.parse(raw) as { completados: string[] };
+    return Math.round((completados.length / TOTAL_ITEMS_POR_MODULO) * 100);
+  } catch { return null; }
+}
+
 function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
-  const porcentaje = m.status === "completado" ? 100 : m.status === "en progreso" ? 50 : 0;
-  return { ...m, duracion: "—", porcentaje };
+  const pctLS = leerPorcentajeLS(m.moduloId);
+  const porcentaje = pctLS !== null ? pctLS
+    : m.status === "completado" ? 100 : m.status === "en progreso" ? 50 : 0;
+  const status = pctLS !== null
+    ? (pctLS >= 100 ? "completado" : pctLS > 0 ? "en progreso" : "pendiente")
+    : m.status;
+  return { ...m, status, duracion: "—", porcentaje };
 }
 
 export default function FormacionPage() {
@@ -47,16 +63,16 @@ export default function FormacionPage() {
     getModulosConProgreso()
       .then((data) => {
         const sorted = data.sort((a, b) => a.orden - b.orden);
-        setModules(sorted.length > 0 ? sorted.map(enriquecer) : MOCK_MODULES);
+        setModules(sorted.length > 0 ? sorted.map(enriquecer) : MOCK_MODULES.map(enriquecer));
       })
-      .catch(() => setModules(MOCK_MODULES))
+      .catch(() => setModules(MOCK_MODULES.map(enriquecer)))
       .finally(() => setLoading(false));
   }, []);
 
   const isAdmin = usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
 
-  // Módulo "continuar": el primero en progreso
-  const continuar = modules.find((m) => m.status === "en progreso");
+  // Módulo "continuar": el primero en progreso (según progreso real de localStorage)
+  const continuar = modules.find((m) => m.status === "en progreso" && m.porcentaje < 100);
 
   return (
     <div className="w-full">

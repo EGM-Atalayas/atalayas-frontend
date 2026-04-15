@@ -6,8 +6,8 @@
  * Archivo: app/dashboard/formacion/[id]/page.tsx
  */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -31,39 +31,102 @@ interface ModuloMock {
   contenidos:  Contenido[];
 }
 
-// ── MOCK — reemplazar por llamada a API cuando esté lista ─────────────────────
-const MODULO_MOCK: ModuloMock = {
-  id:          "mock-prl-alturas",
-  nombre:      "Prevención de Riesgos Laborales — Trabajos en Altura",
-  descripcion: "Aprende los protocolos de seguridad obligatorios para trabajos en altura según la normativa vigente. Al finalizar obtendrás tu certificado PRL.",
-  tipo:        "Formación Básica",
-  totalItems:  5,
-  completados: 2,
-  contenidos: [
-    { id: "c1", titulo: "Introducción a la normativa PRL",     tipo: "texto", duracion: "5 min",  completado: true,  bloqueado: false },
-    { id: "c2", titulo: "Equipos de protección individual",    tipo: "video", duracion: "12 min", completado: true,  bloqueado: false },
-    { id: "c3", titulo: "Procedimientos de trabajo seguro",    tipo: "texto", duracion: "8 min",  completado: false, bloqueado: false },
-    { id: "c4", titulo: "Documentación y protocolos",          tipo: "pdf",   duracion: "10 min", completado: false, bloqueado: true  },
-    { id: "c5", titulo: "Evaluación final del módulo",         tipo: "quiz",  duracion: "15 min", completado: false, bloqueado: true  },
-  ],
+// ── MOCK ─────────────────────────────────────────────────────────────────────
+// Mapa de módulos mock — cubre los IDs del listado de formación
+const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo">> = {
+  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al parque.", tipo: "Identidad Corporativa" },
+  "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional" },
+  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del parque empresarial.",      tipo: "Formación Básica" },
+  "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica" },
+  "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica" },
+  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional" },
+  "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad" },
 };
 
-// ── PÁGINA ────────────────────────────────────────────────────────────────────
-export default function Page({ params }: { params: { id: string } }) {
-  const router = useRouter();
+function getMockBase(id: string): ModuloMock {
+  const meta = MOCKS[id] ?? {
+    nombre:      "Módulo de Formación",
+    descripcion: "Completa todos los pasos para obtener tu certificado.",
+    tipo:        "Formación",
+  };
+  return {
+    id,
+    nombre:      meta.nombre,
+    descripcion: meta.descripcion,
+    tipo:        meta.tipo,
+    totalItems:  5,
+    completados: 0,
+    contenidos: [
+      { id: "c1", titulo: "Introducción y conceptos clave",    tipo: "texto", duracion: "5 min",  completado: false, bloqueado: false },
+      { id: "c2", titulo: "Desarrollo del tema principal",      tipo: "video", duracion: "12 min", completado: false, bloqueado: true  },
+      { id: "c3", titulo: "Casos prácticos y aplicación",      tipo: "texto", duracion: "8 min",  completado: false, bloqueado: true  },
+      { id: "c4", titulo: "Documentación y recursos",           tipo: "pdf",   duracion: "10 min", completado: false, bloqueado: true  },
+      { id: "c5", titulo: "Evaluación final del módulo",        tipo: "quiz",  duracion: "15 min", completado: false, bloqueado: true  },
+    ],
+  };
+}
 
-  // En producción: usar params.id para llamar a /api/v1/modulos/{params.id}
-  const [modulo, setModulo]         = useState<ModuloMock>(MODULO_MOCK);
-  const [activoId, setActivoId]     = useState<string>("c3");
+function lsKey(id: string) { return `egm_modulo_${id}`; }
+
+function cargarEstado(id: string): { completados: string[]; activoId: string } {
+  try {
+    const raw = localStorage.getItem(lsKey(id));
+    if (raw) return JSON.parse(raw);
+  } catch { /* noop */ }
+  return { completados: [], activoId: "c1" };
+}
+
+function guardarEstado(id: string, completados: string[], activoId: string) {
+  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId })); }
+  catch { /* noop */ }
+}
+
+function aplicarEstado(base: ModuloMock, completados: string[]): ModuloMock {
+  const set = new Set(completados);
+  const contenidos = base.contenidos.map((c, i) => ({
+    ...c,
+    completado: set.has(c.id),
+    bloqueado:  i > 0 && !set.has(base.contenidos[i - 1].id),
+  }));
+  return { ...base, completados: completados.length, contenidos };
+}
+
+// ── PÁGINA ────────────────────────────────────────────────────────────────────
+export default function Page() {
+  const router  = useRouter();
+  const rawParams = useParams();
+  const id      = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
+
+  const [modulo, setModulo]           = useState<ModuloMock | null>(null);
+  const [activoId, setActivoId]       = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
 
-  const activo  = modulo.contenidos.find((c) => c.id === activoId)!;
+  // Carga desde localStorage una vez que tenemos el id en el cliente
+  useEffect(() => {
+    if (!id) return;
+    const { completados, activoId: savedActivo } = cargarEstado(id);
+    setModulo(aplicarEstado(getMockBase(id), completados));
+    setActivoId(savedActivo);
+  }, [id]);
+
+  // Persistir en localStorage cuando cambia el estado
+  useEffect(() => {
+    if (!id || !modulo) return;
+    const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
+    guardarEstado(id, hechos, activoId);
+  }, [modulo, activoId]);
+
+  if (!modulo) return null;
+
+  const activo  = modulo.contenidos.find((c) => c.id === activoId) ?? modulo.contenidos[0];
   const progPct = Math.round((modulo.completados / modulo.totalItems) * 100);
 
   const marcarCompletado = () => {
+    if (activo.completado) return;
     setCompletando(true);
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
+      const siguiente = modulo.contenidos[idx + 1];
       setModulo((m) => ({
         ...m,
         completados: m.completados + 1,
@@ -73,77 +136,104 @@ export default function Page({ params }: { params: { id: string } }) {
           return c;
         }),
       }));
-      const siguiente = modulo.contenidos[idx + 1];
       if (siguiente) setActivoId(siguiente.id);
       setCompletando(false);
     }, 600);
   };
 
   return (
-    <div className="-mx-8 -mt-8 flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
 
-      {/* ── CABECERA ─────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ background: "var(--marino)" }}>
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 70% 80% at 80% -20%, rgba(27,63,126,0.5) 0%, transparent 60%)" }} />
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden flex items-center"
+        style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
+      >
+        {/* Imagen de fondo */}
+        <img
+          src="/background-formacion-empleado.jpg"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "center 40%" }}
+        />
+        {/* Capas de oscurecimiento */}
+        <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.60)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,27,46,0.80) 0%, transparent 50%)" }} />
 
-        <div className="relative max-w-7xl mx-auto px-8 py-8">
-          {/* Volver */}
+        {/* Contenido del hero — mismo layout que DashboardHero */}
+        <div className="relative z-10 w-full py-14">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+
+          {/* Breadcrumb */}
           <button
             onClick={() => router.push("/dashboard/formacion")}
-            className="flex items-center gap-2 text-xs font-medium mb-5 transition-opacity"
-            style={{ color: "rgba(255,255,255,0.45)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
+            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5 transition-colors"
+            style={{ color: "var(--verde-oliva-hover)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Volver a Formación
+            Centro de Formación
+            <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
+            {modulo.tipo}
           </button>
 
-          <div className="flex items-start justify-between gap-8">
-            <div className="flex-1 min-w-0">
-              <span
-                className="inline-flex text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
-                style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
-              >
-                {modulo.tipo}
-              </span>
-              <h1
-                className="font-bold text-white leading-tight mb-2"
-                style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontFamily: "'Playfair Display', serif" }}
-              >
-                {modulo.nombre}
-              </h1>
-              <p className="text-sm max-w-2xl" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {modulo.descripcion}
-              </p>
-            </div>
+          {/* Título */}
+          <h1
+            className="text-white leading-tight mb-5"
+            style={{
+              fontSize:      "clamp(1.8rem, 3.2vw, 2.4rem)",
+              fontFamily:    "var(--font-poppins), sans-serif",
+              fontWeight:    600,
+              letterSpacing: "-0.02em",
+              maxWidth:      "820px",
+            }}
+          >
+            {modulo.nombre}
+          </h1>
 
-            {/* Progreso circular */}
-            <div className="flex flex-col items-center gap-1.5 shrink-0">
-              <ProgresoCircular pct={progPct} />
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-                {modulo.completados}/{modulo.totalItems} completados
-              </p>
+          {/* Barra de progreso */}
+          <div className="flex items-center gap-3" style={{ maxWidth: "280px" }}>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progPct}%`, background: "var(--verde-oliva-hover)" }}
+              />
             </div>
+            <span className="text-xs font-bold shrink-0" style={{ color: "var(--verde-oliva-hover)" }}>
+              {progPct}% · {modulo.completados}/{modulo.totalItems}
+            </span>
+          </div>
           </div>
         </div>
       </div>
 
       {/* ── CUERPO: ÍNDICE + CONTENIDO ────────────────────────────────────────── */}
-      <div className="flex flex-1 max-w-7xl mx-auto w-full px-8 py-8 gap-7">
+      <div className="flex flex-1 w-full px-8 lg:px-12 py-8 gap-10">
 
         {/* ÍNDICE LATERAL */}
         <aside
-          className="w-72 shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
+          className="w-[22rem] shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
         >
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-              Contenidos
-            </p>
+          <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                Contenidos
+              </p>
+              <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>
+                {modulo.completados}/{modulo.totalItems}
+              </span>
+            </div>
+            {/* Barra de progreso del módulo */}
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--gris-superficie)" }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${progPct}%`, background: "linear-gradient(90deg, var(--azul-egm), var(--verde-oliva))" }} />
+            </div>
           </div>
           <div className="py-2">
             {modulo.contenidos.map((c, i) => {
