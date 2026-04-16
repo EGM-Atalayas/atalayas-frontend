@@ -130,7 +130,7 @@ export default function Page() {
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
       const siguiente = modulo.contenidos[idx + 1];
-      setModulo((m) => ({
+      setModulo((m) => m ? ({
         ...m,
         completados: m.completados + 1,
         contenidos: m.contenidos.map((c, i) => {
@@ -138,7 +138,7 @@ export default function Page() {
           if (i === idx + 1)     return { ...c, bloqueado: false };
           return c;
         }),
-      }));
+      }) : null);
       if (siguiente) setActivoId(siguiente.id);
       setCompletando(false);
     }, 600);
