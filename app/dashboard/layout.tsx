@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
+import ChatbotIA from "@/components/ui/ChatbotIA";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { usuario, setUsuario } = useAuth();
@@ -72,9 +73,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
       <Header />
       <main className="pb-2">
-
         {children}
       </main>
+      <ChatbotIA />
     </div>
   );
 }

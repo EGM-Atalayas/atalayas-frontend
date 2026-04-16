@@ -116,7 +116,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         </nav>
 
         {/* Lado derecho */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-stretch gap-0">
 
           {/* Campana */}
           <NotifMenu
@@ -126,7 +126,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           />
 
           {/* Divisor */}
-          <div className="hidden sm:block w-px h-6"
+          <div className="hidden sm:block w-px self-stretch my-4"
             style={{ background: "rgba(255,255,255,0.2)" }} />
 
           {/* Avatar + menú — solo desktop */}

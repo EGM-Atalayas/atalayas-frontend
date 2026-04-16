@@ -12,6 +12,7 @@ interface NotifMenuProps {
 export default function NotifMenu({ noLeidas, onVerTodas, onMarcarLeidas }: NotifMenuProps) {
   const [open, setOpen]       = useState(false);
   const [visible, setVisible] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const containerRef          = useRef<HTMLDivElement>(null);
   const dropdownRef           = useRef<HTMLDivElement>(null);
   const cardsRef              = useRef<HTMLDivElement[]>([]);
@@ -95,17 +96,21 @@ export default function NotifMenu({ noLeidas, onVerTodas, onMarcarLeidas }: Noti
   ];
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative h-full" ref={containerRef}>
       {/* Bell button */}
       <button
         onClick={toggle}
-        className="relative flex items-center justify-center rounded-lg transition-colors"
-        style={{ width: "40px", height: "40px", color: "rgba(255,255,255,0.7)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+        className="relative flex items-center justify-center h-full px-4 border-none cursor-pointer"
+        style={{
+          background: "transparent",
+          color:      hovered ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)",
+          transition: "color 0.15s ease",
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         aria-label="Notificaciones"
       >
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"
           stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -124,7 +129,7 @@ export default function NotifMenu({ noLeidas, onVerTodas, onMarcarLeidas }: Noti
       {visible && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 z-[200] will-change-transform"
+          className="absolute right-0 top-full mt-1 z-[200] will-change-transform"
           style={{ width: "300px" }}
         >
           <div
