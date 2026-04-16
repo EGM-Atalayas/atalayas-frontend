@@ -19,7 +19,7 @@ const MOCK_MODULES: ModuloConProgreso[] = [
   { moduloId: "7", nombre: "Diversidad e Inclusión en la Empresa",         descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.", tipoModulo: "COMUNIDAD",  orden: 7, activo: true, empresaId: null, esEspecializadoIa: false, creadoEn: "", actualizadoEn: "", status: "pendiente" },
 ];
 
-// Gradientes por tipo de módulo para las miniaturas
+// Gradientes por tipo de módulo para las miniaturas (fallback)
 const TIPO_GRADIENT: Record<string, string> = {
   IDENTIDAD:   "linear-gradient(135deg, #1B3F7E 0%, #2A5298 100%)",
   BASICA:      "linear-gradient(135deg, #0D1B2E 0%, #1B3F7E 100%)",
@@ -28,6 +28,33 @@ const TIPO_GRADIENT: Record<string, string> = {
   RECOMPENSAS: "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)",
   COMUNIDAD:   "linear-gradient(135deg, #0f766e 0%, #2dd4bf 100%)",
 };
+
+// Imágenes por moduloId (mock) y por keywords del nombre (módulos reales)
+const FORMACION_IMG_BY_ID: Record<string, string> = {
+  "1": "/background-formacion-empleado.jpg",
+  "2": "/comunicacion-trabajo.jpg",
+  "3": "/herramientas-digitales.jpg",
+  "4": "/negociacion-habilidades.jpg",
+  "5": "/ciberseguridad-datos.jpg",
+  "6": "/metodologias-agiles.jpg",
+  "7": "/diversidad.jpg",
+};
+
+const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
+  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+];
+
+function getFormacionImg(moduloId: string, nombre: string): string | undefined {
+  if (FORMACION_IMG_BY_ID[moduloId]) return FORMACION_IMG_BY_ID[moduloId];
+  const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen;
+}
 
 type ModuloEnriquecido = ModuloConProgreso & { duracion: string; porcentaje: number };
 
@@ -147,7 +174,11 @@ export default function FormacionPage() {
       {!loading && (
         <>
           {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
-          <div className="flex items-center justify-end gap-2 mb-10">
+          <div className="flex items-center justify-between gap-2 mb-10">
+            <h2 className="text-4xl font-bold" style={{ color: "var(--texto-primario)", fontFamily: "var(--font-poppins), sans-serif" }}>
+              Módulos
+            </h2>
+            <div className="flex items-center gap-2">
             {/* Buscador */}
             <div className="relative" style={{ width: "260px" }}>
               <svg
@@ -307,6 +338,7 @@ export default function FormacionPage() {
                 {modulosFiltrados.length} resultado{modulosFiltrados.length !== 1 ? "s" : ""}
               </span>
             )}
+            </div>
           </div>
 
           {/* ── Continue Learning card ───────────────────────────────── */}
@@ -315,10 +347,18 @@ export default function FormacionPage() {
               className="w-full rounded-2xl flex flex-col sm:flex-row items-stretch overflow-hidden"
               style={{ border: "2px solid var(--azul-egm)", background: "var(--blanco)", marginBottom: "2.5rem" }}
             >
-              <div
-                className="w-full sm:w-48 h-36 sm:h-auto shrink-0"
-                style={{ background: TIPO_GRADIENT[continuar.tipoModulo] }}
-              />
+              {(() => {
+                const img = getFormacionImg(continuar.moduloId, continuar.nombre);
+                return img ? (
+                  <div className="w-full sm:w-48 h-36 sm:h-auto shrink-0 relative overflow-hidden">
+                    <img src={img} alt={continuar.nombre} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.25)" }} />
+                  </div>
+                ) : (
+                  <div className="w-full sm:w-48 h-36 sm:h-auto shrink-0"
+                    style={{ background: TIPO_GRADIENT[continuar.tipoModulo] }} />
+                );
+              })()}
               <div className="flex-1 px-6 py-5 flex flex-col justify-center gap-3">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--azul-egm)" }}>
@@ -477,10 +517,17 @@ function CourseCard({
       )}
 
       {/* Thumbnail */}
-      <div
-        className="w-full h-40"
-        style={{ background: TIPO_GRADIENT[m.tipoModulo] }}
-      />
+      {(() => {
+        const img = getFormacionImg(m.moduloId, m.nombre);
+        return img ? (
+          <div className="w-full h-40 relative overflow-hidden">
+            <img src={img} alt={m.nombre} className="w-full h-full object-cover" />
+            <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.30)" }} />
+          </div>
+        ) : (
+          <div className="w-full h-40" style={{ background: TIPO_GRADIENT[m.tipoModulo] }} />
+        );
+      })()}
 
       {/* Contenido */}
       <div className="flex flex-col flex-1 p-5 gap-3">

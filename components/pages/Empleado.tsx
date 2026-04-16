@@ -38,6 +38,33 @@ const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
     creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 8, completadosLocal: 0 },
 ];
 
+const FORMACION_IMAGES_BY_ID: Record<string, string> = {
+  "mock-1": "/background-formacion-empleado.jpg",
+  "mock-2": "/comunicacion-trabajo.jpg",
+  "mock-3": "/diversidad.jpg",
+  "mock-4": "/herramientas-digitales.jpg",
+};
+
+const FORMACION_IMAGES_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
+  { keywords: ["incorporac", "bienvenid", "atalayas"],    imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva", "trabajo"],       imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["prl", "prevenci", "riesgos", "laboral"],  imagen: "/diversidad.jpg" },
+  { keywords: ["digitaliz", "herramienta", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad"],                 imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["metodolog", "agil"],                      imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["cibersegur", "datos"],                    imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["diversidad", "inclusi"],                  imagen: "/diversidad.jpg" },
+];
+
+function getFormacionImage(moduloId: string, nombre: string): string | undefined {
+  if (FORMACION_IMAGES_BY_ID[moduloId]) return FORMACION_IMAGES_BY_ID[moduloId];
+  const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const match = FORMACION_IMAGES_BY_NAME.find((entry) =>
+    entry.keywords.some((kw) => lower.includes(kw))
+  );
+  return match?.imagen;
+}
+
 const LS_KEY = "egm_formacion_progress";
 
 function loadProgress(): Record<string, number> {
@@ -492,6 +519,7 @@ export default function Empleado() {
                   esMock={formaciones.length === 0}
                   onAvanzar={() => avanzarModulo(m.moduloId)}
                   onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                  imagenUrl={getFormacionImage(m.moduloId, m.nombre)}
                 />
               ))}
             </div>
@@ -707,12 +735,13 @@ const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }>
   pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
 };
 
-function TarjetaModulo({ modulo, index, onClick, esMock }: {
+function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
   modulo:     FormacionLocal;
   index:      number;
   onClick:    () => void;
   onAvanzar?: () => void;
   esMock?:    boolean;
+  imagenUrl?: string;
 }) {
   const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
   const completado = modulo.status === "completado";
@@ -734,20 +763,34 @@ function TarjetaModulo({ modulo, index, onClick, esMock }: {
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.09)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
     >
-      {/* Número / check */}
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
-        style={{
-          background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
-          color:      completado || enProgreso ? "white" : "var(--texto-muted)",
-        }}
-      >
-        {completado ? (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        ) : String(index + 1).padStart(2, "0")}
-      </div>
+      {/* Imagen / Número / check */}
+      {imagenUrl ? (
+        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative">
+          <img src={imagenUrl} alt={modulo.nombre} className="w-full h-full object-cover" />
+          {completado && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl"
+              style={{ background: "rgba(22,163,74,0.65)" }}>
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+          style={{
+            background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
+            color:      completado || enProgreso ? "white" : "var(--texto-muted)",
+          }}
+        >
+          {completado ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : String(index + 1).padStart(2, "0")}
+        </div>
+      )}
 
       {/* Contenido central */}
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
