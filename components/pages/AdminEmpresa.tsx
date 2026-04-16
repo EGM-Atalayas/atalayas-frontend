@@ -6,25 +6,42 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 
 interface ResumenAdmin {
-  nombreEmpresa:    string;
-  usuariosActivos:  number;
+  nombreEmpresa:     string;
+  usuariosActivos:   number;
   usuariosInactivos: number;
 }
 
 interface Anuncio {
-  anuncioId:    string;
-  empresaId:    string;
-  titulo:       string;
-  contenido:    string;
-  esGlobal:     boolean;
-  activo:       boolean;
-  creadoPor:    string;
-  creadoEn:     string;
+  anuncioId:     string;
+  empresaId:     string;
+  titulo:        string;
+  contenido:     string;
+  esGlobal:      boolean;
+  activo:        boolean;
+  creadoPor:     string;
+  creadoEn:      string;
   actualizadoEn: string;
 }
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+function TituloSeccion({ children, noMargin }: { children: React.ReactNode; noMargin?: boolean }) {
+  return (
+    <h2
+      className={noMargin ? "" : "mb-6"}
+      style={{
+        fontSize:      "clamp(2rem, 2.8vw, 2.8rem)",
+        fontFamily:    "'Instrument Serif', serif",
+        fontWeight:    400,
+        color:         "var(--texto-primario)",
+        letterSpacing: "-0.02em",
+      }}
+    >
+      {children}
+    </h2>
+  );
 }
 
 export default function AdminEmpresa() {
@@ -56,337 +73,657 @@ export default function AdminEmpresa() {
   if (cargando) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-6 h-6 border-2 rounded-full animate-spin"
-          style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+        <div
+          className="w-6 h-6 border-2 rounded-full animate-spin"
+          style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }}
+        />
       </div>
     );
   }
 
   const nombreEmpresa = resumen?.nombreEmpresa ?? usuario?.nombreEmpresa ?? "Mi empresa";
+  const firstName     = (usuario?.nombre ?? "Administrador").split(" ")[0];
+  const fechaHoy      = new Date().toLocaleDateString("es-ES", {
+    day: "numeric", month: "long", year: "numeric",
+  });
 
   return (
     <div>
-      {/* ── BANDA DE BIENVENIDA ── */}
+      {/* ── KEYFRAMES ── */}
+      <style>{`
+        @keyframes heroFadeUp {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes gradientShift {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
+
+      {/* ══════════════════════════════════════════
+          HERO
+      ══════════════════════════════════════════ */}
       <div
-        className="-mx-8 -mt-8 px-8 pt-10 pb-8 mb-8"
-        style={{ background: "var(--marino)" }}
+        className="-mx-8 -mt-8 mb-0 relative overflow-hidden"
+        style={{ minHeight: "340px" }}
       >
-        {/* Saludo */}
-        <div className="max-w-7xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "var(--verde-oliva-hover)" }}>
-            Panel de administración
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-            Hola, {usuario?.nombre ?? "Administrador"}
-          </h1>
-          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {nombreEmpresa} · {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
+        {/* Background image */}
+        <div
+          style={{
+            position:           "absolute",
+            inset:              0,
+            backgroundImage:    "url('/background-dashboard.jpg')",
+            backgroundSize:     "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        {/* Dark overlays */}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.52)" }} />
+        <div
+          style={{
+            position:   "absolute",
+            inset:      0,
+            background: "linear-gradient(135deg, rgba(10,20,40,0.55) 0%, rgba(0,0,0,0.2) 100%)",
+          }}
+        />
+
+        {/* Hero content */}
+        <div
+          className="relative z-10 px-10 lg:px-16 flex flex-col justify-center"
+          style={{ minHeight: "340px", paddingTop: "3.5rem", paddingBottom: "3.5rem" }}
+        >
+          {/* Top line: empresa · fecha */}
+          <p
+            className="text-xs font-bold uppercase tracking-widest mb-4"
+            style={{
+              color:     "var(--verde-oliva-hover)",
+              animation: "heroFadeUp 0.6s ease both",
+            }}
+          >
+            {nombreEmpresa} · {fechaHoy}
           </p>
 
-          {/* Métricas */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <MetricCard
-              label="Empleados activos"
-              value={resumen?.usuariosActivos ?? "—"}
-              acento="azul"
-              onClick={() => router.push("/dashboard/admin?tab=empleados")}
-            />
-            <MetricCard
-              label="Empleados inactivos"
-              value={resumen?.usuariosInactivos ?? "—"}
-              acento="gris"
-              onClick={() => router.push("/dashboard/admin?tab=empleados")}
-            />
-            <MetricCard
-              label="Progreso medio"
-              value="—"
-              nota="Próximamente"
-              acento="verde"
-            />
-            <MetricCard
-              label="Módulos activos"
-              value="—"
-              nota="Próximamente"
-              acento="naranja"
-            />
+          {/* Title */}
+          <div
+            style={{
+              display:       "flex",
+              flexWrap:      "wrap",
+              alignItems:    "baseline",
+              gap:           "0.4em",
+              animation:     "heroFadeUp 0.7s ease both",
+              animationDelay: "0.08s",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 300,
+                fontSize:   "clamp(3.5rem, 7vw, 4.5rem)",
+                color:      "#ffffff",
+                lineHeight: 1.1,
+              }}
+            >
+              Hola,
+            </span>
+            <span
+              style={{
+                fontFamily:              "'Instrument Serif', serif",
+                fontStyle:               "italic",
+                fontWeight:              400,
+                fontSize:                "clamp(3.5rem, 7vw, 6rem)",
+                lineHeight:              1.05,
+                background:              "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+                backgroundSize:          "300% auto",
+                WebkitBackgroundClip:    "text",
+                WebkitTextFillColor:     "transparent",
+                backgroundClip:          "text",
+                animation:               "heroFadeUp 0.7s ease both, gradientShift 6s ease infinite",
+                animationDelay:          "0.12s, 0s",
+              }}
+            >
+              {firstName}
+            </span>
           </div>
+
+          {/* Subtitle */}
+          <p
+            className="text-sm mt-3"
+            style={{
+              color:          "rgba(255,255,255,0.55)",
+              animation:      "heroFadeUp 0.7s ease both",
+              animationDelay: "0.2s",
+            }}
+          >
+            Panel de administración · {nombreEmpresa}
+          </p>
         </div>
       </div>
 
-      {/* ── ACCIONES RÁPIDAS ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <AccionCard
-          titulo="Añadir empleado"
-          descripcion="Registra un nuevo miembro del equipo"
-          acento="azul"
-          icono={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          }
-          onClick={() => router.push("/dashboard/admin?tab=empleados")}
-        />
-        <AccionCard
-          titulo="Nuevo módulo"
-          descripcion="Crea contenido formativo para tu equipo"
-          acento="verde"
-          icono={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          }
-          onClick={() => router.push("/dashboard/admin/modulos/crear")}
-        />
-        <AccionCard
-          titulo="Nuevo anuncio"
-          descripcion="Comunica algo importante a tu equipo"
-          acento="naranja"
-          icono={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-            </svg>
-          }
-          onClick={() => router.push("/dashboard/admin?tab=anuncios")}
-        />
-      </div>
+      {/* ══════════════════════════════════════════
+          CONTENT AREA
+      ══════════════════════════════════════════ */}
+      <div className="px-10 lg:px-16 pt-14 pb-16 flex flex-col gap-16">
 
-      {/* ── GRID PRINCIPAL ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* ── SECCIÓN 1: MÉTRICAS ── */}
+        <section>
+          <TituloSeccion>Resumen</TituloSeccion>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        {/* Últimos anuncios */}
-        <div className="lg:col-span-2 rounded-xl p-6"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-              Últimos anuncios
-            </h2>
+            {/* Empleados activos */}
             <button
-              onClick={() => router.push("/dashboard/admin?tab=anuncios")}
-              className="text-xs font-medium hover:underline"
-              style={{ color: "var(--azul-egm)" }}
+              onClick={() => router.push("/dashboard/admin?tab=empleados")}
+              className="text-left rounded-2xl px-6 py-5 transition-all group"
+              style={{
+                background:   "var(--blanco)",
+                border:       "1px solid var(--gris-borde)",
+                position:     "relative",
+                overflow:     "hidden",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow  = "0 6px 24px rgba(0,0,0,0.08)";
+                e.currentTarget.style.transform  = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow  = "none";
+                e.currentTarget.style.transform  = "translateY(0)";
+              }}
             >
-              Ver todos →
+              {/* Top accent strip */}
+              <div
+                style={{
+                  position:   "absolute",
+                  top:        0,
+                  left:       0,
+                  right:      0,
+                  height:     "3px",
+                  background: "var(--azul-egm)",
+                }}
+              />
+              <p
+                className="text-4xl font-bold mt-1"
+                style={{ color: "var(--azul-egm)" }}
+              >
+                {resumen?.usuariosActivos ?? "—"}
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                Empleados activos
+              </p>
             </button>
-          </div>
 
-          {anuncios.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center rounded-lg"
-              style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-                style={{ background: "var(--azul-egm-light)" }}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
-                  style={{ color: "var(--azul-egm)" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+            {/* Empleados inactivos */}
+            <button
+              onClick={() => router.push("/dashboard/admin?tab=empleados")}
+              className="text-left rounded-2xl px-6 py-5 transition-all"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.08)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  top:        0,
+                  left:       0,
+                  right:      0,
+                  height:     "3px",
+                  background: "var(--texto-muted)",
+                  opacity:    0.4,
+                }}
+              />
+              <p
+                className="text-4xl font-bold mt-1"
+                style={{ color: "var(--texto-muted)" }}
+              >
+                {resumen?.usuariosInactivos ?? "—"}
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                Empleados inactivos
+              </p>
+            </button>
+
+            {/* Progreso medio */}
+            <div
+              className="rounded-2xl px-6 py-5"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  top:        0,
+                  left:       0,
+                  right:      0,
+                  height:     "3px",
+                  background: "var(--verde-oliva)",
+                }}
+              />
+              <p
+                className="text-4xl font-bold mt-1"
+                style={{ color: "var(--verde-oliva)" }}
+              >
+                —
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                Progreso medio
+              </p>
+              <span
+                className="inline-block text-xs px-2 py-0.5 rounded-full mt-2"
+                style={{
+                  background: "var(--verde-oliva-light)",
+                  color:      "var(--verde-oliva)",
+                  fontWeight: 500,
+                }}
+              >
+                Próximamente
+              </span>
+            </div>
+
+            {/* Módulos activos */}
+            <div
+              className="rounded-2xl px-6 py-5"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  top:        0,
+                  left:       0,
+                  right:      0,
+                  height:     "3px",
+                  background: "var(--advertencia)",
+                }}
+              />
+              <p
+                className="text-4xl font-bold mt-1"
+                style={{ color: "var(--advertencia)" }}
+              >
+                —
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                Módulos activos
+              </p>
+              <span
+                className="inline-block text-xs px-2 py-0.5 rounded-full mt-2"
+                style={{
+                  background: "var(--advertencia-light)",
+                  color:      "var(--advertencia)",
+                  fontWeight: 500,
+                }}
+              >
+                Próximamente
+              </span>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── SECCIÓN 2: ACCIONES + ANUNCIOS ── */}
+        <section>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            {/* LEFT: Acciones rápidas */}
+            <div className="lg:col-span-1">
+              <TituloSeccion>Acciones rápidas</TituloSeccion>
+              <div className="flex flex-col gap-3">
+
+                {/* Añadir empleado */}
+                <button
+                  onClick={() => router.push("/dashboard/admin?tab=empleados")}
+                  className="flex items-center gap-4 rounded-2xl px-5 py-4 text-left w-full transition-all"
+                  style={{
+                    background: "var(--blanco)",
+                    border:     "1px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Añadir empleado
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                      Registra un nuevo miembro del equipo
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    style={{ color: "var(--texto-muted)" }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Nuevo módulo */}
+                <button
+                  onClick={() => router.push("/dashboard/admin/modulos/crear")}
+                  className="flex items-center gap-4 rounded-2xl px-5 py-4 text-left w-full transition-all"
+                  style={{
+                    background: "var(--blanco)",
+                    border:     "1px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Nuevo módulo
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                      Crea contenido formativo para tu equipo
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    style={{ color: "var(--texto-muted)" }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Publicar anuncio */}
+                <button
+                  onClick={() => router.push("/dashboard/admin?tab=anuncios")}
+                  className="flex items-center gap-4 rounded-2xl px-5 py-4 text-left w-full transition-all"
+                  style={{
+                    background: "var(--blanco)",
+                    border:     "1px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "var(--advertencia-light)", color: "var(--advertencia)" }}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Publicar anuncio
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                      Comunica algo importante a tu equipo
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    style={{ color: "var(--texto-muted)" }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+              </div>
+            </div>
+
+            {/* RIGHT: Últimos comunicados */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center justify-between mb-6">
+                <TituloSeccion noMargin>Últimos comunicados</TituloSeccion>
+                <button
+                  onClick={() => router.push("/dashboard/admin?tab=anuncios")}
+                  className="text-sm font-medium hover:underline shrink-0"
+                  style={{ color: "var(--azul-egm)" }}
+                >
+                  Ver todos →
+                </button>
+              </div>
+
+              {anuncios.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center py-12 text-center rounded-2xl"
+                  style={{
+                    background: "var(--gris-pagina)",
+                    border:     "1px dashed var(--gris-borde)",
+                  }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: "var(--azul-egm-light)" }}
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
+                      style={{ color: "var(--azul-egm)" }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>
+                    Sin comunicados publicados
+                  </p>
+                  <p className="text-xs mb-4" style={{ color: "var(--texto-muted)" }}>
+                    Comunica novedades importantes a tu equipo
+                  </p>
+                  <button
+                    onClick={() => router.push("/dashboard/admin?tab=anuncios")}
+                    className="text-xs font-semibold px-4 py-2 rounded-lg transition-opacity"
+                    style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                  >
+                    Crear primer comunicado
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {anuncios.map((a) => (
+                    <div
+                      key={a.anuncioId}
+                      className="flex items-start justify-between rounded-xl px-4 py-3"
+                      style={{
+                        background:  "var(--blanco)",
+                        border:      "1px solid var(--gris-borde)",
+                        borderLeft:  "3px solid var(--azul-egm)",
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-sm font-semibold truncate"
+                          style={{ color: "var(--texto-primario)" }}
+                        >
+                          {a.titulo}
+                        </p>
+                        <p
+                          className="text-xs mt-0.5 line-clamp-2"
+                          style={{ color: "var(--texto-muted)" }}
+                        >
+                          {a.contenido}
+                        </p>
+                      </div>
+                      <span
+                        className="text-xs ml-4 shrink-0 mt-0.5"
+                        style={{ color: "var(--texto-muted)" }}
+                      >
+                        {formatFecha(a.creadoEn)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── SECCIÓN 3: ESTADO DEL EQUIPO ── */}
+        <section>
+          <TituloSeccion>Estado del equipo</TituloSeccion>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            {/* Empleados activos */}
+            <div
+              className="rounded-2xl px-5 py-5"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  bottom:     0,
+                  left:       0,
+                  right:      0,
+                  height:     "2px",
+                  background: "linear-gradient(90deg, var(--azul-egm), var(--azul-egm-light))",
+                }}
+              />
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium mb-1" style={{ color: "var(--texto-primario)" }}>
-                Sin anuncios publicados
+              <p className="text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
+                Empleados activos
               </p>
-              <p className="text-xs mb-3" style={{ color: "var(--texto-muted)" }}>
-                Comunica novedades a tu equipo
+              <p
+                className="text-3xl font-bold"
+                style={{ color: "var(--azul-egm)" }}
+              >
+                {resumen?.usuariosActivos ?? "—"}
+              </p>
+            </div>
+
+            {/* Módulos de formación */}
+            <div
+              className="rounded-2xl px-5 py-5"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  bottom:     0,
+                  left:       0,
+                  right:      0,
+                  height:     "2px",
+                  background: "linear-gradient(90deg, var(--verde-oliva), var(--verde-oliva-light))",
+                }}
+              />
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <p className="text-xs mb-2" style={{ color: "var(--texto-muted)" }}>
+                Módulos de formación
               </p>
               <button
-                onClick={() => router.push("/dashboard/admin?tab=anuncios")}
-                className="text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
-                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+                className="text-xs font-semibold transition-opacity"
+                style={{ color: "var(--verde-oliva)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                Crear primer anuncio
+                Gestionar módulos →
               </button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {anuncios.map((a) => (
-                <div key={a.anuncioId}
-                  className="flex items-start justify-between rounded-lg px-4 py-3"
-                  style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate" style={{ color: "var(--texto-primario)" }}>{a.titulo}</p>
-                    <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{a.contenido}</p>
-                  </div>
-                  <span className="text-[10px] ml-4 shrink-0" style={{ color: "var(--texto-muted)" }}>
-                    {formatFecha(a.creadoEn)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Estado del equipo */}
-        <div className="rounded-xl p-6"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-          <h2 className="text-sm font-semibold mb-4" style={{ color: "var(--texto-primario)" }}>
-            Estado del equipo
-          </h2>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Empleados activos</span>
-              <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-                {resumen?.usuariosActivos ?? "—"}
-              </span>
-            </div>
-            <div className="h-px" style={{ background: "var(--gris-borde)" }} />
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Empleados inactivos</span>
-              <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+            {/* Empleados inactivos */}
+            <div
+              className="rounded-2xl px-5 py-5"
+              style={{
+                background: "var(--blanco)",
+                border:     "1px solid var(--gris-borde)",
+                position:   "relative",
+                overflow:   "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position:   "absolute",
+                  bottom:     0,
+                  left:       0,
+                  right:      0,
+                  height:     "2px",
+                  background: "linear-gradient(90deg, var(--texto-muted), var(--gris-superficie))",
+                  opacity:    0.5,
+                }}
+              />
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <p className="text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
+                Empleados inactivos
+              </p>
+              <p
+                className="text-3xl font-bold"
+                style={{ color: "var(--texto-muted)" }}
+              >
                 {resumen?.usuariosInactivos ?? "—"}
-              </span>
+              </p>
             </div>
-            <div className="h-px" style={{ background: "var(--gris-borde)" }} />
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Progreso medio</span>
-              <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                Próximamente
-              </span>
-            </div>
-            <div className="h-px" style={{ background: "var(--gris-borde)" }} />
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Módulos activos</span>
-              <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                Próximamente
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/dashboard/admin?tab=empleados")}
-            className="w-full mt-6 text-xs font-medium py-2.5 rounded-lg transition-colors"
-            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm-light)")}
-          >
-            Ver todos los empleados →
-          </button>
-        </div>
-      </div>
 
-      {/* ── MÓDULOS ── */}
-      <div className="rounded-xl p-6"
-        style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-            Módulos de formación
-          </h2>
-          <button
-            onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-            className="text-xs font-medium hover:underline"
-            style={{ color: "var(--azul-egm)" }}
-          >
-            Gestionar →
-          </button>
-        </div>
-        <div className="flex flex-col items-center justify-center py-8 text-center rounded-lg"
-          style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-            style={{ background: "var(--verde-oliva-light)" }}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
-              style={{ color: "var(--verde-oliva)" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
           </div>
-          <p className="text-sm font-medium mb-1" style={{ color: "var(--texto-primario)" }}>
-            Sin módulos creados
-          </p>
-          <p className="text-xs mb-3" style={{ color: "var(--texto-muted)" }}>
-            Crea el primer módulo formativo para tu equipo
-          </p>
-          <button
-            onClick={() => router.push("/dashboard/admin/modulos/crear")}
-            className="text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
-            style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          >
-            Crear primer módulo
-          </button>
-        </div>
+        </section>
+
       </div>
     </div>
-  );
-}
-
-// ── SUBCOMPONENTES ────────────────────────────────────────────────────────────
-
-function MetricCard({
-  label, value, nota, acento, onClick,
-}: {
-  label:    string;
-  value:    string | number;
-  nota?:    string;
-  acento:   "azul" | "verde" | "naranja" | "gris";
-  onClick?: () => void;
-}) {
-  const acentos = {
-    azul:    "var(--azul-egm)",
-    verde:   "var(--verde-oliva)",
-    naranja: "var(--advertencia)",
-    gris:    "var(--texto-muted)",
-  };
-
-  return (
-    <div
-      className="rounded-xl px-5 py-4 cursor-pointer transition-opacity"
-      style={{
-        background:  "rgba(255,255,255,0.08)",
-        border:      `1px solid rgba(255,255,255,0.12)`,
-        borderLeft:  `3px solid ${acentos[acento]}`,
-      }}
-      onClick={onClick}
-      onMouseEnter={(e) => onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
-      onMouseLeave={(e) => onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-    >
-      <p className="text-xs mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>{label}</p>
-      <p className="text-3xl font-bold text-white">{value}</p>
-      {nota && <p className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>{nota}</p>}
-    </div>
-  );
-}
-
-function AccionCard({
-  titulo, descripcion, acento, icono, onClick,
-}: {
-  titulo:      string;
-  descripcion: string;
-  acento:      "azul" | "verde" | "naranja";
-  icono:       React.ReactNode;
-  onClick:     () => void;
-}) {
-  const acentos = {
-    azul:    { bg: "var(--azul-egm-light)",   text: "var(--azul-egm)",   hover: "var(--azul-egm)",   hoverText: "var(--blanco)" },
-    verde:   { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", hover: "var(--verde-oliva)", hoverText: "var(--blanco)" },
-    naranja: { bg: "var(--advertencia-light)", text: "var(--advertencia)", hover: "var(--advertencia)", hoverText: "var(--blanco)" },
-  };
-
-  const c = acentos[acento];
-
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-xl p-5 text-left flex items-center gap-4 transition-all w-full group"
-      style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background    = c.hover;
-        e.currentTarget.style.borderColor   = c.hover;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background  = "var(--blanco)";
-        e.currentTarget.style.borderColor = "var(--gris-borde)";
-      }}
-    >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors"
-        style={{ background: c.bg, color: c.text }}
-      >
-        {icono}
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{titulo}</p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{descripcion}</p>
-      </div>
-    </button>
   );
 }

@@ -8,8 +8,6 @@ import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import SplitText from "@/components/ui/SplitText";
-import GradientText from "@/components/ui/GradientText";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 
 function formatFecha(iso: string) {
@@ -277,35 +275,40 @@ export default function Empleado() {
                   fontFamily:    "var(--font-poppins), sans-serif",
                   fontWeight:    300,
                   letterSpacing: "-0.03em",
+                  animation:     "heroFadeUp 0.8s ease both",
                 }}
               >
                 Hola,
               </span>
-              <GradientText
+              <span
                 style={{
-                  fontSize:      "clamp(3.5rem, 7vw, 6rem)",
-                  fontFamily:    "'Instrument Serif', serif",
-                  fontStyle:     "italic",
-                  fontWeight:    400,
-                  letterSpacing: "-0.01em",
-                  lineHeight:    1,
+                  fontSize:        "clamp(3.5rem, 7vw, 6rem)",
+                  fontFamily:      "'Instrument Serif', serif",
+                  fontStyle:       "italic",
+                  fontWeight:      400,
+                  letterSpacing:   "-0.01em",
+                  lineHeight:      1,
+                  background:      "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+                  backgroundSize:  "300% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  animation:       "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
                 }}
               >
-                <SplitText
-                  text={usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-                  tag="span"
-                  textAlign="left"
-                  delay={40}
-                  duration={0.9}
-                  ease="power3.out"
-                  splitType="chars"
-                  from={{ opacity: 0, y: 60 }}
-                  to={{ opacity: 1, y: 0 }}
-                  threshold={0.1}
-                  rootMargin="0px"
-                />
-              </GradientText>
+                {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
+              </span>
             </div>
+            <style>{`
+              @keyframes heroFadeUp {
+                from { opacity: 0; transform: translateY(24px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes gradientShift {
+                0%, 100% { background-position: 0% 50%; }
+                50%       { background-position: 100% 50%; }
+              }
+            `}</style>
         </div>
       </div>
 

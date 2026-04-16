@@ -1,8 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import SplitText from "@/components/ui/SplitText";
-import GradientText from "@/components/ui/GradientText";
 
 interface DashboardHeroProps {
   prefijo?:     string;    // texto en Poppins bold, ej: "Centro de "
@@ -50,36 +48,41 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
                 fontFamily:    "var(--font-poppins), sans-serif",
                 fontWeight:    300,
                 letterSpacing: "-0.03em",
+                animation:     "heroFadeUp 0.7s ease both",
               }}
             >
               {prefijo}
             </span>
           )}
-          <GradientText
+          <span
             style={{
-              fontSize:      "clamp(3rem, 6vw, 5rem)",
-              fontFamily:    "'Instrument Serif', serif",
-              fontStyle:     "italic",
-              fontWeight:    400,
-              letterSpacing: "-0.01em",
-              lineHeight:    1,
+              fontSize:             "clamp(3rem, 6vw, 5rem)",
+              fontFamily:           "'Instrument Serif', serif",
+              fontStyle:            "italic",
+              fontWeight:           400,
+              letterSpacing:        "-0.01em",
+              lineHeight:           1,
+              background:           "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+              backgroundSize:       "300% 100%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor:  "transparent",
+              backgroundClip:       "text",
+              animation:            "heroFadeUp 0.7s ease 0.12s both, gradientShift 8s ease infinite",
             }}
           >
-            <SplitText
-              text={titulo}
-              tag="span"
-              textAlign="left"
-              delay={40}
-              duration={0.9}
-              ease="power3.out"
-              splitType="chars"
-              from={{ opacity: 0, y: 50 }}
-              to={{ opacity: 1, y: 0 }}
-              threshold={0.1}
-              rootMargin="0px"
-            />
-          </GradientText>
+            {titulo}
+          </span>
         </div>
+        <style>{`
+          @keyframes heroFadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50%       { background-position: 100% 50%; }
+          }
+        `}</style>
       </div>
     </div>
   );
