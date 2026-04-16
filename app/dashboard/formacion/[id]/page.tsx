@@ -32,6 +32,34 @@ interface ModuloMock {
   contenidos:       Contenido[];
 }
 
+// ── IMÁGENES POR MÓDULO ───────────────────────────────────────────────────────
+const FORMACION_IMG_BY_ID: Record<string, string> = {
+  "1": "/background-formacion-empleado.jpg",
+  "2": "/comunicacion-trabajo.jpg",
+  "3": "/herramientas-digitales.jpg",
+  "4": "/negociacion-habilidades.jpg",
+  "5": "/ciberseguridad-datos.jpg",
+  "6": "/metodologias-agiles.jpg",
+  "7": "/diversidad.jpg",
+};
+
+const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
+  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+];
+
+function getHeroImg(id: string, nombre: string): string {
+  if (FORMACION_IMG_BY_ID[id]) return FORMACION_IMG_BY_ID[id];
+  const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen
+    ?? "/background-formacion-empleado.jpg";
+}
+
 // ── MOCK ─────────────────────────────────────────────────────────────────────
 // Mapa de módulos mock — cubre los IDs del listado de formación
 const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" | "esEspecializadoIa">> = {
@@ -164,7 +192,7 @@ export default function Page() {
       >
         {/* Imagen de fondo */}
         <img
-          src="/background-formacion-empleado.jpg"
+          src={getHeroImg(id, modulo.nombre)}
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover"
@@ -177,7 +205,7 @@ export default function Page() {
 
         {/* Contenido del hero — mismo layout que DashboardHero */}
         <div className="relative z-10 w-full py-14">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="w-full px-8 sm:px-12">
 
           {/* Breadcrumb */}
           <button
@@ -197,11 +225,11 @@ export default function Page() {
 
           {/* Título */}
           <h1
-            className="text-white leading-tight mb-5"
+            className="text-white leading-tight mb-5 text-left"
             style={{
-              fontSize:      "clamp(1.8rem, 3.2vw, 2.4rem)",
+              fontSize:      "clamp(2.2rem, 4vw, 3rem)",
               fontFamily:    "var(--font-poppins), sans-serif",
-              fontWeight:    600,
+              fontWeight:    700,
               letterSpacing: "-0.02em",
               maxWidth:      "820px",
             }}

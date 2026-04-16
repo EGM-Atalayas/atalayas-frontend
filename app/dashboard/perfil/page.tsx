@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
-import { Camera, Edit2, Shield, Key, CheckCircle, Briefcase, User, Clock } from "lucide-react";
+import GradientText from "@/components/ui/GradientText";
+import {
+  Camera, Edit2, Shield, Key, CheckCircle, Briefcase, User, Clock,
+  BookOpen, MessageSquare, LayoutDashboard, Activity,
+} from "lucide-react";
 
 function getInitials(nombre: string, apellidos: string = ""): string {
   const n = nombre ? nombre[0] : "";
@@ -15,6 +20,7 @@ function getInitials(nombre: string, apellidos: string = ""): string {
 
 export default function PerfilPage() {
   const { usuario, setUsuario } = useAuth();
+  const router = useRouter();
 
   const [nombre, setNombre] = useState("");
   const [apellidos, setApellidos] = useState("");
@@ -142,71 +148,105 @@ export default function PerfilPage() {
 
   return (
     <div className="min-h-screen w-full pb-12" style={{ background: "var(--gris-pagina)" }}>
-      {/* Container ancho para el layout de columnas */}
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-8">
 
-        {/* === Header del Perfil === */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 animate-fade-rise">
+      {/* ===== HERO BANNER ===== */}
+      <div
+        className="relative w-full flex items-end"
+        style={{
+          minHeight: "220px",
+          backgroundImage: "url('/background-formacion-empleado.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Dark overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "rgba(10,20,40,0.65)" }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 w-full px-10 lg:px-16 py-8 flex flex-col sm:flex-row items-center sm:items-end gap-6">
+          {/* Avatar */}
           <div className="relative group cursor-pointer shrink-0">
             <div
-              className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border-4px border-white"
-              style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+              className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg"
+              style={{
+                background: "var(--azul-egm)",
+                color: "var(--blanco)",
+                border: "3px solid rgba(255,255,255,0.35)",
+              }}
             >
               {usuario.avatarUrl ? (
                 <Image
                   src={usuario.avatarUrl}
                   alt="Avatar"
-                  width={128}
-                  height={128}
+                  width={112}
+                  height={112}
                   className="object-cover w-full h-full"
                 />
               ) : (
-                <span className="text-4xl font-bold">{initials}</span>
+                <span className="text-3xl font-bold">{initials}</span>
               )}
             </div>
             <div
-              className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-lg flex items-center justify-center border-2 border-white shadow-sm text-white transition-transform group-hover:scale-105"
-              style={{ background: "var(--azul-egm)" }}
+              className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-lg flex items-center justify-center border-2 shadow-sm text-white transition-transform group-hover:scale-105"
+              style={{ background: "var(--azul-egm)", borderColor: "rgba(255,255,255,0.4)" }}
             >
-              <Camera size={16} />
+              <Camera size={14} />
             </div>
           </div>
 
-          <div className="flex flex-col items-center sm:items-start pt-2">
-            <h1
-              className="text-3xl font-bold"
-              style={{ color: "var(--texto-primario)", fontFamily: "'Playfair Display', serif", letterSpacing: "-0.01em" }}
+          {/* Name & badges */}
+          <div className="flex flex-col items-center sm:items-start gap-2 pb-1">
+            <GradientText
+              colors={["#9cb854", "#ffffff", "#c8dc8a", "#9cb854"]}
+              animationSpeed={6}
+              className="!mx-0"
+              direction="horizontal"
+              yoyo
             >
-              {usuario.nombre} {usuario.apellidos}
-            </h1>
-            <p
-              className="text-base mt-0.5 font-medium"
-              style={{ color: "var(--texto-muted)" }}
-            >
+              <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.8rem, 3vw, 2.4rem)", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                {usuario.nombre} {usuario.apellidos}
+              </span>
+            </GradientText>
+            <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
               {usuario.nombreRol || "Especialista en Control de Calidad"}
             </p>
-
-            <div className="flex items-center gap-3 mt-3 flex-wrap justify-center sm:justify-start">
+            <div className="flex items-center gap-3 mt-1 flex-wrap justify-center sm:justify-start">
               {usuario.nombreEmpresa ? (
-                <span className="px-3 py-1.5 text-[11px] font-bold rounded-full uppercase tracking-wider" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+                >
                   {usuario.nombreEmpresa}
                 </span>
               ) : (
-                <span className="px-3 py-1.5 text-[11px] font-bold rounded-full uppercase tracking-wider" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+                >
                   EGM ATALAYAS
                 </span>
               )}
-              <span className="px-3 py-1.5 bg-slate-200 text-slate-700 text-[11px] font-bold rounded-full uppercase tracking-wider">
+              <span
+                className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+              >
                 Empleado Activo
               </span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ===== MAIN CONTENT ===== */}
+      <div className="px-10 lg:px-16 py-8 flex flex-col gap-8">
 
         {/* === Grid Principal (2 columnas + 1 columna lateral) === */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Coloca Izquierda: Cards de Información */}
+          {/* Columna Izquierda: Cards de Información */}
           <div className="lg:col-span-2 flex flex-col gap-6">
 
             {/* --- Tarjeta: Personal Information --- */}
@@ -347,6 +387,67 @@ export default function PerfilPage() {
               </div>
             </div>
 
+            {/* --- Tarjeta: Actividad Reciente --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--texto-primario)" }}>
+                  <Activity size={18} style={{ color: "var(--azul-egm)" }} />
+                  Actividad Reciente
+                </h2>
+              </div>
+              <div className="p-6 flex flex-col gap-0">
+
+                {/* Activity item 1 */}
+                <div className="flex items-start gap-4 py-4 border-b" style={{ borderColor: "var(--gris-borde)" }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+                  >
+                    <BookOpen size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Completó módulo de Comunicación Efectiva
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 2 días</p>
+                  </div>
+                </div>
+
+                {/* Activity item 2 */}
+                <div className="flex items-start gap-4 py-4 border-b" style={{ borderColor: "var(--gris-borde)" }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}
+                  >
+                    <Edit2 size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Actualizó información personal
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 5 días</p>
+                  </div>
+                </div>
+
+                {/* Activity item 3 */}
+                <div className="flex items-start gap-4 py-4">
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}
+                  >
+                    <Clock size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Inició módulo de Incorporación
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 1 semana</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             {/* --- Tarjeta: Security & Privacy --- */}
             <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
               <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
@@ -455,7 +556,7 @@ export default function PerfilPage() {
 
           </div>
 
-          {/* Coloca Derecha: Widgets */}
+          {/* Columna Derecha: Widgets */}
           <div className="lg:col-span-1 flex flex-col gap-6">
 
             {/* --- Widget: Onboarding Status --- */}
@@ -488,14 +589,19 @@ export default function PerfilPage() {
                 </p>
                 <p className="text-xl font-bold mt-1 mb-2">Fase Fundacional</p>
 
-                <button className="w-full mt-6 py-3 rounded-lg font-semibold text-sm transition-colors" style={{ background: "rgba(255,255,255,0.1)", color: "var(--blanco)" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+                <button
+                  className="w-full mt-6 py-3 rounded-lg font-semibold text-sm transition-colors"
+                  style={{ background: "rgba(255,255,255,0.1)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                >
                   Continuar Formación
                 </button>
               </div>
             </div>
 
             {/* --- Widget: Recent Achievements --- */}
-            <div className="rounded-xl bg-white shadow-sm border relative overflow-hidden flex flex-col animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)", minHeight: "400px" }}>
+            <div className="rounded-xl bg-white shadow-sm border relative overflow-hidden flex flex-col animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
               <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "var(--verde-oliva)" }} />
 
               <div className="p-6 flex-1 flex flex-col">
@@ -546,10 +652,64 @@ export default function PerfilPage() {
               </div>
             </div>
 
+            {/* --- Widget: Accesos Rápidos --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>Accesos Rápidos</h2>
+              </div>
+              <div className="p-5 flex flex-col gap-3">
+
+                <button
+                  onClick={() => router.push("/dashboard/formacion")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
+                  style={{
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <BookOpen size={16} style={{ flexShrink: 0 }} />
+                  Ir a Formación
+                </button>
+
+                <button
+                  onClick={() => router.push("/dashboard/comunicacion")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
+                  style={{
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <MessageSquare size={16} style={{ flexShrink: 0 }} />
+                  Ver Comunicados
+                </button>
+
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
+                  style={{
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <LayoutDashboard size={16} style={{ flexShrink: 0 }} />
+                  Ir al Dashboard
+                </button>
+
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
   );
 }
-
