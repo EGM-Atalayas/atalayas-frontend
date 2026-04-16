@@ -31,29 +31,59 @@ const SUGGESTIONS = [
 
 const RESPUESTAS: Array<{ keywords: string[]; response: string }> = [
   {
-    keywords: ["formacion", "pendiente", "formación"],
+    keywords: ["formacion", "pendiente", "formación", "mis formaciones", "que tengo"],
     response:
-      "Tienes **3 formaciones pendientes**: *Comunicación Efectiva*, *Herramientas Digitales* y *Ciberseguridad*. Te recomiendo empezar por Comunicación Efectiva, ya que es la base para el resto. ¿Quieres que te explique cómo acceder?",
+      "Tienes **3 formaciones pendientes**: *Comunicación Efectiva*, *Herramientas Digitales* y *Ciberseguridad y Protección de Datos*. Te recomiendo empezar por **Comunicación Efectiva**, ya que es la base para el resto. ¿Quieres acceder directamente?",
   },
   {
-    keywords: ["comunicado", "noticia"],
+    keywords: ["progreso", "avance", "completado", "cuanto llevo", "cuánto llevo"],
     response:
-      "El último comunicado es del 14 de abril: *'Actualización del protocolo de acceso al parking'*. En resumen: a partir del 1 de mayo se requerirá tarjeta de empresa para acceder. ¿Quieres más detalles?",
+      "Tu progreso actual: ✅ *Incorporación y Bienvenida* — **100% completado** 🔄 *Negociación y Habilidades Directivas* — **60% en progreso** ⏳ *Comunicación Efectiva* — **pendiente**. ¡Vas por buen camino! Tienes 1 módulo completado esta semana.",
   },
   {
-    keywords: ["prl", "riesgo", "seguridad"],
+    keywords: ["comunicado", "noticia", "anuncio"],
     response:
-      "Las normas básicas de PRL incluyen: ✅ Uso de EPI en zonas señalizadas ✅ Comunicar cualquier incidente al responsable ✅ No manipular equipos sin formación específica ✅ Mantener las salidas de emergencia despejadas. ¿Necesitas información sobre alguna norma específica?",
+      "El último comunicado es del 14 de abril: *'Actualización del protocolo de acceso al parking'*. A partir del 1 de mayo se requerirá tarjeta de empresa para acceder. También hay un anuncio sobre la **Jornada de Networking del 24 de mayo**. ¿Quieres más detalles de alguno?",
   },
   {
-    keywords: ["modulo", "completar", "módulo"],
+    keywords: ["prl", "riesgo", "seguridad", "prevencion", "prevención"],
     response:
-      "Para completar un módulo: 1️⃣ Accede a *Formación* en el menú 2️⃣ Selecciona el módulo que quieres hacer 3️⃣ Ve completando cada sección en orden 4️⃣ Responde el quiz final con al menos 2/3 aciertos. ¡El progreso se guarda automáticamente!",
+      "Las normas básicas de PRL en el parque empresarial EGM: ✅ Uso de EPI en zonas señalizadas ✅ Comunicar cualquier incidente al responsable ✅ No manipular equipos sin formación específica ✅ Mantener las salidas de emergencia despejadas ✅ Velocidad máxima en el parking: 10 km/h. ¿Necesitas información sobre alguna norma específica?",
+  },
+  {
+    keywords: ["modulo", "completar", "módulo", "como funciona", "cómo funciona"],
+    response:
+      "Para completar un módulo: 1️⃣ Accede a **Formación** en el menú lateral 2️⃣ Selecciona el módulo que quieres realizar 3️⃣ Completa cada sección en orden 4️⃣ Responde el cuestionario final (mínimo 2/3 aciertos). ¡El progreso se guarda automáticamente y puedes continuar donde lo dejaste!",
+  },
+  {
+    keywords: ["certificado", "diploma", "logro"],
+    response:
+      "Al completar cada módulo recibirás un **certificado digital** con tu nombre y la fecha de finalización. Los certificados de los módulos de PRL y Protección de Datos tienen validez oficial. Puedes descargarlos desde tu perfil. 🏆",
+  },
+  {
+    keywords: ["evento", "actividad", "networking", "comunidad"],
+    response:
+      "Próximos eventos en el parque EGM: 📅 **24 de mayo** — Jornada de Networking (42 inscritos) 📅 **Junio** — Team Building entre empresas 📅 **Julio** — Jornada 'En Femenino'. ¿Te apunto a alguno?",
+  },
+  {
+    keywords: ["equipo", "compañero", "empresa"],
+    response:
+      "Tu empresa tiene actualmente **28 empleados activos**. El progreso medio del equipo en formación es del **67%**. Los módulos con mayor participación son *Onboarding Corporativo* (89%) y *Protección de Datos* (78%). ¿Quieres ver el detalle de algún módulo?",
+  },
+  {
+    keywords: ["hola", "buenas", "buenos días", "buenas tardes"],
+    response:
+      "¡Hola! 👋 Estoy aquí para ayudarte. Puedo informarte sobre tus **formaciones pendientes**, el **progreso del equipo**, **comunicados** del parque, normas de **PRL** o cómo usar la plataforma. ¿Por dónde empezamos?",
+  },
+  {
+    keywords: ["gracias", "perfecto", "genial", "ok"],
+    response:
+      "¡De nada! 😊 Si necesitas cualquier otra cosa, aquí estaré. ¡Mucho ánimo con la formación!",
   },
 ]
 
 const DEFAULT_RESPONSE =
-  "Entendido. Estoy procesando tu consulta... En breve tendré una respuesta para ti. Mientras tanto, puedes explorar la sección de **Formación** o revisar los **Comunicados** más recientes. 💡"
+  "Entendido. Déjame revisar eso por ti... Mientras tanto, puedes explorar la sección de **Formación** o consultar los **Comunicados** más recientes. Si necesitas algo concreto, intenta preguntarme sobre tu progreso, PRL, comunicados o próximos eventos. 💡"
 
 function normalize(text: string): string {
   return text

@@ -69,6 +69,15 @@ function leerPorcentajeLS(moduloId: string): number | null {
   } catch { return null; }
 }
 
+const DURACION_POR_TIPO: Record<string, string> = {
+  IDENTIDAD:  "20 min",
+  BASICA:     "35 min",
+  ESPECIFICA: "50 min",
+  DESARROLLO: "45 min",
+  COMUNIDAD:  "25 min",
+  RECOMPENSAS:"15 min",
+};
+
 function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   const pctLS = leerPorcentajeLS(m.moduloId);
   const porcentaje = pctLS !== null ? pctLS
@@ -76,7 +85,8 @@ function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   const status = pctLS !== null
     ? (pctLS >= 100 ? "completado" : pctLS > 0 ? "en progreso" : "pendiente")
     : m.status;
-  return { ...m, status, duracion: "—", porcentaje };
+  const duracion = DURACION_POR_TIPO[m.tipoModulo] ?? "30 min";
+  return { ...m, status, duracion, porcentaje };
 }
 
 // ── Tipos de filtro ───────────────────────────────────────────────────────────
@@ -175,7 +185,7 @@ export default function FormacionPage() {
         <>
           {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
           <div className="flex items-center justify-between gap-2 mb-10">
-            <h2 className="text-4xl font-bold" style={{ color: "var(--texto-primario)", fontFamily: "var(--font-poppins), sans-serif" }}>
+            <h2 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(2rem, 3vw, 2.6rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
               Módulos
             </h2>
             <div className="flex items-center gap-2">
