@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getModulosConProgreso } from "@/lib/api/modulos";
@@ -52,12 +52,41 @@ function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   return { ...m, status, duracion: "—", porcentaje };
 }
 
+// ── Tipos de filtro ───────────────────────────────────────────────────────────
+type FiltroEstado = "todos" | "pendiente" | "en progreso" | "completado";
+
+const ESTADO_LABELS: { value: FiltroEstado; label: string }[] = [
+  { value: "todos",       label: "Todos" },
+  { value: "pendiente",   label: "Pendiente" },
+  { value: "en progreso", label: "En progreso" },
+  { value: "completado",  label: "Completado" },
+];
+
 export default function FormacionPage() {
   const router      = useRouter();
   const { usuario } = useAuth();
 
-  const [modules, setModules] = useState<ModuloEnriquecido[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [modules,    setModules]    = useState<ModuloEnriquecido[]>([]);
+  const [loading,    setLoading]    = useState(true);
+
+  // ── Filtros ──────────────────────────────────────────────────────────────
+  const [busqueda,     setBusqueda]     = useState("");
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
+  const [filtroTipo,   setFiltroTipo]   = useState<string>("todos");
+  const [soloIA,       setSoloIA]       = useState(false);
+  const [filtroOpen,   setFiltroOpen]   = useState(false);
+  const filtroRef = useRef<HTMLDivElement>(null);
+
+  // Cierra el desplegable al hacer clic fuera
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (filtroRef.current && !filtroRef.current.contains(e.target as Node)) {
+        setFiltroOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   useEffect(() => {
     getModulosConProgreso()
@@ -71,8 +100,23 @@ export default function FormacionPage() {
 
   const isAdmin = usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
 
+  // Tipos únicos disponibles en los módulos cargados
+  const tiposDisponibles = Array.from(new Set(modules.map((m) => m.tipoModulo)));
+
   // Módulo "continuar": el primero en progreso (según progreso real de localStorage)
   const continuar = modules.find((m) => m.status === "en progreso" && m.porcentaje < 100);
+
+  const hayFiltrosActivos =
+    busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos" || soloIA;
+
+  // ── Aplicar filtros ───────────────────────────────────────────────────────
+  const modulosFiltrados = modules.filter((m) => {
+    if (busqueda && !m.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
+    if (filtroEstado !== "todos" && m.status !== filtroEstado) return false;
+    if (filtroTipo !== "todos" && m.tipoModulo !== filtroTipo) return false;
+    if (soloIA && !m.esEspecializadoIa) return false;
+    return true;
+  });
 
   return (
     <div className="w-full">
@@ -102,19 +146,179 @@ export default function FormacionPage() {
 
       {!loading && (
         <>
+          {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
+          <div className="flex items-center justify-end gap-2 mb-10">
+            {/* Buscador */}
+            <div className="relative" style={{ width: "260px" }}>
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                style={{ color: "var(--texto-muted)" }}
+              >
+                <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar formación..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl text-sm outline-none"
+                style={{
+                  background: "var(--blanco)",
+                  border:     "1px solid var(--gris-borde)",
+                  color:      "var(--texto-primario)",
+                  fontSize:   "14px",
+                  height:     "38px",
+                }}
+              />
+              {busqueda && (
+                <button
+                  onClick={() => setBusqueda("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--texto-muted)" }}
+                >
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Botón Filtros con desplegable */}
+            <div className="relative" ref={filtroRef}>
+              <button
+                onClick={() => setFiltroOpen((v) => !v)}
+                className="flex items-center gap-2 px-3.5 rounded-xl text-sm font-semibold border transition-colors"
+                style={{
+                  background:  filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--blanco)",
+                  borderColor: filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--gris-borde)",
+                  color:       filtroOpen || hayFiltrosActivos ? "#ffffff" : "var(--texto-primario)",
+                  height:      "38px",
+                }}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                </svg>
+                Filtros
+                {hayFiltrosActivos && (
+                  <span
+                    className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(255,255,255,0.3)" }}
+                  >
+                    {(filtroEstado !== "todos" ? 1 : 0) + (filtroTipo !== "todos" ? 1 : 0) + (soloIA ? 1 : 0)}
+                  </span>
+                )}
+                <svg
+                  className={`w-3 h-3 shrink-0 transition-transform duration-200 ${filtroOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Desplegable */}
+              {filtroOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl p-4 flex flex-col gap-4"
+                  style={{
+                    background: "var(--blanco)",
+                    border:     "1px solid var(--gris-borde)",
+                    width:      "320px",
+                  }}
+                >
+                  {/* Estado */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
+                      Estado
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {ESTADO_LABELS.map(({ value, label }) => (
+                        <PillFiltro
+                          key={value}
+                          label={label}
+                          active={filtroEstado === value}
+                          onClick={() => setFiltroEstado(value)}
+                          count={value === "todos" ? modules.length : modules.filter((m) => m.status === value).length}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tipo */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
+                      Tipo de módulo
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <PillFiltro label="Todos" active={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} count={modules.length} />
+                      {tiposDisponibles.map((tipo) => (
+                        <PillFiltro
+                          key={tipo}
+                          label={MODULO_TIPO_LABEL[tipo] ?? tipo}
+                          active={filtroTipo === tipo}
+                          onClick={() => setFiltroTipo(tipo)}
+                          count={modules.filter((m) => m.tipoModulo === tipo).length}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* IA */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
+                      Especialización
+                    </p>
+                    <button
+                      onClick={() => setSoloIA((v) => !v)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                      style={
+                        soloIA
+                          ? { background: "#7c3aed", color: "#ffffff", borderColor: "#7c3aed" }
+                          : { background: "var(--gris-superficie)", color: "var(--texto-muted)", borderColor: "var(--gris-borde)" }
+                      }
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Solo especializados IA
+                    </button>
+                  </div>
+
+                  {/* Limpiar */}
+                  {hayFiltrosActivos && (
+                    <button
+                      onClick={() => { setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                      className="text-xs font-medium text-left flex items-center gap-1 pt-1"
+                      style={{ color: "var(--azul-egm)" }}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Contador resultados */}
+            {hayFiltrosActivos && (
+              <span className="text-xs ml-1" style={{ color: "var(--texto-muted)" }}>
+                {modulosFiltrados.length} resultado{modulosFiltrados.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
           {/* ── Continue Learning card ───────────────────────────────── */}
           {continuar && (
             <div
-              className="w-full rounded-2xl mb-10 flex flex-col sm:flex-row items-stretch overflow-hidden"
-              style={{ border: "2px solid var(--azul-egm)", background: "var(--blanco)" }}
+              className="w-full rounded-2xl flex flex-col sm:flex-row items-stretch overflow-hidden"
+              style={{ border: "2px solid var(--azul-egm)", background: "var(--blanco)", marginBottom: "2.5rem" }}
             >
-              {/* Thumbnail */}
               <div
                 className="w-full sm:w-48 h-36 sm:h-auto shrink-0"
                 style={{ background: TIPO_GRADIENT[continuar.tipoModulo] }}
               />
-
-              {/* Info */}
               <div className="flex-1 px-6 py-5 flex flex-col justify-center gap-3">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--azul-egm)" }}>
@@ -123,31 +327,19 @@ export default function FormacionPage() {
                   <h2 className="text-xl font-bold leading-snug" style={{ color: "var(--texto-primario)" }}>
                     {continuar.nombre}
                   </h2>
-                  <div className="flex items-center gap-1 mt-1">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}>
-                      <circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" />
-                    </svg>
-                    <span className="text-sm" style={{ color: "var(--texto-muted)" }}>{continuar.duracion}</span>
-                  </div>
                 </div>
-
-                {/* Progress bar */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="w-full max-w-xs h-2 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${continuar.porcentaje}%`, background: "var(--azul-egm)" }} />
-                    </div>
-                    <span className="text-sm font-semibold ml-3 shrink-0" style={{ color: "var(--azul-egm)" }}>
-                      {continuar.porcentaje}%
-                    </span>
-                    <span className="text-sm ml-2 shrink-0 px-2 py-0.5 rounded-full font-medium" style={{ background: "#FFF3CD", color: "#856404" }}>
-                      En progreso
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 max-w-xs h-2 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${continuar.porcentaje}%`, background: "var(--azul-egm)" }} />
                   </div>
+                  <span className="text-sm font-semibold shrink-0" style={{ color: "var(--azul-egm)" }}>
+                    {continuar.porcentaje}%
+                  </span>
+                  <span className="text-sm shrink-0 px-2 py-0.5 rounded-full font-medium" style={{ background: "#FFF3CD", color: "#856404" }}>
+                    En progreso
+                  </span>
                 </div>
               </div>
-
-              {/* CTA */}
               <div className="px-6 py-5 flex items-center shrink-0">
                 <button
                   onClick={() => router.push(`/dashboard/formacion/${continuar.moduloId}`)}
@@ -163,16 +355,16 @@ export default function FormacionPage() {
           )}
 
           {/* ── Grid de módulos ──────────────────────────────────────── */}
-          {modules.length > 0 && (
+          {modulosFiltrados.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {modules.map((m) => (
+              {modulosFiltrados.map((m) => (
                 <CourseCard key={m.moduloId} m={m} isAdmin={isAdmin} router={router} />
               ))}
             </div>
           )}
 
           {/* ── Estado vacío ─────────────────────────────────────────── */}
-          {modules.length === 0 && (
+          {modulosFiltrados.length === 0 && !hayFiltrosActivos && (
             <div
               className="rounded-xl px-6 py-16 text-center flex flex-col items-center"
               style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
@@ -196,10 +388,64 @@ export default function FormacionPage() {
               )}
             </div>
           )}
+
+          {/* Sin resultados con filtros activos */}
+          {modulosFiltrados.length === 0 && hayFiltrosActivos && (
+            <div
+              className="rounded-xl px-6 py-14 text-center flex flex-col items-center gap-3"
+              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+            >
+              <svg className="w-10 h-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: "var(--texto-muted)" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z" />
+              </svg>
+              <p className="text-base font-medium" style={{ color: "var(--texto-primario)" }}>
+                Sin resultados
+              </p>
+              <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                Prueba con otros filtros o{" "}
+                <button
+                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                  className="underline font-medium"
+                  style={{ color: "var(--azul-egm)" }}
+                >
+                  limpia la búsqueda
+                </button>
+              </p>
+            </div>
+          )}
         </>
       )}
       </div>
     </div>
+  );
+}
+
+// ── Pill de filtro ────────────────────────────────────────────────────────────
+function PillFiltro({ label, active, onClick, count }: {
+  label: string; active: boolean; onClick: () => void; count: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+      style={
+        active
+          ? { background: "var(--azul-egm)", color: "#ffffff", borderColor: "var(--azul-egm)" }
+          : { background: "var(--gris-superficie)", color: "var(--texto-muted)", borderColor: "var(--gris-borde)" }
+      }
+    >
+      {label}
+      <span
+        className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
+        style={
+          active
+            ? { background: "rgba(255,255,255,0.25)", color: "#ffffff" }
+            : { background: "var(--gris-borde)", color: "var(--texto-muted)" }
+        }
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 

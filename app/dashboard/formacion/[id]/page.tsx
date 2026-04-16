@@ -22,40 +22,43 @@ interface Contenido {
 }
 
 interface ModuloMock {
-  id:          string;
-  nombre:      string;
-  descripcion: string;
-  tipo:        string;
-  totalItems:  number;
-  completados: number;
-  contenidos:  Contenido[];
+  id:               string;
+  nombre:           string;
+  descripcion:      string;
+  tipo:             string;
+  totalItems:       number;
+  completados:      number;
+  esEspecializadoIa: boolean;
+  contenidos:       Contenido[];
 }
 
 // ── MOCK ─────────────────────────────────────────────────────────────────────
 // Mapa de módulos mock — cubre los IDs del listado de formación
-const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo">> = {
-  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al parque.", tipo: "Identidad Corporativa" },
-  "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional" },
-  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del parque empresarial.",      tipo: "Formación Básica" },
-  "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica" },
-  "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica" },
-  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional" },
-  "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad" },
+const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" | "esEspecializadoIa">> = {
+  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al parque.", tipo: "Identidad Corporativa",  esEspecializadoIa: false },
+  "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional", esEspecializadoIa: false },
+  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del parque empresarial.",      tipo: "Formación Básica",       esEspecializadoIa: false },
+  "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica",   esEspecializadoIa: true  },
+  "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica",       esEspecializadoIa: false },
+  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional", esEspecializadoIa: true  },
+  "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad",              esEspecializadoIa: false },
 };
 
 function getMockBase(id: string): ModuloMock {
   const meta = MOCKS[id] ?? {
-    nombre:      "Módulo de Formación",
-    descripcion: "Completa todos los pasos para obtener tu certificado.",
-    tipo:        "Formación",
+    nombre:            "Módulo de Formación",
+    descripcion:       "Completa todos los pasos para obtener tu certificado.",
+    tipo:              "Formación",
+    esEspecializadoIa: false,
   };
   return {
     id,
-    nombre:      meta.nombre,
-    descripcion: meta.descripcion,
-    tipo:        meta.tipo,
-    totalItems:  5,
-    completados: 0,
+    nombre:            meta.nombre,
+    descripcion:       meta.descripcion,
+    tipo:              meta.tipo,
+    esEspecializadoIa: meta.esEspecializadoIa ?? false,
+    totalItems:        5,
+    completados:       0,
     contenidos: [
       { id: "c1", titulo: "Introducción y conceptos clave",    tipo: "texto", duracion: "5 min",  completado: false, bloqueado: false },
       { id: "c2", titulo: "Desarrollo del tema principal",      tipo: "video", duracion: "12 min", completado: false, bloqueado: true  },
@@ -141,6 +144,16 @@ export default function Page() {
     }, 600);
   };
 
+  // Color del borde lateral por tipo de contenido
+  const borderColorForTipo = (tipo: TipoContenido) => {
+    switch (tipo) {
+      case "texto": return "#3b82f6"; // blue
+      case "video": return "#a855f7"; // purple
+      case "pdf":   return "#ef4444"; // red
+      case "quiz":  return "#f97316"; // orange
+    }
+  };
+
   return (
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
 
@@ -221,8 +234,15 @@ export default function Page() {
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
         >
           <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            {/* Tipo del módulo como badge */}
+            <span
+              className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2"
+              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+            >
+              {modulo.tipo}
+            </span>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+              <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--texto-primario)" }}>
                 Contenidos
               </p>
               <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>
@@ -239,6 +259,7 @@ export default function Page() {
             {modulo.contenidos.map((c, i) => {
               const esActivo    = c.id === activoId;
               const esBloqueado = c.bloqueado && !c.completado;
+              const activeBorderColor = borderColorForTipo(c.tipo);
               return (
                 <button
                   key={c.id}
@@ -249,7 +270,9 @@ export default function Page() {
                     background:  esActivo    ? "var(--azul-egm-light)" : "transparent",
                     cursor:      esBloqueado ? "not-allowed"           : "pointer",
                     opacity:     esBloqueado ? 0.4                     : 1,
-                    borderLeft:  esActivo    ? "3px solid var(--azul-egm)" : "3px solid transparent",
+                    borderLeft:  esActivo
+                      ? `3px solid ${activeBorderColor}`
+                      : "3px solid transparent",
                   }}
                   onMouseEnter={(e) => { if (!esBloqueado && !esActivo) e.currentTarget.style.background = "var(--gris-pagina)"; }}
                   onMouseLeave={(e) => { if (!esActivo) e.currentTarget.style.background = "transparent"; }}
@@ -271,11 +294,11 @@ export default function Page() {
                     ) : String(i + 1)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate"
+                    <p className="text-sm font-semibold truncate"
                       style={{ color: esActivo ? "var(--azul-egm)" : "var(--texto-primario)" }}>
                       {c.titulo}
                     </p>
-                    <p className="text-[10px] mt-0.5 capitalize" style={{ color: "var(--texto-muted)" }}>
+                    <p className="text-xs mt-0.5 capitalize" style={{ color: "var(--texto-secundario)" }}>
                       {c.tipo}{c.duracion ? ` · ${c.duracion}` : ""}
                     </p>
                   </div>
@@ -344,8 +367,241 @@ export default function Page() {
               </div>
             )}
           </div>
+
+          {/* IA Assistant — solo en módulos especializados IA */}
+          {modulo.esEspecializadoIa && (
+            <div className="mt-6">
+              <AsistenteIA contenidoTitulo={activo.titulo} />
+            </div>
+          )}
         </main>
       </div>
+    </div>
+  );
+}
+
+// ── ASISTENTE IA ──────────────────────────────────────────────────────────────
+
+function getMockIAData(titulo: string): {
+  resumen: string[];
+  preguntas: { pregunta: string; respuesta: string }[];
+} {
+  // Vary mocks slightly based on the content title
+  if (titulo.toLowerCase().includes("evaluación") || titulo.toLowerCase().includes("quiz")) {
+    return {
+      resumen: [
+        "Esta evaluación pone a prueba los conocimientos adquiridos a lo largo del módulo.",
+        "Se requiere un mínimo de aciertos para superar la prueba y obtener el certificado.",
+        "Revisa los contenidos anteriores antes de intentar la evaluación final.",
+      ],
+      preguntas: [
+        { pregunta: "¿Cuántos intentos tengo para aprobar?", respuesta: "Puedes intentarlo tantas veces como necesites. Cada intento reinicia las preguntas para que puedas practicar sin límite." },
+        { pregunta: "¿Qué pasa si no apruebo?", respuesta: "Si no superas la evaluación, puedes repasar el material y volver a intentarlo. No hay penalización por los intentos fallidos." },
+        { pregunta: "¿Se guarda mi progreso automáticamente?", respuesta: "Sí, el progreso se guarda en tu navegador. Si cierras la página y vuelves, encontrarás el módulo en el mismo estado." },
+      ],
+    };
+  }
+  if (titulo.toLowerCase().includes("video")) {
+    return {
+      resumen: [
+        "El vídeo presenta los conceptos fundamentales del módulo de forma visual y práctica.",
+        "Se incluyen demostraciones reales del entorno empresarial de Atalayas.",
+        "Toma nota de los puntos clave que se resaltan durante la reproducción.",
+      ],
+      preguntas: [
+        { pregunta: "¿Puedo ver el vídeo varias veces?", respuesta: "Sí, puedes reproducir el vídeo cuantas veces necesites antes de marcarlo como completado." },
+        { pregunta: "¿Hay subtítulos disponibles?", respuesta: "El vídeo incluye subtítulos en castellano. Puedes activarlos desde los controles del reproductor." },
+        { pregunta: "¿El contenido del vídeo entra en el quiz?", respuesta: "Sí, los conceptos presentados en el vídeo son la base de la evaluación final del módulo." },
+      ],
+    };
+  }
+  // Default for texto, pdf, and anything else
+  return {
+    resumen: [
+      "Este contenido cubre los fundamentos teóricos esenciales del módulo.",
+      "Se abordan casos prácticos aplicables directamente al entorno de Atalayas.",
+      "Presta especial atención a los recuadros de \"Punto clave\" que resumen lo más importante.",
+    ],
+    preguntas: [
+      { pregunta: "¿Qué conceptos son más importantes de este contenido?", respuesta: "Los puntos clave destacados en recuadros azules contienen los conceptos que con más frecuencia aparecen en la evaluación final. Te recomendamos anotarlos." },
+      { pregunta: "¿Puedo volver a este contenido después de completarlo?", respuesta: "Sí, una vez completado puedes acceder al contenido en cualquier momento desde el índice lateral para repasar." },
+      { pregunta: "¿Hay material complementario disponible?", respuesta: "En el apartado de documentación encontrarás recursos adicionales en PDF con información ampliada sobre los temas tratados." },
+    ],
+  };
+}
+
+function AsistenteIA({ contenidoTitulo }: { contenidoTitulo: string }) {
+  const [open, setOpen]                       = useState(true);
+  const [preguntaActiva, setPreguntaActiva]   = useState<number | null>(null);
+  const [inputVal, setInputVal]               = useState("");
+  const [respuesta, setRespuesta]             = useState("");
+
+  const { resumen, preguntas } = getMockIAData(contenidoTitulo);
+
+  const handleSend = () => {
+    if (!inputVal.trim()) return;
+    setRespuesta("Estoy procesando tu consulta sobre \"" + inputVal.trim() + "\"… Dame un momento.");
+    setInputVal("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSend();
+  };
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ border: "1px solid #e9d5ff" }}
+    >
+      {/* Header */}
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-white text-lg leading-none select-none">✦</span>
+          <span className="text-sm font-bold text-white">Asistente IA</span>
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(255,255,255,0.18)", color: "white", letterSpacing: "0.05em" }}
+          >
+            BETA
+          </span>
+        </div>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="text-white transition-opacity"
+          style={{ opacity: 0.75 }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.75")}
+          aria-label={open ? "Colapsar asistente" : "Expandir asistente"}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            {open
+              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              : <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            }
+          </svg>
+        </button>
+      </div>
+
+      {/* Body */}
+      {open && (
+        <div
+          className="flex flex-col gap-5 px-5 py-4"
+          style={{ background: "white" }}
+        >
+          {/* Resumen IA */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
+              Resumen del contenido
+            </p>
+            <ul className="flex flex-col gap-2">
+              {resumen.map((bullet, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-0.5 text-sm font-bold shrink-0" style={{ color: "#7c3aed" }}>•</span>
+                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Preguntas sugeridas */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
+              Preguntas frecuentes
+            </p>
+            <div className="flex flex-col gap-2">
+              {preguntas.map((item, i) => {
+                const isActive = preguntaActiva === i;
+                return (
+                  <div key={i}>
+                    <button
+                      onClick={() => setPreguntaActiva(isActive ? null : i)}
+                      className="text-xs px-3 py-2 rounded-full border transition-all text-left"
+                      style={{
+                        background:   isActive ? "#7c3aed"              : "transparent",
+                        color:        isActive ? "white"                : "var(--texto-primario)",
+                        borderColor:  isActive ? "#7c3aed"              : "#e9d5ff",
+                        fontWeight:   isActive ? 600                    : 400,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background   = "#faf5ff";
+                          e.currentTarget.style.borderColor  = "#a855f7";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background   = "transparent";
+                          e.currentTarget.style.borderColor  = "#e9d5ff";
+                        }
+                      }}
+                    >
+                      {item.pregunta}
+                    </button>
+                    {isActive && (
+                      <div
+                        className="mt-2 rounded-xl px-4 py-3 text-sm"
+                        style={{
+                          background:  "#faf5ff",
+                          borderLeft:  "3px solid #7c3aed",
+                          color:       "var(--texto-secundario)",
+                        }}
+                      >
+                        {item.respuesta}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Respuesta del chat si existe */}
+          {respuesta && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{
+                background: "#faf5ff",
+                borderLeft: "3px solid #a855f7",
+                color:      "var(--texto-secundario)",
+              }}
+            >
+              {respuesta}
+            </div>
+          )}
+
+          {/* Input de chat */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe tu pregunta..."
+              className="flex-1 text-sm rounded-xl border px-3 py-2 outline-none transition-colors"
+              style={{
+                borderColor:     "#e9d5ff",
+                color:           "var(--texto-primario)",
+                background:      "white",
+              }}
+              onFocus={(e)  => (e.currentTarget.style.borderColor = "#a855f7")}
+              onBlur={(e)   => (e.currentTarget.style.borderColor = "#e9d5ff")}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!inputVal.trim()}
+              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+              onMouseEnter={(e) => { if (inputVal.trim()) e.currentTarget.style.opacity = "0.85"; }}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -494,6 +750,8 @@ const PREGUNTAS = [
   { id: "q3", pregunta: "¿Qué documento acredita la formación PRL?",                opciones: ["El contrato laboral", "El certificado de formación", "La nómina mensual", "El DNI"], correcta: 1 },
 ];
 
+const LETRAS = ["A", "B", "C", "D"];
+
 function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
   const [respuestas, setRespuestas] = useState<Record<string, number>>({});
   const [enviado, setEnviado]       = useState(false);
@@ -566,13 +824,23 @@ function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
                 return (
                   <button key={oi}
                     onClick={() => setRespuestas((r) => ({ ...r, [p.id]: oi }))}
-                    className="text-left px-4 py-3 rounded-xl text-sm transition-all"
+                    className="text-left flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
                     style={{
                       border:     sel ? "2px solid var(--azul-egm)" : "1px solid var(--gris-borde)",
                       background: sel ? "var(--azul-egm-light)"     : "var(--blanco)",
                       color:      sel ? "var(--azul-egm)"           : "var(--texto-primario)",
                       fontWeight: sel ? 600 : 400,
                     }}>
+                    {/* Letter label */}
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                      style={{
+                        background: sel ? "var(--azul-egm)"        : "var(--gris-superficie)",
+                        color:      sel ? "var(--blanco)"          : "var(--texto-muted)",
+                      }}
+                    >
+                      {LETRAS[oi]}
+                    </span>
                     {op}
                   </button>
                 );

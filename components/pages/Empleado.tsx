@@ -428,6 +428,76 @@ export default function Empleado() {
         </section>
 
 
+        {/* ── RUTA DE APRENDIZAJE ── */}
+        <section>
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <TituloSeccion noMargin>Mi formación</TituloSeccion>
+              {hayModulos && (
+                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                  {completados === 0
+                    ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
+                    : completados === formDisplay.length
+                    ? "🎉 ¡Has completado toda tu formación!"
+                    : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
+                </p>
+              )}
+            </div>
+            {hayModulos && (
+              <button onClick={() => router.push("/dashboard/formacion")}
+                className="text-sm font-semibold shrink-0 hover:underline"
+                style={{ color: "var(--azul-egm)" }}>
+                Ver todo →
+              </button>
+            )}
+          </div>
+
+          {/* Barra de progreso global */}
+          {hayModulos && (
+            <div className="mb-8">
+              <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${totalProgress}%`, background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)" }} />
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Inicio</span>
+                <span className="text-xs font-semibold" style={{ color: "var(--azul-egm)" }}>{totalProgress}%</span>
+                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Meta</span>
+              </div>
+            </div>
+          )}
+
+          {!hayModulos ? (
+            <div className="flex items-center gap-5 px-8 py-6 rounded-2xl"
+              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no tienes módulos asignados</p>
+                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Tu empresa configurará el itinerario formativo en breve</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {formDisplay.map((m, i) => (
+                <TarjetaModulo
+                  key={m.moduloId}
+                  modulo={m}
+                  index={i}
+                  esMock={formaciones.length === 0}
+                  onAvanzar={() => avanzarModulo(m.moduloId)}
+                  onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
           <TituloSeccion>Comunidad</TituloSeccion>
@@ -499,64 +569,6 @@ export default function Empleado() {
           </div>
         </section>
 
-        {/* ── MI ITINERARIO FORMATIVO ── */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <TituloSeccion noMargin>Mi itinerario</TituloSeccion>
-            <div className="flex items-center gap-5">
-              {hayProgreso && (
-                <span className="text-sm" style={{ color: "var(--texto-muted)" }}>
-                  <span className="font-bold" style={{ color: "var(--texto-primario)" }}>{completados}</span>
-                  /{formDisplay.length} completados
-                </span>
-              )}
-              {hayModulos && (
-                <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-sm font-semibold hover:underline"
-                  style={{ color: "var(--azul-egm)" }}>
-                  Ver todo →
-                </button>
-              )}
-            </div>
-          </div>
-
-          {hayProgreso && (
-            <div className="h-1 w-full mb-7 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${totalProgress}%`, background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)" }} />
-            </div>
-          )}
-
-          {!hayModulos ? (
-            <div className="flex items-center gap-5 px-8 py-6 rounded-2xl"
-              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no tienes módulos asignados</p>
-                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Tu empresa configurará el itinerario formativo en breve</p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {formDisplay.map((m, i) => (
-                <TarjetaModulo
-                  key={m.moduloId}
-                  modulo={m}
-                  index={i}
-                  esMock={formaciones.length === 0}
-                  onAvanzar={() => avanzarModulo(m.moduloId)}
-                  onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
 
       </div>
     </div>
@@ -695,112 +707,85 @@ const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }>
   pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
 };
 
-function TarjetaModulo({ modulo, index, onClick, onAvanzar, esMock }: {
-  modulo:    FormacionLocal;
-  index:     number;
-  onClick:   () => void;
+function TarjetaModulo({ modulo, index, onClick, esMock }: {
+  modulo:     FormacionLocal;
+  index:      number;
+  onClick:    () => void;
   onAvanzar?: () => void;
-  esMock?:   boolean;
+  esMock?:    boolean;
 }) {
   const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
-  const status     = STATUS_ESTILO[modulo.status]   ?? STATUS_ESTILO.pendiente;
-  const enProgreso = modulo.status === "en progreso";
   const completado = modulo.status === "completado";
-  const pendiente  = modulo.status === "pendiente";
+  const enProgreso = modulo.status === "en progreso";
 
   const pct = modulo.totalItems > 0
     ? Math.round((modulo.completadosLocal / modulo.totalItems) * 100)
     : completado ? 100 : 0;
 
-  const ctaLabel = completado ? "Repasar" : enProgreso ? "Continuar →" : "Empezar →";
-
   return (
-    <div
-      className="flex flex-col rounded-2xl overflow-hidden transition-all duration-200"
+    <button
+      onClick={onClick}
+      className="w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200"
       style={{
-        border:    "1px solid var(--gris-borde)",
         background: "var(--blanco)",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+        border:     enProgreso ? `2px solid ${tipo.text}` : "1px solid var(--gris-borde)",
+        boxShadow:  enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)",
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow  = "0 6px 20px rgba(0,0,0,0.09)";
-        (e.currentTarget as HTMLElement).style.transform  = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
-        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.09)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
     >
-      {/* Acento de color superior */}
-      <div className="h-1 w-full" style={{ background: completado ? "var(--exito)" : tipo.text, opacity: completado ? 0.6 : 1 }} />
-
-      <div className="flex flex-col flex-1 p-5 gap-3">
-        {/* Fila superior: número + tipo */}
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
-            style={{ background: tipo.bg, color: tipo.text }}
-          >
-            {tipo.label}
-          </span>
-          <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: "var(--texto-muted)" }}>
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
-
-        {/* Título */}
-        <p className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: "var(--texto-primario)" }}>
-          {modulo.nombre}
-        </p>
-
-        {/* Descripción */}
-        {modulo.descripcion && (
-          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--texto-muted)" }}>
-            {modulo.descripcion}
-          </p>
-        )}
-
-        {/* Progreso */}
-        <div className="mt-auto pt-1 flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: status.text }} />
-              <span className="text-[11px] font-medium" style={{ color: status.text }}>{status.label}</span>
-            </div>
-            {modulo.totalItems > 0 && (
-              <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>
-                {modulo.completadosLocal}/{modulo.totalItems}
-              </span>
-            )}
-          </div>
-          {/* Barra */}
-          <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--gris-superficie)" }}>
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width:      `${pct}%`,
-                background: completado ? "var(--exito)" : tipo.text,
-                opacity:    completado ? 0.7 : 1,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* CTA */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-          className="w-full mt-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
-          style={{
-            background: completado ? "var(--gris-superficie)" : tipo.bg,
-            color:      completado ? "var(--texto-muted)"     : tipo.text,
-            border:     `1px solid ${completado ? "var(--gris-borde)" : tipo.text}20`,
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.75"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-        >
-          {ctaLabel}
-        </button>
+      {/* Número / check */}
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+        style={{
+          background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
+          color:      completado || enProgreso ? "white" : "var(--texto-muted)",
+        }}
+      >
+        {completado ? (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : String(index + 1).padStart(2, "0")}
       </div>
-    </div>
+
+      {/* Contenido central */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-semibold leading-snug truncate" style={{ color: "var(--texto-primario)" }}>
+            {modulo.nombre}
+          </p>
+          {enProgreso && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+              style={{ background: tipo.bg, color: tipo.text }}>
+              En curso
+            </span>
+          )}
+        </div>
+        {/* Barra de progreso */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: completado ? "var(--exito)" : tipo.text }} />
+          </div>
+          <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: completado ? "var(--exito)" : "var(--texto-muted)" }}>
+            {pct}%
+          </span>
+        </div>
+      </div>
+
+      {/* Flecha / check derecha */}
+      <div className="shrink-0" style={{ color: completado ? "var(--exito)" : "var(--gris-borde)" }}>
+        {completado ? (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </div>
+    </button>
   );
 }
