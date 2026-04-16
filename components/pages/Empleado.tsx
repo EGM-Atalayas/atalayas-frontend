@@ -531,72 +531,149 @@ export default function Empleado() {
 
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
-          <TituloSeccion>Comunidad</TituloSeccion>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              {
-                label: "Eventos empresariales",
-                desc:  "Actividades y networking entre las empresas del parque",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ),
-              },
-              {
-                label: "Team building",
-                desc:  "Iniciativas colectivas e integración entre equipos",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                ),
-              },
-              {
-                label: "En Femenino",
-                desc:  "Liderazgo e igualdad en el entorno empresarial",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
-                ),
-              },
-            ].map((item) => (
-              <div key={item.label}
-                className="flex flex-col gap-4 px-5 py-5 rounded-2xl relative overflow-hidden"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+          <div className="flex items-end justify-between mb-6">
+            <TituloSeccion noMargin>Comunidad</TituloSeccion>
+            <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+              Parque empresarial EGM
+            </span>
+          </div>
 
-                {/* Glow corner */}
-                <div className="absolute top-0 right-0 w-24 h-24 pointer-events-none"
-                  style={{ background: "radial-gradient(circle at top right, rgba(139,154,45,0.08) 0%, transparent 70%)" }} />
+          {/* Evento destacado + iniciativas */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
 
-                {/* Icono */}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                  {item.icono}
+            {/* Evento destacado (3/5) */}
+            <div
+              className="lg:col-span-3 rounded-2xl overflow-hidden relative"
+              style={{ background: "var(--marino)", minHeight: "200px" }}
+            >
+              {/* Fondo decorativo */}
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
+              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+
+              <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
+                <div className="flex items-start justify-between mb-auto">
+                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "#A3B535" }}>
+                    Próximo evento
+                  </span>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white leading-none">24</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>May</p>
+                  </div>
                 </div>
 
-                {/* Texto */}
-                <div className="flex-1">
-                  <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>
-                    {item.label}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
+                    Jornada de Networking EGM
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    Conecta con profesionales del parque empresarial. Ponencias, mesas redondas y espacio de networking libre.
                   </p>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>
-                    {item.desc}
-                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {[
+                      { icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z", text: "Sala Polivalente A" },
+                      { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "10:00 – 14:00 h" },
+                      { icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z", text: "42 inscritos" },
+                    ].map((d) => (
+                      <span key={d.text} className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d={d.icon} />
+                        </svg>
+                        {d.text}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Badge */}
-                <span className="text-[10px] font-semibold self-start px-2.5 py-1 rounded-full"
-                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid rgba(139,154,45,0.2)" }}>
-                  Próximamente
-                </span>
-
-                {/* Línea inferior */}
-                <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-                  style={{ background: "linear-gradient(to right, var(--verde-oliva), transparent 70%)" }} />
+                <button
+                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80"
+                  style={{ background: "#A3B535", color: "#fff" }}
+                >
+                  Ver detalles e inscribirme
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* Iniciativas (2/5) */}
+            <div className="lg:col-span-2 flex flex-col gap-3">
+              {[
+                {
+                  label: "Team building",
+                  desc:  "Integración y trabajo en equipo entre empresas del parque",
+                  fecha: "Jun 2025",
+                  inscritos: 18,
+                  color: "#7c3aed",
+                  bg:    "#ede9fe",
+                  icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+                },
+                {
+                  label: "En Femenino",
+                  desc:  "Liderazgo, igualdad e inspiración en el entorno empresarial",
+                  fecha: "Jul 2025",
+                  inscritos: 31,
+                  color: "#be185d",
+                  bg:    "#fce7f3",
+                  icon:  "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
+                },
+                {
+                  label: "Eventos empresariales",
+                  desc:  "Actividades de networking entre las empresas del parque",
+                  fecha: "Mensual",
+                  inscritos: 60,
+                  color: "var(--azul-egm)",
+                  bg:    "var(--azul-egm-light)",
+                  icon:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+                },
+              ].map((ini) => (
+                <div
+                  key={ini.label}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-colors"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)"; }}
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ini.bg, color: ini.color }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={ini.icon} />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{ini.label}</p>
+                    <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ini.desc}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-semibold" style={{ color: ini.color }}>{ini.fecha}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>{ini.inscritos} inscritos</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tablón de la comunidad */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}
+          >
+            <div
+              className="px-5 py-3.5 flex items-center justify-between"
+              style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}
+            >
+              <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Tablón de la comunidad</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>Próximamente</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-x" style={{ borderColor: "var(--gris-borde)" }}>
+              {[
+                { emoji: "💬", titulo: "Foro del parque",         desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
+                { emoji: "📌", titulo: "Anuncios de comunidad",   desc: "Comunicados transversales del parque empresarial EGM." },
+                { emoji: "🤝", titulo: "Directorio de empresas",  desc: "Conoce las empresas y equipos que comparten espacio contigo." },
+              ].map((item, i) => (
+                <div key={i} className="px-5 py-4 flex flex-col gap-2">
+                  <span className="text-2xl leading-none">{item.emoji}</span>
+                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{item.titulo}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
