@@ -6,6 +6,7 @@ import { motion, useMotionValue, useAnimationFrame, useTransform } from 'motion/
 interface GradientTextProps {
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   colors?: string[];
   animationSpeed?: number;
   showBorder?: boolean;
@@ -17,6 +18,7 @@ interface GradientTextProps {
 export default function GradientText({
   children,
   className = '',
+  style,
   colors = ['#5227FF', '#FF9FFC', '#B497CF'],
   animationSpeed = 8,
   showBorder = false,
@@ -96,6 +98,7 @@ export default function GradientText({
   return (
     <motion.div
       className={`relative mx-auto flex max-w-fit flex-row items-center justify-center font-medium transition-shadow duration-500 cursor-pointer ${showBorder ? 'rounded-[1.25rem] overflow-hidden py-1 px-2' : ''} ${className}`}
+      style={style}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
