@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { 
   FaBuilding, 
   FaUsers, 
-  FaBookOpen, 
   FaExclamationTriangle, 
   FaArrowRight,
   FaFileAlt
 } from "react-icons/fa";
 import { API_URL, apiFetch } from "@/lib/api";
 
-// 1. Interfaz de Actividad (la dejamos por si César la añade en el futuro)
+// 1. Interfaz de Actividad
 export interface Actividad {
   id: number;
   texto: string;
@@ -20,7 +19,7 @@ export interface Actividad {
   tipo: "info" | "success" | "error" | "warning";
 }
 
-// 2. Interfaz EXACTA de lo que César nos envía ahora mismo en el JSON verde
+// 2. Interfaz EXACTA de lo que César nos envía
 export interface DashboardResponse {
   empresasAdheridas: number;
   empresasNuevasMes: number;
@@ -46,16 +45,13 @@ const AdminGeneral: React.FC = () => {
       try {
         const response = await apiFetch(`${API_URL}/dashboard/superadmin`);
         
-        // 1. Leemos el paquete ANTES de juzgar si ha ido bien o mal
         const json = await response.json().catch(() => ({})); 
         
-        // 2. Detectamos errores HTTP reales o los "Falsos OK" con code 403/401 encubiertos
         if (!response.ok || json.code === 403 || json.code === 401) {
           console.error(`🚨 ALERTA DE SEGURIDAD DEL BACKEND:`, json);
           throw new Error(`Acceso denegado (Error ${json.code || response.status}). Comprueba con el backend que tienes permisos de SUPERADMIN.`);
         }
         
-        // 3. Si llegamos aquí, los datos son reales y lícitos
         setData(json);
         
       } catch (err: any) {
@@ -80,13 +76,12 @@ const AdminGeneral: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // --- PREPARAMOS LAS TARJETAS (Directo de los datos de César) ---
   const stats = [
     { 
       label: "Empresas Adheridas", 
@@ -103,13 +98,6 @@ const AdminGeneral: React.FC = () => {
       trend: `+${data?.empleadosNuevosMes || 0} este mes` 
     },
     { 
-      label: "Módulos Activos", 
-      value: data?.modulosPublicados || 0, 
-      icon: <FaBookOpen size={20} />, 
-      color: "text-emerald-600", bg: "bg-emerald-100", 
-      trend: "Formación global" 
-    },
-    { 
       label: "Incidencias Abiertas", 
       value: data?.incidenciasAbiertas || 0, 
       icon: <FaExclamationTriangle size={20} />, 
@@ -119,23 +107,22 @@ const AdminGeneral: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-fadeIn min-h-screen">
-      
-      {/* CABECERA */}
+    <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto animate-fadeIn mt-6">
+
+      {/* CABECERA ORIGINAL (Como el Hero está en el Layout, aquí ponemos el título de la sección) */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Panel Principal</h1>
         <p className="text-slate-500 text-sm mt-1.5">Resumen de actividad de EGM Atalayas.</p>
       </div>
 
-      {/* ALERTAS DE ERROR */}
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 text-sm font-medium shadow-sm">
           {error}
         </div>
       )}
 
-      {/* 1. TARJETAS DE ESTADÍSTICAS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* TARJETAS DE ESTADÍSTICAS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {stats.map((stat, index) => (
           <div key={index} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between transition-transform hover:-translate-y-1 hover:shadow-md">
             <div className="flex justify-between items-start mb-4">
@@ -154,7 +141,7 @@ const AdminGeneral: React.FC = () => {
         ))}
       </div>
 
-      {/* 2. CONTENIDO PRINCIPAL (Inferior) */}
+      {/* CONTENIDO INFERIOR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* COLUMNA IZQUIERDA (ACCESOS RÁPIDOS) */}
@@ -162,7 +149,6 @@ const AdminGeneral: React.FC = () => {
           <h2 className="text-lg font-bold text-slate-800">Accesos Rápidos</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Tarjeta Empresas */}
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-sm relative overflow-hidden group">
               <div className="absolute -right-6 -top-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
                 <FaBuilding size={120} />
@@ -183,7 +169,6 @@ const AdminGeneral: React.FC = () => {
               </div>
             </div>
 
-            {/* Tarjeta Solicitudes */}
             <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-slate-200 transition-colors hover:shadow-md">
               <div className="relative z-10 flex flex-col h-full justify-between gap-6">
                 <div>
@@ -207,7 +192,7 @@ const AdminGeneral: React.FC = () => {
         </div>
 
         {/* COLUMNA DERECHA (ACTIVIDAD RECIENTE) */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-max">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-max mt-[44px]"> 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold text-slate-800">Actividad reciente</h2>
           </div>
@@ -225,9 +210,7 @@ const AdminGeneral: React.FC = () => {
                   data.actividadReciente.map((item, index, array) => (
                   <div key={item.id || index} className="flex gap-4 items-start group">
                   <div className="relative mt-1">
-                    {/* Punto de color */}
                     <div className={`w-2.5 h-2.5 rounded-full ${getDotColor(item.tipo)} ring-4 ring-slate-50 z-10 relative group-hover:scale-125 transition-transform`}></div>
-                    {/* Línea conectora */}
                     {index !== array.length - 1 && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[2px] h-12 bg-slate-100"></div>
                     )}

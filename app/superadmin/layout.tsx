@@ -1,14 +1,26 @@
+"use client";
+
 import React from "react";
-import SuperAdminHeader from "@/components/ui/SuperAdminHeader";
+import Header from "@/components/Header";
+import DashboardHero from "@/components/ui/DashboardHero";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
+  // Extraemos el usuario una sola vez para el Layout global
+  const { usuario } = useAuth();
+  const nombreParaMostrar = usuario?.nombre ? usuario.nombre.split(" ")[0] : "Admin";
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
-      {/* El Header maestro con toda la navegación */}
-      <SuperAdminHeader />
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <Header />
       
-      {/* El contenido de las páginas (las tablas, gráficas, etc) */}
-      <main className="flex-1 w-full overflow-y-auto">
+      {/* 1. El Hero gigante aparece en TODAS las pantallas automáticamente */}
+      <DashboardHero prefijo="Hola, " titulo={nombreParaMostrar} />
+
+      {/* 2. AQUÍ ESTÁ LA MAGIA: 
+             Cambiamos el margen negativo (-mt-6) por un "padding top" (pt-8 sm:pt-10) 
+             para que todas las páginas respiren y tengan un hueco limpio debajo de la foto. */}
+      <main className="relative z-10 pt-8 sm:pt-10">
         {children}
       </main>
     </div>
