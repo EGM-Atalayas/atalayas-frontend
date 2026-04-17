@@ -63,9 +63,9 @@ function getHeroImg(id: string, nombre: string): string {
 // ── MOCK ─────────────────────────────────────────────────────────────────────
 // Mapa de módulos mock — cubre los IDs del listado de formación
 const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" | "esEspecializadoIa">> = {
-  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al parque.", tipo: "Identidad Corporativa",  esEspecializadoIa: false },
+  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al área.", tipo: "Identidad Corporativa",  esEspecializadoIa: false },
   "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional", esEspecializadoIa: false },
-  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del parque empresarial.",      tipo: "Formación Básica",       esEspecializadoIa: false },
+  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del área empresarial.",      tipo: "Formación Básica",       esEspecializadoIa: false },
   "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica",   esEspecializadoIa: true  },
   "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica",       esEspecializadoIa: false },
   "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional", esEspecializadoIa: true  },

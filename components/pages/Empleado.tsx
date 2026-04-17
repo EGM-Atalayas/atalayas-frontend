@@ -19,7 +19,7 @@ type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal
 
 const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
   { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
-    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al parque.",
+    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al área.",
     tipoModulo: "IDENTIDAD", orden: 1, activo: true, empresaId: null, esEspecializadoIa: false,
     creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4 },
   { moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",

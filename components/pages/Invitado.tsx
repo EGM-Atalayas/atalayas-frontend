@@ -30,14 +30,14 @@ const comunidadItems = [
   },
   {
     label: "Autobús lanzadera",
-    sub: "Servicio de transporte directo al parque empresarial",
+    sub: "Servicio de transporte directo al área empresarial",
     imagen: "/autobus.jpg",
     bg: null,
     icono: null,
   },
   {
     label: "Coche compartido",
-    sub: "Coordina rutas con compañeros del parque",
+    sub: "Coordina rutas con compañeros del área",
     imagen: "/coche-compartido.jpg",
     bg: null,
     icono: null,
@@ -51,7 +51,7 @@ const comunidadItems = [
   },
   {
     label: "Empresarios de hoy y de mañana",
-    sub: "Networking y actividades entre empresas del parque",
+    sub: "Networking y actividades entre empresas del área",
     imagen: "/empresas-hoy.jpg",
     bg: null,
     icono: null,
@@ -154,11 +154,11 @@ export default function Invitado() {
             className="text-7xl sm:text-[9rem] md:text-[12rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
           >
-            Atalayas Ciudad Empresarial.
+            Atalayas Área Empresarial.
           </h1>
 
           <p className={`${playfair.className} text-white/60 text-xl sm:text-2xl max-w-3xl mt-8 leading-relaxed animate-fade-rise-delay`}>
-            La plataforma digital de incorporación y formación empresarial para las empresas del parque industrial de Atalayas, Alicante.
+            La plataforma digital de incorporación y formación empresarial para las empresas del área industrial de Atalayas, Alicante.
           </p>
 
           <Link
@@ -200,7 +200,7 @@ export default function Invitado() {
                 <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
               </div>
               <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
-                EGM Atalayas lanza su nueva plataforma digital para empresas del parque
+                EGM Atalayas lanza su nueva plataforma digital para empresas del área
               </h3>
             </div>
             <div className="absolute top-5 right-5">
@@ -225,7 +225,7 @@ export default function Invitado() {
               {[
                 {
                   img: "/background-comunidad.jpg",
-                  title: "Jornada de networking: conecta con +150 empresas del parque",
+                  title: "Jornada de networking: conecta con +150 empresas del área",
                   tag: "Evento",
                   day: "18", month: "Abr", year: "2026",
                 },
@@ -237,7 +237,7 @@ export default function Invitado() {
                 },
                 {
                   img: "/background-comunidad.jpg",
-                  title: "Convocatoria: Programa de formación para pymes del parque empresarial",
+                  title: "Convocatoria: Programa de formación para pymes del área empresarial",
                   tag: "Convocatoria",
                   day: "03", month: "Abr", year: "2026",
                 },
