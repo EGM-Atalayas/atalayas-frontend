@@ -79,6 +79,99 @@ const comunidadItems = [
   },
 ];
 
+const colaboradoresData = [
+  {
+    categoria: "Universidades y Centros de Investigación",
+    entidades: [
+      {
+        nombre: "Universidad de Alicante",
+        siglas: "UA",
+        color: "#003DA5",
+        descripcion: "Universidad pública con una fuerte vocación de I+D+i, conexión con empresas y proyectos de transferencia tecnológica.",
+        web: "https://www.ua.es",
+      },
+      {
+        nombre: "Universidad Miguel Hernández de Elche",
+        siglas: "UMH",
+        color: "#8B1A1A",
+        descripcion: "Universidad pública con múltiples programas de innovación, transferencia y colaboración con empresas e instituciones.",
+        web: "https://www.umh.es",
+      },
+      {
+        nombre: "Universidad de Alicante — CENID",
+        siglas: "CENID",
+        color: "#0077B6",
+        descripcion: "Centro de investigación multidisciplinar enfocado en el desarrollo e innovación digital para el tejido empresarial.",
+        web: "https://www.ua.es",
+      },
+    ],
+  },
+  {
+    categoria: "Parques Científicos y Tecnológicos",
+    entidades: [
+      {
+        nombre: "Parque Científico de Alicante",
+        siglas: "PCA",
+        color: "#2E7D32",
+        descripcion: "Espacio de innovación que conecta la investigación universitaria con el mundo empresarial, ofreciendo infraestructuras y servicios de apoyo.",
+        web: "https://pcua.ua.es",
+      },
+      {
+        nombre: "Parque Científico UMH",
+        siglas: "PCUMH",
+        color: "#C62828",
+        descripcion: "Entorno tecnológico que facilita la transferencia de conocimiento y la creación de empresas de base tecnológica.",
+        web: "https://www.umh.es/contenido/Universidad/:tit_gal_pcumh/2265/datos_es.html",
+      },
+    ],
+  },
+  {
+    categoria: "Hubs de Innovación y Aceleración",
+    entidades: [
+      {
+        nombre: "Alicante Futura",
+        siglas: "AF",
+        color: "#6A1B9A",
+        descripcion: "Hub urbano de innovación del Ayuntamiento de Alicante, orientado a impulsar el ecosistema tecnológico y la cultura emprendedora de la ciudad.",
+        web: "https://alicantefutura.es",
+      },
+      {
+        nombre: "CEEI Alcoy — Valencia",
+        siglas: "CEEI",
+        color: "#E65100",
+        descripcion: "Centro Europeo de Empresas e Innovación que apoya la creación y consolidación de empresas innovadoras mediante asesoramiento y recursos.",
+        web: "https://ceeialcoi.emprenemjunts.es",
+      },
+      {
+        nombre: "Distrito Digital",
+        siglas: "DD",
+        color: "#0097A7",
+        descripcion: "Ecosistema de innovación de la Generalitat Valenciana que concentra talento, tecnología y empresas digitales en la provincia de Alicante.",
+        web: "https://www.distritodigital.es",
+      },
+    ],
+  },
+  {
+    categoria: "Institutos Tecnológicos",
+    entidades: [
+      {
+        nombre: "Instituto Tecnológico de Informática (ITI)",
+        siglas: "ITI",
+        color: "#1565C0",
+        descripcion: "Centro de investigación aplicada en tecnologías de la información, inteligencia artificial y transformación digital.",
+        web: "https://www.iti.es",
+      },
+      {
+        nombre: "AITEX — Instituto Tecnológico Textil",
+        siglas: "AITEX",
+        color: "#AD1457",
+        descripcion: "Instituto tecnológico referente en innovación textil, materiales avanzados y sostenibilidad industrial.",
+        web: "https://www.aitex.es",
+      },
+    ],
+  },
+];
+
 export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
@@ -125,6 +218,7 @@ export default function Invitado() {
             <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
             <a href="#noticias" className="text-2xl text-white/50 hover:text-white transition-colors">Noticias</a>
             <a href="#comunidad" className="text-2xl text-white/50 hover:text-white transition-colors">Comunidad</a>
+            <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
           {/* Mobile hamburger */}
@@ -144,6 +238,7 @@ export default function Invitado() {
           <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
             <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
             <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
+            <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
             <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
           </div>
         )}
@@ -338,6 +433,142 @@ export default function Invitado() {
                   <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
                     {item.sub}
                   </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          COLABORADORES — Ecosistema de Proximidad
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section
+        id="colaboradores"
+        className="relative w-full"
+        style={{ background: "#0a0a0f" }}
+      >
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(99,102,241,0.06) 0%, transparent 50%)" }} />
+        {/* Top fade from previous dark section */}
+        <div className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #000000, transparent)" }} />
+
+        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-28 sm:py-40">
+          {/* Section header */}
+          <div className="text-center mb-20">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] mb-5" style={{ color: "rgba(147,197,253,0.7)" }}>
+              Colaboradores
+            </p>
+            <h2
+              className="text-5xl sm:text-7xl font-bold leading-[0.95] mb-8"
+              style={{ fontFamily: "'Instrument Serif', serif", color: "#ffffff", letterSpacing: "-1px" }}
+            >
+              Ecosistema de Proximidad
+            </h2>
+            <p className="text-base sm:text-lg leading-relaxed max-w-3xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
+              Universidades, parques científicos, institutos tecnológicos y hubs de innovación. Conectamos necesidades reales con capacidades estratégicas del territorio.
+            </p>
+          </div>
+
+          {/* Category pills */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-16">
+            {colaboradoresData.map((grupo) => (
+              <a
+                key={grupo.categoria}
+                href={`#cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}
+                className="px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.65)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                {grupo.categoria}
+              </a>
+            ))}
+          </div>
+
+          {/* Category groups */}
+          <div className="flex flex-col gap-24 max-w-7xl mx-auto">
+            {colaboradoresData.map((grupo) => (
+              <div key={grupo.categoria} id={`cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}>
+                {/* Category heading */}
+                <div className="flex items-center gap-4 mb-10">
+                  <div className="w-10 h-px" style={{ background: "rgba(59,130,246,0.5)" }} />
+                  <h3 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    {grupo.categoria}
+                  </h3>
+                  <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+                </div>
+
+                {/* Cards grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {grupo.entidades.map((entidad) => (
+                    <a
+                      key={entidad.nombre}
+                      href={entidad.web}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative flex flex-col p-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-2px] cursor-pointer overflow-hidden"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      {/* Colored accent bar */}
+                      <div
+                        className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                        style={{ background: `linear-gradient(to right, ${entidad.color}, ${entidad.color}88)` }}
+                      />
+
+                      {/* Hover glow */}
+                      <div
+                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                        style={{ background: `radial-gradient(ellipse at 50% 0%, ${entidad.color}15, transparent 70%)` }}
+                      />
+
+                      {/* Siglas badge */}
+                      <div className="flex items-start justify-between mb-6 relative z-10">
+                        <div
+                          className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-lg font-bold transition-transform duration-300 group-hover:scale-110"
+                          style={{
+                            background: `linear-gradient(135deg, ${entidad.color}, ${entidad.color}99)`,
+                            boxShadow: `0 4px 16px ${entidad.color}33`,
+                          }}
+                        >
+                          {entidad.siglas}
+                        </div>
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white/30 group-hover:text-white/80 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          style={{ background: "rgba(255,255,255,0.06)" }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7" />
+                            <path d="M7 7h10v10" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Name & description */}
+                      <div className="flex-1 relative z-10">
+                        <h4 className="text-base font-semibold leading-snug mb-3 group-hover:text-white transition-colors duration-300" style={{ color: "rgba(255,255,255,0.9)" }}>
+                          {entidad.nombre}
+                        </h4>
+                        <p className="text-sm leading-relaxed line-clamp-3" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          {entidad.descripcion}
+                        </p>
+                      </div>
+
+                      {/* Bottom label */}
+                      <div className="mt-6 pt-4 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                        <span className="text-xs font-medium uppercase tracking-wider group-hover:text-blue-400 transition-colors duration-300" style={{ color: "rgba(255,255,255,0.25)" }}>
+                          Visitar web →
+                        </span>
+                      </div>
+                    </a>
+                  ))}
                 </div>
               </div>
             ))}
