@@ -20,8 +20,8 @@ const MOCK_COMUNICADOS: Comunicado[] = [
   },
   {
     comunicadoId: "m2",
-    titulo: "Jornada de networking: Empresas del Parque — Mayo 2026",
-    mensaje: "Os invitamos a la jornada de networking entre empresas del parque. Se celebrará el próximo 15 de mayo en el Salón de Actos del Edificio Central a partir de las 18:00h. Confirmad asistencia antes del 10 de mayo.",
+    titulo: "Jornada de networking: Empresas del Área — Mayo 2026",
+    mensaje: "Os invitamos a la jornada de networking entre empresas del área. Se celebrará el próximo 15 de mayo en el Salón de Actos del Edificio Central a partir de las 18:00h. Confirmad asistencia antes del 10 de mayo.",
     fechaPublicacion: "2026-04-08T10:30:00Z",
     activo: true,
     imagenUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
@@ -39,7 +39,7 @@ const MOCK_COMUNICADOS: Comunicado[] = [
   {
     comunicadoId: "m4",
     titulo: "Nueva cafetería disponible en el Edificio C",
-    mensaje: "A partir del 1 de abril el Edificio C cuenta con una nueva cafetería en la planta baja. Horario de 07:30 a 16:30h, de lunes a viernes. Menú del día disponible con descuento para empleados del parque.",
+    mensaje: "A partir del 1 de abril el Edificio C cuenta con una nueva cafetería en la planta baja. Horario de 07:30 a 16:30h, de lunes a viernes. Menú del día disponible con descuento para empleados del área.",
     fechaPublicacion: "2026-03-28T11:00:00Z",
     activo: true,
     imagenUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80",

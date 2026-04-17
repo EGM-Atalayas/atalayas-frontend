@@ -171,7 +171,7 @@ const AdminGeneral: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Gestión de Empresas</h3>
                   <p className="text-sm text-slate-400 line-clamp-2">
-                    Administra el estado, edita datos y gestiona el acceso de las empresas del parque.
+                    Administra el estado, edita datos y gestiona el acceso de las empresas del área.
                   </p>
                 </div>
                 <button 

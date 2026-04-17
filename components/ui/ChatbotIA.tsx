@@ -48,7 +48,7 @@ const RESPUESTAS: Array<{ keywords: string[]; response: string }> = [
   {
     keywords: ["prl", "riesgo", "seguridad", "prevencion", "prevención"],
     response:
-      "Las normas básicas de PRL en el parque empresarial EGM: ✅ Uso de EPI en zonas señalizadas ✅ Comunicar cualquier incidente al responsable ✅ No manipular equipos sin formación específica ✅ Mantener las salidas de emergencia despejadas ✅ Velocidad máxima en el parking: 10 km/h. ¿Necesitas información sobre alguna norma específica?",
+      "Las normas básicas de PRL en el área empresarial EGM: ✅ Uso de EPI en zonas señalizadas ✅ Comunicar cualquier incidente al responsable ✅ No manipular equipos sin formación específica ✅ Mantener las salidas de emergencia despejadas ✅ Velocidad máxima en el parking: 10 km/h. ¿Necesitas información sobre alguna norma específica?",
   },
   {
     keywords: ["modulo", "completar", "módulo", "como funciona", "cómo funciona"],
@@ -63,7 +63,7 @@ const RESPUESTAS: Array<{ keywords: string[]; response: string }> = [
   {
     keywords: ["evento", "actividad", "networking", "comunidad"],
     response:
-      "Próximos eventos en el parque EGM: 📅 **24 de mayo** — Jornada de Networking (42 inscritos) 📅 **Junio** — Team Building entre empresas 📅 **Julio** — Jornada 'En Femenino'. ¿Te apunto a alguno?",
+      "Próximos eventos en el área EGM: 📅 **24 de mayo** — Jornada de Networking (42 inscritos) 📅 **Junio** — Team Building entre empresas 📅 **Julio** — Jornada 'En Femenino'. ¿Te apunto a alguno?",
   },
   {
     keywords: ["equipo", "compañero", "empresa"],
@@ -73,7 +73,7 @@ const RESPUESTAS: Array<{ keywords: string[]; response: string }> = [
   {
     keywords: ["hola", "buenas", "buenos días", "buenas tardes"],
     response:
-      "¡Hola! 👋 Estoy aquí para ayudarte. Puedo informarte sobre tus **formaciones pendientes**, el **progreso del equipo**, **comunicados** del parque, normas de **PRL** o cómo usar la plataforma. ¿Por dónde empezamos?",
+      "¡Hola! 👋 Estoy aquí para ayudarte. Puedo informarte sobre tus **formaciones pendientes**, el **progreso del equipo**, **comunicados** del área, normas de **PRL** o cómo usar la plataforma. ¿Por dónde empezamos?",
   },
   {
     keywords: ["gracias", "perfecto", "genial", "ok"],
