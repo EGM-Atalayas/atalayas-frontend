@@ -9,12 +9,18 @@ export interface EmpresaDB {
   nombreEmpresa: string;
   cif: string;
   emailContacto: string;
-  estado: "ACTIVA" | "INACTIVA" | string; 
+  // ¡Aquí está la magia! Usamos el nombre exacto de la base de datos de César
+  estadoSolicitud?: "ACTIVA" | "INACTIVA" | "APROBADA" | "RECHAZADA" | "PENDIENTE" | string; 
+  [key: string]: any; 
 }
 
+// Soporte visual
 const coloresEstado: Record<string, string> = {
   ACTIVA: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
+  APROBADA: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
   INACTIVA: "bg-slate-100 text-slate-500 border-slate-200",
+  RECHAZADA: "bg-slate-100 text-slate-500 border-slate-200",
+  PENDIENTE: "bg-amber-50 text-amber-600 border-amber-200/50",
 };
 
 const GestionEmpresas: React.FC = () => {
@@ -22,7 +28,6 @@ const GestionEmpresas: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Nuevos estados para UI/UX
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<"TODAS" | "ACTIVA" | "INACTIVA">("TODAS");
 
@@ -45,11 +50,15 @@ const GestionEmpresas: React.FC = () => {
   };
 
   const toggleActivacion = async (id: string, estadoActual: string) => {
-    const nuevoEstado = estadoActual === "ACTIVA" ? "INACTIVA" : "ACTIVA";
+    const estadoLimpio = String(estadoActual || "").toUpperCase().trim();
+    const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
+    
+    // Ahora enviamos directamente APROBADA o RECHAZADA para que a César le encaje a la perfección
+    const nuevoEstado = esActiva ? "RECHAZADA" : "APROBADA";
     
     // Optimistic UI
     setEmpresas(empresas.map((emp) =>
-      emp.empresaId === id ? { ...emp, estado: nuevoEstado } : emp
+      emp.empresaId === id ? { ...emp, estadoSolicitud: nuevoEstado } : emp
     ));
 
     try {
@@ -60,27 +69,41 @@ const GestionEmpresas: React.FC = () => {
       
       // Rollback si falla
       setEmpresas(empresas.map((emp) =>
-        emp.empresaId === id ? { ...emp, estado: estadoActual } : emp
+        emp.empresaId === id ? { ...emp, estadoSolicitud: estadoActual } : emp
       ));
     }
   };
 
-  // Lógica de filtrado en cliente
   const empresasFiltradas = useMemo(() => {
     return empresas.filter((emp) => {
-      const coincideBusqueda = emp.nombreEmpresa.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                               emp.cif.toLowerCase().includes(searchTerm.toLowerCase());
-      const coincideEstado = filtroEstado === "TODAS" || emp.estado === filtroEstado;
+      const coincideBusqueda = emp.nombreEmpresa?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                               emp.cif?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const estadoLimpio = String(emp.estadoSolicitud || "").toUpperCase().trim();
+      let coincideEstado = false;
+
+      if (filtroEstado === "TODAS") {
+        coincideEstado = true;
+      } else if (filtroEstado === "ACTIVA" && (estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA")) {
+        coincideEstado = true;
+      } else if (filtroEstado === "INACTIVA" && (estadoLimpio === "INACTIVA" || estadoLimpio === "RECHAZADA" || estadoLimpio === "")) {
+        coincideEstado = true;
+      }
       
       return coincideBusqueda && coincideEstado;
     });
   }, [empresas, searchTerm, filtroEstado]);
 
-  // Estadísticas rápidas
   const stats = {
     total: empresas.length,
-    activas: empresas.filter(e => e.estado === "ACTIVA").length,
-    inactivas: empresas.filter(e => e.estado === "INACTIVA").length,
+    activas: empresas.filter(e => {
+        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
+        return est === "ACTIVA" || est === "APROBADA";
+    }).length,
+    inactivas: empresas.filter(e => {
+        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
+        return est === "INACTIVA" || est === "RECHAZADA" || est === "";
+    }).length,
   };
 
   return (
@@ -103,7 +126,7 @@ const GestionEmpresas: React.FC = () => {
 
       {/* KPI CARDS (Resumen estadístico) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <FaBuilding size={20} />
           </div>
@@ -112,7 +135,7 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.total}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
             <FaCheckCircle size={20} />
           </div>
@@ -121,7 +144,7 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.activas}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-500">
             <FaBan size={20} />
           </div>
@@ -201,44 +224,51 @@ const GestionEmpresas: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                empresasFiltradas.map((empresa) => (
-                  <tr key={empresa.empresaId} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-800">{empresa.nombreEmpresa}</div>
-                    </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500 bg-slate-50 rounded p-1 inline-block mt-2">
-                      {empresa.cif}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">{empresa.emailContacto}</td>
-                    
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${coloresEstado[empresa.estado] || "bg-slate-100 text-slate-500 border-slate-200"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${empresa.estado === 'ACTIVA' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
-                        {empresa.estado || "DESCONOCIDO"}
-                      </span>
-                    </td>
+                empresasFiltradas.map((empresa) => {
+                  
+                  const estadoLimpio = String(empresa.estadoSolicitud || "").toUpperCase().trim();
+                  const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
+                  const textoEstado = esActiva ? "ACTIVA" : "INACTIVA";
 
-                    <td className="px-6 py-4 text-right">
-                      {empresa.estado === "ACTIVA" ? (
-                        <button 
-                          onClick={() => toggleActivacion(empresa.empresaId, empresa.estado)}
-                          className="p-2 rounded-xl transition-all text-slate-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                          title="Pausar actividad"
-                        >
-                          <FaBan size={18} />
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => toggleActivacion(empresa.empresaId, empresa.estado)}
-                          className="p-2 rounded-xl transition-all text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                          title="Reactivar empresa"
-                        >
-                          <FaCheckCircle size={18} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                  return (
+                    <tr key={empresa.empresaId} className="hover:bg-slate-50/80 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-slate-800">{empresa.nombreEmpresa}</div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-500 bg-slate-50 rounded p-1 inline-block mt-2">
+                        {empresa.cif}
+                      </td>
+                      <td className="px-6 py-4 text-slate-500">{empresa.emailContacto}</td>
+                      
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${esActiva ? coloresEstado.ACTIVA : coloresEstado.INACTIVA}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${esActiva ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                          {textoEstado}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        {esActiva ? (
+                          <button 
+                            onClick={() => toggleActivacion(empresa.empresaId, empresa.estadoSolicitud || "ACTIVA")}
+                            className="p-2 rounded-xl transition-all text-slate-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                            title="Pausar actividad"
+                          >
+                            <FaBan size={18} />
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => toggleActivacion(empresa.empresaId, empresa.estadoSolicitud || "INACTIVA")}
+                            className="p-2 rounded-xl transition-all text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            title="Reactivar empresa"
+                          >
+                            <FaCheckCircle size={18} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -247,4 +277,5 @@ const GestionEmpresas: React.FC = () => {
     </div>
   );
 };
+
 export default GestionEmpresas;
