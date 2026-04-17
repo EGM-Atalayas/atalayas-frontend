@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import UserMenu from "@/components/ui/UserMenu";
 import NotifMenu from "@/components/ui/NotifMenu";
@@ -86,15 +87,17 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
         {/* Logo */}
         <div className="flex items-center pr-6 shrink-0">
-          <Image
-            src={logo}
-            alt="Atalayas EGM"
-            width={180}
-            height={50}
-            priority
-            style={{ height: "52px", width: "auto" }}
-            className="brightness-0 invert"
-          />
+          <Link href="/dashboard">
+            <Image
+              src={logo}
+              alt="Atalayas EGM"
+              width={180}
+              height={50}
+              priority
+              style={{ height: "52px", width: "auto" }}
+              className="brightness-0 invert cursor-pointer"
+            />
+          </Link>
         </div>
 
         {/* Divisor vertical */}
@@ -116,7 +119,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         </nav>
 
         {/* Lado derecho */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-stretch gap-0">
 
           {/* Campana */}
           <NotifMenu
@@ -126,7 +129,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           />
 
           {/* Divisor */}
-          <div className="hidden sm:block w-px h-6"
+          <div className="hidden sm:block w-px self-stretch my-4"
             style={{ background: "rgba(255,255,255,0.2)" }} />
 
           {/* Avatar + menú — solo desktop */}

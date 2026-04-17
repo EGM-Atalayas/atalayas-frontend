@@ -6,8 +6,8 @@
  * Archivo: app/dashboard/formacion/[id]/page.tsx
  */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -22,49 +22,143 @@ interface Contenido {
 }
 
 interface ModuloMock {
-  id:          string;
-  nombre:      string;
-  descripcion: string;
-  tipo:        string;
-  totalItems:  number;
-  completados: number;
-  contenidos:  Contenido[];
+  id:               string;
+  nombre:           string;
+  descripcion:      string;
+  tipo:             string;
+  totalItems:       number;
+  completados:      number;
+  esEspecializadoIa: boolean;
+  contenidos:       Contenido[];
 }
 
-// ── MOCK — reemplazar por llamada a API cuando esté lista ─────────────────────
-const MODULO_MOCK: ModuloMock = {
-  id:          "mock-prl-alturas",
-  nombre:      "Prevención de Riesgos Laborales — Trabajos en Altura",
-  descripcion: "Aprende los protocolos de seguridad obligatorios para trabajos en altura según la normativa vigente. Al finalizar obtendrás tu certificado PRL.",
-  tipo:        "Formación Básica",
-  totalItems:  5,
-  completados: 2,
-  contenidos: [
-    { id: "c1", titulo: "Introducción a la normativa PRL",     tipo: "texto", duracion: "5 min",  completado: true,  bloqueado: false },
-    { id: "c2", titulo: "Equipos de protección individual",    tipo: "video", duracion: "12 min", completado: true,  bloqueado: false },
-    { id: "c3", titulo: "Procedimientos de trabajo seguro",    tipo: "texto", duracion: "8 min",  completado: false, bloqueado: false },
-    { id: "c4", titulo: "Documentación y protocolos",          tipo: "pdf",   duracion: "10 min", completado: false, bloqueado: true  },
-    { id: "c5", titulo: "Evaluación final del módulo",         tipo: "quiz",  duracion: "15 min", completado: false, bloqueado: true  },
-  ],
+// ── IMÁGENES POR MÓDULO ───────────────────────────────────────────────────────
+const FORMACION_IMG_BY_ID: Record<string, string> = {
+  "1": "/background-formacion-empleado.jpg",
+  "2": "/comunicacion-trabajo.jpg",
+  "3": "/herramientas-digitales.jpg",
+  "4": "/negociacion-habilidades.jpg",
+  "5": "/ciberseguridad-datos.jpg",
+  "6": "/metodologias-agiles.jpg",
+  "7": "/diversidad.jpg",
 };
 
-// ── PÁGINA ────────────────────────────────────────────────────────────────────
-export default function Page({ params }: { params: { id: string } }) {
-  const router = useRouter();
+const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
+  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+];
 
-  // En producción: usar params.id para llamar a /api/v1/modulos/{params.id}
-  const [modulo, setModulo]         = useState<ModuloMock>(MODULO_MOCK);
-  const [activoId, setActivoId]     = useState<string>("c3");
+function getHeroImg(id: string, nombre: string): string {
+  if (FORMACION_IMG_BY_ID[id]) return FORMACION_IMG_BY_ID[id];
+  const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen
+    ?? "/background-formacion-empleado.jpg";
+}
+
+// ── MOCK ─────────────────────────────────────────────────────────────────────
+// Mapa de módulos mock — cubre los IDs del listado de formación
+const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" | "esEspecializadoIa">> = {
+  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al parque.", tipo: "Identidad Corporativa",  esEspecializadoIa: false },
+  "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional", esEspecializadoIa: false },
+  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del parque empresarial.",      tipo: "Formación Básica",       esEspecializadoIa: false },
+  "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica",   esEspecializadoIa: true  },
+  "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica",       esEspecializadoIa: false },
+  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional", esEspecializadoIa: true  },
+  "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad",              esEspecializadoIa: false },
+};
+
+function getMockBase(id: string): ModuloMock {
+  const meta = MOCKS[id] ?? {
+    nombre:            "Módulo de Formación",
+    descripcion:       "Completa todos los pasos para obtener tu certificado.",
+    tipo:              "Formación",
+    esEspecializadoIa: false,
+  };
+  return {
+    id,
+    nombre:            meta.nombre,
+    descripcion:       meta.descripcion,
+    tipo:              meta.tipo,
+    esEspecializadoIa: meta.esEspecializadoIa ?? false,
+    totalItems:        5,
+    completados:       0,
+    contenidos: [
+      { id: "c1", titulo: "Introducción y conceptos clave",    tipo: "texto", duracion: "5 min",  completado: false, bloqueado: false },
+      { id: "c2", titulo: "Desarrollo del tema principal",      tipo: "video", duracion: "12 min", completado: false, bloqueado: true  },
+      { id: "c3", titulo: "Casos prácticos y aplicación",      tipo: "texto", duracion: "8 min",  completado: false, bloqueado: true  },
+      { id: "c4", titulo: "Documentación y recursos",           tipo: "pdf",   duracion: "10 min", completado: false, bloqueado: true  },
+      { id: "c5", titulo: "Evaluación final del módulo",        tipo: "quiz",  duracion: "15 min", completado: false, bloqueado: true  },
+    ],
+  };
+}
+
+function lsKey(id: string) { return `egm_modulo_${id}`; }
+
+function cargarEstado(id: string): { completados: string[]; activoId: string } {
+  try {
+    const raw = localStorage.getItem(lsKey(id));
+    if (raw) return JSON.parse(raw);
+  } catch { /* noop */ }
+  return { completados: [], activoId: "c1" };
+}
+
+function guardarEstado(id: string, completados: string[], activoId: string) {
+  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId })); }
+  catch { /* noop */ }
+}
+
+function aplicarEstado(base: ModuloMock, completados: string[]): ModuloMock {
+  const set = new Set(completados);
+  const contenidos = base.contenidos.map((c, i) => ({
+    ...c,
+    completado: set.has(c.id),
+    bloqueado:  i > 0 && !set.has(base.contenidos[i - 1].id),
+  }));
+  return { ...base, completados: completados.length, contenidos };
+}
+
+// ── PÁGINA ────────────────────────────────────────────────────────────────────
+export default function Page() {
+  const router  = useRouter();
+  const rawParams = useParams();
+  const id      = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
+
+  const [modulo, setModulo]           = useState<ModuloMock | null>(null);
+  const [activoId, setActivoId]       = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
 
-  const activo  = modulo.contenidos.find((c) => c.id === activoId)!;
+  // Carga desde localStorage una vez que tenemos el id en el cliente
+  useEffect(() => {
+    if (!id) return;
+    const { completados, activoId: savedActivo } = cargarEstado(id);
+    setModulo(aplicarEstado(getMockBase(id), completados));
+    setActivoId(savedActivo);
+  }, [id]);
+
+  // Persistir en localStorage cuando cambia el estado
+  useEffect(() => {
+    if (!id || !modulo) return;
+    const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
+    guardarEstado(id, hechos, activoId);
+  }, [modulo, activoId]);
+
+  if (!modulo) return null;
+
+  const activo  = modulo.contenidos.find((c) => c.id === activoId) ?? modulo.contenidos[0];
   const progPct = Math.round((modulo.completados / modulo.totalItems) * 100);
 
   const marcarCompletado = () => {
+    if (activo.completado) return;
     setCompletando(true);
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
-      setModulo((m) => ({
+      const siguiente = modulo.contenidos[idx + 1];
+      setModulo((m) => m ? ({
         ...m,
         completados: m.completados + 1,
         contenidos: m.contenidos.map((c, i) => {
@@ -72,83 +166,128 @@ export default function Page({ params }: { params: { id: string } }) {
           if (i === idx + 1)     return { ...c, bloqueado: false };
           return c;
         }),
-      }));
-      const siguiente = modulo.contenidos[idx + 1];
+      }) : null);
       if (siguiente) setActivoId(siguiente.id);
       setCompletando(false);
     }, 600);
   };
 
+  // Color del borde lateral por tipo de contenido
+  const borderColorForTipo = (tipo: TipoContenido) => {
+    switch (tipo) {
+      case "texto": return "#3b82f6"; // blue
+      case "video": return "#a855f7"; // purple
+      case "pdf":   return "#ef4444"; // red
+      case "quiz":  return "#f97316"; // orange
+    }
+  };
+
   return (
-    <div className="-mx-8 -mt-8 flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
 
-      {/* ── CABECERA ─────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ background: "var(--marino)" }}>
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 70% 80% at 80% -20%, rgba(27,63,126,0.5) 0%, transparent 60%)" }} />
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden flex items-center"
+        style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
+      >
+        {/* Imagen de fondo */}
+        <img
+          src={getHeroImg(id, modulo.nombre)}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "center 40%" }}
+        />
+        {/* Capas de oscurecimiento */}
+        <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.60)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,27,46,0.80) 0%, transparent 50%)" }} />
 
-        <div className="relative max-w-7xl mx-auto px-8 py-8">
-          {/* Volver */}
+        {/* Contenido del hero — mismo layout que DashboardHero */}
+        <div className="relative z-10 w-full py-14">
+          <div className="w-full px-8 sm:px-12">
+
+          {/* Breadcrumb */}
           <button
             onClick={() => router.push("/dashboard/formacion")}
-            className="flex items-center gap-2 text-xs font-medium mb-5 transition-opacity"
-            style={{ color: "rgba(255,255,255,0.45)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
+            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5 transition-colors"
+            style={{ color: "var(--verde-oliva-hover)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Volver a Formación
+            Centro de Formación
+            <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
+            {modulo.tipo}
           </button>
 
-          <div className="flex items-start justify-between gap-8">
-            <div className="flex-1 min-w-0">
-              <span
-                className="inline-flex text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
-                style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
-              >
-                {modulo.tipo}
-              </span>
-              <h1
-                className="font-bold text-white leading-tight mb-2"
-                style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontFamily: "'Playfair Display', serif" }}
-              >
-                {modulo.nombre}
-              </h1>
-              <p className="text-sm max-w-2xl" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {modulo.descripcion}
-              </p>
-            </div>
+          {/* Título */}
+          <h1
+            className="text-white leading-tight mb-5 text-left"
+            style={{
+              fontSize:      "clamp(2.2rem, 4vw, 3rem)",
+              fontFamily:    "var(--font-poppins), sans-serif",
+              fontWeight:    700,
+              letterSpacing: "-0.02em",
+              maxWidth:      "820px",
+            }}
+          >
+            {modulo.nombre}
+          </h1>
 
-            {/* Progreso circular */}
-            <div className="flex flex-col items-center gap-1.5 shrink-0">
-              <ProgresoCircular pct={progPct} />
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-                {modulo.completados}/{modulo.totalItems} completados
-              </p>
+          {/* Barra de progreso */}
+          <div className="flex items-center gap-3" style={{ maxWidth: "280px" }}>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progPct}%`, background: "var(--verde-oliva-hover)" }}
+              />
             </div>
+            <span className="text-xs font-bold shrink-0" style={{ color: "var(--verde-oliva-hover)" }}>
+              {progPct}% · {modulo.completados}/{modulo.totalItems}
+            </span>
+          </div>
           </div>
         </div>
       </div>
 
       {/* ── CUERPO: ÍNDICE + CONTENIDO ────────────────────────────────────────── */}
-      <div className="flex flex-1 max-w-7xl mx-auto w-full px-8 py-8 gap-7">
+      <div className="flex flex-1 w-full px-8 lg:px-12 py-8 gap-10">
 
         {/* ÍNDICE LATERAL */}
         <aside
-          className="w-72 shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
+          className="w-[22rem] shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
         >
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-              Contenidos
-            </p>
+          <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            {/* Tipo del módulo como badge */}
+            <span
+              className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2"
+              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+            >
+              {modulo.tipo}
+            </span>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--texto-primario)" }}>
+                Contenidos
+              </p>
+              <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>
+                {modulo.completados}/{modulo.totalItems}
+              </span>
+            </div>
+            {/* Barra de progreso del módulo */}
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--gris-superficie)" }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${progPct}%`, background: "linear-gradient(90deg, var(--azul-egm), var(--verde-oliva))" }} />
+            </div>
           </div>
           <div className="py-2">
             {modulo.contenidos.map((c, i) => {
               const esActivo    = c.id === activoId;
               const esBloqueado = c.bloqueado && !c.completado;
+              const activeBorderColor = borderColorForTipo(c.tipo);
               return (
                 <button
                   key={c.id}
@@ -159,7 +298,9 @@ export default function Page({ params }: { params: { id: string } }) {
                     background:  esActivo    ? "var(--azul-egm-light)" : "transparent",
                     cursor:      esBloqueado ? "not-allowed"           : "pointer",
                     opacity:     esBloqueado ? 0.4                     : 1,
-                    borderLeft:  esActivo    ? "3px solid var(--azul-egm)" : "3px solid transparent",
+                    borderLeft:  esActivo
+                      ? `3px solid ${activeBorderColor}`
+                      : "3px solid transparent",
                   }}
                   onMouseEnter={(e) => { if (!esBloqueado && !esActivo) e.currentTarget.style.background = "var(--gris-pagina)"; }}
                   onMouseLeave={(e) => { if (!esActivo) e.currentTarget.style.background = "transparent"; }}
@@ -181,11 +322,11 @@ export default function Page({ params }: { params: { id: string } }) {
                     ) : String(i + 1)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate"
+                    <p className="text-sm font-semibold truncate"
                       style={{ color: esActivo ? "var(--azul-egm)" : "var(--texto-primario)" }}>
                       {c.titulo}
                     </p>
-                    <p className="text-[10px] mt-0.5 capitalize" style={{ color: "var(--texto-muted)" }}>
+                    <p className="text-xs mt-0.5 capitalize" style={{ color: "var(--texto-secundario)" }}>
                       {c.tipo}{c.duracion ? ` · ${c.duracion}` : ""}
                     </p>
                   </div>
@@ -254,8 +395,241 @@ export default function Page({ params }: { params: { id: string } }) {
               </div>
             )}
           </div>
+
+          {/* IA Assistant — solo en módulos especializados IA */}
+          {modulo.esEspecializadoIa && (
+            <div className="mt-6">
+              <AsistenteIA contenidoTitulo={activo.titulo} />
+            </div>
+          )}
         </main>
       </div>
+    </div>
+  );
+}
+
+// ── ASISTENTE IA ──────────────────────────────────────────────────────────────
+
+function getMockIAData(titulo: string): {
+  resumen: string[];
+  preguntas: { pregunta: string; respuesta: string }[];
+} {
+  // Vary mocks slightly based on the content title
+  if (titulo.toLowerCase().includes("evaluación") || titulo.toLowerCase().includes("quiz")) {
+    return {
+      resumen: [
+        "Esta evaluación pone a prueba los conocimientos adquiridos a lo largo del módulo.",
+        "Se requiere un mínimo de aciertos para superar la prueba y obtener el certificado.",
+        "Revisa los contenidos anteriores antes de intentar la evaluación final.",
+      ],
+      preguntas: [
+        { pregunta: "¿Cuántos intentos tengo para aprobar?", respuesta: "Puedes intentarlo tantas veces como necesites. Cada intento reinicia las preguntas para que puedas practicar sin límite." },
+        { pregunta: "¿Qué pasa si no apruebo?", respuesta: "Si no superas la evaluación, puedes repasar el material y volver a intentarlo. No hay penalización por los intentos fallidos." },
+        { pregunta: "¿Se guarda mi progreso automáticamente?", respuesta: "Sí, el progreso se guarda en tu navegador. Si cierras la página y vuelves, encontrarás el módulo en el mismo estado." },
+      ],
+    };
+  }
+  if (titulo.toLowerCase().includes("video")) {
+    return {
+      resumen: [
+        "El vídeo presenta los conceptos fundamentales del módulo de forma visual y práctica.",
+        "Se incluyen demostraciones reales del entorno empresarial de Atalayas.",
+        "Toma nota de los puntos clave que se resaltan durante la reproducción.",
+      ],
+      preguntas: [
+        { pregunta: "¿Puedo ver el vídeo varias veces?", respuesta: "Sí, puedes reproducir el vídeo cuantas veces necesites antes de marcarlo como completado." },
+        { pregunta: "¿Hay subtítulos disponibles?", respuesta: "El vídeo incluye subtítulos en castellano. Puedes activarlos desde los controles del reproductor." },
+        { pregunta: "¿El contenido del vídeo entra en el quiz?", respuesta: "Sí, los conceptos presentados en el vídeo son la base de la evaluación final del módulo." },
+      ],
+    };
+  }
+  // Default for texto, pdf, and anything else
+  return {
+    resumen: [
+      "Este contenido cubre los fundamentos teóricos esenciales del módulo.",
+      "Se abordan casos prácticos aplicables directamente al entorno de Atalayas.",
+      "Presta especial atención a los recuadros de \"Punto clave\" que resumen lo más importante.",
+    ],
+    preguntas: [
+      { pregunta: "¿Qué conceptos son más importantes de este contenido?", respuesta: "Los puntos clave destacados en recuadros azules contienen los conceptos que con más frecuencia aparecen en la evaluación final. Te recomendamos anotarlos." },
+      { pregunta: "¿Puedo volver a este contenido después de completarlo?", respuesta: "Sí, una vez completado puedes acceder al contenido en cualquier momento desde el índice lateral para repasar." },
+      { pregunta: "¿Hay material complementario disponible?", respuesta: "En el apartado de documentación encontrarás recursos adicionales en PDF con información ampliada sobre los temas tratados." },
+    ],
+  };
+}
+
+function AsistenteIA({ contenidoTitulo }: { contenidoTitulo: string }) {
+  const [open, setOpen]                       = useState(true);
+  const [preguntaActiva, setPreguntaActiva]   = useState<number | null>(null);
+  const [inputVal, setInputVal]               = useState("");
+  const [respuesta, setRespuesta]             = useState("");
+
+  const { resumen, preguntas } = getMockIAData(contenidoTitulo);
+
+  const handleSend = () => {
+    if (!inputVal.trim()) return;
+    setRespuesta("Estoy procesando tu consulta sobre \"" + inputVal.trim() + "\"… Dame un momento.");
+    setInputVal("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSend();
+  };
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ border: "1px solid #e9d5ff" }}
+    >
+      {/* Header */}
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-white text-lg leading-none select-none">✦</span>
+          <span className="text-sm font-bold text-white">Asistente IA</span>
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(255,255,255,0.18)", color: "white", letterSpacing: "0.05em" }}
+          >
+            BETA
+          </span>
+        </div>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="text-white transition-opacity"
+          style={{ opacity: 0.75 }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.75")}
+          aria-label={open ? "Colapsar asistente" : "Expandir asistente"}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            {open
+              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              : <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            }
+          </svg>
+        </button>
+      </div>
+
+      {/* Body */}
+      {open && (
+        <div
+          className="flex flex-col gap-5 px-5 py-4"
+          style={{ background: "white" }}
+        >
+          {/* Resumen IA */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
+              Resumen del contenido
+            </p>
+            <ul className="flex flex-col gap-2">
+              {resumen.map((bullet, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-0.5 text-sm font-bold shrink-0" style={{ color: "#7c3aed" }}>•</span>
+                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Preguntas sugeridas */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
+              Preguntas frecuentes
+            </p>
+            <div className="flex flex-col gap-2">
+              {preguntas.map((item, i) => {
+                const isActive = preguntaActiva === i;
+                return (
+                  <div key={i}>
+                    <button
+                      onClick={() => setPreguntaActiva(isActive ? null : i)}
+                      className="text-xs px-3 py-2 rounded-full border transition-all text-left"
+                      style={{
+                        background:   isActive ? "#7c3aed"              : "transparent",
+                        color:        isActive ? "white"                : "var(--texto-primario)",
+                        borderColor:  isActive ? "#7c3aed"              : "#e9d5ff",
+                        fontWeight:   isActive ? 600                    : 400,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background   = "#faf5ff";
+                          e.currentTarget.style.borderColor  = "#a855f7";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background   = "transparent";
+                          e.currentTarget.style.borderColor  = "#e9d5ff";
+                        }
+                      }}
+                    >
+                      {item.pregunta}
+                    </button>
+                    {isActive && (
+                      <div
+                        className="mt-2 rounded-xl px-4 py-3 text-sm"
+                        style={{
+                          background:  "#faf5ff",
+                          borderLeft:  "3px solid #7c3aed",
+                          color:       "var(--texto-secundario)",
+                        }}
+                      >
+                        {item.respuesta}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Respuesta del chat si existe */}
+          {respuesta && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{
+                background: "#faf5ff",
+                borderLeft: "3px solid #a855f7",
+                color:      "var(--texto-secundario)",
+              }}
+            >
+              {respuesta}
+            </div>
+          )}
+
+          {/* Input de chat */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe tu pregunta..."
+              className="flex-1 text-sm rounded-xl border px-3 py-2 outline-none transition-colors"
+              style={{
+                borderColor:     "#e9d5ff",
+                color:           "var(--texto-primario)",
+                background:      "white",
+              }}
+              onFocus={(e)  => (e.currentTarget.style.borderColor = "#a855f7")}
+              onBlur={(e)   => (e.currentTarget.style.borderColor = "#e9d5ff")}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!inputVal.trim()}
+              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+              onMouseEnter={(e) => { if (inputVal.trim()) e.currentTarget.style.opacity = "0.85"; }}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -404,6 +778,8 @@ const PREGUNTAS = [
   { id: "q3", pregunta: "¿Qué documento acredita la formación PRL?",                opciones: ["El contrato laboral", "El certificado de formación", "La nómina mensual", "El DNI"], correcta: 1 },
 ];
 
+const LETRAS = ["A", "B", "C", "D"];
+
 function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
   const [respuestas, setRespuestas] = useState<Record<string, number>>({});
   const [enviado, setEnviado]       = useState(false);
@@ -476,13 +852,23 @@ function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
                 return (
                   <button key={oi}
                     onClick={() => setRespuestas((r) => ({ ...r, [p.id]: oi }))}
-                    className="text-left px-4 py-3 rounded-xl text-sm transition-all"
+                    className="text-left flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
                     style={{
                       border:     sel ? "2px solid var(--azul-egm)" : "1px solid var(--gris-borde)",
                       background: sel ? "var(--azul-egm-light)"     : "var(--blanco)",
                       color:      sel ? "var(--azul-egm)"           : "var(--texto-primario)",
                       fontWeight: sel ? 600 : 400,
                     }}>
+                    {/* Letter label */}
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                      style={{
+                        background: sel ? "var(--azul-egm)"        : "var(--gris-superficie)",
+                        color:      sel ? "var(--blanco)"          : "var(--texto-muted)",
+                      }}
+                    >
+                      {LETRAS[oi]}
+                    </span>
                     {op}
                   </button>
                 );

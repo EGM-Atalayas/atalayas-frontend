@@ -8,12 +8,76 @@ import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import SplitText from "@/components/ui/SplitText";
-import GradientText from "@/components/ui/GradientText";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+// ── TIPOS Y MOCK FORMACIONES ──────────────────────────────────────────────────
+type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal: number };
+
+const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
+  { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
+    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al parque.",
+    tipoModulo: "IDENTIDAD", orden: 1, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4 },
+  { moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",
+    descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",
+    tipoModulo: "DESARROLLO", orden: 2, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 5, completadosLocal: 0 },
+  { moduloId: "mock-3", nombre: "PRL — Prevención de Riesgos Laborales",
+    descripcion: "Formación obligatoria en seguridad, higiene y prevención de riesgos en el trabajo.",
+    tipoModulo: "BASICA", orden: 3, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "completado", totalItems: 4, completadosLocal: 4 },
+  { moduloId: "mock-4", nombre: "Digitalización y Herramientas Colaborativas",
+    descripcion: "Aprende a usar las herramientas digitales del entorno laboral moderno.",
+    tipoModulo: "ESPECIFICA", orden: 4, activo: true, empresaId: null, esEspecializadoIa: false,
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 8, completadosLocal: 0 },
+];
+
+const FORMACION_IMAGES_BY_ID: Record<string, string> = {
+  "mock-1": "/background-formacion-empleado.jpg",
+  "mock-2": "/comunicacion-trabajo.jpg",
+  "mock-3": "/diversidad.jpg",
+  "mock-4": "/herramientas-digitales.jpg",
+};
+
+const FORMACION_IMAGES_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
+  { keywords: ["incorporac", "bienvenid", "atalayas"],    imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva", "trabajo"],       imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["prl", "prevenci", "riesgos", "laboral"],  imagen: "/diversidad.jpg" },
+  { keywords: ["digitaliz", "herramienta", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad"],                 imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["metodolog", "agil"],                      imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["cibersegur", "datos"],                    imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["diversidad", "inclusi"],                  imagen: "/diversidad.jpg" },
+];
+
+function getFormacionImage(moduloId: string, nombre: string): string | undefined {
+  if (FORMACION_IMAGES_BY_ID[moduloId]) return FORMACION_IMAGES_BY_ID[moduloId];
+  const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const match = FORMACION_IMAGES_BY_NAME.find((entry) =>
+    entry.keywords.some((kw) => lower.includes(kw))
+  );
+  return match?.imagen;
+}
+
+const LS_KEY = "egm_formacion_progress";
+
+function loadProgress(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "{}"); } catch { return {}; }
+}
+function saveProgress(map: Record<string, number>) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch { /* noop */ }
+}
+function applyProgress(base: FormacionLocal[], map: Record<string, number>): FormacionLocal[] {
+  return base.map((f) => {
+    const c   = map[f.moduloId] ?? f.completadosLocal;
+    const pct = c / f.totalItems;
+    const st  = pct >= 1 ? "completado" : c > 0 ? "en progreso" : "pendiente";
+    return { ...f, completadosLocal: c, status: st };
+  });
 }
 
 const SERVICIOS = [
@@ -79,9 +143,10 @@ export default function Empleado() {
   const router      = useRouter();
   const { usuario } = useAuth();
 
-  const [noticias, setNoticias]       = useState<Noticia[]>([]);
-  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
-  const [cargando, setCargando]       = useState(true);
+  const [noticias, setNoticias]               = useState<Noticia[]>([]);
+  const [formaciones, setFormaciones]         = useState<ModuloConProgreso[]>([]);
+  const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
+  const [cargando, setCargando]               = useState(true);
 
   useEffect(() => {
     async function cargarDatos() {
@@ -91,9 +156,12 @@ export default function Empleado() {
           getModulosConProgreso().catch(() => []),
         ]);
         setNoticias((noticiasData as Noticia[]).slice(0, 6));
-        setFormaciones(
-          (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden)
-        );
+        const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
+        setFormaciones(real);
+        // Si la API no devuelve módulos, usar mock con progreso de localStorage
+        if (real.length === 0) {
+          setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
+        }
       } finally {
         setCargando(false);
       }
@@ -101,12 +169,30 @@ export default function Empleado() {
     if (usuario) cargarDatos();
   }, [usuario]);
 
-  const completados   = formaciones.filter((m) => m.status === "completado").length;
-  const totalProgress = formaciones.length > 0
-    ? Math.round((completados / formaciones.length) * 100)
+  // Avanzar progreso en una unidad (mock)
+  const avanzarModulo = (moduloId: string) => {
+    setFormacionesLocal((prev) => {
+      const map = loadProgress();
+      const m   = prev.find((f) => f.moduloId === moduloId);
+      if (!m || m.completadosLocal >= m.totalItems) return prev;
+      const next = Math.min(m.completadosLocal + 1, m.totalItems);
+      map[moduloId] = next;
+      saveProgress(map);
+      return applyProgress(MOCK_FORMACIONES_BASE, map);
+    });
+  };
+
+  // Usa datos reales si existen, si no los mocks con localStorage
+  const formDisplay: FormacionLocal[] = formaciones.length > 0
+    ? formaciones.map((f) => ({ ...f, totalItems: 0, completadosLocal: 0 }))
+    : formacionesLocal;
+
+  const completados   = formDisplay.filter((m) => m.status === "completado").length;
+  const totalProgress = formDisplay.length > 0
+    ? Math.round((completados / formDisplay.length) * 100)
     : 0;
-  const siguientePaso = formaciones.find((f) => f.status !== "completado");
-  const hayModulos    = formaciones.length > 0;
+  const siguientePaso = formDisplay.find((f) => f.status !== "completado");
+  const hayModulos    = formDisplay.length > 0;
   const hayProgreso   = hayModulos && completados > 0;
   const noticiasEGM     = noticias.filter((n) => n.esGlobal);
   const noticiasEmpresa = noticias.filter((n) => !n.esGlobal);
@@ -171,9 +257,8 @@ export default function Empleado() {
         <div className="absolute inset-0"
           style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
 
-        <div className="relative z-10 w-full px-10 lg:px-16 py-16 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6"
+        <div className="relative z-10 w-full px-10 lg:px-16 py-16">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
               style={{ color: "var(--verde-oliva-hover)" }}>
               {usuario?.nombreEmpresa ?? "Mi empresa"}
               <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
@@ -182,8 +267,7 @@ export default function Empleado() {
               }).replace(/^\w/, (c) => c.toUpperCase())}
             </p>
 
-            {/* Tipografía diferenciada: "Hola," en Poppins, nombre en Serif italic */}
-            <div className="leading-none mb-1" style={{ marginBottom: siguientePaso ? "2.5rem" : "0" }}>
+            <div className="leading-none flex flex-wrap items-center gap-x-3">
               <span
                 className="text-white"
                 style={{
@@ -191,90 +275,40 @@ export default function Empleado() {
                   fontFamily:    "var(--font-poppins), sans-serif",
                   fontWeight:    300,
                   letterSpacing: "-0.03em",
+                  animation:     "heroFadeUp 0.8s ease both",
                 }}
               >
-                Hola,{" "}
+                Hola,
               </span>
-              <GradientText
+              <span
                 style={{
-                  fontSize:      "clamp(3.5rem, 7vw, 6rem)",
-                  fontFamily:    "'Instrument Serif', serif",
-                  fontStyle:     "italic",
-                  fontWeight:    400,
-                  letterSpacing: "-0.01em",
+                  fontSize:        "clamp(3.5rem, 7vw, 6rem)",
+                  fontFamily:      "'Instrument Serif', serif",
+                  fontStyle:       "italic",
+                  fontWeight:      400,
+                  letterSpacing:   "-0.01em",
+                  lineHeight:      1,
+                  background:      "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+                  backgroundSize:  "300% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  animation:       "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
                 }}
               >
-                <SplitText
-                  text={usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-                  tag="span"
-                  textAlign="left"
-                  delay={40}
-                  duration={0.9}
-                  ease="power3.out"
-                  splitType="chars"
-                  from={{ opacity: 0, y: 60 }}
-                  to={{ opacity: 1, y: 0 }}
-                  threshold={0.1}
-                  rootMargin="0px"
-                />
-              </GradientText>
+                {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
+              </span>
             </div>
-
-            {siguientePaso && (
-              <div className="inline-flex items-center gap-4 rounded-2xl px-6 py-4"
-                style={{
-                  background:     "rgba(255,255,255,0.08)",
-                  border:         "1px solid rgba(255,255,255,0.14)",
-                  backdropFilter: "blur(12px)",
-                  maxWidth:       "520px",
-                }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "var(--verde-oliva)" }}>
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" strokeWidth={2.2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-                    style={{ color: "var(--verde-oliva-hover)" }}>
-                    Siguiente paso
-                  </p>
-                  <p className="text-base font-semibold text-white truncate">
-                    {siguientePaso.nombre}
-                  </p>
-                </div>
-                <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-sm font-bold px-5 py-2.5 rounded-xl shrink-0 whitespace-nowrap transition-opacity"
-                  style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                  Continuar →
-                </button>
-              </div>
-            )}
-          </div>
-
-          {hayProgreso && (
-            <div className="flex flex-row lg:flex-col gap-4 shrink-0">
-              <div className="rounded-2xl px-8 py-6 text-center"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", backdropFilter: "blur(10px)", minWidth: "150px" }}>
-                <p className="text-white leading-none"
-                  style={{ fontSize: "3.8rem", fontFamily: "'Instrument Serif', serif" }}>
-                  {totalProgress}<span style={{ fontSize: "2rem", color: "var(--verde-oliva-hover)" }}>%</span>
-                </p>
-                <p className="text-xs uppercase tracking-wider mt-2" style={{ color: "rgba(255,255,255,0.38)" }}>Completado</p>
-              </div>
-              <div className="rounded-2xl px-8 py-6 text-center"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", minWidth: "150px" }}>
-                <p className="text-white leading-none"
-                  style={{ fontSize: "3rem", fontFamily: "'Instrument Serif', serif" }}>
-                  {completados}<span style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.28)" }}>/{formaciones.length}</span>
-                </p>
-                <p className="text-xs uppercase tracking-wider mt-2" style={{ color: "rgba(255,255,255,0.38)" }}>Módulos</p>
-              </div>
-            </div>
-          )}
+            <style>{`
+              @keyframes heroFadeUp {
+                from { opacity: 0; transform: translateY(24px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes gradientShift {
+                0%, 100% { background-position: 0% 50%; }
+                50%       { background-position: 100% 50%; }
+              }
+            `}</style>
         </div>
       </div>
 
@@ -423,35 +457,43 @@ export default function Empleado() {
           </div>
         </section>
 
-        {/* ── FILA 2: FORMACIÓN — ancho completo ── */}
+
+        {/* ── RUTA DE APRENDIZAJE ── */}
         <section>
-          <div className="flex items-center justify-between mb-8">
-            <TituloSeccion noMargin>Mi itinerario</TituloSeccion>
-            <div className="flex items-center gap-5">
-              {hayProgreso && (
-                <span className="text-base" style={{ color: "var(--texto-muted)" }}>
-                  <span style={{ color: "var(--texto-primario)", fontWeight: 700 }}>{completados}</span>
-                  /{formaciones.length} completados
-                </span>
-              )}
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <TituloSeccion noMargin>Mi formación</TituloSeccion>
               {hayModulos && (
-                <button onClick={() => router.push("/dashboard/formacion")}
-                  className="text-base font-semibold hover:underline"
-                  style={{ color: "var(--azul-egm)" }}>
-                  Ver todo →
-                </button>
+                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                  {completados === 0
+                    ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
+                    : completados === formDisplay.length
+                    ? "🎉 ¡Has completado toda tu formación!"
+                    : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
+                </p>
               )}
             </div>
+            {hayModulos && (
+              <button onClick={() => router.push("/dashboard/formacion")}
+                className="text-sm font-semibold shrink-0 hover:underline"
+                style={{ color: "var(--azul-egm)" }}>
+                Ver todo →
+              </button>
+            )}
           </div>
 
+          {/* Barra de progreso global */}
           {hayModulos && (
-            <div className="h-px w-full mb-6 rounded-full overflow-hidden"
-              style={{ background: "var(--gris-borde)" }}>
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width:      `${totalProgress}%`,
-                  background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)",
-                }} />
+            <div className="mb-8">
+              <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${totalProgress}%`, background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva) 100%)" }} />
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Inicio</span>
+                <span className="text-xs font-semibold" style={{ color: "var(--azul-egm)" }}>{totalProgress}%</span>
+                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Meta</span>
+              </div>
             </div>
           )}
 
@@ -460,29 +502,27 @@ export default function Empleado() {
               style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round"
                     d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
-                <p className="text-lg font-semibold" style={{ color: "var(--texto-primario)" }}>
-                  Aún no tienes módulos asignados
-                </p>
-                <p className="text-base mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                  Tu empresa configurará el itinerario formativo en breve
-                </p>
+                <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no tienes módulos asignados</p>
+                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Tu empresa configurará el itinerario formativo en breve</p>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {formaciones.map((m, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {formDisplay.map((m, i) => (
                 <TarjetaModulo
                   key={m.moduloId}
                   modulo={m}
                   index={i}
+                  esMock={formaciones.length === 0}
+                  onAvanzar={() => avanzarModulo(m.moduloId)}
                   onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                  imagenUrl={getFormacionImage(m.moduloId, m.nombre)}
                 />
               ))}
             </div>
@@ -491,74 +531,152 @@ export default function Empleado() {
 
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
-          <TituloSeccion>Comunidad</TituloSeccion>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              {
-                label: "Eventos empresariales",
-                desc:  "Actividades y networking entre las empresas del parque",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ),
-              },
-              {
-                label: "Team building",
-                desc:  "Iniciativas colectivas e integración entre equipos",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                ),
-              },
-              {
-                label: "En Femenino",
-                desc:  "Liderazgo e igualdad en el entorno empresarial",
-                icono: (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
-                ),
-              },
-            ].map((item) => (
-              <div key={item.label}
-                className="flex flex-col gap-4 px-5 py-5 rounded-2xl relative overflow-hidden"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+          <div className="flex items-end justify-between mb-6">
+            <TituloSeccion noMargin>Comunidad</TituloSeccion>
+            <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+              Parque empresarial EGM
+            </span>
+          </div>
 
-                {/* Glow corner */}
-                <div className="absolute top-0 right-0 w-24 h-24 pointer-events-none"
-                  style={{ background: "radial-gradient(circle at top right, rgba(139,154,45,0.08) 0%, transparent 70%)" }} />
+          {/* Evento destacado + iniciativas */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
 
-                {/* Icono */}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                  {item.icono}
+            {/* Evento destacado (3/5) */}
+            <div
+              className="lg:col-span-3 rounded-2xl overflow-hidden relative"
+              style={{ background: "var(--marino)", minHeight: "200px" }}
+            >
+              {/* Fondo decorativo */}
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
+              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+
+              <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
+                <div className="flex items-start justify-between mb-auto">
+                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "#A3B535" }}>
+                    Próximo evento
+                  </span>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white leading-none">24</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>May</p>
+                  </div>
                 </div>
 
-                {/* Texto */}
-                <div className="flex-1">
-                  <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>
-                    {item.label}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
+                    Jornada de Networking EGM
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    Conecta con profesionales del parque empresarial. Ponencias, mesas redondas y espacio de networking libre.
                   </p>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>
-                    {item.desc}
-                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {[
+                      { icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z", text: "Sala Polivalente A" },
+                      { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "10:00 – 14:00 h" },
+                      { icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z", text: "42 inscritos" },
+                    ].map((d) => (
+                      <span key={d.text} className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d={d.icon} />
+                        </svg>
+                        {d.text}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Badge */}
-                <span className="text-[10px] font-semibold self-start px-2.5 py-1 rounded-full"
-                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid rgba(139,154,45,0.2)" }}>
-                  Próximamente
-                </span>
-
-                {/* Línea inferior */}
-                <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-                  style={{ background: "linear-gradient(to right, var(--verde-oliva), transparent 70%)" }} />
+                <button
+                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80"
+                  style={{ background: "#A3B535", color: "#fff" }}
+                >
+                  Ver detalles e inscribirme
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* Iniciativas (2/5) */}
+            <div className="lg:col-span-2 flex flex-col gap-3">
+              {[
+                {
+                  label: "Team building",
+                  desc:  "Integración y trabajo en equipo entre empresas del parque",
+                  fecha: "Jun 2025",
+                  inscritos: 18,
+                  color: "#7c3aed",
+                  bg:    "#ede9fe",
+                  icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+                },
+                {
+                  label: "En Femenino",
+                  desc:  "Liderazgo, igualdad e inspiración en el entorno empresarial",
+                  fecha: "Jul 2025",
+                  inscritos: 31,
+                  color: "#be185d",
+                  bg:    "#fce7f3",
+                  icon:  "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
+                },
+                {
+                  label: "Eventos empresariales",
+                  desc:  "Actividades de networking entre las empresas del parque",
+                  fecha: "Mensual",
+                  inscritos: 60,
+                  color: "var(--azul-egm)",
+                  bg:    "var(--azul-egm-light)",
+                  icon:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+                },
+              ].map((ini) => (
+                <div
+                  key={ini.label}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-colors"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)"; }}
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ini.bg, color: ini.color }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={ini.icon} />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{ini.label}</p>
+                    <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ini.desc}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-semibold" style={{ color: ini.color }}>{ini.fecha}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>{ini.inscritos} inscritos</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tablón de la comunidad */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}
+          >
+            <div
+              className="px-5 py-3.5 flex items-center justify-between"
+              style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}
+            >
+              <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Tablón de la comunidad</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>Próximamente</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-x" style={{ borderColor: "var(--gris-borde)" }}>
+              {[
+                { emoji: "💬", titulo: "Foro del parque",         desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
+                { emoji: "📌", titulo: "Anuncios de comunidad",   desc: "Comunicados transversales del parque empresarial EGM." },
+                { emoji: "🤝", titulo: "Directorio de empresas",  desc: "Conoce las empresas y equipos que comparten espacio contigo." },
+              ].map((item, i) => (
+                <div key={i} className="px-5 py-4 flex flex-col gap-2">
+                  <span className="text-2xl leading-none">{item.emoji}</span>
+                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{item.titulo}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+
 
       </div>
     </div>
@@ -686,6 +804,7 @@ const TIPO_ACENTO: Record<string, { bg: string; text: string; label: string }> =
   BASICA:      { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", label: "Formación Básica" },
   ESPECIFICA:  { bg: "var(--info-light)",        text: "var(--info)",        label: "Formación Específica" },
   DESARROLLO:  { bg: "var(--advertencia-light)", text: "var(--advertencia)", label: "Desarrollo Profesional" },
+  SEGURIDAD:   { bg: "#FFF1F0",                  text: "#C84B31",            label: "Seguridad Laboral" },
   RECOMPENSAS: { bg: "var(--exito-light)",       text: "var(--exito)",       label: "Recompensas" },
   COMUNIDAD:   { bg: "var(--gris-superficie)",   text: "var(--texto-muted)", label: "Comunidad" },
 };
@@ -696,70 +815,100 @@ const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }>
   pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
 };
 
-function TarjetaModulo({ modulo, index, onClick }: {
-  modulo: ModuloConProgreso; index: number; onClick: () => void;
+function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
+  modulo:     FormacionLocal;
+  index:      number;
+  onClick:    () => void;
+  onAvanzar?: () => void;
+  esMock?:    boolean;
+  imagenUrl?: string;
 }) {
-  const tipo        = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
-  const status      = STATUS_ESTILO[modulo.status]   ?? STATUS_ESTILO.pendiente;
-  const enProgreso  = modulo.status === "en progreso";
-  const completado  = modulo.status === "completado";
+  const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
+  const completado = modulo.status === "completado";
+  const enProgreso = modulo.status === "en progreso";
+
+  const pct = modulo.totalItems > 0
+    ? Math.round((modulo.completadosLocal / modulo.totalItems) * 100)
+    : completado ? 100 : 0;
 
   return (
-    <div
-      className="flex flex-col rounded-2xl cursor-pointer overflow-hidden transition-all"
-      style={{
-        border:     "1px solid var(--gris-borde)",
-        borderLeft: `3px solid ${tipo.text}`,
-        background: "var(--blanco)",
-        boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
-      }}
+    <button
       onClick={onClick}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background   = "var(--gris-pagina)";
-        (e.currentTarget as HTMLElement).style.boxShadow   = "0 4px 16px rgba(0,0,0,0.08)";
-        (e.currentTarget as HTMLElement).style.transform   = "translateY(-1px)";
+      className="w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200"
+      style={{
+        background: "var(--blanco)",
+        border:     enProgreso ? `2px solid ${tipo.text}` : "1px solid var(--gris-borde)",
+        boxShadow:  enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)",
       }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background  = "var(--blanco)";
-        (e.currentTarget as HTMLElement).style.boxShadow  = "0 1px 4px rgba(0,0,0,0.04)";
-        (e.currentTarget as HTMLElement).style.transform  = "translateY(0)";
-      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.09)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
     >
-      <div className="flex items-center gap-4 px-5 py-4">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
-          style={{ background: tipo.bg, color: tipo.text, fontFamily: "var(--font-poppins), sans-serif" }}
-        >
-          {String(index + 1).padStart(2, "0")}
+      {/* Imagen / Número / check */}
+      {imagenUrl ? (
+        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative">
+          <img src={imagenUrl} alt={modulo.nombre} className="w-full h-full object-cover" />
+          {completado && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl"
+              style={{ background: "rgba(22,163,74,0.65)" }}>
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+      ) : (
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+          style={{
+            background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
+            color:      completado || enProgreso ? "white" : "var(--texto-muted)",
+          }}
+        >
+          {completado ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : String(index + 1).padStart(2, "0")}
+        </div>
+      )}
+
+      {/* Contenido central */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-semibold leading-snug truncate" style={{ color: "var(--texto-primario)" }}>
             {modulo.nombre}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{tipo.label}</p>
+          {enProgreso && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+              style={{ background: tipo.bg, color: tipo.text }}>
+              En curso
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ background: status.text }}
-          />
-          <span className="text-xs font-medium" style={{ color: status.text }}>
-            {status.label}
+        {/* Barra de progreso */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: completado ? "var(--exito)" : tipo.text }} />
+          </div>
+          <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: completado ? "var(--exito)" : "var(--texto-muted)" }}>
+            {pct}%
           </span>
         </div>
       </div>
-      {(enProgreso || completado) && (
-        <div className="h-[3px] w-full" style={{ background: "var(--gris-superficie)" }}>
-          <div
-            className="h-full transition-all duration-700"
-            style={{
-              width:      completado ? "100%" : "50%",
-              background: tipo.text,
-              opacity:    completado ? 0.45 : 1,
-            }}
-          />
-        </div>
-      )}
-    </div>
+
+      {/* Flecha / check derecha */}
+      <div className="shrink-0" style={{ color: completado ? "var(--exito)" : "var(--gris-borde)" }}>
+        {completado ? (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </div>
+    </button>
   );
 }

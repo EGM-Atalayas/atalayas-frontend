@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
+import GradientText from "@/components/ui/GradientText";
+import {
+  Camera, Edit2, Shield, Key, CheckCircle, Briefcase, User, Clock,
+  BookOpen, MessageSquare, LayoutDashboard, Activity,
+} from "lucide-react";
 
 function getInitials(nombre: string, apellidos: string = ""): string {
   const n = nombre ? nombre[0] : "";
@@ -14,6 +20,7 @@ function getInitials(nombre: string, apellidos: string = ""): string {
 
 export default function PerfilPage() {
   const { usuario, setUsuario } = useAuth();
+  const router = useRouter();
 
   const [nombre, setNombre] = useState("");
   const [apellidos, setApellidos] = useState("");
@@ -27,12 +34,15 @@ export default function PerfilPage() {
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [loadingPass, setLoadingPass] = useState(false);
 
+  // Estados para manejar el modo edición
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isEditingPass, setIsEditingPass] = useState(false);
+
   useEffect(() => {
     if (usuario) {
       setNombre(usuario.nombre || "");
       setApellidos(usuario.apellidos || "");
       setEmail(usuario.email || "");
-      // Puesto de trabajo no está en la interfaz base, se podría cargar si se añade
       setPuesto("");
     }
   }, [usuario]);
@@ -42,7 +52,7 @@ export default function PerfilPage() {
       alert("Error: No se pudo obtener el ID del usuario.");
       return;
     }
-    
+
     setLoadingInfo(true);
     try {
       const payload: any = { nombre, apellidos };
@@ -65,20 +75,20 @@ export default function PerfilPage() {
       }
 
       const updatedUser = await res.json();
-      
-      // Actualizamos el contexto con la nueva información
+
       const finalUser = updatedUser || {};
-      setUsuario({ 
-        ...usuario, 
-        ...finalUser, 
-        nombre: finalUser.nombre || nombre, 
-        apellidos: finalUser.apellidos || apellidos 
+      setUsuario({
+        ...usuario,
+        ...finalUser,
+        nombre: finalUser.nombre || nombre,
+        apellidos: finalUser.apellidos || apellidos
       });
 
-      alert("Información personal guardada correctamente en la base de datos.");
+      setIsEditingInfo(false); // Salir del modo edición
+      alert("Información personal guardada correctamente.");
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Error al guardar la información. Comprueba la conexión o la ruta de la API.");
+      alert(error instanceof Error ? error.message : "Error al guardar la información.");
     } finally {
       setLoadingInfo(false);
     }
@@ -98,7 +108,6 @@ export default function PerfilPage() {
       const id = usuario?.usuarioId;
       if (!id) throw new Error("ID de usuario no disponible.");
 
-      // Enviamos la contraseña actual y la nueva al mismo endpoint (comúnmente usado o ajustar a ruta correcta)
       const res = await apiFetch(`${API_URL}/usuarios/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -118,10 +127,11 @@ export default function PerfilPage() {
         throw new Error(errorMsg);
       }
 
-      alert("Contraseña modificada correctamente en la base de datos.");
+      alert("Contraseña modificada correctamente.");
       setPwdActual("");
       setPwdNueva("");
       setPwdConfirmar("");
+      setIsEditingPass(false); // Salir del modo edición
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Error al cambiar la contraseña. Asegúrate de que la contraseña actual es correcta.");
@@ -137,226 +147,568 @@ export default function PerfilPage() {
   const initials = getInitials(usuario.nombre, usuario.apellidos);
 
   return (
-    <div className="min-h-screen w-full" style={{ background: "var(--gris-pagina)" }}>
-      {/* Contenedor principal de una columna centrado, max 680px */}
-      <div className="max-w-[680px] mx-auto py-10 px-4 sm:px-6 flex flex-col gap-6">
+    <div className="min-h-screen w-full pb-12" style={{ background: "var(--gris-pagina)" }}>
 
-        {/* === Cabecera de perfil === */}
-        <div className="flex flex-col items-center text-center pb-2">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mb-4 overflow-hidden shadow-sm"
-            style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-          >
-            {usuario.avatarUrl ? (
-              <Image
-                src={usuario.avatarUrl}
-                alt="Avatar"
-                width={80}
-                height={80}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <span className="text-2xl font-bold">{initials}</span>
-            )}
-          </div>
-          <h1
-            className="font-serif font-bold"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: "22px",
-              color: "var(--texto-primario)",
-              letterSpacing: "-0.01em"
-            }}
-          >
-            {usuario.nombre} {usuario.apellidos}
-          </h1>
-          <p
-            className="mt-1"
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "14px",
-              color: "var(--texto-muted)",
-              fontWeight: 500
-            }}
-          >
-            {usuario.nombreRol || "Usuario"}
-          </p>
-          {usuario.nombreEmpresa && (
-            <p
-              className="mt-0.5"
+      {/* ===== HERO BANNER ===== */}
+      <div
+        className="relative w-full flex items-end"
+        style={{
+          minHeight: "220px",
+          backgroundImage: "url('/background-formacion-empleado.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Dark overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "rgba(10,20,40,0.65)" }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 w-full px-10 lg:px-16 py-8 flex flex-col sm:flex-row items-center sm:items-end gap-6">
+          {/* Avatar */}
+          <div className="relative group cursor-pointer shrink-0">
+            <div
+              className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg"
               style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "13px",
-                color: "var(--texto-muted)"
+                background: "var(--azul-egm)",
+                color: "var(--blanco)",
+                border: "3px solid rgba(255,255,255,0.35)",
               }}
             >
-              {usuario.nombreEmpresa}
-            </p>
-          )}
-        </div>
-
-        {/* === Sección: Información personal === */}
-        <div
-          className="rounded-xl overflow-hidden shadow-sm"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-        >
-          <div className="px-6 py-5 border-b" style={{ borderColor: "var(--gris-borde)" }}>
-            <h2 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
-              Información personal
-            </h2>
-            <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-              Actualiza tus datos y perfil público.
-            </p>
+              {usuario.avatarUrl ? (
+                <Image
+                  src={usuario.avatarUrl}
+                  alt="Avatar"
+                  width={112}
+                  height={112}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <span className="text-3xl font-bold">{initials}</span>
+              )}
+            </div>
+            <div
+              className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-lg flex items-center justify-center border-2 shadow-sm text-white transition-transform group-hover:scale-105"
+              style={{ background: "var(--azul-egm)", borderColor: "rgba(255,255,255,0.4)" }}
+            >
+              <Camera size={14} />
+            </div>
           </div>
 
-          <div className="p-6 flex flex-col gap-5">
-            {/* Grid 2 columnas para campos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Nombre</label>
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
+          {/* Name & badges */}
+          <div className="flex flex-col items-center sm:items-start gap-2 pb-1">
+            <GradientText
+              colors={["#9cb854", "#ffffff", "#c8dc8a", "#9cb854"]}
+              animationSpeed={6}
+              className="!mx-0"
+              direction="horizontal"
+              yoyo
+            >
+              <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.8rem, 3vw, 2.4rem)", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                {usuario.nombre} {usuario.apellidos}
+              </span>
+            </GradientText>
+            <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
+              {usuario.nombreRol || "Especialista en Control de Calidad"}
+            </p>
+            <div className="flex items-center gap-3 mt-1 flex-wrap justify-center sm:justify-start">
+              {usuario.nombreEmpresa ? (
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+                >
+                  {usuario.nombreEmpresa}
+                </span>
+              ) : (
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+                >
+                  EGM ATALAYAS
+                </span>
+              )}
+              <span
+                className="px-3 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider"
+                style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.25)" }}
+              >
+                Empleado Activo
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== MAIN CONTENT ===== */}
+      <div className="px-10 lg:px-16 py-8 flex flex-col gap-8">
+
+        {/* === Grid Principal (2 columnas + 1 columna lateral) === */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Columna Izquierda: Cards de Información */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
+
+            {/* --- Tarjeta: Personal Information --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b flex justify-between items-center bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-lg font-bold" style={{ color: "var(--texto-primario)" }}>Información Personal</h2>
+                {!isEditingInfo && (
+                  <button
+                    onClick={() => setIsEditingInfo(true)}
+                    className="flex items-center gap-1.5 text-sm font-semibold transition-colors hover:opacity-80"
+                    style={{ color: "var(--azul-egm)" }}
+                  >
+                    <Edit2 size={14} /> Editar
+                  </button>
+                )}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Apellidos</label>
-                <input
-                  type="text"
-                  value={apellidos}
-                  onChange={(e) => setApellidos(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
+
+              <div className="p-6">
+                {!isEditingInfo ? (
+                  /* Modo Vista */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-7 gap-x-6">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre</span>
+                      <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{nombre || "—"}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Apellidos</span>
+                      <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{apellidos || "—"}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Correo Electrónico</span>
+                      <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{email || "—"}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Teléfono</span>
+                      <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>+34 612 345 678</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Modo Edición */
+                  <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Nombre</label>
+                        <input
+                          type="text"
+                          value={nombre}
+                          onChange={(e) => setNombre(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Apellidos</label>
+                        <input
+                          type="text"
+                          value={apellidos}
+                          onChange={(e) => setApellidos(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Puesto de trabajo</label>
+                        <input
+                          type="text"
+                          value={puesto}
+                          onChange={(e) => setPuesto(e.target.value)}
+                          placeholder="Ej: Director comercial"
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Email <span className="text-xs font-normal" style={{ color: "var(--texto-muted)" }}>(Solo lectura)</span></label>
+                        <input
+                          type="email"
+                          value={email}
+                          readOnly
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none cursor-not-allowed border"
+                          style={{ borderColor: "var(--gris-borde)", background: "var(--gris-pagina)", color: "var(--texto-secundario)" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 mt-2 border-t" style={{ borderColor: "var(--gris-borde)" }}>
+                      <button
+                        onClick={() => setIsEditingInfo(false)}
+                        className="px-5 py-2 text-sm font-semibold rounded-lg transition-colors border"
+                        style={{ color: "var(--texto-primario)", borderColor: "var(--gris-borde)", background: "transparent" }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleGuardarInformacion}
+                        disabled={loadingInfo}
+                        className="px-5 py-2 text-sm font-semibold rounded-lg shadow-sm transition-all"
+                        style={{ background: "var(--azul-egm)", color: "var(--blanco)", opacity: loadingInfo ? 0.7 : 1 }}
+                      >
+                        {loadingInfo ? "Guardando..." : "Guardar cambios"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Email <span style={{ color: "var(--texto-muted)" }}>(Solo lectura)</span></label>
-                <input
-                  type="email"
-                  value={email}
-                  readOnly
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none cursor-not-allowed"
+            </div>
+
+            {/* --- Tarjeta: Professional Details --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-lg font-bold" style={{ color: "var(--texto-primario)" }}>Detalles Profesionales</h2>
+              </div>
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                    <Briefcase size={14} /> Departamento
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Control de Calidad</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                    <Clock size={14} /> Fecha de Incorporación
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>14 de marzo, 2022</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                    <User size={14} /> Supervisor
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Marta Sánchez</p>
+                </div>
+              </div>
+            </div>
+
+            {/* --- Tarjeta: Actividad Reciente --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--texto-primario)" }}>
+                  <Activity size={18} style={{ color: "var(--azul-egm)" }} />
+                  Actividad Reciente
+                </h2>
+              </div>
+              <div className="p-6 flex flex-col gap-0">
+
+                {/* Activity item 1 */}
+                <div className="flex items-start gap-4 py-4 border-b" style={{ borderColor: "var(--gris-borde)" }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+                  >
+                    <BookOpen size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Completó módulo de Comunicación Efectiva
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 2 días</p>
+                  </div>
+                </div>
+
+                {/* Activity item 2 */}
+                <div className="flex items-start gap-4 py-4 border-b" style={{ borderColor: "var(--gris-borde)" }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}
+                  >
+                    <Edit2 size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Actualizó información personal
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 5 días</p>
+                  </div>
+                </div>
+
+                {/* Activity item 3 */}
+                <div className="flex items-start gap-4 py-4">
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}
+                  >
+                    <Clock size={16} />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      Inició módulo de Incorporación
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>hace 1 semana</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* --- Tarjeta: Security & Privacy --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-lg font-bold" style={{ color: "var(--texto-primario)" }}>Seguridad y Privacidad</h2>
+              </div>
+              <div className="p-0 flex flex-col">
+
+                {/* Item: Password */}
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b" style={{ borderColor: "var(--gris-borde)" }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
+                      <Key size={18} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm" style={{ color: "var(--texto-primario)" }}>Contraseña</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Cambiada hace 4 meses</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsEditingPass(!isEditingPass)}
+                    className="px-4 py-2 font-semibold text-sm rounded-lg transition-colors shrink-0 outline-none"
+                    style={{
+                      background: isEditingPass ? "transparent" : "var(--azul-egm-light)",
+                      color: isEditingPass ? "var(--texto-muted)" : "var(--azul-egm)",
+                      border: isEditingPass ? "1px solid var(--gris-borde)" : "1px solid transparent"
+                    }}
+                  >
+                    {isEditingPass ? "Cancelar" : "Actualizar"}
+                  </button>
+                </div>
+
+                {/* Formulario Password Desplegable */}
+                {isEditingPass && (
+                  <div className="p-6 border-b animate-in fade-in slide-in-from-top-2 duration-300" style={{ borderColor: "var(--gris-borde)", background: "rgba(245,246,248,0.3)" }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Contraseña actual</label>
+                        <input
+                          type="password"
+                          value={pwdActual}
+                          onChange={(e) => setPwdActual(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Nueva contraseña</label>
+                        <input
+                          type="password"
+                          value={pwdNueva}
+                          onChange={(e) => setPwdNueva(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Confirmar contraseña</label>
+                        <input
+                          type="password"
+                          value={pwdConfirmar}
+                          onChange={(e) => setPwdConfirmar(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                          onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-5 pt-4 border-t" style={{ borderColor: "var(--gris-borde)" }}>
+                      <button
+                        onClick={handleCambiarPassword}
+                        disabled={loadingPass}
+                        className="px-5 py-2 text-sm font-semibold rounded-lg shadow-sm transition-all"
+                        style={{ background: "var(--azul-egm)", color: "var(--blanco)", opacity: loadingPass ? 0.7 : 1 }}
+                      >
+                        {loadingPass ? "Actualizando..." : "Guardar Contraseña"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Item: 2FA */}
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
+                      <Shield size={18} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm" style={{ color: "var(--texto-primario)" }}>Autenticación en Dos Pasos</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Activada</p>
+                    </div>
+                  </div>
+                  <button
+                    className="px-4 py-2 font-semibold text-sm rounded-lg transition-colors shrink-0"
+                    style={{ background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
+                  >
+                    Configurar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Columna Derecha: Widgets */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
+
+            {/* --- Widget: Onboarding Status --- */}
+            <div className="rounded-xl shadow-sm overflow-hidden animate-fade-rise-delay-2" style={{ background: "var(--marino)", color: "var(--blanco)" }}>
+              <div className="p-6 flex flex-col items-center text-center">
+                <h2 className="text-lg font-bold self-start w-full text-left mb-8">Estado de Incorporación</h2>
+
+                <div className="relative w-36 h-36 mb-6">
+                  <svg viewBox="0 0 36 36" className="w-full h-full stroke-current" style={{ color: "rgba(255,255,255,0.1)" }}>
+                    <path className="stroke-current" fill="none" strokeWidth="2.5" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <svg viewBox="0 0 36 36" className="w-full h-full absolute top-0 left-0" style={{ transform: "rotate(-90deg)" }}>
+                    <path
+                      style={{ stroke: "var(--verde-oliva)" }}
+                      strokeDasharray="65, 100"
+                      strokeLinecap="round"
+                      className="stroke-current"
+                      fill="none"
+                      strokeWidth="2.5"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold">65%</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold mt-2" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Nivel de Dominio Institucional
+                </p>
+                <p className="text-xl font-bold mt-1 mb-2">Fase Fundacional</p>
+
+                <button
+                  className="w-full mt-6 py-3 rounded-lg font-semibold text-sm transition-colors"
+                  style={{ background: "rgba(255,255,255,0.1)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                >
+                  Continuar Formación
+                </button>
+              </div>
+            </div>
+
+            {/* --- Widget: Recent Achievements --- */}
+            <div className="rounded-xl bg-white shadow-sm border relative overflow-hidden flex flex-col animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "var(--verde-oliva)" }} />
+
+              <div className="p-6 flex-1 flex flex-col">
+                <h2 className="text-base font-bold flex items-center gap-2 mb-6 mt-1" style={{ color: "var(--texto-primario)" }}>
+                  <span style={{ color: "var(--verde-oliva)" }}><CheckCircle size={18} fill="currentColor" className="text-white" /></span> Logros Recientes
+                </h2>
+
+                <div className="flex flex-col gap-3 flex-1">
+                  {/* Cert 1 */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-xl border" style={{ background: "var(--gris-pagina)", borderColor: "var(--gris-borde)" }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                      <CheckCircle size={14} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Protocolos de Seguridad 2024</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Completado 12 ago, 2024</p>
+                    </div>
+                  </div>
+
+                  {/* Cert 2 */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-xl border" style={{ background: "var(--gris-pagina)", borderColor: "var(--gris-borde)" }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                      <CheckCircle size={14} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Introducción a la Gestión de Calidad</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Completado 30 jul, 2024</p>
+                    </div>
+                  </div>
+
+                  {/* Cert 3 */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-xl border" style={{ background: "var(--gris-pagina)", borderColor: "var(--gris-borde)" }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                      <CheckCircle size={14} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Fundamentos de Ciberseguridad</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Completado 15 jul, 2024</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-center w-full">
+                  <button className="text-sm font-bold transition-opacity hover:opacity-80" style={{ color: "var(--azul-egm)" }}>
+                    Ver Todos los Certificados
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* --- Widget: Accesos Rápidos --- */}
+            <div className="rounded-xl bg-white shadow-sm border overflow-hidden animate-fade-rise-delay-2" style={{ borderColor: "var(--gris-borde)" }}>
+              <div className="px-6 py-5 border-b bg-[rgba(245,246,248,0.5)]" style={{ borderColor: "var(--gris-borde)" }}>
+                <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>Accesos Rápidos</h2>
+              </div>
+              <div className="p-5 flex flex-col gap-3">
+
+                <button
+                  onClick={() => router.push("/dashboard/formacion")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
                   style={{
-                    border: "1px solid var(--gris-borde)",
-                    background: "var(--gris-pagina)",
-                    color: "var(--texto-secundario)"
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
                   }}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Puesto de trabajo</label>
-                <input
-                  type="text"
-                  value={puesto}
-                  onChange={(e) => setPuesto(e.target.value)}
-                  placeholder="Ej: Director comercial"
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <BookOpen size={16} style={{ flexShrink: 0 }} />
+                  Ir a Formación
+                </button>
+
+                <button
+                  onClick={() => router.push("/dashboard/comunicacion")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
+                  style={{
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <MessageSquare size={16} style={{ flexShrink: 0 }} />
+                  Ver Comunicados
+                </button>
+
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all hover:shadow-sm"
+                  style={{
+                    background: "var(--blanco)",
+                    color: "var(--texto-primario)",
+                    border: "1.5px solid var(--gris-borde)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-primario)"; }}
+                >
+                  <LayoutDashboard size={16} style={{ flexShrink: 0 }} />
+                  Ir al Dashboard
+                </button>
+
               </div>
             </div>
 
-            {/* Acción de guardar */}
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleGuardarInformacion}
-                disabled={loadingInfo}
-                className="px-5 py-2.5 text-sm font-semibold rounded-lg shadow-sm transition-all"
-                style={{
-                  background: "var(--azul-egm)",
-                  color: "var(--blanco)",
-                  opacity: loadingInfo ? 0.7 : 1
-                }}
-              >
-                {loadingInfo ? "Guardando..." : "Guardar cambios"}
-              </button>
-            </div>
           </div>
         </div>
-
-        {/* === Sección: Seguridad === */}
-        <div
-          className="rounded-xl overflow-hidden shadow-sm"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-        >
-          <div className="px-6 py-5 border-b" style={{ borderColor: "var(--gris-borde)" }}>
-            <h2 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
-              Seguridad
-            </h2>
-            <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-              Gestiona tu contraseña de acceso a la plataforma.
-            </p>
-          </div>
-
-          <div className="p-6 flex flex-col gap-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Contraseña actual</label>
-                <input
-                  type="password"
-                  value={pwdActual}
-                  onChange={(e) => setPwdActual(e.target.value)}
-                  className="w-full sm:w-1/2 px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Nueva contraseña</label>
-                <input
-                  type="password"
-                  value={pwdNueva}
-                  onChange={(e) => setPwdNueva(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Confirmar nueva contraseña</label>
-                <input
-                  type="password"
-                  value={pwdConfirmar}
-                  onChange={(e) => setPwdConfirmar(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none transition-colors"
-                  style={{ border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleCambiarPassword}
-                disabled={loadingPass}
-                className="px-5 py-2.5 text-sm font-semibold rounded-lg shadow-sm transition-all outline-blue"
-                style={{
-                  background: "transparent",
-                  color: "var(--azul-egm)",
-                  border: "1px solid var(--azul-egm)",
-                  opacity: loadingPass ? 0.7 : 1
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "var(--azul-egm-light)"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-              >
-                {loadingPass ? "Actualizando..." : "Cambiar contraseña"}
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );

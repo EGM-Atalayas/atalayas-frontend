@@ -21,10 +21,62 @@ interface Comunicado {
 }
 
 const comunidadItems = [
-  { label: "En femenino", sub: "Alicante impulsa el liderazgo femenino en el ámbito empresarial" },
-  { label: "Autobús lanzadera", sub: "Servicio de transporte directo al parque empresarial" },
-  { label: "Coche compartido", sub: "Coordina rutas con compañeros del parque" },
-  { label: "Aparcamiento VAO", sub: "Plazas exclusivas para vehículos de alta ocupación" },
+  {
+    label: "En Femenino",
+    sub: "Liderazgo e igualdad en el entorno empresarial",
+    imagen: "/logo-en-femenino.png",
+    bg: "#8878c8",
+    icono: null,
+  },
+  {
+    label: "Autobús lanzadera",
+    sub: "Servicio de transporte directo al parque empresarial",
+    imagen: "/autobus.jpg",
+    bg: null,
+    icono: null,
+  },
+  {
+    label: "Coche compartido",
+    sub: "Coordina rutas con compañeros del parque",
+    imagen: "/coche-compartido.jpg",
+    bg: null,
+    icono: null,
+  },
+  {
+    label: "Aparcamiento VAO",
+    sub: "Plazas exclusivas para vehículos de alta ocupación",
+    imagen: "/aparcamiento-vao.png",
+    bg: null,
+    icono: null,
+  },
+  {
+    label: "Empresarios de hoy y de mañana",
+    sub: "Networking y actividades entre empresas del parque",
+    imagen: "/empresas-hoy.jpg",
+    bg: null,
+    icono: null,
+  },
+  {
+    label: "Proyecto empresas solidarias",
+    sub: "Más de 44.000 personas ya han sido beneficiadas.",
+    imagen: "/empresas-solidarias.png",
+    bg: "#ffffff",
+    icono: null,
+  },
+  {
+    label: "Voy en bici al trabajo",
+    sub: "Semana de la movilidad",
+    imagen: "/trabajo-bici.jpg",
+    bg: null,
+    icono: null,
+  },
+  {
+    label: "Atalayas circular",
+    sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
+    imagen: "/atalayas-circular.jpg",
+    bg: null,
+    icono: null,
+  },
 ];
 
 export default function Invitado() {
@@ -211,69 +263,86 @@ export default function Invitado() {
         </div>
       </section>
 
+      {/* LOGO LOOP */}
+      <section className="relative w-full pt-10 pb-20 sm:pt-14 sm:pb-28" style={{ background: "#F5F6F8" }}>
+        <LogoLoop
+          speed={35}
+          size={70}
+          gap={90}
+          logos={[
+            { src: "/logo.webp", alt: "EGM Atalayas" },
+            { src: "/logo-famosa.png", alt: "Empresa 2" },
+            { src: "/logo-aliaxis.png", alt: "Empresa 3" },
+            { src: "/logo-blinker.png", alt: "Empresa 4" },
+            { src: "/logo-seur.png", alt: "Empresa 5" },
+            { src: "/logo-gofre.png", alt: "Empresa 6" },
+            { src: "/logo-itae.png", alt: "Empresa 7" },
+            { src: "/logo-pompadour.png", alt: "Empresa 8" },
+            { src: "/logo-sprinter.png", alt: "Empresa 9" },
+          ]}
+        />
+      </section>
+
       {/* COMUNIDAD */}
       <section
         id="comunidad"
         className="relative w-full mt-2"
-        style={{ backgroundImage: "url('/background-comunidad.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
+        style={{ backgroundImage: "url('/background-comunidad.png')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
-        {/* Fade inferior hacia el LogoLoop */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, #0a1628)" }} />
-        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-32 sm:py-52">
-          <h2 className="text-5xl sm:text-6xl font-bold leading-tight mb-14 text-right" style={{ color: "white" }}>
-            Nuestra<br />Comunidad
+        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #0d0d0d, transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, #000000)" }} />
+        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight mb-12 text-center" style={{ color: "white" }}>
+            Nuestra Comunidad
           </h2>
-          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-8 sm:gap-16 items-start sm:items-center">
-            <div className="flex flex-col divide-y w-full" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-              {comunidadItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between py-6 group cursor-pointer">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-white text-2xl sm:text-3xl font-medium">{item.label}</p>
-                    <p className={`${playfair.className} text-lg sm:text-xl mt-1 line-clamp-2`} style={{ color: "rgba(255,255,255,0.5)" }}>{item.sub}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {comunidadItems.map((item) => (
+              <div
+                key={item.label}
+                className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
+                style={{
+                  background: 'bg' in item && item.bg ? item.bg as string : "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backdropFilter: 'bg' in item ? undefined : "blur(8px)",
+                }}
+              >
+                {/* Imagen (En Femenino) */}
+                {(item.label === "Autobús lanzadera" || item.label === "Coche compartido" || item.label === "Aparcamiento VAO" || item.label === "Empresarios de hoy y de mañana" || item.label === "Voy en bici al trabajo" || item.label === "Atalayas circular") && 'imagen' in item && item.imagen ? (
+                  <>
+                    <img src={item.imagen as string} alt={item.label}
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                    <div className="absolute inset-0 rounded-2xl bg-black/40" />
+                    <div className="flex-1" />
+                  </>
+                ) : item.label !== "Autobús lanzadera" && item.label !== "Coche compartido" && item.label !== "Aparcamiento VAO" && item.label !== "Empresarios de hoy y de mañana" && item.label !== "Voy en bici al trabajo" && item.label !== "Atalayas circular" && 'imagen' in item && item.imagen ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <img src={item.imagen as string} alt={item.label}
+                      className="w-full h-full object-contain p-3" />
                   </div>
-                  <span className="text-xl shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>&#8594;</span>
+                ) : (
+                  /* Icono */
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}
+                  >
+                    {item.icono}
+                  </div>
+                )}
+
+                {/* Texto */}
+                <div className="flex flex-col gap-1 relative z-10">
+                  <p className="text-sm font-semibold leading-snug" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
+                    {item.label}
+                  </p>
+                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
+                    {item.sub}
+                  </p>
                 </div>
-              ))}
-            </div>
-            <div className="hidden sm:flex flex-col gap-4 justify-center">
-              {[
-                { numero: "+150", label: "Empresas en el parque" },
-                { numero: "+8.000", label: "Empleados directos" },
-                { numero: "25", label: "Años de gestión" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl px-6 py-4"
-                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
-                >
-                  <p className="text-white text-5xl font-extrabold leading-none">{s.numero}</p>
-                  <p className={`${playfair.className} text-base mt-2`} style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
-
-      {/* LOGO LOOP */}
-      <section className="relative w-full py-10 sm:py-14" style={{ background: "linear-gradient(to bottom, #0a1628 0%, #0D1B2E 40%)" }}>
-        <p className="text-center text-xs font-semibold uppercase tracking-widest mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
-          Empresas del parque
-        </p>
-        <LogoLoop
-          speed={35}
-          size={40}
-          gap={80}
-          logos={[
-            { src: "/logo.webp", alt: "EGM Atalayas" },
-            { src: "/logo.webp", alt: "Empresa 2" },
-            { src: "/logo.webp", alt: "Empresa 3" },
-            { src: "/logo.webp", alt: "Empresa 4" },
-            { src: "/logo.webp", alt: "Empresa 5" },
-            { src: "/logo.webp", alt: "Empresa 6" },
-          ]}
-        />
       </section>
 
       {/* FOOTER */}

@@ -1,102 +1,130 @@
 "use client";
 
-import { useRef, useCallback, useEffect, ReactNode } from "react";
-import { motion, useMotionValue, useAnimationFrame, useTransform } from "motion/react";
+import { useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import { motion, useMotionValue, useAnimationFrame, useTransform } from 'motion/react';
 
 interface GradientTextProps {
-  children:       ReactNode;
-  className?:     string;
-  style?:         React.CSSProperties;
-  /** Color stops – must be valid CSS colors */
-  colors?:        string[];
-  animationSpeed?: number;   // seconds for one half-cycle
-  pauseOnHover?:  boolean;
-  yoyo?:          boolean;
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  colors?: string[];
+  animationSpeed?: number;
+  showBorder?: boolean;
+  direction?: 'horizontal' | 'vertical' | 'diagonal';
+  pauseOnHover?: boolean;
+  yoyo?: boolean;
 }
 
 export default function GradientText({
   children,
-  className    = "",
-  style: styleProp,
-  colors       = ["#ffffff", "#d0e8a0", "#8fb040", "#d0e8a0", "#ffffff"],
-  animationSpeed = 6,
+  className = '',
+  style,
+  colors = ['#5227FF', '#FF9FFC', '#B497CF'],
+  animationSpeed = 8,
+  showBorder = false,
+  direction = 'horizontal',
   pauseOnHover = false,
-  yoyo         = true,
+  yoyo = true
 }: GradientTextProps) {
-  const isPausedRef  = useRef(false);
-  const elapsedRef   = useRef(0);
-  const lastTimeRef  = useRef<number | null>(null);
-  const progress     = useMotionValue(0);           // 0 → 1
+  const [isPaused, setIsPaused] = useState(false);
+  const progress = useMotionValue(0);
+  const elapsedRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
 
-  useAnimationFrame((time) => {
-    if (isPausedRef.current) { lastTimeRef.current = null; return; }
-    if (lastTimeRef.current === null) { lastTimeRef.current = time; return; }
+  const animationDuration = animationSpeed * 1000;
 
-    const delta = time - lastTimeRef.current;
+  useAnimationFrame(time => {
+    if (isPaused) {
+      lastTimeRef.current = null;
+      return;
+    }
+
+    if (lastTimeRef.current === null) {
+      lastTimeRef.current = time;
+      return;
+    }
+
+    const deltaTime = time - lastTimeRef.current;
     lastTimeRef.current = time;
-    elapsedRef.current += delta;
+    elapsedRef.current += deltaTime;
 
-    const duration = animationSpeed * 1000;
     if (yoyo) {
-      const full  = duration * 2;
-      const cycle = elapsedRef.current % full;
-      progress.set(cycle < duration ? cycle / duration : 1 - (cycle - duration) / duration);
+      const fullCycle = animationDuration * 2;
+      const cycleTime = elapsedRef.current % fullCycle;
+
+      if (cycleTime < animationDuration) {
+        progress.set((cycleTime / animationDuration) * 100);
+      } else {
+        progress.set(100 - ((cycleTime - animationDuration) / animationDuration) * 100);
+      }
     } else {
-      progress.set((elapsedRef.current / duration) % 1);
+      progress.set((elapsedRef.current / animationDuration) * 100);
     }
   });
 
-  useEffect(() => { elapsedRef.current = 0; progress.set(0); }, [animationSpeed, yoyo]);
+  useEffect(() => {
+    elapsedRef.current = 0;
+    progress.set(0);
+  }, [animationSpeed, yoyo]);
 
-  const handleMouseEnter = useCallback(() => { if (pauseOnHover) isPausedRef.current = true;  }, [pauseOnHover]);
-  const handleMouseLeave = useCallback(() => { if (pauseOnHover) isPausedRef.current = false; }, [pauseOnHover]);
-
-  /** Interpolate between color stops at the current progress value */
-  const color = useTransform(progress, (t: number) => {
-    const stops  = colors.length - 1;
-    const scaled = t * stops;
-    const i      = Math.min(Math.floor(scaled), stops - 1);
-    const frac   = scaled - i;
-    return lerpColor(colors[i], colors[i + 1], frac);
+  const backgroundPosition = useTransform(progress, p => {
+    if (direction === 'horizontal') {
+      return `${p}% 50%`;
+    } else if (direction === 'vertical') {
+      return `50% ${p}%`;
+    } else {
+      return `${p}% 50%`;
+    }
   });
 
+  const handleMouseEnter = useCallback(() => {
+    if (pauseOnHover) setIsPaused(true);
+  }, [pauseOnHover]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (pauseOnHover) setIsPaused(false);
+  }, [pauseOnHover]);
+
+  const gradientAngle =
+    direction === 'horizontal' ? 'to right' : direction === 'vertical' ? 'to bottom' : 'to bottom right';
+  const gradientColors = [...colors, colors[0]].join(', ');
+
+  const gradientStyle = {
+    backgroundImage: `linear-gradient(${gradientAngle}, ${gradientColors})`,
+    backgroundSize: direction === 'horizontal' ? '300% 100%' : direction === 'vertical' ? '100% 300%' : '300% 300%',
+    backgroundRepeat: 'repeat' as const,
+  };
+
   return (
-    <motion.span
-      className={className}
+    <motion.div
+      className={`relative mx-auto flex max-w-fit flex-row items-center justify-center font-medium transition-shadow duration-500 cursor-pointer ${showBorder ? 'rounded-[1.25rem] overflow-hidden py-1 px-2' : ''} ${className}`}
+      style={style}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ display: "inline", color, ...styleProp }}
     >
-      {children}
-    </motion.span>
+      {showBorder && (
+        <motion.div
+          className="absolute inset-0 z-0 pointer-events-none rounded-[1.25rem]"
+          style={{ ...gradientStyle, backgroundPosition }}
+        >
+          <div
+            className="absolute bg-black rounded-[1.25rem] z-[-1]"
+            style={{
+              width: 'calc(100% - 2px)',
+              height: 'calc(100% - 2px)',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        </motion.div>
+      )}
+      <motion.div
+        className="inline-block relative z-2 text-transparent bg-clip-text"
+        style={{ ...gradientStyle, backgroundPosition, WebkitBackgroundClip: 'text' }}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
   );
-}
-
-// ── helpers ────────────────────────────────────────────────────────────────────
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function rgbToHex(r: number, g: number, b: number) {
-  return "#" + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
-}
-
-function lerpColor(a: string, b: string, t: number) {
-  // handle both hex and rgb(...) strings
-  const ca = parseColor(a);
-  const cb = parseColor(b);
-  return rgbToHex(
-    ca[0] + (cb[0] - ca[0]) * t,
-    ca[1] + (cb[1] - ca[1]) * t,
-    ca[2] + (cb[2] - ca[2]) * t,
-  );
-}
-
-function parseColor(c: string): [number, number, number] {
-  if (c.startsWith("#")) return hexToRgb(c);
-  const m = c.match(/\d+/g);
-  return m ? [+m[0], +m[1], +m[2]] : [255, 255, 255];
 }
