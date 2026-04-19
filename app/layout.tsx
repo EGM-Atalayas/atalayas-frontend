@@ -1,6 +1,6 @@
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
-import { Inter, Playfair_Display, Poppins } from "next/font/google";
+import { Inter, Playfair_Display, Poppins, Raleway } from "next/font/google";
 
 const inter    = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
@@ -9,10 +9,15 @@ const poppins  = Poppins({
   weight:   ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
 });
+const raleway  = Raleway({
+  subsets:  ["latin"],
+  weight:   ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-raleway",
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${inter.variable} ${playfair.variable} ${poppins.variable}`}>
+    <html lang="es" className={`${inter.variable} ${playfair.variable} ${poppins.variable} ${raleway.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

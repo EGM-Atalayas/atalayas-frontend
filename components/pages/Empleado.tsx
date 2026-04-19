@@ -247,7 +247,7 @@ export default function Empleado() {
         className="relative overflow-hidden flex items-center"
         style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
       >
-        <img src="/background-dashboard.jpg" alt="" aria-hidden
+        <img src={usuario?.bannerUrl ?? "/background-dashboard.jpg"} alt="" aria-hidden
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: "center 40%" }} />
         <div className="absolute inset-0"
