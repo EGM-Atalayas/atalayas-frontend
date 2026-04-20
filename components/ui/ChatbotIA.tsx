@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react"
+import { useAuth } from "@/context/AuthContext"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,79 +29,6 @@ const SUGGESTIONS = [
   "Normas de PRL básicas",
   "¿Cómo completo un módulo?",
 ]
-
-const RESPUESTAS: Array<{ keywords: string[]; response: string }> = [
-  {
-    keywords: ["formacion", "pendiente", "formación", "mis formaciones", "que tengo"],
-    response:
-      "Tienes **3 formaciones pendientes**: *Comunicación Efectiva*, *Herramientas Digitales* y *Ciberseguridad y Protección de Datos*. Te recomiendo empezar por **Comunicación Efectiva**, ya que es la base para el resto. ¿Quieres acceder directamente?",
-  },
-  {
-    keywords: ["progreso", "avance", "completado", "cuanto llevo", "cuánto llevo"],
-    response:
-      "Tu progreso actual: ✅ *Incorporación y Bienvenida* — **100% completado** 🔄 *Negociación y Habilidades Directivas* — **60% en progreso** ⏳ *Comunicación Efectiva* — **pendiente**. ¡Vas por buen camino! Tienes 1 módulo completado esta semana.",
-  },
-  {
-    keywords: ["comunicado", "noticia", "anuncio"],
-    response:
-      "El último comunicado es del 14 de abril: *'Actualización del protocolo de acceso al parking'*. A partir del 1 de mayo se requerirá tarjeta de empresa para acceder. También hay un anuncio sobre la **Jornada de Networking del 24 de mayo**. ¿Quieres más detalles de alguno?",
-  },
-  {
-    keywords: ["prl", "riesgo", "seguridad", "prevencion", "prevención"],
-    response:
-      "Las normas básicas de PRL en el área empresarial EGM: ✅ Uso de EPI en zonas señalizadas ✅ Comunicar cualquier incidente al responsable ✅ No manipular equipos sin formación específica ✅ Mantener las salidas de emergencia despejadas ✅ Velocidad máxima en el parking: 10 km/h. ¿Necesitas información sobre alguna norma específica?",
-  },
-  {
-    keywords: ["modulo", "completar", "módulo", "como funciona", "cómo funciona"],
-    response:
-      "Para completar un módulo: 1️⃣ Accede a **Formación** en el menú lateral 2️⃣ Selecciona el módulo que quieres realizar 3️⃣ Completa cada sección en orden 4️⃣ Responde el cuestionario final (mínimo 2/3 aciertos). ¡El progreso se guarda automáticamente y puedes continuar donde lo dejaste!",
-  },
-  {
-    keywords: ["certificado", "diploma", "logro"],
-    response:
-      "Al completar cada módulo recibirás un **certificado digital** con tu nombre y la fecha de finalización. Los certificados de los módulos de PRL y Protección de Datos tienen validez oficial. Puedes descargarlos desde tu perfil. 🏆",
-  },
-  {
-    keywords: ["evento", "actividad", "networking", "comunidad"],
-    response:
-      "Próximos eventos en el área EGM: 📅 **24 de mayo** — Jornada de Networking (42 inscritos) 📅 **Junio** — Team Building entre empresas 📅 **Julio** — Jornada 'En Femenino'. ¿Te apunto a alguno?",
-  },
-  {
-    keywords: ["equipo", "compañero", "empresa"],
-    response:
-      "Tu empresa tiene actualmente **28 empleados activos**. El progreso medio del equipo en formación es del **67%**. Los módulos con mayor participación son *Onboarding Corporativo* (89%) y *Protección de Datos* (78%). ¿Quieres ver el detalle de algún módulo?",
-  },
-  {
-    keywords: ["hola", "buenas", "buenos días", "buenas tardes"],
-    response:
-      "¡Hola! 👋 Estoy aquí para ayudarte. Puedo informarte sobre tus **formaciones pendientes**, el **progreso del equipo**, **comunicados** del área, normas de **PRL** o cómo usar la plataforma. ¿Por dónde empezamos?",
-  },
-  {
-    keywords: ["gracias", "perfecto", "genial", "ok"],
-    response:
-      "¡De nada! 😊 Si necesitas cualquier otra cosa, aquí estaré. ¡Mucho ánimo con la formación!",
-  },
-]
-
-const DEFAULT_RESPONSE =
-  "Entendido. Déjame revisar eso por ti... Mientras tanto, puedes explorar la sección de **Formación** o consultar los **Comunicados** más recientes. Si necesitas algo concreto, intenta preguntarme sobre tu progreso, PRL, comunicados o próximos eventos. 💡"
-
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-}
-
-function getMockResponse(text: string): string {
-  const normalized = normalize(text)
-  for (const entry of RESPUESTAS) {
-    if (entry.keywords.some((kw) => normalized.includes(kw))) {
-      return entry.response
-    }
-  }
-  return DEFAULT_RESPONSE
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -205,7 +133,6 @@ function TypingIndicator() {
 }
 
 function renderText(text: string) {
-  // Render **bold** and *italic* markdown inline
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
@@ -259,13 +186,7 @@ function MessageBubble({ message }: { message: Message }) {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        marginBottom: "12px",
-      }}
-    >
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
       <div style={{ maxWidth: "82%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px" }}>
         <div
           style={{
@@ -288,6 +209,7 @@ function MessageBubble({ message }: { message: Message }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ChatbotIA() {
+  const { usuario } = useAuth()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
   const [input, setInput] = useState("")
@@ -296,41 +218,75 @@ export default function ChatbotIA() {
   const [showTooltip, setShowTooltip] = useState(false)
   const [suggestionsSent, setSuggestionsSent] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const apiHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([])
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
 
-  // Clear unread badge when panel opens
   useEffect(() => {
-    if (open) {
-      setHasUnread(false)
-    }
+    if (open) setHasUnread(false)
   }, [open])
 
-  function sendMessage(text: string) {
-    if (!text.trim()) return
+  async function sendMessage(text: string) {
+    if (!text.trim() || isTyping) return
+
+    const now = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
 
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), role: "user", text: text.trim(), time: "Ahora" },
+      { id: Date.now().toString(), role: "user", text: text.trim(), time: now },
     ])
     setInput("")
     setIsTyping(true)
 
-    setTimeout(() => {
+    apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content: text.trim() }]
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: apiHistoryRef.current,
+          context: {
+            nombreUsuario: usuario
+              ? `${usuario.nombre} ${usuario.apellidos ?? ""}`.trim()
+              : undefined,
+            empresa: usuario?.nombreEmpresa ?? undefined,
+            rol: usuario?.codigoRol ?? undefined,
+          },
+        }),
+      })
+
+      const data = await res.json()
+      const responseText: string = res.ok
+        ? data.message
+        : "Lo siento, ha ocurrido un error. Inténtalo de nuevo. 🙏"
+
+      apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: responseText }]
+
       setIsTyping(false)
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          text: getMockResponse(text),
-          time: "Ahora",
+          text: responseText,
+          time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
         },
       ])
-    }, 1200)
+    } catch {
+      setIsTyping(false)
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: "Lo siento, no he podido conectar con el asistente. Comprueba tu conexión e inténtalo de nuevo. 🙏",
+          time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
+        },
+      ])
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -347,7 +303,6 @@ export default function ChatbotIA() {
 
   return (
     <>
-      {/* ── Keyframe styles injected once ───────────────────────────── */}
       <style>{`
         @keyframes chatbotBounce {
           0%, 60%, 100% { transform: translateY(0); }
@@ -361,34 +316,20 @@ export default function ChatbotIA() {
           0%, 100% { box-shadow: 0 8px 32px rgba(124,58,237,0.4); }
           50%       { box-shadow: 0 8px 40px rgba(124,58,237,0.65); }
         }
-        .chatbot-fab:hover {
-          transform: scale(1.08) !important;
-        }
-        .chatbot-send:hover:not(:disabled) {
-          opacity: 0.9;
-          transform: scale(1.05);
-        }
+        .chatbot-fab:hover { transform: scale(1.08) !important; }
+        .chatbot-send:hover:not(:disabled) { opacity: 0.9; transform: scale(1.05); }
         .chatbot-chip:hover {
           background: #ede9fe !important;
           border-color: #7c3aed !important;
           color: #5b21b6 !important;
         }
-        .chatbot-close:hover {
-          background: rgba(255,255,255,0.2) !important;
-        }
-        .chatbot-messages::-webkit-scrollbar {
-          width: 4px;
-        }
-        .chatbot-messages::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .chatbot-messages::-webkit-scrollbar-thumb {
-          background: #e5e7eb;
-          border-radius: 4px;
-        }
+        .chatbot-close:hover { background: rgba(255,255,255,0.2) !important; }
+        .chatbot-messages::-webkit-scrollbar { width: 4px; }
+        .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
       `}</style>
 
-      {/* ── Floating Action Button ────────────────────────────────────── */}
+      {/* ── Floating Action Button ─────────────────────────────────────── */}
       <div
         style={{
           position: "fixed",
@@ -400,7 +341,6 @@ export default function ChatbotIA() {
           gap: "10px",
         }}
       >
-        {/* Tooltip */}
         {showTooltip && !open && (
           <div
             style={{
@@ -420,7 +360,6 @@ export default function ChatbotIA() {
           </div>
         )}
 
-        {/* FAB button */}
         <button
           className="chatbot-fab"
           onClick={() => setOpen((prev) => !prev)}
@@ -445,8 +384,6 @@ export default function ChatbotIA() {
           }}
         >
           <SparkleIcon size={22} />
-
-          {/* Unread badge */}
           {hasUnread && (
             <span
               style={{
@@ -464,7 +401,7 @@ export default function ChatbotIA() {
         </button>
       </div>
 
-      {/* ── Chat Panel ───────────────────────────────────────────────── */}
+      {/* ── Chat Panel ────────────────────────────────────────────────── */}
       {open && (
         <div
           style={{
@@ -494,7 +431,6 @@ export default function ChatbotIA() {
               flexShrink: 0,
             }}
           >
-            {/* Avatar */}
             <div style={{ position: "relative", flexShrink: 0 }}>
               <div
                 style={{
@@ -510,7 +446,6 @@ export default function ChatbotIA() {
               >
                 <SparkleIcon size={18} />
               </div>
-              {/* Online indicator */}
               <span
                 style={{
                   position: "absolute",
@@ -525,7 +460,6 @@ export default function ChatbotIA() {
               />
             </div>
 
-            {/* Title */}
             <div style={{ flex: 1 }}>
               <div style={{ color: "white", fontWeight: 700, fontSize: "14px", lineHeight: 1.2 }}>
                 Asistente Atalayas
@@ -535,7 +469,6 @@ export default function ChatbotIA() {
               </div>
             </div>
 
-            {/* Close button */}
             <button
               className="chatbot-close"
               onClick={() => setOpen(false)}
@@ -558,7 +491,7 @@ export default function ChatbotIA() {
             </button>
           </div>
 
-          {/* Messages area */}
+          {/* Messages */}
           <div
             className="chatbot-messages"
             style={{
@@ -573,7 +506,6 @@ export default function ChatbotIA() {
               <MessageBubble key={msg.id} message={msg} />
             ))}
 
-            {/* Suggestion chips — shown after initial message, before user sends anything */}
             {!suggestionsSent && messages.length === 1 && (
               <div
                 style={{
@@ -608,14 +540,11 @@ export default function ChatbotIA() {
               </div>
             )}
 
-            {/* Typing indicator */}
             {isTyping && <TypingIndicator />}
-
-            {/* Scroll anchor */}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area */}
+          {/* Input */}
           <div
             style={{
               borderTop: "1px solid #e5e7eb",
@@ -633,6 +562,7 @@ export default function ChatbotIA() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu consulta..."
+              disabled={isTyping}
               style={{
                 flex: 1,
                 border: "none",
@@ -642,22 +572,24 @@ export default function ChatbotIA() {
                 background: "transparent",
                 padding: "8px 4px",
                 fontFamily: "inherit",
+                opacity: isTyping ? 0.5 : 1,
               }}
             />
             <button
               className="chatbot-send"
               onClick={() => sendMessage(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isTyping}
               aria-label="Enviar mensaje"
               style={{
                 width: "36px",
                 height: "36px",
                 borderRadius: "50%",
-                background: input.trim()
-                  ? "linear-gradient(135deg, #7c3aed, #6366f1)"
-                  : "#e5e7eb",
+                background:
+                  input.trim() && !isTyping
+                    ? "linear-gradient(135deg, #7c3aed, #6366f1)"
+                    : "#e5e7eb",
                 border: "none",
-                cursor: input.trim() ? "pointer" : "not-allowed",
+                cursor: input.trim() && !isTyping ? "pointer" : "not-allowed",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
