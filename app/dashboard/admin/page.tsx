@@ -897,7 +897,7 @@ function AdminContent() {
                 </div>
                 <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
                 <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo formativo para tus empleados</p>
-                <button onClick={() => { resetFormModulo(); setShowFormModulo(true); }}
+                <button onClick={() => router.push("/dashboard/admin/modulos/crear")}
                   className="text-xs font-semibold px-4 py-2 rounded-xl"
                   style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
                   Crear el primero →

@@ -1,7 +1,7 @@
 // lib/api.ts
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-1c1h.onrender.com/api";
+  "https://atalayas-backend-1c1h.onrender.com/api/v1";
 
 /**
  * Wrapper de fetch que incluye credentials: "include" para enviar
@@ -11,8 +11,7 @@ export const API_URL =
 export const apiFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, {
     ...options,
-    
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
