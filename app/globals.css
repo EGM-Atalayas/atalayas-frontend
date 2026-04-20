@@ -36,6 +36,29 @@ body::-webkit-scrollbar,
   --info-light: #E3ECF5;
 }
 
+/* ── Disponibilidad dropdown ──────────────────────────────────────────────── */
+.disp-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  text-align: left;
+  background: transparent;
+  color: var(--texto-primario);
+  transition: background 60ms linear;
+  cursor: pointer;
+}
+.disp-option:hover:not(.disp-option--selected) {
+  background: var(--azul-egm-light);
+}
+.disp-option--selected {
+  background: var(--azul-egm);
+  color: #fff;
+  font-weight: 500;
+}
+
 /* ── Liquid Glass ─────────────────────────────────────────────────────────── */
 .liquid-glass {
   background: rgba(255, 255, 255, 0.01);

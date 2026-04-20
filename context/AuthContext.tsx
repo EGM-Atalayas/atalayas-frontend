@@ -15,6 +15,7 @@ interface Usuario {
   usuarioId?: string;
   email?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   nombreRol?: string;
   invitado?: boolean;
 }

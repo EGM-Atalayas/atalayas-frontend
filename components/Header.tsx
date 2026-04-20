@@ -93,6 +93,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   // Configuramos dónde van los botones dependiendo de quién esté logueado
   const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
   const linkPerfil = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/perfil";
+  const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/configuracion";
   const linkNotificaciones = isSuperAdmin ? "/superadmin/solicitudes" : "/dashboard/comunicacion";
 
   return (
@@ -162,7 +163,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
             empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
             initials={initials}
             logoEmpresa={logoEmpresa}
+            avatarUrl={usuario?.avatarUrl}
             onPerfil={() => router.push(linkPerfil)}
+            onConfiguracion={() => router.push(linkConfiguracion)}
             onCerrarSesion={handleLogout}
           />
 
