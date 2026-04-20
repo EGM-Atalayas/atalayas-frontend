@@ -1,157 +1,166 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  AreaChart, Area, PieChart, Pie, Cell, Legend
-} from "recharts";
 import { API_URL, apiFetch } from "@/lib/api";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, BarChart, Bar, LabelList
+} from "recharts";
+import { FaChartPie } from "react-icons/fa";
 
-// --- MOCKS TEMPORALES PARA EL DISEÑO ---
-// Mientras tu backend crea el endpoint, usaremos estos datos para que veas cómo queda
-const mockEvolucion = [
-  { mes: "Ene", empresas: 4, empleados: 120 },
-  { mes: "Feb", empresas: 7, empleados: 250 },
-  { mes: "Mar", empresas: 10, empleados: 380 },
-  { mes: "Abr", empresas: 15, empleados: 520 },
-  { mes: "May", empresas: 18, empleados: 743 },
-];
+// 1. Interfaz para el backend
+export interface EstadisticasResponse {
+  crecimiento: { mes: string; empleados: number; empresas: number }[];
+  sectores: { nombre: string; valor: number; color: string }[];
+  usuarios: { rol: string; cantidad: number; color: string }[];
+}
 
-const mockSectores = [
-  { name: "Tecnología", value: 35 },
-  { name: "Logística", value: 25 },
-  { name: "Salud", value: 20 },
-  { name: "Construcción", value: 20 },
-];
-const COLORES_SECTORES = ["#2563EB", "#10B981", "#F43F5E", "#8B5CF6"];
+// Datos de emergencia (Mocks)
+const mockFallback: EstadisticasResponse = {
+  crecimiento: [
+    { mes: "Ene", empleados: 10, empresas: 5 },
+    { mes: "Feb", empleados: 25, empresas: 8 },
+    { mes: "Mar", empleados: 50, empresas: 12 },
+    { mes: "Abr", empleados: 80, empresas: 15 },
+    { mes: "May", empleados: 100, empresas: 18 },
+  ],
+  sectores: [
+    { nombre: "Construcción", valor: 30, color: "#8B5CF6" },
+    { nombre: "Logística", valor: 25, color: "#10B981" },
+    { nombre: "Salud", valor: 20, color: "#F43F5E" },
+    { nombre: "Tecnología", valor: 25, color: "#3B82F6" },
+  ],
+  usuarios: [
+    { rol: "SuperAdmins", cantidad: 5, color: "#F59E0B" },
+    { rol: "Admins Empresa", cantidad: 30, color: "#3B82F6" },
+    { rol: "Empleados", cantidad: 200, color: "#10B981" },
+  ]
+};
 
-const mockModulos = [
-  { nombre: "Onboarding", completados: 450, pendientes: 120 },
-  { nombre: "PRL Básico", completados: 380, pendientes: 190 },
-  { nombre: "Ciberseguridad", completados: 210, pendientes: 360 },
-];
+const EstadisticasPage: React.FC = () => {
+  const [data, setData] = useState<EstadisticasResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default function EstadisticasPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [dataEvolucion, setDataEvolucion] = useState(mockEvolucion);
-  const [dataSectores, setDataSectores] = useState(mockSectores);
-  const [dataModulos, setDataModulos] = useState(mockModulos);
-
-  // Cuando el backend esté listo, descomenta esto para usar datos reales
-  /*
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchEstadisticas = async () => {
       setIsLoading(true);
       try {
-        const res = await apiFetch(`${API_URL}/estadisticas/superadmin`);
-        if (res.ok) {
-          const json = await res.json();
-          setDataEvolucion(json.evolucion);
-          setDataSectores(json.sectores);
-          setDataModulos(json.modulos);
-        }
-      } catch (error) {
-        console.error("Error al cargar estadísticas", error);
+        const response = await apiFetch(`${API_URL}/estadisticas/superadmin`);
+        if (!response.ok) throw new Error();
+        const json = await response.json();
+        setData(json);
+      } catch (err) {
+        setData(mockFallback); 
       } finally {
         setIsLoading(false);
       }
     };
-    fetchStats();
+    fetchEstadisticas();
   }, []);
-  */
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 w-full max-w-7xl mx-auto animate-fadeIn">
+    <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto animate-fadeIn mt-6">
+      
+      {/* CABECERA */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-blue-950">Estadísticas y Analítica</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Métricas detalladas del uso de la plataforma en el parque empresarial.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Estadísticas Generales</h1>
+        <p className="text-slate-500 text-sm mt-1.5">Análisis del crecimiento y distribución del parque empresarial.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* GRÁFICO 1: EVOLUCIÓN (Ocupa todo el ancho en móvil, media pantalla en PC) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-          <h2 className="text-lg font-bold text-blue-950 mb-6">Crecimiento de la Plataforma</h2>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dataEvolucion} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorEmpleados" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <RechartsTooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Legend verticalAlign="top" height={36} />
-                <Area type="monotone" dataKey="empleados" name="Empleados Totales" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#colorEmpleados)" />
-                <Area type="monotone" dataKey="empresas" name="Empresas" stroke="#10B981" strokeWidth={3} fillOpacity={0} fill="none" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      {/* 1. CRECIMIENTO */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+        <h2 className="text-lg font-bold text-slate-800 mb-6">Crecimiento de la Plataforma</h2>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data?.crecimiento} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorEmpleados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+              <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+              <Legend verticalAlign="top" height={36} iconType="circle" />
+              <Area type="monotone" name="Empleados Totales" dataKey="empleados" stroke="#3B82F6" strokeWidth={3} fill="url(#colorEmpleados)" />
+              <Area type="monotone" name="Empresas" dataKey="empresas" stroke="#10B981" strokeWidth={3} fillOpacity={0} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
+      </div>
 
-        {/* GRÁFICO 2: DISTRIBUCIÓN POR SECTOR (Anillo) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Gráfico Quesito: Sectores */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-blue-950 mb-6">Empresas por Sector</h2>
-          <div className="h-64 w-full flex justify-center">
+          <h2 className="text-lg font-bold text-slate-800 mb-6">Empresas por Sector</h2>
+          <div className="h-[300px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={dataSectores}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {dataSectores.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORES_SECTORES[index % COLORES_SECTORES.length]} />
+                <Pie data={data?.sectores} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="valor" nameKey="nombre" stroke="none">
+                  {data?.sectores.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend iconType="circle" />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* GRÁFICO 3: MÓDULOS (Barras apiladas) */}
+        {/* NUEVO GRÁFICO DE BARRAS VERTICALES: DISTRIBUCIÓN DE USUARIOS */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-blue-950 mb-6">Estado de Formaciones</h2>
-          <div className="h-64 w-full">
+          <h2 className="text-lg font-bold text-slate-800 mb-6">Distribución de Usuarios por Rol</h2>
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataModulos} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} barSize={30}>
+              <BarChart
+                data={data?.usuarios}
+                margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="nombre" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <XAxis 
+                  dataKey="rol" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} 
+                  dy={10} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94a3b8', fontSize: 12}} 
+                />
                 <RechartsTooltip 
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
                 />
-                <Legend iconType="circle" />
-                <Bar dataKey="completados" name="Completados" stackId="a" fill="#10B981" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="pendientes" name="Pendientes" stackId="a" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+                {/* Barras verticales, borde redondeado arriba [top-left, top-right, bottom-right, bottom-left] */}
+                <Bar dataKey="cantidad" radius={[10, 10, 0, 0]} barSize={50}>
+                  {data?.usuarios.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                  {/* Número encima de la barra */}
+                  <LabelList dataKey="cantidad" position="top" style={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} dy={-5} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
       </div>
     </div>
   );
-}
+};
+
+export default EstadisticasPage;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { FaBan, FaCheckCircle, FaSearch, FaBuilding, FaRegFolderOpen } from "react-icons/fa";
+import { FaBan, FaCheckCircle, FaSearch, FaBuilding, FaRegFolderOpen, FaClock } from "react-icons/fa";
 import { getEmpresas, actualizarEstadoEmpresa } from "@/lib/api/empresas";
 
 export interface EmpresaDB {
@@ -9,12 +9,10 @@ export interface EmpresaDB {
   nombreEmpresa: string;
   cif: string;
   emailContacto: string;
-  // ¡Aquí está la magia! Usamos el nombre exacto de la base de datos de César
   estadoSolicitud?: "ACTIVA" | "INACTIVA" | "APROBADA" | "RECHAZADA" | "PENDIENTE" | string; 
   [key: string]: any; 
 }
 
-// Soporte visual
 const coloresEstado: Record<string, string> = {
   ACTIVA: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
   APROBADA: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
@@ -29,7 +27,7 @@ const GestionEmpresas: React.FC = () => {
   const [error, setError] = useState("");
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState<"TODAS" | "ACTIVA" | "INACTIVA">("TODAS");
+  const [filtroEstado, setFiltroEstado] = useState<"TODAS" | "ACTIVA" | "INACTIVA" | "PENDIENTE">("TODAS");
 
   useEffect(() => {
     fetchData();
@@ -51,12 +49,11 @@ const GestionEmpresas: React.FC = () => {
 
   const toggleActivacion = async (id: string, estadoActual: string) => {
     const estadoLimpio = String(estadoActual || "").toUpperCase().trim();
+    if (estadoLimpio === "PENDIENTE") return; // Las pendientes se gestionan en Solicitudes
+
     const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
-    
-    // Ahora enviamos directamente APROBADA o RECHAZADA para que a César le encaje a la perfección
     const nuevoEstado = esActiva ? "RECHAZADA" : "APROBADA";
     
-    // Optimistic UI
     setEmpresas(empresas.map((emp) =>
       emp.empresaId === id ? { ...emp, estadoSolicitud: nuevoEstado } : emp
     ));
@@ -66,8 +63,6 @@ const GestionEmpresas: React.FC = () => {
     } catch (error) {
       console.error("Error cambiando estado:", error);
       alert("Hubo un error al guardar el cambio en el servidor.");
-      
-      // Rollback si falla
       setEmpresas(empresas.map((emp) =>
         emp.empresaId === id ? { ...emp, estadoSolicitud: estadoActual } : emp
       ));
@@ -88,6 +83,8 @@ const GestionEmpresas: React.FC = () => {
         coincideEstado = true;
       } else if (filtroEstado === "INACTIVA" && (estadoLimpio === "INACTIVA" || estadoLimpio === "RECHAZADA" || estadoLimpio === "")) {
         coincideEstado = true;
+      } else if (filtroEstado === "PENDIENTE" && estadoLimpio === "PENDIENTE") {
+        coincideEstado = true;
       }
       
       return coincideBusqueda && coincideEstado;
@@ -104,10 +101,14 @@ const GestionEmpresas: React.FC = () => {
         const est = String(e.estadoSolicitud || "").toUpperCase().trim();
         return est === "INACTIVA" || est === "RECHAZADA" || est === "";
     }).length,
+    pendientes: empresas.filter(e => {
+        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
+        return est === "PENDIENTE";
+    }).length,
   };
 
   return (
-    <div className="p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-fadeIn">
+    <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto animate-fadeIn mt-6">
       
       {/* CABECERA */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -125,7 +126,7 @@ const GestionEmpresas: React.FC = () => {
       )}
 
       {/* KPI CARDS (Resumen estadístico) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <FaBuilding size={20} />
@@ -153,18 +154,27 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.inactivas}</p>
           </div>
         </div>
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+            <FaClock size={20} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Pendientes</p>
+            <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.pendientes}</p>
+          </div>
+        </div>
       </div>
 
-      {/* BARRA DE HERRAMIENTAS (Filtros y Buscador) */}
+      {/* BARRA DE HERRAMIENTAS */}
       <div className="bg-white p-4 rounded-t-2xl border-x border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
         
         {/* Tabs de Filtro */}
-        <div className="flex bg-slate-100/50 p-1 rounded-xl w-full md:w-auto">
-          {["TODAS", "ACTIVA", "INACTIVA"].map((tab) => (
+        <div className="flex bg-slate-100/50 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+          {["TODAS", "ACTIVA", "INACTIVA", "PENDIENTE"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFiltroEstado(tab as any)}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 capitalize ${
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 capitalize whitespace-nowrap ${
                 filtroEstado === tab 
                   ? "bg-white text-blue-600 shadow-sm" 
                   : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
@@ -176,7 +186,7 @@ const GestionEmpresas: React.FC = () => {
         </div>
 
         {/* Buscador */}
-        <div className="relative w-full md:w-72">
+        <div className="relative w-full md:w-72 shrink-0">
           <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
           <input 
             type="text"
@@ -191,7 +201,7 @@ const GestionEmpresas: React.FC = () => {
       {/* TABLA PRINCIPAL */}
       <div className="bg-white rounded-b-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
+          <table className="w-full text-left text-sm text-slate-600 min-w-[800px]">
             <thead className="bg-slate-50/50 text-slate-500 text-xs uppercase font-bold tracking-wider border-y border-slate-100">
               <tr>
                 <th className="px-6 py-5">Empresa</th>
@@ -225,10 +235,17 @@ const GestionEmpresas: React.FC = () => {
                 </tr>
               ) : (
                 empresasFiltradas.map((empresa) => {
-                  
                   const estadoLimpio = String(empresa.estadoSolicitud || "").toUpperCase().trim();
                   const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
-                  const textoEstado = esActiva ? "ACTIVA" : "INACTIVA";
+                  const esPendiente = estadoLimpio === "PENDIENTE";
+                  
+                  let textoEstado = "INACTIVA";
+                  if (esActiva) textoEstado = "ACTIVA";
+                  if (esPendiente) textoEstado = "PENDIENTE";
+
+                  let colorPunto = 'bg-slate-400';
+                  if (esActiva) colorPunto = 'bg-emerald-500';
+                  if (esPendiente) colorPunto = 'bg-amber-500';
 
                   return (
                     <tr key={empresa.empresaId} className="hover:bg-slate-50/80 transition-colors group">
@@ -241,16 +258,18 @@ const GestionEmpresas: React.FC = () => {
                       <td className="px-6 py-4 text-slate-500">{empresa.emailContacto}</td>
                       
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${esActiva ? coloresEstado.ACTIVA : coloresEstado.INACTIVA}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${esActiva ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${coloresEstado[estadoLimpio] || coloresEstado.INACTIVA}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${colorPunto}`}></span>
                           {textoEstado}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        {esActiva ? (
+                        {esPendiente ? (
+                          <span className="text-xs text-slate-400 font-medium italic">En Solicitudes</span>
+                        ) : esActiva ? (
                           <button 
-                            onClick={() => toggleActivacion(empresa.empresaId, empresa.estadoSolicitud || "ACTIVA")}
+                            onClick={() => toggleActivacion(empresa.empresaId, estadoLimpio)}
                             className="p-2 rounded-xl transition-all text-slate-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                             title="Pausar actividad"
                           >
@@ -258,7 +277,7 @@ const GestionEmpresas: React.FC = () => {
                           </button>
                         ) : (
                           <button 
-                            onClick={() => toggleActivacion(empresa.empresaId, empresa.estadoSolicitud || "INACTIVA")}
+                            onClick={() => toggleActivacion(empresa.empresaId, estadoLimpio)}
                             className="p-2 rounded-xl transition-all text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                             title="Reactivar empresa"
                           >
