@@ -4,7 +4,7 @@ import Link from "next/link";
 import LineWaves from "@/components/ui/LineWaves";
 import SplitText from "@/components/ui/SplitText";
 
-const HEADING = "¿Tu empresa está en el parque empresarial?";
+const HEADING = "¿Tu empresa está en el área empresarial?";
 
 export default function FooterCTA() {
   return (

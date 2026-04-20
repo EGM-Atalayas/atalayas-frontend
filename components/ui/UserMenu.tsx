@@ -9,7 +9,9 @@ interface UserMenuProps {
   empresaNombre?: string;
   initials: string;
   logoEmpresa?: string;
+  avatarUrl?: string;
   onPerfil: () => void;
+  onConfiguracion: () => void;
   onCerrarSesion: () => void;
 }
 
@@ -24,6 +26,17 @@ const CARDS = [
     bg: "#ffffff",
     color: "#111827",
     action: "perfil" as const,
+  },
+  {
+    label: "Configuración",
+    icon: (
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    bg: "#f9fafb",
+    color: "#374151",
+    action: "configuracion" as const,
   },
   {
     label: "Cerrar sesión",
@@ -43,7 +56,9 @@ export default function UserMenu({
   empresaNombre,
   initials,
   logoEmpresa,
+  avatarUrl,
   onPerfil,
+  onConfiguracion,
   onCerrarSesion,
 }: UserMenuProps) {
   const [open, setOpen]       = useState(false);
@@ -102,9 +117,10 @@ export default function UserMenu({
     open ? closeMenu() : openMenu();
   }
 
-  function handleAction(action: "perfil" | "logout") {
+  function handleAction(action: "perfil" | "configuracion" | "logout") {
     closeMenu();
     if (action === "perfil") onPerfil();
+    else if (action === "configuracion") onConfiguracion();
     else onCerrarSesion();
   }
 
@@ -128,7 +144,10 @@ export default function UserMenu({
             border:     "2px solid rgba(255,255,255,0.5)",
           }}
         >
-          {logoEmpresa ? (
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="Avatar" width={36} height={36}
+              className="object-cover rounded-full" />
+          ) : logoEmpresa ? (
             <Image src={logoEmpresa} alt="Logo empresa" width={36} height={36}
               className="object-cover rounded-full" />
           ) : initials}
@@ -177,7 +196,9 @@ export default function UserMenu({
                   border:     "2px solid #e5e7eb",
                 }}
               >
-                {initials}
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="Avatar" width={32} height={32} className="object-cover rounded-full" />
+                ) : initials}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate" style={{ color: "#111827" }}>

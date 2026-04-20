@@ -19,7 +19,7 @@ type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal
 
 const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
   { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
-    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al parque.",
+    descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al área.",
     tipoModulo: "IDENTIDAD", orden: 1, activo: true, empresaId: null, esEspecializadoIa: false,
     creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4 },
   { moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",
@@ -247,7 +247,7 @@ export default function Empleado() {
         className="relative overflow-hidden flex items-center"
         style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
       >
-        <img src="/background-dashboard.jpg" alt="" aria-hidden
+        <img src={usuario?.bannerUrl ?? "/background-dashboard.jpg"} alt="" aria-hidden
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: "center 40%" }} />
         <div className="absolute inset-0"

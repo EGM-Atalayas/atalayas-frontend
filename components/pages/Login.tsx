@@ -364,7 +364,7 @@ const LoginPage: React.FC = () => {
                   ¿Tu empresa aún no está en Atalayas?
                 </p>
                 <p className="text-sm leading-relaxed mt-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>
-                  Regístrala y accede a la plataforma del parque empresarial.
+                  Regístrala y accede a la plataforma del área empresarial.
                 </p>
               </div>
               <Link

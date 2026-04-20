@@ -114,7 +114,7 @@ const GestionEmpresas: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Gestión de Empresas</h1>
-          <p className="text-slate-500 text-sm mt-1.5">Administra, pausa o reactiva las empresas del parque empresarial.</p>
+          <p className="text-slate-500 text-sm mt-1.5">Administra, pausa o reactiva las empresas del área empresarial.</p>
         </div>
       </div>
 

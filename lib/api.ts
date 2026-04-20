@@ -1,7 +1,7 @@
 // lib/api.ts
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-production-4777.up.railway.app/api/v1";
+  "https://atalayas-backend-1c1h.onrender.com/api";
 
 /**
  * Wrapper de fetch que incluye credentials: "include" para enviar
@@ -11,7 +11,7 @@ export const API_URL =
 export const apiFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, {
     ...options,
-    // ¡ESTA ES LA LÍNEA QUE SALVARÁ TU VIDA!
+    
     credentials: "include", 
     headers: {
       "Content-Type": "application/json",

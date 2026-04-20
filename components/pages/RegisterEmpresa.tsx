@@ -111,7 +111,7 @@ const RegisterEmpresa: React.FC = () => {
         <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Tu empresa
         </h2>
-        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al parque empresarial de Atalayas.</p>
+        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al área empresarial de Atalayas.</p>
       </div>
 
       <div>

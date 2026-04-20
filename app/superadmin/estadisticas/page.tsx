@@ -71,8 +71,10 @@ const EstadisticasPage: React.FC = () => {
       
       {/* CABECERA */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Estadísticas Generales</h1>
-        <p className="text-slate-500 text-sm mt-1.5">Análisis del crecimiento y distribución del parque empresarial.</p>
+        <h1 className="text-2xl font-bold text-blue-950">Estadísticas y Analítica</h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Métricas detalladas del uso de la plataforma en el parque empresarial.
+        </p>
       </div>
 
       {/* 1. CRECIMIENTO */}
