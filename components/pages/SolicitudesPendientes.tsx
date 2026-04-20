@@ -4,15 +4,14 @@ import React, { useState, useEffect } from "react";
 import { FaCheck, FaTimes, FaBuilding, FaEnvelope, FaIdCard, FaUserTie, FaRegCalendarAlt } from "react-icons/fa";
 import { getEmpresas, actualizarEstadoEmpresa } from "@/lib/api/empresas";
 
-// Interfaz ajustada exactamente a lo que mandaste en tu payload de RegisterEmpresa.tsx
 export interface SolicitudDB {
   empresaId: string;
   nombreEmpresa: string;
   cif: string;
-  emailContacto: string; // <-- Así lo llamaste en el payload
-  nombre?: string;       // Datos del admin
-  apellidos?: string;    // Datos del admin
-  emailAdmin?: string;   // Datos del admin
+  emailContacto: string; 
+  nombre?: string;       
+  apellidos?: string;    
+  emailAdmin?: string;   
   fechaSolicitud?: string;
   estadoSolicitud?: string;
   [key: string]: any; 
@@ -31,10 +30,8 @@ const SolicitudesPendientes: React.FC = () => {
     setIsLoading(true);
     setError("");
     try {
-      // 1. Nos traemos TODAS las empresas
       const data = await getEmpresas();
       
-      // 2. FILTRO MÁGICO: Nos quedamos SOLO con las pendientes
       const pendientes = data.filter((emp: any) => {
         const estado = String(emp.estadoSolicitud || "").toUpperCase().trim();
         return estado === "PENDIENTE";
@@ -49,22 +46,20 @@ const SolicitudesPendientes: React.FC = () => {
     }
   };
 
-  // Función para aprobar o rechazar
   const procesarSolicitud = async (id: string, accion: "APROBADA" | "RECHAZADA") => {
-    // Optimistic UI: Lo quitamos de la lista al instante para que la tarjeta desaparezca suavemente
+    // Escondemos la tarjeta al instante
     setSolicitudes((prev) => prev.filter((sol) => sol.empresaId !== id));
 
     try {
       await actualizarEstadoEmpresa(id, accion);
     } catch (error) {
       console.error(`Error al ${accion}:`, error);
-      alert(`Hubo un error al ${accion === 'APROBADA' ? 'aprobar' : 'rechazar'} la solicitud.`);
-      // Si falla, recargamos la lista desde el servidor
+      alert(`El servidor devolvió un error al intentar ${accion === 'APROBADA' ? 'aprobar' : 'rechazar'}. César debe revisar los logs del backend.`);
+      // Si falla, volvemos a mostrar la tarjeta
       fetchSolicitudes();
     }
   };
 
-  // Función a prueba de balas para las fechas (Adiós al "Invalid Date")
   const formatearFecha = (fechaString?: string) => {
     if (!fechaString) return "Fecha no disponible";
     try {
@@ -107,12 +102,10 @@ const SolicitudesPendientes: React.FC = () => {
           <p className="text-slate-500">No hay ninguna solicitud de empresa pendiente de revisión en este momento.</p>
         </div>
       ) : (
-        /* GRID DE TARJETAS */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {solicitudes.map((solicitud) => (
             <div key={solicitud.empresaId} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
               
-              {/* Top de la Tarjeta (Badge y Fecha) */}
               <div className="flex justify-between items-center p-5 border-b border-slate-50 bg-slate-50/50">
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                   PENDIENTE
@@ -123,7 +116,6 @@ const SolicitudesPendientes: React.FC = () => {
                 </span>
               </div>
 
-              {/* Cuerpo de la Tarjeta (Datos Reales) */}
               <div className="p-6 flex-1">
                 <h3 className="text-xl font-bold text-slate-800 mb-5 flex items-center gap-2">
                   <FaBuilding className="text-blue-500" size={18} />
@@ -131,26 +123,24 @@ const SolicitudesPendientes: React.FC = () => {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
-                  {/* Datos de Empresa */}
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Datos Empresa</p>
                     <div className="flex items-start gap-2.5">
                       <FaIdCard className="text-slate-400 mt-0.5" />
                       <div>
                         <p className="text-xs text-slate-500">CIF</p>
-                        <p className="text-sm font-medium text-slate-700">{solicitud.cif || "---"}</p>
+                        <p className="text-sm font-medium text-slate-700">{solicitud.cif || <span className="text-slate-400 italic">No disponible</span>}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2.5">
                       <FaEnvelope className="text-slate-400 mt-0.5" />
                       <div>
                         <p className="text-xs text-slate-500">Email Contacto</p>
-                        <p className="text-sm font-medium text-slate-700 break-all">{solicitud.emailContacto || "---"}</p>
+                        <p className="text-sm font-medium text-slate-700 break-all">{solicitud.emailContacto || <span className="text-slate-400 italic">No disponible</span>}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Datos del Administrador */}
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Administrador</p>
                     <div className="flex items-start gap-2.5">
@@ -158,7 +148,7 @@ const SolicitudesPendientes: React.FC = () => {
                       <div>
                         <p className="text-xs text-slate-500">Nombre completo</p>
                         <p className="text-sm font-medium text-slate-700 capitalize">
-                          {solicitud.nombre ? `${solicitud.nombre} ${solicitud.apellidos || ''}` : "---"}
+                          {solicitud.nombre ? `${solicitud.nombre} ${solicitud.apellidos || ''}` : <span className="text-slate-400 italic">Pendiente de servidor</span>}
                         </p>
                       </div>
                     </div>
@@ -166,14 +156,15 @@ const SolicitudesPendientes: React.FC = () => {
                       <FaEnvelope className="text-slate-400 mt-0.5" />
                       <div>
                         <p className="text-xs text-slate-500">Email Admin</p>
-                        <p className="text-sm font-medium text-slate-700 break-all">{solicitud.emailAdmin || "---"}</p>
+                        <p className="text-sm font-medium text-slate-700 break-all">
+                          {solicitud.emailAdmin ? solicitud.emailAdmin : <span className="text-slate-400 italic">Pendiente de servidor</span>}
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Botones de Acción */}
               <div className="grid grid-cols-2 gap-3 p-5 bg-slate-50 border-t border-slate-100">
                 <button
                   onClick={() => procesarSolicitud(solicitud.empresaId, "RECHAZADA")}
