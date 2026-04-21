@@ -1,41 +1,66 @@
 "use client"
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react"
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
-import Iridescence from "./Iridescence"
+import Grainient from "./Grainient"
 
-// ─── Tema de color — cambia THEME para alternar entre variantes ───────────────
-// "morado" | "teal"
-const THEME: "morado" | "teal" = "teal"
-
+// ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  morado: {
-    gradientFab:   "linear-gradient(135deg, #5B21B6, #4338CA)",
-    gradientHeader:"linear-gradient(135deg, #5B21B6, #4338CA)",
-    gradientUser:  "linear-gradient(135deg, #5B21B6, #4338CA)",
-    avatarBg:      "linear-gradient(135deg, #5B21B6, #4338CA)",
-    chipBg:        "#EDE9FE",
-    chipBorder:    "#C4B5FD",
-    chipText:      "#4C1D95",
-    chipHoverBg:   "#DDD6FE",
-    pulse:         "rgba(91,33,182,0.45)",
-    shadow:        "rgba(91,33,182,0.35)",
-  },
-  teal: {
-    gradientFab:   "linear-gradient(135deg, #0F766E, #0891B2)",
-    gradientHeader:"linear-gradient(135deg, #0F766E, #0891B2)",
-    gradientUser:  "linear-gradient(135deg, #0F766E, #0891B2)",
-    avatarBg:      "linear-gradient(135deg, #0F766E, #0891B2)",
-    chipBg:        "#CCFBF1",
-    chipBorder:    "#99F6E4",
-    chipText:      "#134E4A",
-    chipHoverBg:   "#99F6E4",
-    pulse:         "rgba(15,118,110,0.45)",
-    shadow:        "rgba(15,118,110,0.35)",
-  },
+  gradientFab:    "linear-gradient(135deg, #2d5fc4 0%, #3aad66 100%)",
+  gradientHeader: "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
+  gradientUser:   "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
+  avatarBg:       "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
+  chipBg:         "#e8f5ee",
+  chipBorder:     "#9dcdb3",
+  chipText:       "#1a4a30",
+  chipHoverBg:    "#c6e8d4",
+  pulse:          "rgba(71,141,98,0.45)",
+  shadow:         "rgba(71,141,98,0.4)",
 } as const
 
-const C = COLORS[THEME]
+const C = COLORS
+
+// ─── Draggable FAB layout ─────────────────────────────────────────────────────
+const FAB_SIZE  = 64
+const PANEL_W   = 400
+const PANEL_H   = 560
+const MARGIN    = 12
+
+interface Pos { x: number; y: number }
+
+function getDefaultFabPos(): Pos {
+  return {
+    x: window.innerWidth  - FAB_SIZE - 28,
+    y: window.innerHeight - FAB_SIZE - 28,
+  }
+}
+
+function loadFabPos(): Pos | null {
+  try {
+    const raw = localStorage.getItem("atalaIA-fab-pos")
+    if (!raw) return null
+    const p = JSON.parse(raw) as Pos
+    if (p.x >= 0 && p.y >= 0 && p.x < window.innerWidth && p.y < window.innerHeight) return p
+  } catch { /* ignore */ }
+  return null
+}
+
+function calcPanelPos(fab: Pos): Pos {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const panelH = Math.min(PANEL_H, vh - 110)
+
+  let x = fab.x - PANEL_W - MARGIN
+  if (x < 8) x = fab.x + FAB_SIZE + MARGIN
+  if (x + PANEL_W > vw - 8) x = vw - PANEL_W - 8
+  if (x < 8) x = 8
+
+  let y = fab.y + FAB_SIZE - panelH
+  if (y < 8) y = 8
+  if (y + panelH > vh - 8) y = vh - panelH - 8
+
+  return { x, y }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,34 +90,6 @@ const SUGGESTIONS = [
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function BotAvatar({ size = 28 }: { size?: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: C.avatarBg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        overflow: "hidden",
-        padding: "4px",
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo-chatbot.png"
-        alt="AtalaIA"
-        width={size}
-        height={size}
-        style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
-      />
-    </div>
-  )
-}
 
 function SendIcon({ disabled }: { disabled: boolean }) {
   return (
@@ -220,9 +217,35 @@ export default function ChatbotIA() {
   const [hasUnread, setHasUnread] = useState(true)
   const [showTooltip, setShowTooltip] = useState(false)
   const [suggestionsSent, setSuggestionsSent] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [positions, setPositions] = useState<{ fab: Pos; panel: Pos }>({
+    fab:   { x: 0, y: 0 },
+    panel: { x: 0, y: 0 },
+  })
+  const [posReady, setPosReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const apiHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([])
+  const isDragging = useRef(false)
+  const didDrag = useRef(false)
+  const dragOffset = useRef<Pos>({ x: 0, y: 0 })
+  const fabRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const liveFabPos = useRef<Pos>({ x: 0, y: 0 })
+
+  const fabPos   = positions.fab
+  const panelPos = positions.panel
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 500
+    setIsMobile(mobile)
+    if (!mobile) {
+      const pos = loadFabPos() ?? getDefaultFabPos()
+      liveFabPos.current = pos
+      setPositions({ fab: pos, panel: calcPanelPos(pos) })
+    }
+    setPosReady(true)
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -234,6 +257,62 @@ export default function ChatbotIA() {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
   }, [open])
+
+  // ── Drag handlers ──────────────────────────────────────────────────────────
+
+  const onFabMouseDown = useCallback((e: React.MouseEvent) => {
+    if (isMobile) return
+    isDragging.current = true
+    didDrag.current    = false
+    dragOffset.current = { x: e.clientX - liveFabPos.current.x, y: e.clientY - liveFabPos.current.y }
+    e.preventDefault()
+  }, [isMobile])
+
+  useEffect(() => {
+    if (isMobile) return
+
+    function onMouseMove(e: MouseEvent) {
+      if (!isDragging.current) return
+      if (!didDrag.current) {
+        didDrag.current = true
+        setShowTooltip(false)
+      }
+      const newFab: Pos = {
+        x: Math.max(0, Math.min(window.innerWidth  - FAB_SIZE, e.clientX - dragOffset.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - FAB_SIZE, e.clientY - dragOffset.current.y)),
+      }
+      const newPanel = calcPanelPos(newFab)
+      liveFabPos.current = newFab
+      // Mover directamente en el DOM — sin React, sin re-render
+      if (fabRef.current) {
+        fabRef.current.style.left = `${newFab.x}px`
+        fabRef.current.style.top  = `${newFab.y}px`
+      }
+      if (panelRef.current) {
+        panelRef.current.style.left = `${newPanel.x}px`
+        panelRef.current.style.top  = `${newPanel.y}px`
+      }
+    }
+
+    function onMouseUp() {
+      if (!isDragging.current) return
+      isDragging.current = false
+      if (!didDrag.current) return
+      const pos = liveFabPos.current
+      localStorage.setItem("atalaIA-fab-pos", JSON.stringify(pos))
+      // Sync React state sin causar salto: el DOM ya está en la posición correcta
+      setPositions({ fab: pos, panel: calcPanelPos(pos) })
+    }
+
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseup",   onMouseUp)
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseup",   onMouseUp)
+    }
+  }, [isMobile])
+
+  // ── Message sending ────────────────────────────────────────────────────────
 
   async function sendMessage(text: string) {
     if (!text.trim() || isTyping) return
@@ -308,6 +387,34 @@ export default function ChatbotIA() {
     sendMessage(text)
   }
 
+  function handleFabClick() {
+    if (didDrag.current) return
+    setOpen((p) => !p)
+  }
+
+  // ── Position styles ────────────────────────────────────────────────────────
+
+  const fabStyle: React.CSSProperties = isMobile
+    ? { position: "fixed", bottom: "28px", right: "28px", zIndex: 1000 }
+    : { position: "fixed", left: fabPos.x, top: fabPos.y, zIndex: 1000 }
+
+  const panelStyle: React.CSSProperties = isMobile
+    ? {
+        position: "fixed",
+        bottom: "104px",
+        right: "16px",
+        left: "16px",
+        width: "auto",
+        height: `min(${PANEL_H}px, calc(100dvh - 120px))`,
+      }
+    : {
+        position: "fixed",
+        left: panelPos.x,
+        top: panelPos.y,
+        width: `${PANEL_W}px`,
+        height: `min(${PANEL_H}px, calc(100dvh - 120px))`,
+      }
+
   return (
     <>
       <style>{`
@@ -329,6 +436,8 @@ export default function ChatbotIA() {
         }
         .chatbot-fab { transition: transform 0.2s ease; }
         .chatbot-fab:hover { transform: scale(1.1) !important; }
+        .chatbot-fab-drag { cursor: grab !important; }
+        .chatbot-fab-drag:active { cursor: grabbing !important; }
         .chatbot-send { transition: background 0.2s, transform 0.15s; }
         .chatbot-send:hover:not(:disabled) { transform: scale(1.08); }
         .chatbot-chip {
@@ -339,8 +448,9 @@ export default function ChatbotIA() {
           border-color: ${C.chipBorder} !important;
           transform: translateY(-1px);
         }
-        .chatbot-close { transition: background 0.15s ease; }
-        .chatbot-close:hover { background: rgba(255,255,255,0.22) !important; }
+        .chatbot-close { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+        .chatbot-close:hover { background: rgba(0,0,0,0.35) !important; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(0,0,0,0.15) !important; }
+        .chatbot-close:active { transform: scale(0.95); }
         .chatbot-messages::-webkit-scrollbar { width: 4px; }
         .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
         .chatbot-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -348,11 +458,17 @@ export default function ChatbotIA() {
       `}</style>
 
       {/* ── FAB ──────────────────────────────────────────────────────────── */}
-      <div style={{ position: "fixed", bottom: "28px", right: "28px", zIndex: 1000, display: "flex", alignItems: "center", gap: "10px" }}>
+      {posReady && <div ref={fabRef} style={{ ...fabStyle }}>
 
-        {/* Tooltip */}
+        {/* Tooltip — posicionado absolutamente para no mover el FAB */}
         {showTooltip && !open && (
           <div style={{
+            position: "absolute",
+            ...(fabPos.x > (typeof window !== "undefined" ? window.innerWidth / 2 : 500)
+              ? { right: `${FAB_SIZE + 10}px` }
+              : { left: `${FAB_SIZE + 10}px` }),
+            top: "50%",
+            transform: "translateY(-50%)",
             background: "rgba(15,23,42,0.9)",
             color: "white",
             fontSize: "12px",
@@ -368,18 +484,18 @@ export default function ChatbotIA() {
         )}
 
         <button
-          className="chatbot-fab"
-          onClick={() => setOpen((p) => !p)}
+          className={`chatbot-fab${isMobile ? "" : " chatbot-fab-drag"}`}
+          onMouseDown={onFabMouseDown}
+          onClick={handleFabClick}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           aria-label="Abrir asistente IA"
           style={{
-            width: "60px",
-            height: "60px",
+            width: `${FAB_SIZE}px`,
+            height: `${FAB_SIZE}px`,
             borderRadius: "50%",
             background: C.gradientFab,
             border: "none",
-            cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -387,15 +503,16 @@ export default function ChatbotIA() {
             boxShadow: `0 6px 24px ${C.shadow}`,
             position: "relative",
             padding: "10px",
+            userSelect: "none",
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-chatbot.png"
             alt="Asistente IA"
-            width={26}
-            height={26}
-            style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
+            width={40}
+            height={40}
+            style={{ objectFit: "contain", filter: "brightness(0) invert(1)", pointerEvents: "none" }}
           />
           {hasUnread && (
             <span style={{
@@ -405,16 +522,12 @@ export default function ChatbotIA() {
             }} />
           )}
         </button>
-      </div>
+      </div>}
 
       {/* ── Panel ────────────────────────────────────────────────────────── */}
       {open && (
-        <div style={{
-          position: "fixed",
-          bottom: "104px",
-          right: "28px",
-          width: "400px",
-          height: "min(560px, calc(100dvh - 120px))",
+        <div ref={panelRef} style={{
+          ...panelStyle,
           zIndex: 999,
           borderRadius: "20px",
           boxShadow: "0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08)",
@@ -422,56 +535,56 @@ export default function ChatbotIA() {
           flexDirection: "column",
           overflow: "hidden",
           background: "white",
-          animation: "chatbotFadeIn 0.25s ease forwards",
+          animation: isDragging.current ? "none" : "chatbotFadeIn 0.25s ease forwards",
           border: "1px solid rgba(0,0,0,0.06)",
         }}>
 
-          {/* Header con iridiscencia */}
-          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden" }}>
-            {/* Fondo animado */}
-            <Iridescence
-              color={[0.106, 0.247, 0.494]}
-              speed={1.2}
-              amplitude={0.12}
-              mouseReact
-              style={{ position: "absolute", inset: 0 }}
+          {/* Header */}
+          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#0e2a4a" }}>
+            <Grainient
+              color1="#3aad66"
+              color2="#2d5fc4"
+              color3="#1a4a6e"
+              timeSpeed={0.15}
+              warpSpeed={1.0}
+              warpStrength={1.2}
+              contrast={1.4}
+              saturation={1.3}
+              grainAmount={0.04}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
             />
-            {/* Overlay oscuro para legibilidad del texto */}
-            <div style={{
-              position: "absolute", inset: 0,
-              background: "rgba(13,27,46,0.04)",
-            }} />
-            {/* Contenido del header */}
             <div style={{
               position: "relative", zIndex: 1,
               padding: "0 16px",
               height: "100%",
-              display: "flex", alignItems: "center", gap: "12px",
+              display: "flex", alignItems: "center", gap: "14px",
             }}>
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
-                  width: "40px", height: "40px", borderRadius: "50%",
-                  background: "rgba(255,255,255,0.15)",
-                  border: "2px solid rgba(255,255,255,0.35)",
+                  width: "50px", height: "50px", borderRadius: "50%",
+                  background: "rgba(255,255,255,0.18)",
+                  border: "2px solid rgba(255,255,255,0.5)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", padding: "5px",
+                  overflow: "hidden", padding: "6px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/logo-chatbot.png" alt="AtalaIA" width={30} height={30}
+                  <img src="/logo-chatbot.png" alt="AtalaIA" width={36} height={36}
                     style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
                 </div>
-                <span style={{
-                  position: "absolute", bottom: "1px", right: "1px",
-                  width: "10px", height: "10px", borderRadius: "50%",
-                  background: "#22c55e", border: "2px solid white",
-                }} />
               </div>
 
-              <div style={{ flex: 1 }}>
-                <div style={{ color: "white", fontWeight: 700, fontSize: "14px", lineHeight: 1.2 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{
+                  color: "white", fontWeight: 800, fontSize: "17px", lineHeight: 1.2,
+                  textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+                }}>
                   AtalaIA
                 </div>
-                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: "11px", marginTop: "2px" }}>
+                <div style={{
+                  color: "rgba(255,255,255,0.9)", fontSize: "12.5px", marginTop: "4px",
+                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                }}>
                   {isTyping ? "✍️ Escribiendo..." : "Tu asistente de formación"}
                 </div>
               </div>
@@ -479,10 +592,12 @@ export default function ChatbotIA() {
               <button className="chatbot-close" onClick={() => setOpen(false)}
                 aria-label="Cerrar asistente"
                 style={{
-                  width: "30px", height: "30px", borderRadius: "50%",
-                  background: "rgba(255,255,255,0.15)",
-                  border: "none", cursor: "pointer",
+                  width: "32px", height: "32px", borderRadius: "50%",
+                  background: "rgba(255,255,255,0.18)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
                 }}>
                 <CloseIcon />
               </button>
@@ -500,7 +615,6 @@ export default function ChatbotIA() {
               <MessageBubble key={msg.id} message={msg} />
             ))}
 
-            {/* Suggestion chips */}
             {!suggestionsSent && messages.length === 1 && (
               <div style={{
                 display: "flex", flexWrap: "wrap", gap: "8px",
