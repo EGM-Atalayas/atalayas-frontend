@@ -1,7 +1,7 @@
 export const runtime = "nodejs"
 
-import { NextRequest, NextResponse } from "next/server"
-import { chatCompletion, ChatMessage } from "@/lib/ai/provider"
+import { NextRequest } from "next/server"
+import { chatCompletionStream, ChatMessage } from "@/lib/ai/provider"
 
 function buildSystemPrompt(context: {
   nombreUsuario?: string
@@ -59,18 +59,32 @@ export async function POST(req: NextRequest) {
     }
 
     if (!messages || messages.length === 0) {
-      return NextResponse.json({ error: "No hay mensajes" }, { status: 400 })
+      return new Response("No hay mensajes", { status: 400 })
     }
 
     const systemPrompt = buildSystemPrompt(context ?? {})
-    const response = await chatCompletion(messages, systemPrompt)
 
-    return NextResponse.json({ message: response })
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder()
+        try {
+          await chatCompletionStream(messages, systemPrompt, (chunk) => {
+            controller.enqueue(encoder.encode(chunk))
+          })
+        } catch (error) {
+          console.error("[/api/chat] Error en stream:", error)
+          controller.enqueue(encoder.encode("⚠️ Error al generar la respuesta."))
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
   } catch (error) {
     console.error("[/api/chat] Error:", error)
-    return NextResponse.json(
-      { error: "Error al procesar la consulta. Inténtalo de nuevo." },
-      { status: 500 }
-    )
+    return new Response("Error al procesar la consulta.", { status: 500 })
   }
 }

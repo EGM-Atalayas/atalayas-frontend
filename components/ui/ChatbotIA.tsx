@@ -335,6 +335,13 @@ export default function ChatbotIA() {
   const [suggestionsSent, setSuggestionsSent] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
   const [modulos, setModulos] = useState<ModuloConProgreso[]>([])
+  const [streamingId, setStreamingId] = useState<string | null>(null)
+  const [rateLimited, setRateLimited] = useState(false)
+  const recentMessagesRef = useRef<number[]>([])
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  const MAX_CHARS = 500
+  const isBusy = isTyping || streamingId !== null
   const [isMobile, setIsMobile] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [positions, setPositions] = useState<{ fab: Pos; panel: Pos }>({
@@ -424,7 +431,12 @@ export default function ChatbotIA() {
   }, [usuario?.nombre])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = messagesContainerRef.current
+    if (!container) return
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    if (distanceFromBottom < 100) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
   }, [messages, isTyping])
 
   useEffect(() => {
@@ -491,13 +503,23 @@ export default function ChatbotIA() {
   // ── Message sending ────────────────────────────────────────────────────────
 
   async function sendMessage(text: string) {
-    if (!text.trim() || isTyping) return
+    if (!text.trim() || isBusy || rateLimited) return
 
-    const now = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+    // ── Rate limiting: máx 4 mensajes en 10 segundos ──
+    const now = Date.now()
+    recentMessagesRef.current = recentMessagesRef.current.filter((t) => now - t < 10_000)
+    if (recentMessagesRef.current.length >= 4) {
+      setRateLimited(true)
+      setTimeout(() => setRateLimited(false), 5_000)
+      return
+    }
+    recentMessagesRef.current.push(now)
+
+    const timeStr = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
 
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), role: "user", text: text.trim(), time: now },
+      { id: Date.now().toString(), role: "user", text: text.trim(), time: timeStr },
     ])
     setInput("")
     setIsTyping(true)
@@ -526,39 +548,53 @@ export default function ChatbotIA() {
         }),
       })
 
-      const data = await res.json()
-      const responseText: string = res.ok
-        ? data.message
-        : res.status >= 500
+      if (!res.ok || !res.body) {
+        const errorText = res.status >= 500
           ? "⚠️ El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
-          : "No he podido procesar tu consulta. Comprueba que el mensaje no esté vacío e inténtalo de nuevo."
-
-      apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: responseText }]
-
-      setIsTyping(false)
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          text: responseText,
+          : "No he podido procesar tu consulta. Inténtalo de nuevo."
+        setIsTyping(false)
+        apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(), role: "assistant", text: errorText,
           time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ])
+        }])
+        return
+      }
+
+      // ── Streaming ────────────────────────────────────────
+      const msgId = (Date.now() + 1).toString()
+      const msgTime = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+      setIsTyping(false)
+      setStreamingId(msgId)
+      setMessages((prev) => [...prev, { id: msgId, role: "assistant", text: "", time: msgTime }])
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        fullText += chunk
+        setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, text: fullText } : m))
+      }
+
+      apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: fullText }]
+      setStreamingId(null)
+
     } catch {
       setIsTyping(false)
+      setStreamingId(null)
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          text: isOffline
-            ? "📡 Parece que no tienes conexión a internet. Comprueba tu red e inténtalo de nuevo."
-            : "⚠️ No he podido conectar con el servidor. Inténtalo en unos segundos.",
-          time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ])
+      const errorText = isOffline
+        ? "📡 Parece que no tienes conexión a internet. Comprueba tu red e inténtalo de nuevo."
+        : "⚠️ No he podido conectar con el servidor. Inténtalo en unos segundos."
+      apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(), role: "assistant", text: errorText,
+        time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
+      }])
     }
   }
 
@@ -568,6 +604,9 @@ export default function ChatbotIA() {
       sendMessage(input)
     }
   }
+
+  const charsLeft = MAX_CHARS - input.length
+  const showCharWarning = input.length > MAX_CHARS * 0.8
 
   function handleSuggestion(text: string) {
     setSuggestionsSent(true)
@@ -866,7 +905,7 @@ export default function ChatbotIA() {
           </div>
 
           {/* Messages */}
-          <div className="chatbot-messages" style={{
+          <div ref={messagesContainerRef} className="chatbot-messages" style={{
             flex: 1, overflowY: "auto",
             padding: "18px 16px 8px",
             display: "flex", flexDirection: "column",
@@ -908,13 +947,19 @@ export default function ChatbotIA() {
           {/* Input */}
           <div style={{
             borderTop: "1px solid #E2E8F0",
-            display: "flex",
-            alignItems: "center",
             padding: "10px 12px",
-            gap: "8px",
             background: "white",
             flexShrink: 0,
           }}>
+            {rateLimited && (
+              <div style={{
+                fontSize: "11.5px", color: "#e0693d", textAlign: "center",
+                marginBottom: "6px", fontWeight: 500,
+              }}>
+                ⏳ Vas muy rápido, espera un momento antes de continuar
+              </div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{
               flex: 1,
               background: "#F1F5F9",
@@ -931,12 +976,12 @@ export default function ChatbotIA() {
                 className="chatbot-input"
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 placeholder="Pregúntame lo que necesites..."
-                disabled={isTyping}
+                disabled={isBusy}
                 style={{
                   flex: 1,
                   border: "none",
@@ -945,25 +990,35 @@ export default function ChatbotIA() {
                   color: "#1e293b",
                   padding: "10px 0",
                   fontFamily: "inherit",
-                  opacity: isTyping ? 0.5 : 1,
+                  opacity: isBusy ? 0.5 : 1,
                 }}
               />
+              {showCharWarning && (
+                <span style={{
+                  fontSize: "11px", flexShrink: 0, marginLeft: "6px",
+                  color: charsLeft <= 20 ? "#e0693d" : "#94a3b8",
+                  fontWeight: 500,
+                }}>
+                  {charsLeft}
+                </span>
+              )}
             </div>
             <button
               className="chatbot-send"
               onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isBusy || rateLimited}
               aria-label="Enviar mensaje"
               style={{
                 width: "40px", height: "40px", borderRadius: "50%",
-                background: input.trim() && !isTyping ? C.gradientFab : "#E2E8F0",
+                background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "#E2E8F0",
                 border: "none",
-                cursor: input.trim() && !isTyping ? "pointer" : "not-allowed",
+                cursor: input.trim() && !isBusy && !rateLimited ? "pointer" : "not-allowed",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
               }}>
-              <SendIcon disabled={!input.trim() || isTyping} />
+              <SendIcon disabled={!input.trim() || isBusy || rateLimited} />
             </button>
+            </div>
           </div>
         </div>
         </>
