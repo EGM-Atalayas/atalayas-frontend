@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { FaBan, FaCheckCircle, FaSearch, FaBuilding, FaRegFolderOpen, FaClock } from "react-icons/fa";
-import { getEmpresas, actualizarEstadoEmpresa } from "@/lib/api/empresas";
+import { getEmpresas, toggleActivacionEmpresa } from "@/lib/api/empresas";
 
 export interface EmpresaDB {
   empresaId: string;
   nombreEmpresa: string;
   cif: string;
   emailContacto: string;
-  estadoSolicitud?: "ACTIVA" | "INACTIVA" | "APROBADA" | "RECHAZADA" | "PENDIENTE" | string; 
-  [key: string]: any; 
+  estadoSolicitud?: "APROBADA" | "RECHAZADA" | "PENDIENTE" | string;
+  activo?: boolean;
+  [key: string]: any;
 }
 
 const coloresEstado: Record<string, string> = {
@@ -47,64 +48,50 @@ const GestionEmpresas: React.FC = () => {
     }
   };
 
-  const toggleActivacion = async (id: string, estadoActual: string) => {
-    const estadoLimpio = String(estadoActual || "").toUpperCase().trim();
-    if (estadoLimpio === "PENDIENTE") return; // Las pendientes se gestionan en Solicitudes
-
-    const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
-    const nuevoEstado = esActiva ? "RECHAZADA" : "APROBADA";
-    
+  const toggleActivacion = async (id: string, activaActual: boolean) => {
+    // Optimistic update
     setEmpresas(empresas.map((emp) =>
-      emp.empresaId === id ? { ...emp, estadoSolicitud: nuevoEstado } : emp
+      emp.empresaId === id ? { ...emp, activo: !activaActual } : emp
     ));
 
     try {
-      await actualizarEstadoEmpresa(id, nuevoEstado);
+      await toggleActivacionEmpresa(id);
     } catch (error) {
-      console.error("Error cambiando estado:", error);
+      console.error("Error cambiando activación:", error);
       alert("Hubo un error al guardar el cambio en el servidor.");
+      // Revertir
       setEmpresas(empresas.map((emp) =>
-        emp.empresaId === id ? { ...emp, estadoSolicitud: estadoActual } : emp
+        emp.empresaId === id ? { ...emp, activo: activaActual } : emp
       ));
     }
   };
 
   const empresasFiltradas = useMemo(() => {
     return empresas.filter((emp) => {
-      const coincideBusqueda = emp.nombreEmpresa?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                               emp.cif?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const estadoLimpio = String(emp.estadoSolicitud || "").toUpperCase().trim();
-      let coincideEstado = false;
+      const coincideBusqueda =
+        emp.nombreEmpresa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.cif?.toLowerCase().includes(searchTerm.toLowerCase());
 
+      let coincideEstado = false;
       if (filtroEstado === "TODAS") {
         coincideEstado = true;
-      } else if (filtroEstado === "ACTIVA" && (estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA")) {
-        coincideEstado = true;
-      } else if (filtroEstado === "INACTIVA" && (estadoLimpio === "INACTIVA" || estadoLimpio === "RECHAZADA" || estadoLimpio === "")) {
-        coincideEstado = true;
-      } else if (filtroEstado === "PENDIENTE" && estadoLimpio === "PENDIENTE") {
-        coincideEstado = true;
+      } else if (filtroEstado === "ACTIVA") {
+        coincideEstado = emp.estadoSolicitud === "APROBADA" && emp.activo === true;
+      } else if (filtroEstado === "INACTIVA") {
+        coincideEstado = emp.estadoSolicitud === "APROBADA" && emp.activo === false;
+      } else if (filtroEstado === "PENDIENTE") {
+        coincideEstado = emp.estadoSolicitud === "PENDIENTE";
       }
-      
+
       return coincideBusqueda && coincideEstado;
     });
   }, [empresas, searchTerm, filtroEstado]);
 
   const stats = {
     total: empresas.length,
-    activas: empresas.filter(e => {
-        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
-        return est === "ACTIVA" || est === "APROBADA";
-    }).length,
-    inactivas: empresas.filter(e => {
-        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
-        return est === "INACTIVA" || est === "RECHAZADA" || est === "";
-    }).length,
-    pendientes: empresas.filter(e => {
-        const est = String(e.estadoSolicitud || "").toUpperCase().trim();
-        return est === "PENDIENTE";
-    }).length,
+    activas: empresas.filter(e => e.estadoSolicitud === "APROBADA" && e.activo === true).length,
+    inactivas: empresas.filter(e => e.estadoSolicitud === "APROBADA" && e.activo === false).length,
+    pendientes: empresas.filter(e => e.estadoSolicitud === "PENDIENTE").length,
   };
 
   return (
@@ -236,16 +223,28 @@ const GestionEmpresas: React.FC = () => {
               ) : (
                 empresasFiltradas.map((empresa) => {
                   const estadoLimpio = String(empresa.estadoSolicitud || "").toUpperCase().trim();
-                  const esActiva = estadoLimpio === "ACTIVA" || estadoLimpio === "APROBADA";
                   const esPendiente = estadoLimpio === "PENDIENTE";
-                  
-                  let textoEstado = "INACTIVA";
-                  if (esActiva) textoEstado = "ACTIVA";
-                  if (esPendiente) textoEstado = "PENDIENTE";
+                  const esAprobada = estadoLimpio === "APROBADA";
+                  const esRechazada = estadoLimpio === "RECHAZADA";
+                  const esActiva = esAprobada && empresa.activo === true;
 
-                  let colorPunto = 'bg-slate-400';
-                  if (esActiva) colorPunto = 'bg-emerald-500';
-                  if (esPendiente) colorPunto = 'bg-amber-500';
+                  let textoEstado = "RECHAZADA";
+                  let colorClase = coloresEstado.RECHAZADA;
+                  let colorPunto = "bg-slate-400";
+
+                  if (esPendiente) {
+                    textoEstado = "PENDIENTE";
+                    colorClase = coloresEstado.PENDIENTE;
+                    colorPunto = "bg-amber-500";
+                  } else if (esAprobada && esActiva) {
+                    textoEstado = "ACTIVA";
+                    colorClase = coloresEstado.APROBADA;
+                    colorPunto = "bg-emerald-500";
+                  } else if (esAprobada && !esActiva) {
+                    textoEstado = "INACTIVA";
+                    colorClase = coloresEstado.INACTIVA;
+                    colorPunto = "bg-slate-400";
+                  }
 
                   return (
                     <tr key={empresa.empresaId} className="hover:bg-slate-50/80 transition-colors group">
@@ -256,30 +255,32 @@ const GestionEmpresas: React.FC = () => {
                         {empresa.cif}
                       </td>
                       <td className="px-6 py-4 text-slate-500">{empresa.emailContacto}</td>
-                      
+
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${coloresEstado[estadoLimpio] || coloresEstado.INACTIVA}`}>
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase flex w-max items-center gap-1.5 ${colorClase}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${colorPunto}`}></span>
                           {textoEstado}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        {esPendiente ? (
-                          <span className="text-xs text-slate-400 font-medium italic">En Solicitudes</span>
+                        {esPendiente || esRechazada ? (
+                          <span className="text-xs text-slate-400 font-medium italic">
+                            {esPendiente ? "En Solicitudes" : "Rechazada"}
+                          </span>
                         ) : esActiva ? (
-                          <button 
-                            onClick={() => toggleActivacion(empresa.empresaId, estadoLimpio)}
+                          <button
+                            onClick={() => toggleActivacion(empresa.empresaId, true)}
                             className="p-2 rounded-xl transition-all text-slate-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                            title="Pausar actividad"
+                            title="Desactivar empresa"
                           >
                             <FaBan size={18} />
                           </button>
                         ) : (
-                          <button 
-                            onClick={() => toggleActivacion(empresa.empresaId, estadoLimpio)}
+                          <button
+                            onClick={() => toggleActivacion(empresa.empresaId, false)}
                             className="p-2 rounded-xl transition-all text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            title="Reactivar empresa"
+                            title="Activar empresa"
                           >
                             <FaCheckCircle size={18} />
                           </button>
