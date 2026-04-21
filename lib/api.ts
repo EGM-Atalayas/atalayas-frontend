@@ -1,7 +1,7 @@
 // lib/api.ts
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-1c1h.onrender.com/api/v1";
+  "https://atalayas-backend-c25d.onrender.com/api/v1";
 
 /**
  * Wrapper de fetch que incluye credentials: "include" para enviar
