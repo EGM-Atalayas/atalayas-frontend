@@ -13,35 +13,34 @@ export async function getEmpresas(): Promise<EmpresaDB[]> {
   return response.json();
 }
 
-// Actualizar el estado de una empresa
+// Actualizar el estado de una empresa (solo para cambios de solicitud: PENDIENTE/APROBADA/RECHAZADA)
 export async function actualizarEstadoEmpresa(id: string, estadoAEnviar: string): Promise<void> {
-  
-  // 1. EL TRADUCTOR: Convertimos el idioma del frontend al idioma de César (Enum estricto)
-  let estadoParaCesar = "PENDIENTE"; // Valor por defecto seguro
-  
-  // Pasamos lo que llegue a mayúsculas por seguridad ("activa" -> "ACTIVA")
   const estadoNormalizado = String(estadoAEnviar).toUpperCase();
+  let estadoParaBackend = "PENDIENTE";
 
-  if (estadoNormalizado === "ACTIVA" || estadoNormalizado === "APROBADA" || estadoNormalizado === "TRUE") {
-    estadoParaCesar = "APROBADA";
-  } else if (estadoNormalizado === "INACTIVA" || estadoNormalizado === "RECHAZADA" || estadoNormalizado === "FALSE") {
-    estadoParaCesar = "RECHAZADA";
-  } else {
-    estadoParaCesar = "PENDIENTE";
-  }
+  if (estadoNormalizado === "APROBADA") estadoParaBackend = "APROBADA";
+  else if (estadoNormalizado === "RECHAZADA") estadoParaBackend = "RECHAZADA";
 
-  // 2. EL ENVÍO: Mandamos el paquete exacto que no rompe el servidor
   const response = await apiFetch(`${API_URL}/empresas/${id}/estado`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ nuevoEstado: estadoParaCesar }), 
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nuevoEstado: estadoParaBackend }),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    console.error("🚨 RESPUESTA DEL BACKEND:", errorData);
-    throw new Error(errorData.message || errorData.error || "Error al actualizar el estado en el servidor");
+    throw new Error(errorData.message || "Error al actualizar el estado");
+  }
+}
+
+// Activar / desactivar una empresa aprobada (toggle de activo)
+export async function toggleActivacionEmpresa(id: string): Promise<void> {
+  const response = await apiFetch(`${API_URL}/empresas/${id}/activacion`, {
+    method: "PATCH",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Error al cambiar la activación de la empresa");
   }
 }
