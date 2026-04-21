@@ -64,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
     } finally {
-      // Limpiamos también el guest por si acaso
       localStorage.removeItem("guest");
+      localStorage.removeItem("accessToken");
       setUsuario(null);
     }
   };

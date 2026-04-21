@@ -63,6 +63,11 @@ const LoginPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
 
+        // Guardar token para peticiones cross-domain (Vercel → Render)
+        if (data.accessToken) {
+          localStorage.setItem("accessToken", data.accessToken);
+        }
+
         setUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,
