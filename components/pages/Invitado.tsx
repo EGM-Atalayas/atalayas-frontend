@@ -8,6 +8,13 @@ import { API_URL } from "@/lib/api";
 import { Playfair_Display } from "next/font/google";
 import LogoLoop from "@/components/ui/LogoLoop";
 import FooterCTA from "@/components/ui/FooterCTA";
+import {
+  GraduationCap, BookOpen, Network,
+  FlaskConical, Sprout, Building2,
+  Rocket, Lightbulb, MonitorDot,
+  Microchip, Cpu, Factory,
+  ChevronDown
+} from "lucide-react";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
@@ -82,88 +89,92 @@ const comunidadItems = [
 const colaboradoresData = [
   {
     categoria: "Universidades y Centros de Investigación",
+    icono: GraduationCap,
     entidades: [
       {
         nombre: "Universidad de Alicante",
-        siglas: "UA",
+        icon: "/ua-icono.png",
         color: "#003DA5",
         descripcion: "Universidad pública con una fuerte vocación de I+D+i, conexión con empresas y proyectos de transferencia tecnológica.",
         web: "https://www.ua.es",
       },
       {
         nombre: "Universidad Miguel Hernández de Elche",
-        siglas: "UMH",
+        icon: "/umh-icono.jpg",
         color: "#8B1A1A",
         descripcion: "Universidad pública con múltiples programas de innovación, transferencia y colaboración con empresas e instituciones.",
         web: "https://www.umh.es",
       },
       {
         nombre: "Universidad de Alicante — CENID",
-        siglas: "CENID",
+        icon: "/cenid-icono.jpg",
         color: "#0077B6",
         descripcion: "Centro de investigación multidisciplinar enfocado en el desarrollo e innovación digital para el tejido empresarial.",
-        web: "https://www.ua.es",
+        web: "https://cenid.es",
       },
     ],
   },
   {
     categoria: "Parques Científicos y Tecnológicos",
+    icono: FlaskConical,
     entidades: [
       {
         nombre: "Parque Científico de Alicante",
-        siglas: "PCA",
+        icon: "/pca-icono.png",
         color: "#2E7D32",
         descripcion: "Espacio de innovación que conecta la investigación universitaria con el mundo empresarial, ofreciendo infraestructuras y servicios de apoyo.",
-        web: "https://pcua.ua.es",
+        web: "https://pca.ua.es",
       },
       {
         nombre: "Parque Científico UMH",
-        siglas: "PCUMH",
+        icon: "/pcumh-icono.png",
         color: "#C62828",
         descripcion: "Entorno tecnológico que facilita la transferencia de conocimiento y la creación de empresas de base tecnológica.",
-        web: "https://www.umh.es/contenido/Universidad/:tit_gal_pcumh/2265/datos_es.html",
+        web: "https://parquecientificoumh.es",
       },
     ],
   },
   {
     categoria: "Hubs de Innovación y Aceleración",
+    icono: Rocket,
     entidades: [
       {
         nombre: "Alicante Futura",
-        siglas: "AF",
+        icon: "/af-icono.png",
         color: "#6A1B9A",
         descripcion: "Hub urbano de innovación del Ayuntamiento de Alicante, orientado a impulsar el ecosistema tecnológico y la cultura emprendedora de la ciudad.",
-        web: "https://alicantefutura.es",
+        web: "https://alicantefutura.org",
       },
       {
         nombre: "CEEI Alcoy — Valencia",
-        siglas: "CEEI",
+        icon: "/ceei-icono.png",
         color: "#E65100",
         descripcion: "Centro Europeo de Empresas e Innovación que apoya la creación y consolidación de empresas innovadoras mediante asesoramiento y recursos.",
         web: "https://ceeialcoi.emprenemjunts.es",
       },
       {
         nombre: "Distrito Digital",
-        siglas: "DD",
+        icon: "/ddcv-icono.png",
         color: "#0097A7",
         descripcion: "Ecosistema de innovación de la Generalitat Valenciana que concentra talento, tecnología y empresas digitales en la provincia de Alicante.",
-        web: "https://www.distritodigital.es",
+        web: "https://distritodigitalcv.es",
       },
     ],
   },
   {
     categoria: "Institutos Tecnológicos",
+    icono: Microchip,
     entidades: [
       {
         nombre: "Instituto Tecnológico de Informática (ITI)",
-        siglas: "ITI",
+        icon: "/iti-icono.jpg",
         color: "#1565C0",
         descripcion: "Centro de investigación aplicada en tecnologías de la información, inteligencia artificial y transformación digital.",
         web: "https://www.iti.es",
       },
       {
         nombre: "AITEX — Instituto Tecnológico Textil",
-        siglas: "AITEX",
+        icon: "/aitex-icono.jpg",
         color: "#AD1457",
         descripcion: "Instituto tecnológico referente en innovación textil, materiales avanzados y sostenibilidad industrial.",
         web: "https://www.aitex.es",
@@ -176,6 +187,16 @@ export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [categoriasAbiertas, setCategoriasAbiertas] = useState<Record<string, boolean>>({
+    "Universidades y Centros de Investigación": true,
+    "Parques Científicos y Tecnológicos": true,
+    "Hubs de Innovación y Aceleración": true,
+    "Institutos Tecnológicos": true,
+  });
+
+  const toggleCategoria = (cat: string) => {
+    setCategoriasAbiertas(prev => ({ ...prev, [cat]: !prev[cat] }));
+  };
 
   useEffect(() => {
     fetch(`${API_URL}/comunicados`)
@@ -186,7 +207,7 @@ export default function Invitado() {
       .then((data: Comunicado[]) =>
         setComunicados(data.filter((c) => c.activo).slice(0, 3))
       )
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingComunicados(false));
   }, []);
 
@@ -472,106 +493,140 @@ export default function Invitado() {
 
           {/* Category pills */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-16">
-            {colaboradoresData.map((grupo) => (
-              <a
-                key={grupo.categoria}
-                href={`#cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}
-                className="px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.65)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(8px)",
-                }}
-              >
-                {grupo.categoria}
-              </a>
-            ))}
+            {colaboradoresData.map((grupo) => {
+              const Icon = grupo.icono;
+              const isOpen = categoriasAbiertas[grupo.categoria];
+              return (
+                <button
+                  key={grupo.categoria}
+                  onClick={() => toggleCategoria(grupo.categoria)}
+                  className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 flex items-center gap-2 ${isOpen
+                    ? "bg-white/10 text-white border-white/20"
+                    : "bg-white/5 text-white/50 border-white/10 hover:text-white/80"
+                    }`}
+                  style={{
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  <Icon className="w-4 h-4" />
+                  {grupo.categoria}
+                </button>
+              );
+            })}
           </div>
 
           {/* Category groups */}
-          <div className="flex flex-col gap-24 max-w-7xl mx-auto">
-            {colaboradoresData.map((grupo) => (
-              <div key={grupo.categoria} id={`cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}>
-                {/* Category heading */}
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="w-10 h-px" style={{ background: "rgba(59,130,246,0.5)" }} />
-                  <h3 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(255,255,255,0.4)" }}>
-                    {grupo.categoria}
-                  </h3>
-                  <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-                </div>
+          <div className="flex flex-col gap-10 max-w-[1600px] w-[95%] lg:w-full mx-auto pb-10">
+            {colaboradoresData.map((grupo) => {
+              const isOpen = categoriasAbiertas[grupo.categoria];
+              const SectionIcon = grupo.icono;
 
-                {/* Cards grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {grupo.entidades.map((entidad) => (
-                    <a
-                      key={entidad.nombre}
-                      href={entidad.web}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative flex flex-col p-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-2px] cursor-pointer overflow-hidden"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      {/* Colored accent bar */}
-                      <div
-                        className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-300"
-                        style={{ background: `linear-gradient(to right, ${entidad.color}, ${entidad.color}88)` }}
-                      />
+              return (
+                <div
+                  key={grupo.categoria}
+                  id={`cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}
+                  className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out"
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  {/* Category button/heading */}
+                  <button
+                    onClick={() => toggleCategoria(grupo.categoria)}
+                    className="w-full flex items-center justify-between p-8 sm:p-12 cursor-pointer hover:bg-white/[0.03] transition-colors"
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(59,130,246,0.1)", color: "rgba(96,165,250,0.9)" }}>
+                        <SectionIcon className="w-8 h-8 sm:w-10 sm:h-10" />
+                      </div>
+                      <h3 className="text-2xl sm:text-4xl font-bold tracking-wide text-white text-left">
+                        {grupo.categoria}
+                      </h3>
+                    </div>
+                    <div className="shrink-0 ml-4 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-colors">
+                      <ChevronDown className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
 
-                      {/* Hover glow */}
-                      <div
-                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                        style={{ background: `radial-gradient(ellipse at 50% 0%, ${entidad.color}15, transparent 70%)` }}
-                      />
-
-                      {/* Siglas badge */}
-                      <div className="flex items-start justify-between mb-6 relative z-10">
-                        <div
-                          className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-lg font-bold transition-transform duration-300 group-hover:scale-110"
+                  {/* Cards grid (collapsible body) */}
+                  <div
+                    className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-8 sm:px-12 transition-all duration-500 ease-in-out ${isOpen ? 'pb-12 opacity-100 max-h-[3000px]' : 'pb-0 opacity-0 max-h-0 hidden'
+                      }`}
+                  >
+                    {grupo.entidades.map((entidad) => {
+                      const EntidadIcon = entidad.icon;
+                      return (
+                        <a
+                          key={entidad.nombre}
+                          href={entidad.web}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col p-8 sm:p-10 rounded-3xl transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-4px] cursor-pointer overflow-hidden"
                           style={{
-                            background: `linear-gradient(135deg, ${entidad.color}, ${entidad.color}99)`,
-                            boxShadow: `0 4px 16px ${entidad.color}33`,
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            backdropFilter: "blur(12px)",
                           }}
                         >
-                          {entidad.siglas}
-                        </div>
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white/30 group-hover:text-white/80 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                          style={{ background: "rgba(255,255,255,0.06)" }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M7 17L17 7" />
-                            <path d="M7 7h10v10" />
-                          </svg>
-                        </div>
-                      </div>
+                          {/* Colored accent bar */}
+                          <div
+                            className="absolute top-0 left-0 right-0 h-1.5 rounded-t-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                            style={{ background: `linear-gradient(to right, ${entidad.color}, ${entidad.color}88)` }}
+                          />
 
-                      {/* Name & description */}
-                      <div className="flex-1 relative z-10">
-                        <h4 className="text-base font-semibold leading-snug mb-3 group-hover:text-white transition-colors duration-300" style={{ color: "rgba(255,255,255,0.9)" }}>
-                          {entidad.nombre}
-                        </h4>
-                        <p className="text-sm leading-relaxed line-clamp-3" style={{ color: "rgba(255,255,255,0.4)" }}>
-                          {entidad.descripcion}
-                        </p>
-                      </div>
+                          {/* Hover glow */}
+                          <div
+                            className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                            style={{ background: `radial-gradient(ellipse at 50% 0%, ${entidad.color}15, transparent 70%)` }}
+                          />
 
-                      {/* Bottom label */}
-                      <div className="mt-6 pt-4 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                        <span className="text-xs font-medium uppercase tracking-wider group-hover:text-blue-400 transition-colors duration-300" style={{ color: "rgba(255,255,255,0.25)" }}>
-                          Visitar web →
-                        </span>
-                      </div>
-                    </a>
-                  ))}
+                          {/* Icon badge */}
+                          <div className="flex items-start justify-between mb-8 relative z-10">
+                            <div
+                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center bg-white transition-transform duration-300 group-hover:scale-110 overflow-hidden relative p-2"
+                              style={{
+                                boxShadow: `0 8px 24px ${entidad.color}44`,
+                              }}
+                            >
+                              <img src={entidad.icon as string} alt={entidad.nombre} className="w-full h-full object-contain" />
+                            </div>
+                            <div
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white/30 group-hover:text-white/80 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+                              style={{ background: "rgba(255,255,255,0.06)" }}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M7 17L17 7" />
+                                <path d="M7 7h10v10" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          {/* Name & description */}
+                          <div className="flex-1 relative z-10">
+                            <h4 className="text-xl sm:text-2xl font-bold leading-snug mb-4 group-hover:text-white transition-colors duration-300" style={{ color: "rgba(255,255,255,0.9)" }}>
+                              {entidad.nombre}
+                            </h4>
+                            <p className="text-base sm:text-lg leading-relaxed line-clamp-3" style={{ color: "rgba(255,255,255,0.5)" }}>
+                              {entidad.descripcion}
+                            </p>
+                          </div>
+
+                          {/* Bottom label */}
+                          <div className="mt-8 pt-5 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                            <span className="text-sm font-medium uppercase tracking-widest group-hover:text-blue-400 transition-colors duration-300" style={{ color: "rgba(255,255,255,0.3)" }}>
+                              Visitar web →
+                            </span>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
