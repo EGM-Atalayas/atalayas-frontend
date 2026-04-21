@@ -253,7 +253,7 @@ function renderText(text: string) {
   return result
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message, isStreaming }: { message: Message; isStreaming?: boolean }) {
   const isAssistant = message.role === "assistant"
 
   if (isAssistant) {
@@ -274,7 +274,8 @@ function MessageBubble({ message }: { message: Message }) {
             color: "#1e293b",
             fontWeight: 400,
           }}>
-            {renderText(message.text)}
+            {message.text ? renderText(message.text) : null}
+            {isStreaming && <span className="chatbot-cursor" />}
           </div>
           <span style={{
             fontSize: "10.5px", color: "#b0bac7", paddingLeft: "6px",
@@ -433,11 +434,12 @@ export default function ChatbotIA() {
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
+    // Siempre scrollea si hay streaming activo o si el usuario está cerca del fondo
     const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
-    if (distanceFromBottom < 100) {
+    if (streamingId || distanceFromBottom < 100) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages, isTyping])
+  }, [messages, isTyping, streamingId])
 
   useEffect(() => {
     if (open) {
@@ -523,6 +525,7 @@ export default function ChatbotIA() {
     ])
     setInput("")
     setIsTyping(true)
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
 
     apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content: text.trim() }]
 
@@ -692,6 +695,16 @@ export default function ChatbotIA() {
         @keyframes msgFadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatbotCursor {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .chatbot-cursor {
+          display: inline-block; width: 2px; height: 13px;
+          background: #1e293b; border-radius: 1px;
+          animation: chatbotCursor 0.65s ease-in-out infinite;
+          vertical-align: middle; margin-left: 2px;
         }
         .chatbot-fab { transition: transform 0.2s ease; }
         .chatbot-fab:hover { transform: scale(1.1) !important; }
@@ -912,7 +925,7 @@ export default function ChatbotIA() {
             background: "#f0f2f5",
           }}>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
+              <MessageBubble key={msg.id} message={msg} isStreaming={msg.id === streamingId} />
             ))}
 
             {!suggestionsSent && messages.length === 1 && (
