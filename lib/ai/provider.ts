@@ -1,3 +1,4 @@
+import "server-only"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import Groq from "groq-sdk"
 

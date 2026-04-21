@@ -3,19 +3,21 @@
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
 import Grainient from "./Grainient"
+import { getModulosConProgreso } from "@/lib/api/modulos"
+import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #2d5fc4 0%, #3aad66 100%)",
-  gradientHeader: "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
-  gradientUser:   "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
-  avatarBg:       "linear-gradient(135deg, #2d6b47 0%, #478d62 100%)",
-  chipBg:         "#e8f5ee",
-  chipBorder:     "#9dcdb3",
-  chipText:       "#1a4a30",
-  chipHoverBg:    "#c6e8d4",
-  pulse:          "rgba(71,141,98,0.45)",
-  shadow:         "rgba(71,141,98,0.4)",
+  gradientFab:    "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
+  gradientUser:   "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
+  avatarBg:       "#f0845a",
+  chipBg:         "rgba(27,63,126,0.08)",
+  chipBorder:     "rgba(27,63,126,0.22)",
+  chipText:       "#1b3f7e",
+  chipHoverBg:    "rgba(27,63,126,0.16)",
+  pulse:          "rgba(240,132,90,0.45)",
+  shadow:         "rgba(224,105,61,0.35)",
+  accent:         "#f0845a",
 } as const
 
 const C = COLORS
@@ -73,36 +75,74 @@ interface Message {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const INITIAL_MESSAGES: Message[] = [
-  {
+function buildWelcomeMessage(nombre?: string): Message {
+  const now = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+  const saludo = nombre ? `¡Hola, ${nombre}! 👋` : "¡Hola! 👋"
+  return {
     id: "1",
     role: "assistant",
-    text: "¡Hola! 👋 Soy AtalaIA, tu asistente IA de Atalayas. Puedo ayudarte con tu formación, responder dudas sobre comunicados, PRL o cualquier consulta sobre la plataforma. ¿En qué puedo ayudarte?",
-    time: "Ahora",
-  },
-]
+    text: `${saludo} Soy **AtalaIA**, tu asistente de formación en Atalayas. Puedo ayudarte con tus módulos, responder dudas sobre comunicados, PRL o el uso de la plataforma. ¿En qué puedo ayudarte?`,
+    time: now,
+  }
+}
 
-const SUGGESTIONS = [
-  "¿Qué formaciones tengo pendientes?",
-  "Resumen del último comunicado",
-  "Normas de PRL básicas",
-  "¿Cómo completo un módulo?",
-]
+function getSuggestions(
+  rol: string | undefined,
+  modulos: ModuloConProgreso[]
+): string[] {
+  const isAdmin = rol === "ROLE_ADMIN" || rol === "ROLE_ADMIN_EMPRESA"
+  const enProgreso = modulos.find((m) => m.status === "en progreso")
+  const pendientes = modulos.filter((m) => m.status === "pendiente")
+  const completados = modulos.filter((m) => m.status === "completado")
+
+  if (isAdmin) {
+    return [
+      "¿Cómo genero contenido con IA?",
+      "¿Cómo creo un nuevo módulo?",
+      "Resumen del progreso de empleados",
+      "Normas de PRL para administradores",
+    ]
+  }
+
+  const suggestions: string[] = []
+
+  if (enProgreso) {
+    suggestions.push(`Continuar con "${enProgreso.nombre}"`)
+  } else if (pendientes.length > 0) {
+    suggestions.push(`¿De qué trata "${pendientes[0].nombre}"?`)
+  }
+
+  if (pendientes.length > 0) {
+    suggestions.push("¿Qué formaciones me quedan?")
+  }
+
+  if (completados.length > 0) {
+    suggestions.push("¿Qué he completado hasta ahora?")
+  } else {
+    suggestions.push("¿Por dónde empiezo?")
+  }
+
+  suggestions.push("Normas de PRL básicas")
+  suggestions.push("¿Cómo completo un módulo?")
+
+  return suggestions.slice(0, 4)
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SendIcon({ disabled }: { disabled: boolean }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="23"
+      height="23"
       viewBox="0 0 24 24"
       fill="none"
       stroke={disabled ? "#9ca3af" : "white"}
-      strokeWidth="2.5"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      style={{ display: "block", margin: "auto", transform: "translate(-1px, 1px)", pointerEvents: "none" }}
     >
       <line x1="22" y1="2" x2="11" y2="13" />
       <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -135,7 +175,7 @@ function TypingIndicator() {
         {[0, 1, 2].map((i) => (
           <div key={i} style={{
             width: "7px", height: "7px", borderRadius: "50%",
-            background: "#94a3b8",
+            background: C.accent,
             animation: "chatbotBounce 1.2s ease-in-out infinite",
             animationDelay: `${i * 0.2}s`,
           }} />
@@ -145,15 +185,69 @@ function TypingIndicator() {
   )
 }
 
+function renderInline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
+    p.startsWith("**") && p.endsWith("**")
+      ? <strong key={i}>{p.slice(2, -2)}</strong>
+      : <span key={i}>{p}</span>
+  )
+}
+
 function renderText(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={i}>{part.slice(2, -2)}</strong>
-    if (part.startsWith("*") && part.endsWith("*"))
-      return <em key={i}>{part.slice(1, -1)}</em>
-    return <span key={i}>{part}</span>
+  const lines = text.split("\n")
+  const result: React.ReactNode[] = []
+  let numListCounter = 0
+
+  lines.forEach((line, lineIdx) => {
+    const isLast = lineIdx === lines.length - 1
+
+    // Lista con guión o bullet
+    const bulletMatch = line.match(/^[-•]\s+(.+)/)
+    if (bulletMatch) {
+      numListCounter = 0
+      result.push(
+        <div key={lineIdx} style={{ display: "flex", gap: "6px", marginTop: result.length === 0 ? 0 : "3px" }}>
+          <span style={{ color: C.accent, fontWeight: 700, flexShrink: 0, marginTop: "1px" }}>•</span>
+          <span>{renderInline(bulletMatch[1])}</span>
+        </div>
+      )
+      return
+    }
+
+    // Lista numerada: "1. " "2. " etc.
+    const numMatch = line.match(/^(\d+)\.\s+(.+)/)
+    if (numMatch) {
+      numListCounter++
+      result.push(
+        <div key={lineIdx} style={{ display: "flex", gap: "8px", marginTop: result.length === 0 ? 0 : "4px" }}>
+          <span style={{
+            color: C.accent, fontWeight: 700, flexShrink: 0,
+            minWidth: "16px", textAlign: "right", marginTop: "1px",
+          }}>{numMatch[1]}.</span>
+          <span>{renderInline(numMatch[2])}</span>
+        </div>
+      )
+      return
+    }
+
+    numListCounter = 0
+
+    // Línea vacía → espaciado
+    if (line.trim() === "") {
+      if (lineIdx !== 0 && !isLast) result.push(<div key={lineIdx} style={{ height: "6px" }} />)
+      return
+    }
+
+    // Línea normal
+    result.push(
+      <span key={lineIdx}>
+        {renderInline(line)}
+        {!isLast && <br />}
+      </span>
+    )
   })
+
+  return result
 }
 
 function MessageBubble({ message }: { message: Message }) {
@@ -163,21 +257,26 @@ function MessageBubble({ message }: { message: Message }) {
     return (
       <div style={{
         display: "flex", alignItems: "flex-start",
-        marginBottom: "12px",
+        marginBottom: "16px",
         animation: "msgFadeIn 0.2s ease forwards",
       }}>
-        <div style={{ maxWidth: "86%", display: "flex", flexDirection: "column", gap: "3px" }}>
+        <div style={{ maxWidth: "86%", display: "flex", flexDirection: "column", gap: "5px" }}>
           <div style={{
-            background: "#F1F5F9",
+            background: "rgba(240,132,90,0.07)",
+            border: "1px solid rgba(240,132,90,0.15)",
             borderRadius: "4px 18px 18px 18px",
-            padding: "11px 15px",
-            fontSize: "13.5px",
-            lineHeight: "1.6",
+            padding: "12px 16px",
+            fontSize: "14px",
+            lineHeight: "1.65",
             color: "#1e293b",
+            fontWeight: 400,
           }}>
             {renderText(message.text)}
           </div>
-          <span style={{ fontSize: "10px", color: "#94a3b8", paddingLeft: "4px" }}>{message.time}</span>
+          <span style={{
+            fontSize: "10.5px", color: "#b0bac7", paddingLeft: "6px",
+            fontWeight: 400, letterSpacing: "0.01em",
+          }}>{message.time}</span>
         </div>
       </div>
     )
@@ -189,18 +288,22 @@ function MessageBubble({ message }: { message: Message }) {
       marginBottom: "16px",
       animation: "msgFadeIn 0.2s ease forwards",
     }}>
-      <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+      <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
         <div style={{
           background: C.gradientUser,
           borderRadius: "18px 18px 4px 18px",
-          padding: "11px 15px",
+          padding: "12px 16px",
           fontSize: "13.5px",
-          lineHeight: "1.55",
+          lineHeight: "1.65",
           color: "white",
+          fontWeight: 400,
         }}>
           {renderText(message.text)}
         </div>
-        <span style={{ fontSize: "10px", color: "#94a3b8", paddingRight: "4px" }}>{message.time}</span>
+        <span style={{
+          fontSize: "10.5px", color: "#b0bac7", paddingRight: "6px",
+          fontWeight: 400, letterSpacing: "0.01em",
+        }}>{message.time}</span>
       </div>
     </div>
   )
@@ -211,12 +314,25 @@ function MessageBubble({ message }: { message: Message }) {
 export default function ChatbotIA() {
   const { usuario } = useAuth()
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
+  const STORAGE_KEY = "atalaIA-messages"
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = localStorage.getItem("atalaIA-messages")
+      if (saved) {
+        const parsed = JSON.parse(saved) as Message[]
+        if (parsed.length > 0) return parsed
+      }
+    } catch { /* ignore */ }
+    return [buildWelcomeMessage()]
+  })
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [hasUnread, setHasUnread] = useState(true)
   const [showTooltip, setShowTooltip] = useState(false)
   const [suggestionsSent, setSuggestionsSent] = useState(false)
+  const [inputFocused, setInputFocused] = useState(false)
+  const [modulos, setModulos] = useState<ModuloConProgreso[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const [positions, setPositions] = useState<{ fab: Pos; panel: Pos }>({
     fab:   { x: 0, y: 0 },
@@ -246,6 +362,26 @@ export default function ChatbotIA() {
     }
     setPosReady(true)
   }, [])
+
+  useEffect(() => {
+    getModulosConProgreso().then(setModulos).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (messages.length > 1) {
+      try { localStorage.setItem("atalaIA-messages", JSON.stringify(messages)) } catch { /* ignore */ }
+    }
+  }, [messages])
+
+  useEffect(() => {
+    if (usuario?.nombre) {
+      setMessages((prev) =>
+        prev.length === 1 && prev[0].id === "1"
+          ? [buildWelcomeMessage(usuario.nombre)]
+          : prev
+      )
+    }
+  }, [usuario?.nombre])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -333,13 +469,19 @@ export default function ChatbotIA() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: apiHistoryRef.current,
+          messages: apiHistoryRef.current.slice(-10),
           context: {
             nombreUsuario: usuario
               ? `${usuario.nombre} ${usuario.apellidos ?? ""}`.trim()
               : undefined,
             empresa: usuario?.nombreEmpresa ?? undefined,
             rol: usuario?.codigoRol ?? undefined,
+            modulosPendientes: modulos
+              .filter((m) => m.status === "pendiente" || m.status === "en progreso")
+              .map((m) => m.status === "en progreso" ? `${m.nombre} (en progreso)` : m.nombre),
+            modulosCompletados: modulos
+              .filter((m) => m.status === "completado")
+              .map((m) => m.nombre),
           },
         }),
       })
@@ -347,7 +489,9 @@ export default function ChatbotIA() {
       const data = await res.json()
       const responseText: string = res.ok
         ? data.message
-        : "Lo siento, ha ocurrido un error. Inténtalo de nuevo. 🙏"
+        : res.status >= 500
+          ? "⚠️ El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
+          : "No he podido procesar tu consulta. Comprueba que el mensaje no esté vacío e inténtalo de nuevo."
 
       apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: responseText }]
 
@@ -363,12 +507,15 @@ export default function ChatbotIA() {
       ])
     } catch {
       setIsTyping(false)
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          text: "Lo siento, no he podido conectar. Comprueba tu conexión e inténtalo de nuevo. 🙏",
+          text: isOffline
+            ? "📡 Parece que no tienes conexión a internet. Comprueba tu red e inténtalo de nuevo."
+            : "⚠️ No he podido conectar con el servidor. Inténtalo en unos segundos.",
           time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
         },
       ])
@@ -392,6 +539,13 @@ export default function ChatbotIA() {
     setOpen((p) => !p)
   }
 
+  function clearConversation() {
+    try { localStorage.removeItem("atalaIA-messages") } catch { /* ignore */ }
+    apiHistoryRef.current = []
+    setSuggestionsSent(false)
+    setMessages([buildWelcomeMessage(usuario?.nombre)])
+  }
+
   // ── Position styles ────────────────────────────────────────────────────────
 
   const fabStyle: React.CSSProperties = isMobile
@@ -401,11 +555,12 @@ export default function ChatbotIA() {
   const panelStyle: React.CSSProperties = isMobile
     ? {
         position: "fixed",
-        bottom: "104px",
-        right: "16px",
-        left: "16px",
-        width: "auto",
-        height: `min(${PANEL_H}px, calc(100dvh - 120px))`,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: "100%",
+        height: "calc(100dvh - 80px)",
+        borderRadius: "20px 20px 0 0",
       }
     : {
         position: "fixed",
@@ -426,6 +581,14 @@ export default function ChatbotIA() {
           from { opacity: 0; transform: translateY(16px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes chatbotSlideUp {
+          from { opacity: 0; transform: translateY(100%); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatbotBackdropIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
         @keyframes chatbotPulse {
           0%, 100% { box-shadow: 0 6px 24px ${C.pulse}; }
           50%       { box-shadow: 0 8px 36px ${C.pulse}, 0 0 0 8px ${C.pulse.replace("0.45", "0.12")}; }
@@ -438,14 +601,17 @@ export default function ChatbotIA() {
         .chatbot-fab:hover { transform: scale(1.1) !important; }
         .chatbot-fab-drag { cursor: grab !important; }
         .chatbot-fab-drag:active { cursor: grabbing !important; }
-        .chatbot-send { transition: background 0.2s, transform 0.15s; }
-        .chatbot-send:hover:not(:disabled) { transform: scale(1.08); }
+        .chatbot-send { transition: background 0.2s, filter 0.15s, box-shadow 0.15s; }
+        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(240,132,90,0.4); }
+        .chatbot-send:hover:not(:disabled) svg { transform: translate(-1px, 1px) scale(1.18); transition: transform 0.15s; }
+        .chatbot-send:active:not(:disabled) { filter: brightness(0.95); }
+        .chatbot-send:active:not(:disabled) svg { transform: translate(-1px, 1px) scale(0.9); }
         .chatbot-chip {
           transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
         }
         .chatbot-chip:hover {
           background: ${C.chipHoverBg} !important;
-          border-color: ${C.chipBorder} !important;
+          border-color: rgba(27,63,126,0.4) !important;
           transform: translateY(-1px);
         }
         .chatbot-close { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
@@ -453,7 +619,8 @@ export default function ChatbotIA() {
         .chatbot-close:active { transform: scale(0.95); }
         .chatbot-messages::-webkit-scrollbar { width: 4px; }
         .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
-        .chatbot-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(240,132,90,0.35); border-radius: 4px; }
+        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(240,132,90,0.6); }
         .chatbot-input:focus { outline: none; }
       `}</style>
 
@@ -526,30 +693,42 @@ export default function ChatbotIA() {
 
       {/* ── Panel ────────────────────────────────────────────────────────── */}
       {open && (
+        <>
+          {/* Backdrop móvil */}
+          {isMobile && (
+            <div
+              onClick={() => setOpen(false)}
+              style={{
+                position: "fixed", inset: 0, zIndex: 998,
+                background: "rgba(0,0,0,0.45)",
+                animation: "chatbotBackdropIn 0.2s ease forwards",
+              }}
+            />
+          )}
         <div ref={panelRef} style={{
           ...panelStyle,
           zIndex: 999,
-          borderRadius: "20px",
+          borderRadius: isMobile ? "20px 20px 0 0" : "20px",
           boxShadow: "0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          background: "white",
-          animation: isDragging.current ? "none" : "chatbotFadeIn 0.25s ease forwards",
-          border: "1px solid rgba(0,0,0,0.06)",
+          background: "#1b3f7e",
+          animation: isDragging.current ? "none" : isMobile ? "chatbotSlideUp 0.3s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
+          border: isMobile ? "none" : "1px solid rgba(0,0,0,0.06)",
         }}>
 
           {/* Header */}
-          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#0e2a4a" }}>
+          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#1b3f7e" }}>
             <Grainient
-              color1="#3aad66"
-              color2="#2d5fc4"
-              color3="#1a4a6e"
-              timeSpeed={0.15}
-              warpSpeed={1.0}
-              warpStrength={1.2}
-              contrast={1.4}
-              saturation={1.3}
+              color1="#16a34a"
+              color2="#3b82f6"
+              color3="#1b3f7e"
+              timeSpeed={0.12}
+              warpSpeed={0.8}
+              warpStrength={1.0}
+              contrast={1.3}
+              saturation={1.2}
               grainAmount={0.04}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
             />
@@ -562,8 +741,8 @@ export default function ChatbotIA() {
               <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
                   width: "50px", height: "50px", borderRadius: "50%",
-                  background: "rgba(255,255,255,0.18)",
-                  border: "2px solid rgba(255,255,255,0.5)",
+                  background: C.accent,
+                  border: "2px solid rgba(255,255,255,0.25)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden", padding: "6px",
                   boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
@@ -574,33 +753,56 @@ export default function ChatbotIA() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
                 <div style={{
-                  color: "white", fontWeight: 800, fontSize: "17px", lineHeight: 1.2,
-                  textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+                  color: "white", fontWeight: 800, fontSize: "20px", lineHeight: 1.1,
+                  letterSpacing: "-0.02em",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}>
                   AtalaIA
                 </div>
                 <div style={{
-                  color: "rgba(255,255,255,0.9)", fontSize: "12.5px", marginTop: "4px",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                  color: "rgba(255,255,255,0.88)", fontSize: "12px", fontWeight: 400,
+                  letterSpacing: "0.01em",
+                  textShadow: "0 1px 3px rgba(0,0,0,0.25)",
                 }}>
-                  {isTyping ? "✍️ Escribiendo..." : "Tu asistente de formación"}
+                  {isTyping ? "Escribiendo..." : "Tu asistente en Atalayas"}
                 </div>
               </div>
 
-              <button className="chatbot-close" onClick={() => setOpen(false)}
-                aria-label="Cerrar asistente"
-                style={{
-                  width: "32px", height: "32px", borderRadius: "50%",
-                  background: "rgba(255,255,255,0.18)",
-                  border: "1px solid rgba(255,255,255,0.3)",
-                  cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                }}>
-                <CloseIcon />
-              </button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                {/* Limpiar conversación */}
+                <button className="chatbot-close" onClick={clearConversation}
+                  aria-label="Nueva conversación"
+                  title="Nueva conversación"
+                  style={{
+                    width: "32px", height: "32px", borderRadius: "50%",
+                    background: "rgba(255,255,255,0.18)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                  }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                    stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                  </svg>
+                </button>
+                {/* Cerrar */}
+                <button className="chatbot-close" onClick={() => setOpen(false)}
+                  aria-label="Cerrar asistente"
+                  style={{
+                    width: "32px", height: "32px", borderRadius: "50%",
+                    background: "rgba(255,255,255,0.18)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                  }}>
+                  <CloseIcon />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -609,7 +811,7 @@ export default function ChatbotIA() {
             flex: 1, overflowY: "auto",
             padding: "18px 16px 8px",
             display: "flex", flexDirection: "column",
-            background: "#FAFBFC",
+            background: "#f0f2f5",
           }}>
             {messages.map((msg) => (
               <MessageBubble key={msg.id} message={msg} />
@@ -620,18 +822,19 @@ export default function ChatbotIA() {
                 display: "flex", flexWrap: "wrap", gap: "8px",
                 marginTop: "4px", marginBottom: "4px",
               }}>
-                {SUGGESTIONS.map((s) => (
+                {getSuggestions(usuario?.codigoRol, modulos).map((s) => (
                   <button key={s} className="chatbot-chip" onClick={() => handleSuggestion(s)}
                     style={{
                       background: C.chipBg,
                       border: `1px solid ${C.chipBorder}`,
                       borderRadius: "20px",
-                      padding: "5px 12px",
-                      fontSize: "11.5px",
+                      padding: "6px 13px",
+                      fontSize: "12px",
                       color: C.chipText,
                       cursor: "pointer",
                       lineHeight: 1.4,
                       fontWeight: 500,
+                      letterSpacing: "0.01em",
                     }}>
                     {s}
                   </button>
@@ -660,8 +863,9 @@ export default function ChatbotIA() {
               padding: "0 14px",
               display: "flex",
               alignItems: "center",
-              border: "1px solid #E2E8F0",
-              transition: "border-color 0.15s",
+              border: inputFocused ? "1.5px solid rgba(27,63,126,0.4)" : "1px solid #E2E8F0",
+              transition: "border-color 0.15s, box-shadow 0.15s",
+              boxShadow: inputFocused ? "0 0 0 3px rgba(27,63,126,0.1)" : "none",
             }}>
               <input
                 ref={inputRef}
@@ -670,13 +874,15 @@ export default function ChatbotIA() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
                 placeholder="Pregúntame lo que necesites..."
                 disabled={isTyping}
                 style={{
                   flex: 1,
                   border: "none",
                   background: "transparent",
-                  fontSize: "13px",
+                  fontSize: "13.5px",
                   color: "#1e293b",
                   padding: "10px 0",
                   fontFamily: "inherit",
@@ -701,6 +907,7 @@ export default function ChatbotIA() {
             </button>
           </div>
         </div>
+        </>
       )}
     </>
   )
