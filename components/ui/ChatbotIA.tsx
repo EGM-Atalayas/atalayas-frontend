@@ -10,7 +10,6 @@ import type { ModuloConProgreso } from "@/lib/types/modulos"
 const COLORS = {
   gradientFab:    "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
   gradientUser:   "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
-  avatarBg:       "#f0845a",
   chipBg:         "rgba(27,63,126,0.08)",
   chipBorder:     "rgba(27,63,126,0.22)",
   chipText:       "#1b3f7e",
@@ -87,7 +86,37 @@ function buildWelcomeMessage(nombre?: string): Message {
 }
 
 const STORAGE_KEY = "atalaIA-messages"
-const STORAGE_HISTORY_KEY = "atalaIA-history"
+
+const ADMIN_POOL = [
+  "¿Cómo genero contenido con IA?",
+  "¿Cómo creo un módulo?",
+  "Progreso de empleados",
+  "PRL para administradores",
+  "¿Cómo edito un módulo?",
+  "¿Cómo añado empleados?",
+  "¿Qué tipos de módulos hay?",
+  "¿Cómo genero evaluaciones?",
+  "¿Cómo publico un comunicado?",
+  "¿Cómo veo el progreso individual?",
+]
+
+const EMPLEADO_POOL = [
+  "Normas de PRL básicas",
+  "¿Cómo completo un módulo?",
+  "¿Qué es el onboarding?",
+  "¿Cómo accedo a mis formaciones?",
+  "¿Dónde veo mis comunicados?",
+  "¿Puedo retomar una formación?",
+  "¿Hay evaluaciones en los módulos?",
+  "¿Cómo contacto con RRHH?",
+  "¿Qué módulos son obligatorios?",
+  "¿Cómo uso la plataforma?",
+]
+
+function pickRandom<T>(arr: T[], n: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, n)
+}
 
 function getSuggestions(
   rol: string | undefined,
@@ -99,36 +128,27 @@ function getSuggestions(
   const completados = modulos.filter((m) => m.status === "completado")
 
   if (isAdmin) {
-    return [
-      "¿Cómo genero contenido con IA?",
-      "¿Cómo creo un nuevo módulo?",
-      "Resumen del progreso de empleados",
-      "Normas de PRL para administradores",
-    ]
+    return pickRandom(ADMIN_POOL, 4)
   }
 
-  const suggestions: string[] = []
-
+  // Sugerencias contextuales fijas (basadas en módulos reales)
+  const contextual: string[] = []
   if (enProgreso) {
-    suggestions.push(`Continuar con "${enProgreso.nombre}"`)
+    contextual.push(`Continuar con "${enProgreso.nombre}"`)
   } else if (pendientes.length > 0) {
-    suggestions.push(`¿De qué trata "${pendientes[0].nombre}"?`)
+    contextual.push(`¿De qué trata "${pendientes[0].nombre}"?`)
   }
-
   if (pendientes.length > 0) {
-    suggestions.push("¿Qué formaciones me quedan?")
+    contextual.push("¿Qué formaciones me quedan?")
+  } else if (completados.length > 0) {
+    contextual.push("¿Qué he completado hasta ahora?")
   }
 
-  if (completados.length > 0) {
-    suggestions.push("¿Qué he completado hasta ahora?")
-  } else {
-    suggestions.push("¿Por dónde empiezo?")
-  }
+  // Rellenar con aleatorias del pool hasta llegar a 4
+  const needed = 4 - contextual.length
+  const random = pickRandom(EMPLEADO_POOL, needed)
 
-  suggestions.push("Normas de PRL básicas")
-  suggestions.push("¿Cómo completo un módulo?")
-
-  return suggestions.slice(0, 4)
+  return [...contextual, ...random]
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -136,8 +156,8 @@ function getSuggestions(
 function SendIcon({ disabled }: { disabled: boolean }) {
   return (
     <svg
-      width="23"
-      height="23"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke={disabled ? "#9ca3af" : "white"}
@@ -145,7 +165,7 @@ function SendIcon({ disabled }: { disabled: boolean }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      style={{ display: "block", margin: "auto", transform: "translate(-1px, 1px)", pointerEvents: "none" }}
+      style={{ display: "block", pointerEvents: "none" }}
     >
       <line x1="22" y1="2" x2="11" y2="13" />
       <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -167,8 +187,9 @@ function TypingIndicator() {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "12px" }}>
       <div style={{
-        background: "#F1F5F9",
-        borderRadius: "18px 18px 18px 4px",
+        background: "rgba(240,132,90,0.07)",
+        border: "1px solid rgba(240,132,90,0.15)",
+        borderRadius: "4px 18px 18px 18px",
         padding: "12px 16px",
         display: "flex",
         alignItems: "center",
@@ -199,7 +220,6 @@ function renderInline(text: string) {
 function renderText(text: string) {
   const lines = text.split("\n")
   const result: React.ReactNode[] = []
-  let numListCounter = 0
 
   lines.forEach((line, lineIdx) => {
     const isLast = lineIdx === lines.length - 1
@@ -207,7 +227,6 @@ function renderText(text: string) {
     // Lista con guión o bullet
     const bulletMatch = line.match(/^[-•]\s+(.+)/)
     if (bulletMatch) {
-      numListCounter = 0
       result.push(
         <div key={lineIdx} style={{ display: "flex", gap: "6px", marginTop: result.length === 0 ? 0 : "3px" }}>
           <span style={{ color: C.accent, fontWeight: 700, flexShrink: 0, marginTop: "1px" }}>•</span>
@@ -220,7 +239,6 @@ function renderText(text: string) {
     // Lista numerada: "1. " "2. " etc.
     const numMatch = line.match(/^(\d+)\.\s+(.+)/)
     if (numMatch) {
-      numListCounter++
       result.push(
         <div key={lineIdx} style={{ display: "flex", gap: "8px", marginTop: result.length === 0 ? 0 : "4px" }}>
           <span style={{
@@ -232,8 +250,6 @@ function renderText(text: string) {
       )
       return
     }
-
-    numListCounter = 0
 
     // Línea vacía → espaciado
     if (line.trim() === "") {
@@ -253,7 +269,7 @@ function renderText(text: string) {
   return result
 }
 
-function MessageBubble({ message, isStreaming }: { message: Message; isStreaming?: boolean }) {
+function MessageBubble({ message, isStreaming, animate = true }: { message: Message; isStreaming?: boolean; animate?: boolean }) {
   const isAssistant = message.role === "assistant"
 
   if (isAssistant) {
@@ -261,25 +277,26 @@ function MessageBubble({ message, isStreaming }: { message: Message; isStreaming
       <div style={{
         display: "flex", alignItems: "flex-start",
         marginBottom: "16px",
-        animation: "msgFadeIn 0.2s ease forwards",
+        animation: animate ? "msgFadeIn 0.2s ease forwards" : "none",
       }}>
-        <div style={{ maxWidth: "86%", display: "flex", flexDirection: "column", gap: "5px" }}>
+        <div style={{ maxWidth: "82%", display: "flex", flexDirection: "column", gap: "5px" }}>
           <div style={{
             background: "rgba(240,132,90,0.07)",
             border: "1px solid rgba(240,132,90,0.15)",
             borderRadius: "4px 18px 18px 18px",
-            padding: "12px 16px",
+            padding: isStreaming && !message.text ? "10px 14px" : "12px 16px",
             fontSize: "14px",
             lineHeight: "1.65",
             color: "#1e293b",
             fontWeight: 400,
+            transition: "padding 0.1s",
           }}>
             {message.text ? renderText(message.text) : null}
             {isStreaming && <span className="chatbot-cursor" />}
           </div>
           <span style={{
             fontSize: "10.5px", color: "#b0bac7", paddingLeft: "6px",
-            fontWeight: 400, letterSpacing: "0.01em",
+            fontWeight: 400, letterSpacing: "0.01em", lineHeight: 1.4,
           }}>{message.time}</span>
         </div>
       </div>
@@ -290,14 +307,14 @@ function MessageBubble({ message, isStreaming }: { message: Message; isStreaming
     <div style={{
       display: "flex", justifyContent: "flex-end",
       marginBottom: "16px",
-      animation: "msgFadeIn 0.2s ease forwards",
+      animation: animate ? "msgFadeIn 0.2s ease forwards" : "none",
     }}>
-      <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
+      <div style={{ maxWidth: "82%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
         <div style={{
           background: C.gradientUser,
           borderRadius: "18px 18px 4px 18px",
           padding: "12px 16px",
-          fontSize: "13.5px",
+          fontSize: "14px",
           lineHeight: "1.65",
           color: "white",
           fontWeight: 400,
@@ -306,7 +323,7 @@ function MessageBubble({ message, isStreaming }: { message: Message; isStreaming
         </div>
         <span style={{
           fontSize: "10.5px", color: "#b0bac7", paddingRight: "6px",
-          fontWeight: 400, letterSpacing: "0.01em",
+          fontWeight: 400, letterSpacing: "0.01em", lineHeight: 1.4,
         }}>{message.time}</span>
       </div>
     </div>
@@ -318,27 +335,39 @@ function MessageBubble({ message, isStreaming }: { message: Message; isStreaming
 export default function ChatbotIA() {
   const { usuario } = useAuth()
   const [open, setOpen] = useState(false)
+  const initialMessageIds = useRef<Set<string>>(new Set())
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved) as Message[]
-        if (parsed.length > 0) return parsed
+        if (parsed.length > 0) {
+          parsed.forEach((m) => initialMessageIds.current.add(m.id))
+          return parsed
+        }
       }
     } catch { /* ignore */ }
-    return [buildWelcomeMessage()]
+    const welcome = buildWelcomeMessage()
+    initialMessageIds.current.add(welcome.id)
+    return [welcome]
   })
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [hasUnread, setHasUnread] = useState(true)
+  const [hasUnread, setHasUnread] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
   const [suggestionsSent, setSuggestionsSent] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
   const [modulos, setModulos] = useState<ModuloConProgreso[]>([])
+  const [suggestions, setSuggestions] = useState<string[]>(() => getSuggestions(undefined, []))
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [confirmFading, setConfirmFading] = useState(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const confirmClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const recentMessagesRef = useRef<number[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const MAX_CHARS = 500
@@ -408,12 +437,25 @@ export default function ChatbotIA() {
     setPosReady(true)
 
     window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      abortControllerRef.current?.abort()
+    }
   }, [])
 
   useEffect(() => {
-    getModulosConProgreso().then(setModulos).catch(() => {})
-  }, [])
+    getModulosConProgreso().then((m) => {
+      setModulos(m)
+      setSuggestions(getSuggestions(usuario?.codigoRol, m))
+      // Mostrar punto rojo si hay módulos pendientes o en progreso
+      const hayPendientes = m.some((mod) => mod.status === "pendiente" || mod.status === "en progreso")
+      setHasUnread(hayPendientes)
+    }).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setSuggestions(getSuggestions(usuario?.codigoRol, modulos))
+  }, [usuario?.codigoRol]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (messages.length > 1) {
@@ -444,8 +486,26 @@ export default function ChatbotIA() {
   useEffect(() => {
     if (open) {
       setHasUnread(false)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" })
+        inputRef.current?.focus()
+      }, 50)
+    } else {
+      setShowScrollBtn(false)
+      // Al cerrar, marcar todos los mensajes como "ya vistos" para que no animen al reabrir
+      messages.forEach((m) => initialMessageIds.current.add(m.id))
     }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    function handleScroll() {
+      const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+      setShowScrollBtn(distFromBottom > 120)
+    }
+    container.addEventListener("scroll", handleScroll, { passive: true })
+    return () => container.removeEventListener("scroll", handleScroll)
   }, [open])
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
@@ -530,8 +590,12 @@ export default function ChatbotIA() {
     apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content: text.trim() }]
 
     try {
+      abortControllerRef.current?.abort()
+      abortControllerRef.current = new AbortController()
+
       const res = await fetch("/api/chat", {
         method: "POST",
+        signal: abortControllerRef.current.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiHistoryRef.current.slice(-10),
@@ -581,6 +645,7 @@ export default function ChatbotIA() {
         const chunk = decoder.decode(value, { stream: true })
         fullText += chunk
         setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, text: fullText } : m))
+        await new Promise((r) => setTimeout(r, 38))
       }
 
       apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: fullText }]
@@ -617,34 +682,45 @@ export default function ChatbotIA() {
   }
 
   function closePanel() {
-    if (isMobile) {
-      setIsClosing(true)
-      setTimeout(() => {
-        setOpen(false)
-        setIsClosing(false)
-      }, 280)
-    } else {
-      setOpen(false)
+    if (confirmClear) {
+      setConfirmClear(false)
+      setConfirmFading(false)
+      if (confirmClearTimer.current) clearTimeout(confirmClearTimer.current)
     }
+    setIsClosing(true)
+    const delay = isMobile ? 280 : 150
+    setTimeout(() => {
+      setOpen(false)
+      setIsClosing(false)
+    }, delay)
   }
 
   function handleFabClick() {
-    if (didDrag.current) return
+    if (didDrag.current || isClosing) return
     if (open) closePanel()
     else setOpen(true)
   }
 
-  function clearConversation() {
-    try { localStorage.removeItem("atalaIA-messages") } catch { /* ignore */ }
-    apiHistoryRef.current = []
-    setSuggestionsSent(false)
-    setMessages([buildWelcomeMessage(usuario?.nombre)])
+  function dismissConfirm() {
+    if (confirmClearTimer.current) clearTimeout(confirmClearTimer.current)
+    setConfirmFading(true)
+    setTimeout(() => {
+      setConfirmClear(false)
+      setConfirmFading(false)
+    }, 220)
+  }
+
+  function handleClearClick() {
+    if (confirmClear) return
+    setConfirmClear(true)
+    setConfirmFading(false)
+    confirmClearTimer.current = setTimeout(() => dismissConfirm(), 4000)
   }
 
   // ── Position styles ────────────────────────────────────────────────────────
 
   const fabStyle: React.CSSProperties = isMobile
-    ? { position: "fixed", bottom: "28px", right: "28px", zIndex: 1000 }
+    ? { position: "fixed", bottom: "calc(28px + env(safe-area-inset-bottom, 0px))", right: "calc(28px + env(safe-area-inset-right, 0px))", zIndex: 1000 }
     : { position: "fixed", left: fabPos.x, top: fabPos.y, zIndex: 1000 }
 
   const panelStyle: React.CSSProperties = isMobile
@@ -676,6 +752,10 @@ export default function ChatbotIA() {
           from { opacity: 0; transform: translateY(16px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes chatbotFadeOut {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to   { opacity: 0; transform: translateY(10px) scale(0.97); }
+        }
         @keyframes chatbotSlideUp {
           from { opacity: 0; transform: translateY(100%); }
           to   { opacity: 1; transform: translateY(0); }
@@ -688,6 +768,10 @@ export default function ChatbotIA() {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
+        @keyframes chatbotBackdropOut {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
         @keyframes chatbotPulse {
           0%, 100% { box-shadow: 0 6px 24px ${C.pulse}; }
           50%       { box-shadow: 0 8px 36px ${C.pulse}, 0 0 0 8px ${C.pulse.replace("0.45", "0.12")}; }
@@ -695,6 +779,14 @@ export default function ChatbotIA() {
         @keyframes msgFadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes confirmAppear {
+          from { opacity: 0; transform: scale(0.9); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes confirmDisappear {
+          from { opacity: 1; transform: scale(1); }
+          to   { opacity: 0; transform: scale(0.9); }
         }
         @keyframes chatbotCursor {
           0%, 100% { opacity: 1; }
@@ -712,9 +804,9 @@ export default function ChatbotIA() {
         .chatbot-fab-drag:active { cursor: grabbing !important; }
         .chatbot-send { transition: background 0.2s, filter 0.15s, box-shadow 0.15s; }
         .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(240,132,90,0.4); }
-        .chatbot-send:hover:not(:disabled) svg { transform: translate(-1px, 1px) scale(1.18); transition: transform 0.15s; }
+        .chatbot-send:hover:not(:disabled) svg { transform: scale(1.18); transition: transform 0.15s; }
         .chatbot-send:active:not(:disabled) { filter: brightness(0.95); }
-        .chatbot-send:active:not(:disabled) svg { transform: translate(-1px, 1px) scale(0.9); }
+        .chatbot-send:active:not(:disabled) svg { transform: scale(0.9); }
         .chatbot-chip {
           transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
         }
@@ -731,10 +823,12 @@ export default function ChatbotIA() {
         .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(240,132,90,0.35); border-radius: 4px; }
         .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(240,132,90,0.6); }
         .chatbot-input:focus { outline: none; }
+        .chatbot-input::placeholder { color: #b0bac7; }
+        .chatbot-suggestions { animation: msgFadeIn 0.3s ease 0.1s both; }
       `}</style>
 
       {/* ── FAB ──────────────────────────────────────────────────────────── */}
-      {posReady && !(isMobile && (open || isClosing)) && <div ref={fabRef} style={{ ...fabStyle }}>
+      {posReady && (isMobile ? !(open || isClosing) : !isClosing) && <div ref={fabRef} style={{ ...fabStyle }}>
 
         {/* Tooltip — posicionado absolutamente para no mover el FAB */}
         {showTooltip && !open && (
@@ -778,7 +872,7 @@ export default function ChatbotIA() {
             animation: hasUnread ? `chatbotPulse 2.5s ease-in-out infinite` : "none",
             boxShadow: `0 6px 24px ${C.shadow}`,
             position: "relative",
-            padding: "10px",
+            padding: 0,
             userSelect: "none",
           }}
         >
@@ -786,9 +880,12 @@ export default function ChatbotIA() {
           <img
             src="/logo-chatbot.png"
             alt="Asistente IA"
-            width={40}
-            height={40}
-            style={{ objectFit: "contain", filter: "brightness(0) invert(1)", pointerEvents: "none" }}
+            style={{
+              width: "60%", height: "60%",
+              objectFit: "contain", objectPosition: "center",
+              filter: "brightness(0) invert(1)", pointerEvents: "none",
+              display: "block",
+            }}
           />
           {hasUnread && (
             <span style={{
@@ -810,7 +907,7 @@ export default function ChatbotIA() {
               style={{
                 position: "fixed", inset: 0, zIndex: 998,
                 background: "rgba(0,0,0,0.45)",
-                animation: isClosing ? "chatbotBackdropIn 0.28s ease reverse forwards" : "chatbotBackdropIn 0.2s ease forwards",
+                animation: isClosing ? "chatbotBackdropOut 0.28s ease forwards" : "chatbotBackdropIn 0.2s ease forwards",
               }}
             />
           )}
@@ -825,7 +922,7 @@ export default function ChatbotIA() {
           background: "#1b3f7e",
           animation: isDragging.current ? "none" : isMobile
             ? isClosing ? "chatbotSlideDown 0.28s ease forwards" : "chatbotSlideUp 0.3s ease forwards"
-            : "chatbotFadeIn 0.25s ease forwards",
+            : isClosing ? "chatbotFadeOut 0.15s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
           border: isMobile ? "none" : "1px solid rgba(0,0,0,0.06)",
         }}>
 
@@ -855,12 +952,17 @@ export default function ChatbotIA() {
                   background: C.accent,
                   border: "2px solid rgba(255,255,255,0.25)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", padding: "6px",
+                  overflow: "hidden",
                   boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+                  flexShrink: 0,
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/logo-chatbot.png" alt="AtalaIA" width={36} height={36}
-                    style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+                  <img src="/logo-chatbot.png" alt="AtalaIA"
+                    style={{
+                      width: "62%", height: "62%",
+                      objectFit: "contain", objectPosition: "center",
+                      filter: "brightness(0) invert(1)", display: "block",
+                    }} />
                 </div>
               </div>
 
@@ -877,42 +979,68 @@ export default function ChatbotIA() {
                   letterSpacing: "0.01em",
                   textShadow: "0 1px 3px rgba(0,0,0,0.25)",
                 }}>
-                  {isTyping ? "Escribiendo..." : "Tu asistente en Atalayas"}
+                  {isTyping ? "Escribiendo..." : streamingId ? "Respondiendo..." : "Tu asistente en Atalayas"}
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                {/* Limpiar conversación */}
-                <button className="chatbot-close" onClick={clearConversation}
-                  aria-label="Nueva conversación"
-                  title="Nueva conversación"
-                  style={{
-                    width: "32px", height: "32px", borderRadius: "50%",
-                    background: "rgba(255,255,255,0.18)",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                  }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="1 4 1 10 7 10" />
-                    <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
-                  </svg>
-                </button>
-                {/* Cerrar */}
-                <button className="chatbot-close" onClick={closePanel}
-                  aria-label="Cerrar asistente"
-                  style={{
-                    width: "32px", height: "32px", borderRadius: "50%",
-                    background: "rgba(255,255,255,0.18)",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                  }}>
-                  <CloseIcon />
-                </button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, justifyContent: "flex-end" }}>
+                {confirmClear ? (
+                  <button
+                    onClick={() => {
+                      dismissConfirm()
+                      try { localStorage.removeItem("atalaIA-messages") } catch { /* ignore */ }
+                      apiHistoryRef.current = []
+                      setSuggestionsSent(false)
+                      setSuggestions(getSuggestions(usuario?.codigoRol, modulos))
+                      setTimeout(() => setMessages([buildWelcomeMessage(usuario?.nombre)]), 220)
+                    }}
+                    style={{
+                      height: "32px", padding: "0 14px",
+                      borderRadius: "16px",
+                      background: "rgba(239,68,68,0.75)", border: "1px solid rgba(255,255,255,0.25)",
+                      color: "white", fontSize: "12px", fontWeight: 600,
+                      cursor: "pointer", whiteSpace: "nowrap",
+                      display: "flex", alignItems: "center", gap: "6px",
+                      opacity: confirmFading ? 1 : 0,
+                      animation: confirmFading
+                        ? "confirmDisappear 0.2s ease forwards"
+                        : "confirmAppear 0.2s ease 0.25s forwards",
+                    }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                      stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                    </svg>
+                    Borrar chat
+                  </button>
+                ) : (
+                  <>
+                    <button className="chatbot-close" onClick={handleClearClick}
+                      aria-label="Nueva conversación" title="Nueva conversación"
+                      style={{
+                        width: "32px", height: "32px", borderRadius: "50%",
+                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                      }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                      </svg>
+                    </button>
+                    <button className="chatbot-close" onClick={closePanel}
+                      aria-label="Cerrar asistente"
+                      style={{
+                        width: "32px", height: "32px", borderRadius: "50%",
+                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                      }}>
+                      <CloseIcon />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -925,27 +1053,34 @@ export default function ChatbotIA() {
             background: "#f0f2f5",
           }}>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} isStreaming={msg.id === streamingId} />
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                isStreaming={msg.id === streamingId}
+                animate={!initialMessageIds.current.has(msg.id)}
+              />
             ))}
 
             {!suggestionsSent && messages.length === 1 && (
-              <div style={{
-                display: "flex", flexWrap: "wrap", gap: "8px",
+              <div className="chatbot-suggestions" style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px",
                 marginTop: "4px", marginBottom: "4px",
               }}>
-                {getSuggestions(usuario?.codigoRol, modulos).map((s) => (
+                {suggestions.map((s) => (
                   <button key={s} className="chatbot-chip" onClick={() => handleSuggestion(s)}
                     style={{
                       background: C.chipBg,
                       border: `1px solid ${C.chipBorder}`,
                       borderRadius: "20px",
-                      padding: "6px 13px",
+                      padding: "7px 12px",
                       fontSize: "12px",
                       color: C.chipText,
                       cursor: "pointer",
                       lineHeight: 1.4,
                       fontWeight: 500,
                       letterSpacing: "0.01em",
+                      textAlign: "center",
+                      wordBreak: "break-word",
                     }}>
                     {s}
                   </button>
@@ -957,10 +1092,45 @@ export default function ChatbotIA() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Scroll to bottom */}
+          {showScrollBtn && (
+            <div style={{ position: "relative", height: 0, overflow: "visible", flexShrink: 0, display: "flex", justifyContent: "center" }}>
+              <button
+                onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+                style={{
+                  position: "absolute",
+                  bottom: "10px",
+                  background: "white",
+                  border: `1px solid ${C.chipBorder}`,
+                  borderRadius: "20px",
+                  padding: "5px 14px",
+                  fontSize: "12px",
+                  color: C.chipText,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  fontWeight: 600,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.10)",
+                  zIndex: 10,
+                  whiteSpace: "nowrap",
+                  animation: "msgFadeIn 0.18s ease forwards",
+                }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke={C.chipText} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+                Ir al final
+              </button>
+            </div>
+          )}
+
           {/* Input */}
           <div style={{
             borderTop: "1px solid #E2E8F0",
-            padding: "10px 12px",
+            padding: isMobile
+              ? "10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px"
+              : "10px 12px",
             background: "white",
             flexShrink: 0,
           }}>
@@ -973,64 +1143,67 @@ export default function ChatbotIA() {
               </div>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{
-              flex: 1,
-              background: "#F1F5F9",
-              borderRadius: "24px",
-              padding: "0 14px",
-              display: "flex",
-              alignItems: "center",
-              border: inputFocused ? "1.5px solid rgba(27,63,126,0.4)" : "1px solid #E2E8F0",
-              transition: "border-color 0.15s, box-shadow 0.15s",
-              boxShadow: inputFocused ? "0 0 0 3px rgba(27,63,126,0.1)" : "none",
-            }}>
-              <input
-                ref={inputRef}
-                className="chatbot-input"
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                placeholder="Pregúntame lo que necesites..."
-                disabled={isBusy}
-                style={{
-                  flex: 1,
-                  border: "none",
-                  background: "transparent",
-                  fontSize: "13.5px",
-                  color: "#1e293b",
-                  padding: "10px 0",
-                  fontFamily: "inherit",
-                  opacity: isBusy ? 0.5 : 1,
-                }}
-              />
-              {showCharWarning && (
-                <span style={{
-                  fontSize: "11px", flexShrink: 0, marginLeft: "6px",
-                  color: charsLeft <= 20 ? "#e0693d" : "#94a3b8",
-                  fontWeight: 500,
-                }}>
-                  {charsLeft}
-                </span>
-              )}
-            </div>
-            <button
-              className="chatbot-send"
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isBusy || rateLimited}
-              aria-label="Enviar mensaje"
-              style={{
-                width: "40px", height: "40px", borderRadius: "50%",
-                background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "#E2E8F0",
-                border: "none",
-                cursor: input.trim() && !isBusy && !rateLimited ? "pointer" : "not-allowed",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
+              <div style={{
+                flex: 1,
+                background: "#F1F5F9",
+                borderRadius: "24px",
+                padding: "0 14px",
+                display: "flex",
+                alignItems: "center",
+                border: inputFocused ? "1.5px solid rgba(27,63,126,0.4)" : "1px solid #E2E8F0",
+                transition: "border-color 0.15s, box-shadow 0.15s",
+                boxShadow: inputFocused ? "0 0 0 3px rgba(27,63,126,0.1)" : "none",
+                cursor: isBusy ? "not-allowed" : "text",
               }}>
-              <SendIcon disabled={!input.trim() || isBusy || rateLimited} />
-            </button>
+                <input
+                  ref={inputRef}
+                  className="chatbot-input"
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  placeholder="Pregúntame lo que necesites..."
+                  disabled={isBusy}
+                  style={{
+                    flex: 1,
+                    border: "none",
+                    background: "transparent",
+                    fontSize: "14px",
+                    color: "#1e293b",
+                    padding: "10px 0",
+                    fontFamily: "inherit",
+                    letterSpacing: "0.01em",
+                    opacity: isBusy ? 0.5 : 1,
+                    cursor: "inherit",
+                  }}
+                />
+                {showCharWarning && (
+                  <span style={{
+                    fontSize: "11px", flexShrink: 0, marginLeft: "6px",
+                    color: charsLeft <= 20 ? "#e0693d" : "#94a3b8",
+                    fontWeight: 500,
+                  }}>
+                    {charsLeft}
+                  </span>
+                )}
+              </div>
+              <button
+                className="chatbot-send"
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isBusy || rateLimited}
+                aria-label="Enviar mensaje"
+                style={{
+                  width: "40px", height: "40px", borderRadius: "50%",
+                  background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "#E2E8F0",
+                  border: "none",
+                  cursor: input.trim() && !isBusy && !rateLimited ? "pointer" : "not-allowed",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                <SendIcon disabled={!input.trim() || isBusy || rateLimited} />
+              </button>
             </div>
           </div>
         </div>
