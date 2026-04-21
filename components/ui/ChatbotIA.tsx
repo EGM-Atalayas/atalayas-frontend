@@ -86,6 +86,9 @@ function buildWelcomeMessage(nombre?: string): Message {
   }
 }
 
+const STORAGE_KEY = "atalaIA-messages"
+const STORAGE_HISTORY_KEY = "atalaIA-history"
+
 function getSuggestions(
   rol: string | undefined,
   modulos: ModuloConProgreso[]
@@ -314,11 +317,10 @@ function MessageBubble({ message }: { message: Message }) {
 export default function ChatbotIA() {
   const { usuario } = useAuth()
   const [open, setOpen] = useState(false)
-  const STORAGE_KEY = "atalaIA-messages"
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
-      const saved = localStorage.getItem("atalaIA-messages")
+      const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved) as Message[]
         if (parsed.length > 0) return parsed
@@ -334,6 +336,7 @@ export default function ChatbotIA() {
   const [inputFocused, setInputFocused] = useState(false)
   const [modulos, setModulos] = useState<ModuloConProgreso[]>([])
   const [isMobile, setIsMobile] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [positions, setPositions] = useState<{ fab: Pos; panel: Pos }>({
     fab:   { x: 0, y: 0 },
     panel: { x: 0, y: 0 },
@@ -353,7 +356,41 @@ export default function ChatbotIA() {
   const panelPos = positions.panel
 
   useEffect(() => {
-    const mobile = window.innerWidth < 500
+    // Restaurar historial de API desde mensajes guardados
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Message[]
+        apiHistoryRef.current = parsed
+          .filter((m) => m.id !== "1") // excluir bienvenida
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.text }))
+      }
+    } catch { /* ignore */ }
+
+    const isMobileNow = () => window.innerWidth < 500
+    let wasMobile = isMobileNow()
+
+    const handleResize = () => {
+      const mobile = isMobileNow()
+      // Solo actuar si cruzamos el umbral móvil ↔ desktop
+      if (mobile !== wasMobile) {
+        wasMobile = mobile
+        setIsMobile(mobile)
+        if (!mobile) {
+          const pos = loadFabPos() ?? getDefaultFabPos()
+          liveFabPos.current = pos
+          setPositions({ fab: pos, panel: calcPanelPos(pos) })
+        }
+        setOpen(false)
+        setIsClosing(false)
+      } else if (!mobile) {
+        // En desktop, recalcular posición del panel si se redimensiona
+        const pos = liveFabPos.current
+        setPositions({ fab: pos, panel: calcPanelPos(pos) })
+      }
+    }
+
+    const mobile = isMobileNow()
     setIsMobile(mobile)
     if (!mobile) {
       const pos = loadFabPos() ?? getDefaultFabPos()
@@ -361,6 +398,9 @@ export default function ChatbotIA() {
       setPositions({ fab: pos, panel: calcPanelPos(pos) })
     }
     setPosReady(true)
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   useEffect(() => {
@@ -534,9 +574,22 @@ export default function ChatbotIA() {
     sendMessage(text)
   }
 
+  function closePanel() {
+    if (isMobile) {
+      setIsClosing(true)
+      setTimeout(() => {
+        setOpen(false)
+        setIsClosing(false)
+      }, 280)
+    } else {
+      setOpen(false)
+    }
+  }
+
   function handleFabClick() {
     if (didDrag.current) return
-    setOpen((p) => !p)
+    if (open) closePanel()
+    else setOpen(true)
   }
 
   function clearConversation() {
@@ -585,6 +638,10 @@ export default function ChatbotIA() {
           from { opacity: 0; transform: translateY(100%); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes chatbotSlideDown {
+          from { opacity: 1; transform: translateY(0); }
+          to   { opacity: 0; transform: translateY(100%); }
+        }
         @keyframes chatbotBackdropIn {
           from { opacity: 0; }
           to   { opacity: 1; }
@@ -625,7 +682,7 @@ export default function ChatbotIA() {
       `}</style>
 
       {/* ── FAB ──────────────────────────────────────────────────────────── */}
-      {posReady && <div ref={fabRef} style={{ ...fabStyle }}>
+      {posReady && !(isMobile && (open || isClosing)) && <div ref={fabRef} style={{ ...fabStyle }}>
 
         {/* Tooltip — posicionado absolutamente para no mover el FAB */}
         {showTooltip && !open && (
@@ -697,11 +754,11 @@ export default function ChatbotIA() {
           {/* Backdrop móvil */}
           {isMobile && (
             <div
-              onClick={() => setOpen(false)}
+              onClick={closePanel}
               style={{
                 position: "fixed", inset: 0, zIndex: 998,
                 background: "rgba(0,0,0,0.45)",
-                animation: "chatbotBackdropIn 0.2s ease forwards",
+                animation: isClosing ? "chatbotBackdropIn 0.28s ease reverse forwards" : "chatbotBackdropIn 0.2s ease forwards",
               }}
             />
           )}
@@ -714,7 +771,9 @@ export default function ChatbotIA() {
           flexDirection: "column",
           overflow: "hidden",
           background: "#1b3f7e",
-          animation: isDragging.current ? "none" : isMobile ? "chatbotSlideUp 0.3s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
+          animation: isDragging.current ? "none" : isMobile
+            ? isClosing ? "chatbotSlideDown 0.28s ease forwards" : "chatbotSlideUp 0.3s ease forwards"
+            : "chatbotFadeIn 0.25s ease forwards",
           border: isMobile ? "none" : "1px solid rgba(0,0,0,0.06)",
         }}>
 
@@ -790,7 +849,7 @@ export default function ChatbotIA() {
                   </svg>
                 </button>
                 {/* Cerrar */}
-                <button className="chatbot-close" onClick={() => setOpen(false)}
+                <button className="chatbot-close" onClick={closePanel}
                   aria-label="Cerrar asistente"
                   style={{
                     width: "32px", height: "32px", borderRadius: "50%",
