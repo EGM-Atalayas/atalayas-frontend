@@ -1,3 +1,4 @@
+import "server-only"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import Groq from "groq-sdk"
 
@@ -6,9 +7,13 @@ export interface ChatMessage {
   content: string
 }
 
-// ─── Gemini (principal) ───────────────────────────────────────────────────────
+// ─── Gemini streaming ─────────────────────────────────────────────────────────
 
-async function geminiChat(messages: ChatMessage[], systemPrompt: string): Promise<string> {
+async function geminiChatStream(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  onChunk: (text: string) => void
+): Promise<void> {
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
@@ -22,34 +27,50 @@ async function geminiChat(messages: ChatMessage[], systemPrompt: string): Promis
 
   const chat = model.startChat({ history })
   const lastMessage = messages[messages.length - 1]
-  const result = await chat.sendMessage(lastMessage.content)
-  return result.response.text()
+  const result = await chat.sendMessageStream(lastMessage.content)
+
+  for await (const chunk of result.stream) {
+    const text = chunk.text()
+    if (text) onChunk(text)
+  }
 }
 
-// ─── Groq (fallback) ──────────────────────────────────────────────────────────
+// ─── Groq streaming (fallback) ────────────────────────────────────────────────
 
-async function groqChat(messages: ChatMessage[], systemPrompt: string): Promise<string> {
+async function groqChatStream(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  onChunk: (text: string) => void
+): Promise<void> {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-  const completion = await groq.chat.completions.create({
+  const stream = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
       { role: "system", content: systemPrompt },
       ...messages.map((m) => ({ role: m.role, content: m.content })),
     ],
     max_tokens: 1024,
+    stream: true,
   })
 
-  return completion.choices[0]?.message?.content ?? ""
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content ?? ""
+    if (text) onChunk(text)
+  }
 }
 
-// ─── Provider público — cambia esta función para migrar a otro modelo ─────────
+// ─── Provider público ─────────────────────────────────────────────────────────
 
-export async function chatCompletion(messages: ChatMessage[], systemPrompt: string): Promise<string> {
+export async function chatCompletionStream(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  onChunk: (text: string) => void
+): Promise<void> {
   try {
-    return await geminiChat(messages, systemPrompt)
+    await geminiChatStream(messages, systemPrompt, onChunk)
   } catch (error) {
-    console.error("[AI] Gemini falló, usando Groq como fallback:", error)
-    return await groqChat(messages, systemPrompt)
+    console.error("[AI] Gemini stream falló, usando Groq:", error)
+    await groqChatStream(messages, systemPrompt, onChunk)
   }
 }
