@@ -105,7 +105,7 @@ export default function CrearModuloPage() {
   const [pasoManual,    setPasoManual]    = useState<PasoManual>(1);
   const [nombre,        setNombre]        = useState("");
   const [descripcion,   setDescripcion]   = useState("");
-  const [categoria,     setCategoria]     = useState("ESPECIFICA");
+  const [categoria,     setCategoria]     = useState("ESPECIALIZADO");
   const [idioma,        setIdioma]        = useState("es");
   const [duracion,      setDuracion]      = useState("medio");
   const [archivoM,      setArchivoM]      = useState<ArchivoSubido | null>(null);
@@ -159,14 +159,37 @@ export default function CrearModuloPage() {
   const guardarManual = async () => {
     setGuardando(true); setErrorMsg("");
     try {
+      const testJson = tieneTest && preguntas.length > 0
+        ? JSON.stringify(preguntas.map((q) => ({
+            texto: q.texto,
+            opciones: q.opciones,
+            correcta: q.correcta,
+          })))
+        : null;
+
       const res = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
-        body: JSON.stringify({ nombre: nombre.trim(), descripcion: descripcion.trim(), tipoModulo: categoria, activo: true, empresaId: usuario?.empresaId ?? null }),
+        body: JSON.stringify({
+          nombre:        nombre.trim(),
+          descripcion:   descripcion.trim(),
+          tipoModulo:    categoria,
+          activo:        true,
+          empresaId:     usuario?.empresaId ?? null,
+          idioma,
+          duracion,
+          audiencia,
+          departamentos: audiencia === "departamento" ? deptos : [],
+          testPreguntas: testJson,
+        }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Error al guardar");
+      }
       setGuardado(true);
-    } catch { setErrorMsg("No se pudo guardar. Inténtalo de nuevo."); }
-    finally { setGuardando(false); }
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof Error ? e.message : "No se pudo guardar. Inténtalo de nuevo.");
+    } finally { setGuardando(false); }
   };
 
   // ── IA estado ──
@@ -251,10 +274,10 @@ export default function CrearModuloPage() {
         <div>
           <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Categoría</label>
           <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={SEL} style={CS}>
-            <option value="ESPECIFICA">Específica</option>
-            <option value="BASICA">Básica</option>
-            <option value="DESARROLLO">Desarrollo</option>
-            <option value="IDENTIDAD">Corporativa</option>
+            <option value="ESPECIALIZADO">Específica</option>
+            <option value="GENERAL">Básica / General</option>
+            <option value="CUMPLIMIENTO">Cumplimiento normativo</option>
+            <option value="ONBOARDING">Onboarding</option>
           </select>
         </div>
         <div>
