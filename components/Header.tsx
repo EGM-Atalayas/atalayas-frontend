@@ -27,6 +27,7 @@ const SUPERADMIN_LINKS = [
   { label: "Empresas", path: "/superadmin/empresas" },
   { label: "Solicitudes", path: "/superadmin/solicitudes" },
   { label: "Estadísticas", path: "/superadmin/estadisticas" },
+  { label: "Comunicados", path: "/superadmin/comunicados" },
 ];
 
 export default function Header({ logoEmpresa }: HeaderProps) {

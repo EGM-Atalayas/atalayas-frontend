@@ -12,6 +12,7 @@ export const SUPERADMIN_ROUTES: Record<string, string> = {
   "Empresas":         "/superadmin/empresas",
   "Solicitudes":      "/superadmin/solicitudes",
   "Estadísticas":     "/superadmin/estadisticas",
+  "Comunicados":      "/superadmin/comunicados",
   "Configuración":    "/superadmin/configuracion",
 };
 
