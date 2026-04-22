@@ -17,7 +17,7 @@ const EMPTY_ANUNCIO: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null,
 };
 
-const ROL_EMPLEADO_ID = "6251ef28-e6a3-4a3b-8121-e622da855d86";
+const ROL_EMPLEADO_ID = "ff7abc21-9380-4e51-a55c-e2427d2a4e2d";
 
 const MOCK_MODULO_STATS = [
   { asignados: 28, completado: 64 },
@@ -29,16 +29,16 @@ const MOCK_MODULO_STATS = [
 ];
 
 const DEPARTAMENTOS = [
-  { id: "PRODUCCION",    label: "Producción"     },
-  { id: "RRHH",          label: "RRHH"           },
-  { id: "LOGISTICA",     label: "Logística"      },
-  { id: "CALIDAD",       label: "Calidad"        },
-  { id: "MANTENIMIENTO", label: "Mantenimiento"  },
-  { id: "VENTAS",        label: "Ventas"         },
-  { id: "ADMINISTRACION",label: "Administración" },
-  { id: "IT",            label: "IT"             },
-  { id: "SEGURIDAD",     label: "Seguridad"      },
-  { id: "FORMACION",     label: "Formación"      },
+  { id: "PRODUCCION", label: "Producción" },
+  { id: "RRHH", label: "RRHH" },
+  { id: "LOGISTICA", label: "Logística" },
+  { id: "CALIDAD", label: "Calidad" },
+  { id: "MANTENIMIENTO", label: "Mantenimiento" },
+  { id: "VENTAS", label: "Ventas" },
+  { id: "ADMINISTRACION", label: "Administración" },
+  { id: "IT", label: "IT" },
+  { id: "SEGURIDAD", label: "Seguridad" },
+  { id: "FORMACION", label: "Formación" },
 ];
 
 interface Usuario {
@@ -109,7 +109,7 @@ function AdminContent() {
     try {
       const res = await apiFetch(`${API_URL}/users`);
       if (res.ok) setEmpleados(await res.json());
-    } catch {}
+    } catch { }
     finally { setCargandoEmpleados(false); }
   };
 
@@ -187,7 +187,7 @@ function AdminContent() {
       await apiFetch(`${API_URL}/users/${usuarioId}/desactivar`, { method: "DELETE" });
       await cargarEmpleados();
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
-    } catch {}
+    } catch { }
   };
 
   const resetFormAnuncio = () => {
@@ -664,7 +664,7 @@ function AdminContent() {
                     <div className="flex flex-col gap-2.5">
                       {[
                         { nombre: "Prevención de Riesgos", pct: 100, color: "var(--verde-oliva)" },
-                        { nombre: "Protección de Datos",   pct: 72,  color: "var(--azul-egm)" },
+                        { nombre: "Protección de Datos", pct: 72, color: "var(--azul-egm)" },
                         { nombre: "Onboarding Corporativo", pct: 45, color: "#f59e0b" },
                       ].map((m) => (
                         <div key={m.nombre}>
@@ -1067,10 +1067,10 @@ function AdminContent() {
                   </thead>
                   <tbody>
                     {[
-                      { nombre: "Ana García",    apellidos: "Martínez", pcts: [100, 72, 45, 100] },
-                      { nombre: "Carlos Ruiz",   apellidos: "López",    pcts: [100, 100, 80, 100] },
-                      { nombre: "María López",   apellidos: "Sánchez",  pcts: [65,  40,  20, 100] },
-                      { nombre: "David Torres",  apellidos: "Gil",      pcts: [30,  15,  0,  80]  },
+                      { nombre: "Ana García", apellidos: "Martínez", pcts: [100, 72, 45, 100] },
+                      { nombre: "Carlos Ruiz", apellidos: "López", pcts: [100, 100, 80, 100] },
+                      { nombre: "María López", apellidos: "Sánchez", pcts: [65, 40, 20, 100] },
+                      { nombre: "David Torres", apellidos: "Gil", pcts: [30, 15, 0, 80] },
                     ].map((emp, idx, arr) => {
                       const media = Math.round(emp.pcts.reduce((a, b) => a + b, 0) / emp.pcts.length);
                       const initials = [emp.nombre, emp.apellidos].join(" ").split(" ").slice(0, 2).map(p => p[0]).join("");
