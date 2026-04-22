@@ -40,6 +40,10 @@ export interface Modulo {
   departamentos?: string;
   testPreguntas?: string;
   imagenPortadaUrl?: string | null;
+  tiposSalida?: string;
+  scriptPodcast?: string | null;
+  scriptVideo?: string | null;
+  podcastAudioUrl?: string | null;
   creadoEn: string;
   actualizadoEn: string;
 }
