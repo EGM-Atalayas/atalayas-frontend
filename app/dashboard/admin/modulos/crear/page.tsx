@@ -415,7 +415,6 @@ export default function CrearModuloPage() {
           idioma,
           duracion,
           tiposSalida:   tiposSalidaStr,
-          descripcion:   d.descripcion || "",
           testPreguntas: null,
           scriptPodcast: d.scriptPodcast ?? null,
           scriptVideo:   d.scriptVideo   ?? null,
