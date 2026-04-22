@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -90,6 +90,7 @@ const colaboradoresData = [
   {
     categoria: "Universidades y Centros de Investigación",
     icono: GraduationCap,
+    imagen: "/bg-universidad.avif",
     entidades: [
       {
         nombre: "Universidad de Alicante",
@@ -117,6 +118,8 @@ const colaboradoresData = [
   {
     categoria: "Parques Científicos y Tecnológicos",
     icono: FlaskConical,
+    imagen: "/bg-parque.avif",
+
     entidades: [
       {
         nombre: "Parque Científico de Alicante",
@@ -137,6 +140,8 @@ const colaboradoresData = [
   {
     categoria: "Hubs de Innovación y Aceleración",
     icono: Rocket,
+    imagen: "/bg-innova.jpg",
+
     entidades: [
       {
         nombre: "Alicante Futura",
@@ -164,6 +169,8 @@ const colaboradoresData = [
   {
     categoria: "Institutos Tecnológicos",
     icono: Microchip,
+    imagen: "/bg-instituto.jpg",
+
     entidades: [
       {
         nombre: "Instituto Tecnológico de Informática (ITI)",
@@ -188,11 +195,12 @@ export default function Invitado() {
   const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [categoriasAbiertas, setCategoriasAbiertas] = useState<Record<string, boolean>>({
-    "Universidades y Centros de Investigación": true,
-    "Parques Científicos y Tecnológicos": true,
-    "Hubs de Innovación y Aceleración": true,
-    "Institutos Tecnológicos": true,
+    "Universidades y Centros de Investigación": false,
+    "Parques Científicos y Tecnológicos": false,
+    "Hubs de Innovación y Aceleración": false,
+    "Institutos Tecnológicos": false,
   });
+  const closeTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const toggleCategoria = (cat: string) => {
     setCategoriasAbiertas(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -227,7 +235,7 @@ export default function Invitado() {
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
         {/* Dark overlay */}
-        <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.52)" }} />
+        <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
         {/* ── Navigation ─────────────────────────────────────────────── */}
         <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
@@ -302,7 +310,7 @@ export default function Invitado() {
 
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Featured card */}
-          <Link href="/login" className="relative rounded-2xl overflow-hidden flex-shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
+          <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
             <Image
               src="/background-invitado.jpg"
               alt="Noticia destacada"
@@ -477,11 +485,11 @@ export default function Invitado() {
         <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-28 sm:py-40">
           {/* Section header */}
           <div className="text-center mb-20">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] mb-5" style={{ color: "rgba(147,197,253,0.7)" }}>
+            <p className="text-2xl font-semibold uppercase tracking-[0.2em] mb-5" style={{ color: "rgba(147,197,253,0.7)" }}>
               Colaboradores
             </p>
             <h2
-              className="text-5xl sm:text-7xl font-bold leading-[0.95] mb-8"
+              className="text-5xl sm:text-8xl font-bold leading-[0.95] mb-8"
               style={{ fontFamily: "'Instrument Serif', serif", color: "#ffffff", letterSpacing: "-1px" }}
             >
               Ecosistema de Proximidad
@@ -499,7 +507,15 @@ export default function Invitado() {
               return (
                 <button
                   key={grupo.categoria}
-                  onClick={() => toggleCategoria(grupo.categoria)}
+                  onMouseEnter={() => {
+                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
+                      setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
+                    }, 300); // espera 300ms antes de abrir
+                  }}
+                  onMouseLeave={() => {
+                    clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
+                  }}
                   className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 flex items-center gap-2 ${isOpen
                     ? "bg-white/10 text-white border-white/20"
                     : "bg-white/5 text-white/50 border-white/10 hover:text-white/80"
@@ -527,21 +543,33 @@ export default function Invitado() {
                 <div
                   key={grupo.categoria}
                   id={`cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}
-                  className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out"
+                  onMouseEnter={() => {
+                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
+                      setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
+                    }, 300); // espera 300ms antes de abrir
+                  }}
+                  onMouseLeave={() => {
+                    clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
+                  }}
+                  className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative"
                   style={{
-                    background: "rgba(255,255,255,0.02)",
                     border: "1px solid rgba(255,255,255,0.05)",
+                    backgroundImage: `url(${grupo.imagen})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundAttachment: "local",
                   }}
                 >
-                  {/* Category button/heading */}
+                  {/* UN SOLO overlay para todo el grupo */}
+                  <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.75)" }} />
+
+                  {/* Cabecera */}
                   <button
-                    onClick={() => toggleCategoria(grupo.categoria)}
-                    className="w-full flex items-center justify-between p-8 sm:p-12 cursor-pointer hover:bg-white/[0.03] transition-colors"
+                    className="w-full flex items-center justify-between p-8 sm:p-12 cursor-pointer transition-colors relative z-10"
+                    style={{ minHeight: "140px" }}
                   >
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(59,130,246,0.1)", color: "rgba(96,165,250,0.9)" }}>
-                        <SectionIcon className="w-8 h-8 sm:w-10 sm:h-10" />
-                      </div>
                       <h3 className="text-2xl sm:text-4xl font-bold tracking-wide text-white text-left">
                         {grupo.categoria}
                       </h3>
@@ -550,11 +578,9 @@ export default function Invitado() {
                       <ChevronDown className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
-
-                  {/* Cards grid (collapsible body) */}
+                  {/* Grid de cards original */}
                   <div
-                    className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-8 sm:px-12 transition-all duration-500 ease-in-out ${isOpen ? 'pb-12 opacity-100 max-h-[3000px]' : 'pb-0 opacity-0 max-h-0 hidden'
-                      }`}
+                    className={`relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-8 sm:px-12 transition-all duration-500 ease-in-out overflow-hidden ${isOpen ? 'pb-12 opacity-100 max-h-[3000px]' : 'max-h-0 opacity-0 pb-0'}`}
                   >
                     {grupo.entidades.map((entidad) => {
                       const EntidadIcon = entidad.icon;
@@ -571,12 +597,6 @@ export default function Invitado() {
                             backdropFilter: "blur(12px)",
                           }}
                         >
-                          {/* Colored accent bar */}
-                          <div
-                            className="absolute top-0 left-0 right-0 h-1.5 rounded-t-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-300"
-                            style={{ background: `linear-gradient(to right, ${entidad.color}, ${entidad.color}88)` }}
-                          />
-
                           {/* Hover glow */}
                           <div
                             className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -625,15 +645,16 @@ export default function Invitado() {
                     })}
                   </div>
                 </div>
+
               );
             })}
           </div>
         </div>
-      </section>
+      </section >
 
       {/* FOOTER */}
-      <FooterCTA />
+      < FooterCTA />
 
-    </div>
+    </div >
   );
 }
