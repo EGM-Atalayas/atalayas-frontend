@@ -40,6 +40,11 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       prefijo: "Panel de ",
       titulo: "Configuración"
     };
+  } else if (pathname.includes("/superadmin/comunicados")) {
+    heroConfig = {
+      prefijo: "Gestiona los ",
+      titulo: "Comunicados"
+    };
   }
 
   return (

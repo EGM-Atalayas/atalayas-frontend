@@ -702,18 +702,27 @@ function AdminContent() {
                 </h1>
                 <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Comunica novedades a todos los empleados</p>
               </div>
-              <button
-                onClick={() => { resetFormAnuncio(); setShowFormAnuncio(true); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Nuevo anuncio
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push("/dashboard/admin/comunicados")}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: "var(--gris-pagina)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
+                >
+                  Sube tus comunicados
+                </button>
+                <button
+                  onClick={() => { resetFormAnuncio(); setShowFormAnuncio(true); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Nuevo anuncio
+                </button>
+              </div>
             </div>
 
             {/* Formulario anuncio */}
