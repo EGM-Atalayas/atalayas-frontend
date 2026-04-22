@@ -178,7 +178,7 @@ export default function CrearModuloPage() {
           idioma,
           duracion,
           audiencia,
-          departamentos: audiencia === "departamento" ? deptos : [],
+          departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
           testPreguntas: testJson,
         }),
       });
