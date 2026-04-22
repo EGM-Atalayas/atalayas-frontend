@@ -50,7 +50,8 @@ const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
   { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
 ];
 
-function getFormacionImg(moduloId: string, nombre: string): string | undefined {
+function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: string | null): string | undefined {
+  if (imagenPortadaUrl) return imagenPortadaUrl;
   if (FORMACION_IMG_BY_ID[moduloId]) return FORMACION_IMG_BY_ID[moduloId];
   const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen;
@@ -358,7 +359,7 @@ export default function FormacionPage() {
               style={{ border: "2px solid var(--azul-egm)", background: "var(--blanco)", marginBottom: "2.5rem" }}
             >
               {(() => {
-                const img = getFormacionImg(continuar.moduloId, continuar.nombre);
+                const img = getFormacionImg(continuar.moduloId, continuar.nombre, continuar.imagenPortadaUrl);
                 return img ? (
                   <div className="w-full sm:w-48 h-36 sm:h-auto shrink-0 relative overflow-hidden">
                     <img src={img} alt={continuar.nombre} className="w-full h-full object-cover" />
@@ -528,7 +529,7 @@ function CourseCard({
 
       {/* Thumbnail */}
       {(() => {
-        const img = getFormacionImg(m.moduloId, m.nombre);
+        const img = getFormacionImg(m.moduloId, m.nombre, m.imagenPortadaUrl);
         return img ? (
           <div className="w-full h-40 relative overflow-hidden">
             <img src={img} alt={m.nombre} className="w-full h-full object-cover" />

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { subirImagenModulo } from "@/lib/supabase";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Modo  = null | "manual" | "ia";
@@ -88,10 +89,139 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
+// ── CAMPOS BASE (fuera del componente para evitar remount en cada render) ──────
+function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria, setCategoria, idioma, setIdioma, duracion, setDuracion }: {
+  nombre: string; setNombre: (v: string) => void;
+  descripcion: string; setDescripcion: (v: string) => void;
+  categoria: string; setCategoria: (v: string) => void;
+  idioma: string; setIdioma: (v: string) => void;
+  duracion: string; setDuracion: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+          Nombre del módulo <span style={{ color: "#dc2626" }}>*</span>
+        </label>
+        <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
+          placeholder="Ej: Seguridad en planta — Nivel básico"
+          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none transition-all"
+          style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" }}
+          onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; e.target.style.background = "var(--blanco)"; }}
+          onBlur={(e)  => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; e.target.style.background = "var(--gris-pagina)"; }} />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Descripción</label>
+        <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+          placeholder="Breve descripción del módulo…" rows={3}
+          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none transition-all resize-none"
+          style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" }}
+          onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; e.target.style.background = "var(--blanco)"; }}
+          onBlur={(e)  => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; e.target.style.background = "var(--gris-pagina)"; }} />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Categoría</label>
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={SEL} style={CS}>
+            <option value="ESPECIALIZADO">Específica</option>
+            <option value="GENERAL">Básica / General</option>
+            <option value="CUMPLIMIENTO">Cumplimiento normativo</option>
+            <option value="ONBOARDING">Onboarding</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Idioma</label>
+          <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className={SEL} style={CS}>
+            <option value="es">Español</option>
+            <option value="en">Inglés</option>
+            <option value="ca">Valenciano</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Duración</label>
+          <select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={SEL} style={CS}>
+            <option value="corto">−15 min</option>
+            <option value="medio">15–45 min</option>
+            <option value="largo">+45 min</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── STEPPER ───────────────────────────────────────────────────────────────────
+function Stepper({ pasoManual, setPasoManual }: { pasoManual: PasoManual; setPasoManual: (p: PasoManual) => void }) {
+  return (
+    <div className="flex items-center gap-0 mb-8">
+      {PASOS_MANUAL.map((p, idx) => {
+        const estado = p.num < pasoManual ? "done" : p.num === pasoManual ? "active" : "pending";
+        const isLast = idx === PASOS_MANUAL.length - 1;
+        const clickable = estado === "done";
+        return (
+          <div key={p.num} className="flex items-center" style={{ flex: isLast ? "0 0 auto" : "1 1 auto" }}>
+            <div className="flex items-center gap-2"
+              onClick={() => clickable && setPasoManual(p.num as PasoManual)}
+              style={{ cursor: clickable ? "pointer" : "default" }}
+              title={clickable ? `Volver a ${p.label}` : undefined}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all"
+                style={{
+                  background: estado === "done" ? "var(--verde-oliva)" : estado === "active" ? "var(--azul-egm)" : "var(--gris-superficie)",
+                  color:      estado === "pending" ? "var(--texto-muted)" : "#fff",
+                  boxShadow:  estado === "active" ? "0 0 0 4px rgba(30,64,175,0.12)" : estado === "done" ? "0 0 0 3px rgba(74,124,89,0.15)" : "none",
+                  transition: "box-shadow 0.2s, background 0.2s",
+                }}>
+                {estado === "done" ? <IconCheck /> : p.num}
+              </div>
+              <span className="text-xs font-semibold whitespace-nowrap hidden sm:block"
+                style={{ color: estado === "active" ? "var(--texto-primario)" : estado === "done" ? "var(--verde-oliva)" : "var(--texto-muted)" }}>
+                {p.label}
+              </span>
+            </div>
+            {!isLast && (
+              <div className="flex-1 mx-3 rounded-full" style={{ height: "2px", minWidth: "24px", background: p.num < pasoManual ? "var(--verde-oliva)" : "var(--gris-borde)", transition: "background 0.3s" }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── BOTONES NAVEGACIÓN ────────────────────────────────────────────────────────
+function NavBtns({ pasoManual, setPasoManual, setModo, onNext, disabledNext, labelNext = "Continuar", onSave, guardando }: {
+  pasoManual: PasoManual; setPasoManual: (p: PasoManual) => void; setModo: (m: Modo) => void;
+  onNext?: () => void; disabledNext?: boolean; labelNext?: string; onSave?: () => void; guardando?: boolean;
+}) {
+  return (
+    <div className="flex gap-3 mt-6">
+      <button onClick={() => pasoManual > 1 ? setPasoManual((pasoManual - 1) as PasoManual) : setModo(null)}
+        className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
+        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
+        {pasoManual === 1 ? "Cancelar" : "← Atrás"}
+      </button>
+      {onSave ? (
+        <button onClick={onSave} disabled={guardando}
+          className="flex-[2] py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+          style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1 }}>
+          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : "Guardar módulo"}
+        </button>
+      ) : (
+        <button onClick={onNext} disabled={disabledNext}
+          className="flex-[2] py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+          style={{ background: disabledNext ? "var(--gris-superficie)" : "var(--azul-egm)", color: disabledNext ? "var(--texto-muted)" : "#fff", cursor: disabledNext ? "not-allowed" : "pointer", boxShadow: disabledNext ? "none" : "0 4px 14px rgba(30,64,175,0.2)" }}>
+          {labelNext} <IconArrow />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function CrearModuloPage() {
   const router      = useRouter();
-  const inputRef    = useRef<HTMLInputElement>(null);
-  const inputIARef  = useRef<HTMLInputElement>(null);
+  const inputRef        = useRef<HTMLInputElement>(null);
+  const inputIARef      = useRef<HTMLInputElement>(null);
+  const inputPortadaRef = useRef<HTMLInputElement>(null);
   const { usuario } = useAuth();
 
   useEffect(() => {
@@ -117,6 +247,8 @@ export default function CrearModuloPage() {
   const [modoTest,      setModoTest]      = useState<"manual" | "ia">("manual");
   const [preguntas,     setPreguntas]     = useState<Pregunta[]>([]);
   const [genTest,       setGenTest]       = useState(false);
+  const [portadaFile,   setPortadaFile]   = useState<File | null>(null);
+  const [portadaPreview,setPortadaPreview]= useState<string>("");
   const [guardando,     setGuardando]     = useState(false);
   const [guardado,      setGuardado]      = useState(false);
   const [errorMsg,      setErrorMsg]      = useState("");
@@ -167,19 +299,26 @@ export default function CrearModuloPage() {
           })))
         : null;
 
+      // Subir imagen de portada a Supabase Storage si se seleccionó una
+      let imagenPortadaUrl: string | null = null;
+      if (portadaFile) {
+        imagenPortadaUrl = await subirImagenModulo(portadaFile);
+      }
+
       const res = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
         body: JSON.stringify({
-          nombre:        nombre.trim(),
-          descripcion:   descripcion.trim(),
-          tipoModulo:    categoria,
-          activo:        true,
-          empresaId:     usuario?.empresaId ?? null,
+          nombre:           nombre.trim(),
+          descripcion:      descripcion.trim(),
+          tipoModulo:       categoria,
+          activo:           true,
+          empresaId:        usuario?.empresaId ?? null,
           idioma,
           duracion,
           audiencia,
-          departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
-          testPreguntas: testJson,
+          departamentos:    audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
+          testPreguntas:    testJson,
+          imagenPortadaUrl: imagenPortadaUrl,
         }),
       });
       if (!res.ok) {
@@ -242,128 +381,12 @@ export default function CrearModuloPage() {
   const resetear = () => {
     setModo(null); setPasoManual(1); setNombre(""); setDescripcion(""); setCategoria("ESPECIFICA"); setIdioma("es"); setDuracion("medio");
     setArchivoM(null); setArchivoMRaw(null); setAudiencia("todos"); setDeptos([]); setTieneTest(false); setPreguntas([]); setGuardado(false); setErrorMsg("");
+    setPortadaFile(null); setPortadaPreview("");
     setArchivosIA([]); setArchivosIARaw([]); setGenerado(false); setResultadoIA(null); setProgreso(0);
   };
 
   const puedeGenerar = archivosIA.length > 0 && nombre.trim().length > 0;
 
-  // ── CAMPOS BASE ──
-  const CamposBase = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>
-          Nombre del módulo <span style={{ color: "#dc2626" }}>*</span>
-        </label>
-        <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
-          placeholder="Ej: Seguridad en planta — Nivel básico"
-          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none transition-all"
-          style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" }}
-          onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; e.target.style.background = "var(--blanco)"; }}
-          onBlur={(e)  => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; e.target.style.background = "var(--gris-pagina)"; }} />
-      </div>
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Descripción</label>
-        <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Breve descripción del módulo…" rows={3}
-          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none transition-all resize-none"
-          style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" }}
-          onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; e.target.style.background = "var(--blanco)"; }}
-          onBlur={(e)  => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; e.target.style.background = "var(--gris-pagina)"; }} />
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Categoría</label>
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={SEL} style={CS}>
-            <option value="ESPECIALIZADO">Específica</option>
-            <option value="GENERAL">Básica / General</option>
-            <option value="CUMPLIMIENTO">Cumplimiento normativo</option>
-            <option value="ONBOARDING">Onboarding</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Idioma</label>
-          <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className={SEL} style={CS}>
-            <option value="es">Español</option>
-            <option value="en">Inglés</option>
-            <option value="ca">Valenciano</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Duración</label>
-          <select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={SEL} style={CS}>
-            <option value="corto">−15 min</option>
-            <option value="medio">15–45 min</option>
-            <option value="largo">+45 min</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── STEPPER ──
-  const Stepper = () => (
-    <div className="flex items-center gap-0 mb-8">
-      {PASOS_MANUAL.map((p, idx) => {
-        const estado = p.num < pasoManual ? "done" : p.num === pasoManual ? "active" : "pending";
-        const isLast = idx === PASOS_MANUAL.length - 1;
-        const clickable = estado === "done";
-        return (
-          <div key={p.num} className="flex items-center" style={{ flex: isLast ? "0 0 auto" : "1 1 auto" }}>
-            <div
-              className="flex items-center gap-2"
-              onClick={() => clickable && setPasoManual(p.num as PasoManual)}
-              style={{ cursor: clickable ? "pointer" : "default" }}
-              title={clickable ? `Volver a ${p.label}` : undefined}
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all"
-                style={{
-                  background: estado === "done" ? "var(--verde-oliva)" : estado === "active" ? "var(--azul-egm)" : "var(--gris-superficie)",
-                  color:      estado === "pending" ? "var(--texto-muted)" : "#fff",
-                  boxShadow:  estado === "active" ? "0 0 0 4px rgba(30,64,175,0.12)" : estado === "done" ? "0 0 0 3px rgba(74,124,89,0.15)" : "none",
-                  transform:  clickable ? "scale(1)" : "scale(1)",
-                  transition: "box-shadow 0.2s, background 0.2s",
-                }}>
-                {estado === "done" ? <IconCheck /> : p.num}
-              </div>
-              <span className="text-xs font-semibold whitespace-nowrap hidden sm:block"
-                style={{
-                  color: estado === "active" ? "var(--texto-primario)" : estado === "done" ? "var(--verde-oliva)" : "var(--texto-muted)",
-                }}>
-                {p.label}
-              </span>
-            </div>
-            {!isLast && (
-              <div className="flex-1 mx-3 rounded-full" style={{ height: "2px", minWidth: "24px", background: p.num < pasoManual ? "var(--verde-oliva)" : "var(--gris-borde)", transition: "background 0.3s" }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // ── BOTONES NAVEGACIÓN ──
-  const NavBtns = ({ onNext, disabledNext, labelNext = "Continuar", onSave }: { onNext?: () => void; disabledNext?: boolean; labelNext?: string; onSave?: () => void }) => (
-    <div className="flex gap-3 mt-6">
-      <button onClick={() => pasoManual > 1 ? setPasoManual((p) => (p - 1) as PasoManual) : setModo(null)}
-        className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
-        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
-        {pasoManual === 1 ? "Cancelar" : "← Atrás"}
-      </button>
-      {onSave ? (
-        <button onClick={onSave} disabled={guardando}
-          className="flex-[2] py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-          style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1 }}>
-          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : "Guardar módulo"}
-        </button>
-      ) : (
-        <button onClick={onNext} disabled={disabledNext}
-          className="flex-[2] py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
-          style={{ background: disabledNext ? "var(--gris-superficie)" : "var(--azul-egm)", color: disabledNext ? "var(--texto-muted)" : "#fff", cursor: disabledNext ? "not-allowed" : "pointer", boxShadow: disabledNext ? "none" : "0 4px 14px rgba(30,64,175,0.2)" }}>
-          {labelNext} <IconArrow />
-        </button>
-      )}
-    </div>
-  );
 
   return (
     <div className="w-full">
@@ -427,7 +450,7 @@ export default function CrearModuloPage() {
         {/* ══ MODO MANUAL ══ */}
         {modo === "manual" && !guardado && (
           <div className="fade-up max-w-2xl mx-auto">
-            <Stepper />
+            <Stepper pasoManual={pasoManual} setPasoManual={setPasoManual} />
 
             {/* PASO 1: Información */}
             {pasoManual === 1 && (
@@ -440,8 +463,52 @@ export default function CrearModuloPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <CamposBase />
-                  <NavBtns onNext={() => setPasoManual(2)} disabledNext={!nombre.trim()} />
+                  <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+
+                  {/* Imagen de portada */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Imagen de portada</label>
+                    {portadaPreview ? (
+                      <div className="relative rounded-xl overflow-hidden" style={{ height: "160px", border: "1.5px solid var(--gris-borde)" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={portadaPreview} alt="Portada" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => { setPortadaFile(null); setPortadaPreview(""); }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-80"
+                          style={{ background: "rgba(0,0,0,0.55)" }}
+                          title="Eliminar imagen">
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => inputPortadaRef.current?.click()}
+                        className="rounded-xl flex flex-col items-center gap-2 cursor-pointer transition-all py-7"
+                        style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
+                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--texto-muted)" }}>
+                          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Haz clic para subir una imagen de portada</p>
+                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WEBP — max 5 MB</p>
+                      </div>
+                    )}
+                    <input
+                      ref={inputPortadaRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        setPortadaFile(f);
+                        setPortadaPreview(URL.createObjectURL(f));
+                      }}
+                    />
+                  </div>
+
+                  <NavBtns pasoManual={pasoManual} setPasoManual={setPasoManual} setModo={setModo} onNext={() => setPasoManual(2)} disabledNext={!nombre.trim()} />
                 </div>
               </div>
             )}
@@ -495,7 +562,7 @@ export default function CrearModuloPage() {
                     </div>
                   )}
                   <p className="text-xs mt-3 text-center" style={{ color:"var(--texto-muted)" }}>El archivo es opcional, puedes continuar sin subir ninguno</p>
-                  <NavBtns onNext={() => setPasoManual(3)} labelNext="Continuar" />
+                  <NavBtns pasoManual={pasoManual} setPasoManual={setPasoManual} setModo={setModo} onNext={() => setPasoManual(3)} labelNext="Continuar" />
                 </div>
               </div>
             )}
@@ -570,7 +637,7 @@ export default function CrearModuloPage() {
                     </div>
                   )}
 
-                  <NavBtns
+                  <NavBtns pasoManual={pasoManual} setPasoManual={setPasoManual} setModo={setModo}
                     onNext={() => setPasoManual(4)}
                     disabledNext={audiencia === "departamento" && deptos.length === 0}
                   />
@@ -677,7 +744,7 @@ export default function CrearModuloPage() {
                     </div>
                   )}
 
-                  <NavBtns onSave={guardarManual} />
+                  <NavBtns pasoManual={pasoManual} setPasoManual={setPasoManual} setModo={setModo} onSave={guardarManual} guardando={guardando} />
                 </div>
               </div>
             )}
@@ -736,7 +803,7 @@ export default function CrearModuloPage() {
                   <p className="text-sm font-semibold" style={{color:"var(--texto-primario)"}}>Configuración</p>
                 </div>
                 <div className="p-6">
-                  <CamposBase />
+                  <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
                   <div className="mt-5" style={{height:"1px",background:"var(--gris-borde)"}}/>
                   {!puedeGenerar&&<p className="text-xs mt-4 px-3 py-2 rounded-lg flex items-center gap-2" style={{background:"#fef9c3",color:"#854d0e"}}>⚠ {archivosIA.length===0?"Sube al menos un archivo":"Escribe un nombre para el módulo"}</p>}
                   <button onClick={iniciarGeneracion} disabled={generando||!puedeGenerar}

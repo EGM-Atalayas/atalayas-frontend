@@ -34,6 +34,12 @@ export interface Modulo {
   activo: boolean;
   empresaId: string | null;
   esEspecializadoIa: boolean;
+  idioma?: string;
+  duracion?: string;
+  audiencia?: string;
+  departamentos?: string;
+  testPreguntas?: string;
+  imagenPortadaUrl?: string | null;
   creadoEn: string;
   actualizadoEn: string;
 }

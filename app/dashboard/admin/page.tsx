@@ -964,15 +964,25 @@ function AdminContent() {
                   return (
                     <div
                       key={f.moduloId}
-                      className="rounded-2xl p-5 flex flex-col transition-shadow"
+                      className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
                       style={{
                         background: "var(--blanco)",
                         border: "1px solid var(--gris-borde)",
-                        borderTop: `3px solid ${accentColor}`,
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
                       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
                     >
+                      {/* Imagen de portada o franja de color */}
+                      {f.imagenPortadaUrl ? (
+                        <div className="w-full h-36 relative overflow-hidden shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
+                        </div>
+                      ) : (
+                        <div className="w-full h-2 shrink-0" style={{ background: accentColor }} />
+                      )}
+                      <div className="p-5 flex flex-col flex-1">
                       {/* Badges */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -1037,6 +1047,7 @@ function AdminContent() {
                           </span>
                         )}
                       </div>
+                      </div>{/* /p-5 */}
                     </div>
                   );
                 })}
