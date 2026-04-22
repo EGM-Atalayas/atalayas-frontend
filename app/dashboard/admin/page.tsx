@@ -28,6 +28,19 @@ const MOCK_MODULO_STATS = [
   { asignados: 28, completado: 55 },
 ];
 
+const DEPARTAMENTOS = [
+  { id: "PRODUCCION",    label: "Producción"     },
+  { id: "RRHH",          label: "RRHH"           },
+  { id: "LOGISTICA",     label: "Logística"      },
+  { id: "CALIDAD",       label: "Calidad"        },
+  { id: "MANTENIMIENTO", label: "Mantenimiento"  },
+  { id: "VENTAS",        label: "Ventas"         },
+  { id: "ADMINISTRACION",label: "Administración" },
+  { id: "IT",            label: "IT"             },
+  { id: "SEGURIDAD",     label: "Seguridad"      },
+  { id: "FORMACION",     label: "Formación"      },
+];
+
 interface Usuario {
   usuarioId: string;
   nombre: string;
@@ -36,6 +49,7 @@ interface Usuario {
   codigoRol: string;
   nombreRol: string;
   puestoTrabajo: string | null;
+  departamento: string | null;
   activo: boolean;
   fechaRegistro: string;
 }
@@ -46,10 +60,11 @@ interface NuevoEmpleadoForm {
   email: string;
   password: string;
   puestoTrabajo: string;
+  departamento: string;
 }
 
 const EMPTY_EMPLEADO: NuevoEmpleadoForm = {
-  nombre: "", apellidos: "", email: "", password: "", puestoTrabajo: "",
+  nombre: "", apellidos: "", email: "", password: "", puestoTrabajo: "", departamento: "",
 };
 
 export default function AdminPage() {
@@ -149,6 +164,7 @@ function AdminContent() {
           empresaId: usuario?.empresaId,
           rolId: ROL_EMPLEADO_ID,
           puestoTrabajo: formEmpleado.puestoTrabajo.trim() || null,
+          departamento: formEmpleado.departamento || null,
         }),
       });
       if (!res.ok) {
@@ -378,7 +394,7 @@ function AdminContent() {
                       />
                     </div>
                   ))}
-                  <div className="col-span-1 sm:col-span-2">
+                  <div>
                     <label className="block text-xs font-semibold mb-2" style={{ color: "var(--texto-secundario)" }}>
                       Puesto de trabajo
                     </label>
@@ -390,6 +406,22 @@ function AdminContent() {
                       className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
                       style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: "var(--texto-primario)" }}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-2" style={{ color: "var(--texto-secundario)" }}>
+                      Departamento
+                    </label>
+                    <select
+                      value={formEmpleado.departamento}
+                      onChange={(e) => setFormEmpleado({ ...formEmpleado, departamento: e.target.value })}
+                      className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
+                      style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: formEmpleado.departamento ? "var(--texto-primario)" : "var(--texto-muted)" }}
+                    >
+                      <option value="">Sin departamento</option>
+                      {DEPARTAMENTOS.map((d) => (
+                        <option key={d.id} value={d.id}>{d.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 {errorEmpleado && (
@@ -455,7 +487,7 @@ function AdminContent() {
                       <table className="w-full">
                         <thead>
                           <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                            {["Empleado", "Puesto", "Rol", "Alta", "Estado"].map((h) => (
+                            {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
                               <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
                                 style={{ color: "var(--texto-muted)" }}>{h}</th>
                             ))}
@@ -500,6 +532,16 @@ function AdminContent() {
                               </td>
                               <td className="py-4 px-5 text-sm" style={{ color: "var(--texto-secundario)" }}>
                                 {e.puestoTrabajo ?? "—"}
+                              </td>
+                              <td className="py-4 px-5">
+                                {e.departamento ? (
+                                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                    style={{ background: "#fffbeb", color: "#d97706" }}>
+                                    {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm" style={{ color: "var(--texto-muted)" }}>—</span>
+                                )}
                               </td>
                               <td className="py-4 px-5">
                                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -611,6 +653,7 @@ function AdminContent() {
                   </div>
                   <div className="flex flex-col gap-3 pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                     <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
+                    <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
                     <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
                     <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
                     <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
@@ -677,6 +720,7 @@ function AdminContent() {
                 </div>
                 <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "12px" }}>
                   <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
+                  <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
                   <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
                   <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
                 </div>
