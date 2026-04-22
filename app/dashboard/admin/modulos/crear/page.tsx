@@ -339,6 +339,7 @@ export default function CrearModuloPage() {
   const [generado,      setGenerado]      = useState(false);
   const [progreso,      setProgreso]      = useState(0);
   const [msgProgreso,   setMsgProgreso]   = useState("");
+  const [errorIA,       setErrorIA]       = useState("");
   const [resultadoIA,   setResultadoIA]   = useState<{ titulo: string; descripcion: string; contenido: string } | null>(null);
 
   // Tipos de salida seleccionados (al menos uno requerido)
@@ -380,7 +381,7 @@ export default function CrearModuloPage() {
 
   const iniciarGeneracion = async () => {
     if (generando || archivosIA.length === 0 || !nombre.trim()) return;
-    setGenerando(true); setGenerado(false); setProgreso(0);
+    setGenerando(true); setGenerado(false); setProgreso(0); setErrorIA("");
     let i = 0; setMsgProgreso(MENSAJES_IA_EXTENDED[0]);
     const interval = setInterval(() => {
       i++;
@@ -399,7 +400,7 @@ export default function CrearModuloPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       clearInterval(interval);
-      if (!resIA.ok) throw new Error();
+      if (!resIA.ok) throw new Error(`Error ${resIA.status} al generar contenido con IA`);
       const d = await resIA.json();
       setResultadoIA({ titulo: d.titulo || nombre, descripcion: d.descripcion || "", contenido: d.contenido || "" });
       setProgreso(90); setMsgProgreso("Guardando módulo…");
@@ -420,10 +421,15 @@ export default function CrearModuloPage() {
           scriptVideo:   d.scriptVideo   ?? null,
         }),
       });
-      if (!resM.ok) throw new Error();
-      setProgreso(100); setMsgProgreso("¡Módulo creado!"); setGenerado(true);
-    } catch {
-      clearInterval(interval); setMsgProgreso("Error al generar. Inténtalo de nuevo."); setProgreso(0); setGenerando(false);
+      if (!resM.ok) {
+        const errBody = await resM.json().catch(() => ({}));
+        throw new Error(errBody.message || `Error ${resM.status} al guardar el módulo`);
+      }
+      setProgreso(100); setMsgProgreso("¡Módulo creado!"); setGenerado(true); setGenerando(false);
+    } catch (e: unknown) {
+      clearInterval(interval);
+      setErrorIA(e instanceof Error ? e.message : "Error al generar. Inténtalo de nuevo.");
+      setProgreso(0); setGenerando(false);
     }
   };
 
@@ -431,7 +437,7 @@ export default function CrearModuloPage() {
     setModo(null); setPasoManual(1); setNombre(""); setDescripcion(""); setCategoria("ESPECIFICA"); setIdioma("es"); setDuracion("medio");
     setArchivoM(null); setArchivoMRaw(null); setAudiencia("todos"); setDeptos([]); setTieneTest(false); setPreguntas([]); setGuardado(false); setErrorMsg("");
     setPortadaFile(null); setPortadaPreview("");
-    setArchivosIA([]); setArchivosIARaw([]); setGenerado(false); setResultadoIA(null); setProgreso(0);
+    setArchivosIA([]); setArchivosIARaw([]); setGenerado(false); setResultadoIA(null); setProgreso(0); setErrorIA(""); setTiposSalidaIA(["documentacion"]);
   };
 
   const puedeGenerar = archivosIA.length > 0 && nombre.trim().length > 0;
@@ -905,6 +911,15 @@ export default function CrearModuloPage() {
                       <p className="text-xs text-center mt-2" style={{color:"var(--texto-muted)"}}>{msgProgreso}</p>
                     </div>
                   )}
+                  {errorIA && !generando && (
+                    <div className="mt-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626"}}>
+                      <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <div>
+                        <p className="text-xs font-semibold">Error al generar el módulo</p>
+                        <p className="text-xs mt-0.5">{errorIA}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -916,11 +931,28 @@ export default function CrearModuloPage() {
           <div className="fade-up max-w-lg mx-auto text-center">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{background:"var(--verde-oliva)",color:"#fff"}}><IconCheck/></div>
             <h2 className="text-xl font-bold mb-2" style={{color:"var(--texto-primario)"}}>¡Módulo creado correctamente!</h2>
-            <p className="text-sm mb-8" style={{color:"var(--texto-muted)"}}><strong>{resultadoIA?.titulo||nombre}</strong> ya está disponible en la plataforma.</p>
+            <p className="text-sm mb-6" style={{color:"var(--texto-muted)"}}><strong>{resultadoIA?.titulo||nombre}</strong> ya está disponible en la plataforma.</p>
+
+            {/* Resumen de tipos generados */}
+            {generado && tiposSalidaIA.length > 0 && (
+              <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
+                {tiposSalidaIA.map((t) => {
+                  const info = TIPOS_SALIDA.find((x) => x.key === t);
+                  if (!info) return null;
+                  return (
+                    <span key={t} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                      style={{ background: info.bg, color: info.color, border: `1.5px solid ${info.color}` }}>
+                      {info.icon} {info.label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
             {generado&&resultadoIA?.contenido&&(
               <div className="rounded-xl p-4 mb-6 text-left" style={{background:"var(--gris-pagina)",border:"1px solid var(--gris-borde)"}}>
-                <p className="text-xs font-semibold mb-2" style={{color:"var(--texto-muted)"}}>Contenido generado por IA</p>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{color:"var(--texto-secundario)"}}>{resultadoIA.contenido.slice(0,400)}{resultadoIA.contenido.length>400?"…":""}</p>
+                <p className="text-xs font-semibold mb-2" style={{color:"var(--texto-muted)"}}>Vista previa del contenido generado</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{color:"var(--texto-secundario)"}}>{resultadoIA.contenido.slice(0,500)}{resultadoIA.contenido.length>500?"…":""}</p>
               </div>
             )}
             <div className="flex gap-3 justify-center">
