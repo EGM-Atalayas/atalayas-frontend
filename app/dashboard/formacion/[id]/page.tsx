@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { apiFetch, API_URL } from "@/lib/api";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -31,6 +32,28 @@ interface ModuloMock {
   esEspecializadoIa: boolean;
   contenidos:       Contenido[];
 }
+
+// ── MÓDULO REAL (API) ─────────────────────────────────────────────────────────
+interface ModuloAPI {
+  moduloId:         string;
+  nombre:           string;
+  descripcion:      string | null;
+  tipoModulo:       string;
+  idioma:           string | null;
+  duracion:         string | null;
+  audiencia:        string | null;
+  esEspecializadoIa: boolean;
+  testPreguntas:    string | null; // JSON string
+  activo:           boolean;
+}
+
+const TIPO_LABEL: Record<string, string> = {
+  GENERAL:         "General",
+  ESPECIALIZADO:   "Específico",
+  ESPECIALIZADO_IA:"Generado con IA",
+  CUMPLIMIENTO:    "Cumplimiento normativo",
+  ONBOARDING:      "Onboarding",
+};
 
 // ── IMÁGENES POR MÓDULO ───────────────────────────────────────────────────────
 const FORMACION_IMG_BY_ID: Record<string, string> = {
@@ -72,6 +95,49 @@ const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" |
   "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad",              esEspecializadoIa: false },
 };
 
+function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
+  const items: Contenido[] = [];
+
+  // Siempre hay un contenido de texto con la descripción
+  items.push({
+    id: "c1",
+    titulo: "Descripción y contenido",
+    tipo: "texto",
+    duracion: moduloApi.duracion === "corto" ? "−15 min" : moduloApi.duracion === "largo" ? "+45 min" : "15–45 min",
+    completado: false,
+    bloqueado: false,
+  });
+
+  // Si tiene test, añadir quiz al final
+  if (moduloApi.testPreguntas) {
+    items.push({
+      id: "c2",
+      titulo: "Test de evaluación",
+      tipo: "quiz",
+      duracion: "10–15 min",
+      completado: false,
+      bloqueado: true,
+    });
+  }
+
+  return items;
+}
+
+function apiToMock(moduloApi: ModuloAPI): ModuloMock {
+  const contenidos = buildContenidos(moduloApi);
+  return {
+    id:               moduloApi.moduloId,
+    nombre:           moduloApi.nombre,
+    descripcion:      moduloApi.descripcion ?? "",
+    tipo:             TIPO_LABEL[moduloApi.tipoModulo] ?? moduloApi.tipoModulo,
+    esEspecializadoIa: moduloApi.esEspecializadoIa,
+    totalItems:       contenidos.length,
+    completados:      0,
+    contenidos,
+  };
+}
+
+// Fallback para módulos legacy (IDs numéricos del mock original)
 function getMockBase(id: string): ModuloMock {
   const meta = MOCKS[id] ?? {
     nombre:            "Módulo de Formación",
@@ -128,16 +194,33 @@ export default function Page() {
   const rawParams = useParams();
   const id      = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
 
-  const [modulo, setModulo]           = useState<ModuloMock | null>(null);
-  const [activoId, setActivoId]       = useState<string>("c1");
+  const [modulo,      setModulo]      = useState<ModuloMock | null>(null);
+  const [moduloApi,   setModuloApi]   = useState<ModuloAPI | null>(null);
+  const [activoId,    setActivoId]    = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
 
-  // Carga desde localStorage una vez que tenemos el id en el cliente
+  // Carga el módulo desde la API; si falla usa el mock legacy
   useEffect(() => {
     if (!id) return;
-    const { completados, activoId: savedActivo } = cargarEstado(id);
-    setModulo(aplicarEstado(getMockBase(id), completados));
-    setActivoId(savedActivo);
+    const cargar = async () => {
+      try {
+        const res = await apiFetch(`${API_URL}/modulos/${id}`);
+        if (res.ok) {
+          const data: ModuloAPI = await res.json();
+          setModuloApi(data);
+          const base = apiToMock(data);
+          const { completados, activoId: savedActivo } = cargarEstado(id);
+          setModulo(aplicarEstado(base, completados));
+          setActivoId(savedActivo);
+          return;
+        }
+      } catch { /* fallback */ }
+      // Fallback: datos mock legacy
+      const { completados, activoId: savedActivo } = cargarEstado(id);
+      setModulo(aplicarEstado(getMockBase(id), completados));
+      setActivoId(savedActivo);
+    };
+    cargar();
   }, [id]);
 
   // Persistir en localStorage cuando cambia el estado
@@ -366,10 +449,10 @@ export default function Page() {
 
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
-              {activo.tipo === "texto" && <ContenidoTexto />}
+              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} />}
               {activo.tipo === "video" && <ContenidoVideo />}
               {activo.tipo === "pdf"   && <ContenidoPDF />}
-              {activo.tipo === "quiz"  && <ContenidoQuiz onCompletar={marcarCompletado} />}
+              {activo.tipo === "quiz"  && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
             </div>
 
             {/* Footer — no aparece en quiz (tiene su propio CTA) */}
@@ -682,34 +765,23 @@ function IconoTipo({ tipo, size = 16 }: { tipo: TipoContenido; size?: number }) 
   );
 }
 
-function ContenidoTexto() {
+function ContenidoTexto({ descripcion }: { descripcion: string }) {
+  if (!descripcion) {
+    return (
+      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-muted)" }}>
+        Este módulo no tiene descripción. El administrador puede añadir contenido editando el módulo.
+      </p>
+    );
+  }
+  // Renderiza cada párrafo separado por salto de línea
+  const parrafos = descripcion.split(/\n+/).filter(Boolean);
   return (
     <div>
-      <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--texto-secundario)" }}>
-        La normativa española sobre prevención de riesgos laborales establece en la Ley 31/1995 y el
-        Real Decreto 2177/2004 los requisitos mínimos de seguridad para trabajos en altura. Todo
-        trabajador que realice tareas a más de 2 metros del nivel de referencia debe completar esta
-        formación y disponer del equipo de protección adecuado.
-      </p>
-      <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--texto-secundario)" }}>
-        Los principios básicos incluyen: evaluación previa del riesgo, uso obligatorio de arnés
-        homologado, inspección del equipo antes de cada uso, y comunicación al responsable de
-        seguridad antes de iniciar cualquier tarea en altura.
-      </p>
-      <div className="rounded-xl px-5 py-4 my-6"
-        style={{ background: "var(--azul-egm-light)", borderLeft: "3px solid var(--azul-egm)" }}>
-        <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--azul-egm)" }}>
-          Punto clave
+      {parrafos.map((p, i) => (
+        <p key={i} className="text-sm leading-relaxed mb-4" style={{ color: "var(--texto-secundario)" }}>
+          {p}
         </p>
-        <p className="text-sm" style={{ color: "var(--texto-primario)" }}>
-          El incumplimiento de los protocolos PRL puede derivar en paralización de la actividad,
-          sanciones económicas y responsabilidad penal.
-        </p>
-      </div>
-      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
-        Es responsabilidad de cada trabajador conocer y aplicar estas normas. La empresa facilitará
-        el equipo necesario y la formación específica requerida por ley.
-      </p>
+      ))}
     </div>
   );
 }
@@ -772,22 +844,39 @@ function ContenidoPDF() {
   );
 }
 
-const PREGUNTAS = [
-  { id: "q1", pregunta: "¿A partir de qué altura es obligatorio el uso de arnés?", opciones: ["1 metro", "2 metros", "3 metros", "5 metros"], correcta: 1 },
-  { id: "q2", pregunta: "¿Cada cuánto tiempo debe inspeccionarse el arnés?",        opciones: ["Mensualmente", "Trimestralmente", "Antes de cada uso", "Anualmente"], correcta: 2 },
-  { id: "q3", pregunta: "¿Qué documento acredita la formación PRL?",                opciones: ["El contrato laboral", "El certificado de formación", "La nómina mensual", "El DNI"], correcta: 1 },
-];
-
 const LETRAS = ["A", "B", "C", "D"];
 
-function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
+interface PreguntaQuiz { id: string; texto: string; opciones: string[]; correcta: number; }
+
+function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => void; testPreguntasJson: string | null }) {
   const [respuestas, setRespuestas] = useState<Record<string, number>>({});
   const [enviado, setEnviado]       = useState(false);
+
+  // Parsear preguntas reales o usar fallback
+  const PREGUNTAS: PreguntaQuiz[] = (() => {
+    if (testPreguntasJson) {
+      try {
+        const parsed = JSON.parse(testPreguntasJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((q: any, i: number) => ({
+            id: `q${i + 1}`,
+            texto: q.texto ?? q.pregunta ?? `Pregunta ${i + 1}`,
+            opciones: q.opciones ?? [],
+            correcta: q.correcta ?? 0,
+          }));
+        }
+      } catch { /* usa fallback */ }
+    }
+    return [
+      { id: "q1", texto: "¿Cuál es el objetivo principal de este módulo?", opciones: ["Opción A", "Opción B", "Opción C", "Opción D"], correcta: 0 },
+    ];
+  })();
 
   const correctas = enviado
     ? PREGUNTAS.filter((p) => respuestas[p.id] === p.correcta).length
     : 0;
-  const aprobado = correctas >= 2;
+  const minAprobado = Math.ceil(PREGUNTAS.length * 0.6);
+  const aprobado = correctas >= minAprobado;
 
   if (enviado) {
     return (
@@ -812,7 +901,7 @@ function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
         </p>
         <p className="text-sm mb-8 font-semibold"
           style={{ color: aprobado ? "var(--exito)" : "var(--error)" }}>
-          {aprobado ? "Módulo completado — certificado disponible" : "Necesitas al menos 2 aciertos para aprobar"}
+          {aprobado ? "Módulo completado — certificado disponible" : `Necesitas al menos ${minAprobado} aciertos para aprobar`}
         </p>
         {aprobado ? (
           <button onClick={onCompletar}
@@ -844,7 +933,7 @@ function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
         {PREGUNTAS.map((p, pi) => (
           <div key={p.id}>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--texto-primario)" }}>
-              {pi + 1}. {p.pregunta}
+              {pi + 1}. {p.texto}
             </p>
             <div className="flex flex-col gap-2">
               {p.opciones.map((op, oi) => {
@@ -882,7 +971,7 @@ function ContenidoQuiz({ onCompletar }: { onCompletar: () => void }) {
         disabled={Object.keys(respuestas).length < PREGUNTAS.length}
         className="mt-8 w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
         style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-        onMouseEnter={(e) => { if (Object.keys(respuestas).length >= PREGUNTAS.length) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+        onMouseEnter={(e) => { if (Object.keys(respuestas).length >= PREGUNTAS.length) e.currentTarget.style.background = "var(--azul-egm-hover)";}}
         onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
         Enviar respuestas
       </button>
