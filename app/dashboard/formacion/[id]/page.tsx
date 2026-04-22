@@ -47,6 +47,7 @@ interface ModuloAPI {
   testPreguntas:    string | null;
   scriptPodcast:    string | null;
   scriptVideo:      string | null;
+  podcastAudioUrl:  string | null;
   tiposSalida:      string | null;
   activo:           boolean;
 }
@@ -451,7 +452,7 @@ export default function Page() {
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
               {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} />}
-              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} />}
+              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} />}
               {activo.tipo === "video" && activo.subtipo === "slides"  && moduloApi?.scriptVideo  && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo />}
               {activo.tipo === "pdf"   && <ContenidoPDF />}
@@ -816,11 +817,32 @@ function ContenidoVideo() {
 }
 
 // ── PODCAST ──────────────────────────────────────────────────────────────────
-function ContenidoPodcast({ script }: { script: string }) {
+function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: string }) {
+  // Si hay URL de audio real (ElevenLabs MP3), usamos <audio>; si no, Web Speech API como fallback
+  const tieneAudioReal = !!audioUrl;
+  const audioRef = React.useRef<HTMLAudioElement>(null);
   const [reproduciendo, setReproduciendo] = React.useState(false);
   const [pausado,       setPausado]       = React.useState(false);
 
-  const iniciar = () => {
+  // ── Controles para <audio> nativo ─────────────────────────────────────────
+  const iniciarAudio = () => {
+    if (!audioRef.current) return;
+    audioRef.current.play();
+    setReproduciendo(true); setPausado(false);
+  };
+  const pausarAudio = () => {
+    if (!audioRef.current) return;
+    if (!audioRef.current.paused) { audioRef.current.pause(); setPausado(true); }
+    else { audioRef.current.play(); setPausado(false); }
+  };
+  const detenerAudio = () => {
+    if (!audioRef.current) return;
+    audioRef.current.pause(); audioRef.current.currentTime = 0;
+    setReproduciendo(false); setPausado(false);
+  };
+
+  // ── Controles para Web Speech API (fallback) ───────────────────────────────
+  const iniciarSpeech = () => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(script);
@@ -829,17 +851,32 @@ function ContenidoPodcast({ script }: { script: string }) {
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
   };
-  const pausar = () => {
+  const pausarSpeech = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
       window.speechSynthesis.pause(); setPausado(true);
     } else if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume(); setPausado(false);
     }
   };
-  const detener = () => { window.speechSynthesis.cancel(); setReproduciendo(false); setPausado(false); };
+  const detenerSpeech = () => { window.speechSynthesis.cancel(); setReproduciendo(false); setPausado(false); };
+
+  const iniciar = tieneAudioReal ? iniciarAudio  : iniciarSpeech;
+  const pausar  = tieneAudioReal ? pausarAudio   : pausarSpeech;
+  const detener = tieneAudioReal ? detenerAudio  : detenerSpeech;
 
   return (
     <div>
+      {/* Audio element oculto para reproducción MP3 */}
+      {tieneAudioReal && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onEnded={() => { setReproduciendo(false); setPausado(false); }}
+          onPlay={() => { setReproduciendo(true); setPausado(false); }}
+          onPause={() => setPausado(true)}
+          preload="metadata"
+        />
+      )}
       <div className="rounded-2xl p-6 mb-6 flex flex-col gap-4"
         style={{ background: "linear-gradient(135deg,#1e1b4b 0%,#312e81 100%)", border: "1px solid #4338ca" }}>
         <div className="flex items-center gap-3">
@@ -850,7 +887,9 @@ function ContenidoPodcast({ script }: { script: string }) {
           </div>
           <div>
             <p className="text-sm font-bold text-white">Podcast del módulo</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Narrado por IA · ~5 min</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+              {tieneAudioReal ? "Narrado por IA con ElevenLabs · ~5 min" : "Narrado por IA · ~5 min"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">

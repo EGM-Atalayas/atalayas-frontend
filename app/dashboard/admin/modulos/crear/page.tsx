@@ -415,10 +415,11 @@ export default function CrearModuloPage() {
           empresaId:     usuario?.empresaId ?? null,
           idioma,
           duracion,
-          tiposSalida:   tiposSalidaStr,
-          testPreguntas: null,
-          scriptPodcast: d.scriptPodcast ?? null,
-          scriptVideo:   d.scriptVideo   ?? null,
+          tiposSalida:     tiposSalidaStr,
+          testPreguntas:   null,
+          scriptPodcast:   d.scriptPodcast   ?? null,
+          scriptVideo:     d.scriptVideo     ?? null,
+          podcastAudioUrl: d.podcastAudioUrl ?? null,
         }),
       });
       if (!resM.ok) {
