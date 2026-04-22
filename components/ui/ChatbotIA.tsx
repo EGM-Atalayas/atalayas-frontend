@@ -8,15 +8,15 @@ import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
-  gradientUser:   "linear-gradient(135deg, #f0845a 0%, #e0693d 100%)",
-  chipBg:         "rgba(27,63,126,0.08)",
-  chipBorder:     "rgba(27,63,126,0.22)",
-  chipText:       "#1b3f7e",
-  chipHoverBg:    "rgba(27,63,126,0.16)",
-  pulse:          "rgba(240,132,90,0.45)",
-  shadow:         "rgba(224,105,61,0.35)",
-  accent:         "#f0845a",
+  gradientFab:    "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
+  gradientUser:   "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
+  chipBg:         "rgba(21,128,61,0.08)",
+  chipBorder:     "rgba(21,128,61,0.22)",
+  chipText:       "#15803d",
+  chipHoverBg:    "rgba(21,128,61,0.16)",
+  pulse:          "rgba(34,197,94,0.45)",
+  shadow:         "rgba(21,128,61,0.35)",
+  accent:         "#22c55e",
 } as const
 
 const C = COLORS
@@ -930,8 +930,8 @@ export default function ChatbotIA() {
           {/* Header */}
           <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#1b3f7e" }}>
             <Grainient
-              color1="#16a34a"
-              color2="#3b82f6"
+              color1="#2563eb"
+              color2="#60a5fa"
               color3="#1b3f7e"
               timeSpeed={0.12}
               warpSpeed={0.8}
@@ -950,7 +950,7 @@ export default function ChatbotIA() {
               <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
                   width: "50px", height: "50px", borderRadius: "50%",
-                  background: C.accent,
+                  background: C.gradientFab,
                   border: "2px solid rgba(255,255,255,0.25)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden",
@@ -1137,7 +1137,7 @@ export default function ChatbotIA() {
           }}>
             {rateLimited && (
               <div style={{
-                fontSize: "11.5px", color: "#e0693d", textAlign: "center",
+                fontSize: "11.5px", color: "#15803d", textAlign: "center",
                 marginBottom: "6px", fontWeight: 500,
               }}>
                 ⏳ Vas muy rápido, espera un momento antes de continuar
@@ -1183,7 +1183,7 @@ export default function ChatbotIA() {
                 {showCharWarning && (
                   <span style={{
                     fontSize: "11px", flexShrink: 0, marginLeft: "6px",
-                    color: charsLeft <= 20 ? "#e0693d" : "#94a3b8",
+                    color: charsLeft <= 20 ? "#15803d" : "#94a3b8",
                     fontWeight: 500,
                   }}>
                     {charsLeft}
