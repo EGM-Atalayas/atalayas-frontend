@@ -500,12 +500,13 @@ export default function ChatbotIA() {
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
+    const el = container
     function handleScroll() {
-      const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
       setShowScrollBtn(distFromBottom > 120)
     }
-    container.addEventListener("scroll", handleScroll, { passive: true })
-    return () => container.removeEventListener("scroll", handleScroll)
+    el.addEventListener("scroll", handleScroll, { passive: true })
+    return () => el.removeEventListener("scroll", handleScroll)
   }, [open])
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
