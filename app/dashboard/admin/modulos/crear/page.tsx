@@ -341,24 +341,60 @@ export default function CrearModuloPage() {
   const [msgProgreso,   setMsgProgreso]   = useState("");
   const [resultadoIA,   setResultadoIA]   = useState<{ titulo: string; descripcion: string; contenido: string } | null>(null);
 
+  // Tipos de salida seleccionados (al menos uno requerido)
+  type TipoSalida = "documentacion" | "podcast" | "video";
+  const TIPOS_SALIDA: { key: TipoSalida; label: string; desc: string; icon: React.ReactNode; color: string; bg: string }[] = [
+    { key: "documentacion", label: "Documentación",        desc: "Contenido formativo en texto estructurado",    icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>, color: "var(--azul-egm)", bg: "var(--azul-egm-light)" },
+    { key: "podcast",       label: "Podcast",               desc: "Guion para narración de audio",                icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, color: "#d97706", bg: "#fffbeb" },
+    { key: "video",         label: "Video / Presentación",  desc: "Slides estructuradas con guion visual",        icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>, color: "#7c3aed", bg: "#f3e8ff" },
+  ];
+
+  const COMBOS: { keys: TipoSalida[]; label: string; desc: string }[] = [
+    { keys: ["documentacion"],            label: "Solo documentación",          desc: "Texto formativo estructurado" },
+    { keys: ["video"],                    label: "Solo video",                  desc: "Slides + guion visual" },
+    { keys: ["podcast"],                  label: "Solo podcast",                desc: "Guion de audio narrado" },
+    { keys: ["documentacion", "video"],   label: "Documentación + Video",       desc: "Texto y presentación" },
+    { keys: ["documentacion", "podcast"], label: "Documentación + Podcast",     desc: "Texto y guion de audio" },
+  ];
+
+  const [tiposSalidaIA, setTiposSalidaIA] = useState<TipoSalida[]>(["documentacion"]);
+
+  const comboActivo = COMBOS.findIndex(
+    (c) => c.keys.length === tiposSalidaIA.length && c.keys.every((k) => tiposSalidaIA.includes(k))
+  );
+
   const procesarArchivosIA = (files: FileList | null) => {
     if (!files) return;
     setArchivosIA((p) => [...p, ...Array.from(files).map((f) => ({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }))]);
     setArchivosIARaw((p) => [...p, ...Array.from(files)]);
   };
 
+  const MENSAJES_IA_EXTENDED = [
+    "Analizando documento…",
+    "Extrayendo conceptos clave…",
+    tiposSalidaIA.includes("documentacion") ? "Generando contenido formativo…" : null,
+    tiposSalidaIA.includes("podcast") ? "Escribiendo guion de podcast…" : null,
+    tiposSalidaIA.includes("video") ? "Creando slides del video…" : null,
+    "Finalizando módulo…",
+  ].filter(Boolean) as string[];
+
   const iniciarGeneracion = async () => {
     if (generando || archivosIA.length === 0 || !nombre.trim()) return;
     setGenerando(true); setGenerado(false); setProgreso(0);
-    let i = 0; setMsgProgreso(MENSAJES_IA[0]);
+    let i = 0; setMsgProgreso(MENSAJES_IA_EXTENDED[0]);
     const interval = setInterval(() => {
       i++;
-      if (i < MENSAJES_IA.length - 1) { setProgreso(Math.round((i / MENSAJES_IA.length) * 85)); setMsgProgreso(MENSAJES_IA[i]); }
-    }, 1200);
+      if (i < MENSAJES_IA_EXTENDED.length - 1) {
+        setProgreso(Math.round((i / MENSAJES_IA_EXTENDED.length) * 85));
+        setMsgProgreso(MENSAJES_IA_EXTENDED[i]);
+      }
+    }, 1400);
     try {
-      const fd = new FormData(); fd.append("archivo", archivosIARaw[0]);
+      const fd = new FormData();
+      fd.append("archivo", archivosIARaw[0]);
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-      const resIA = await fetch(`${API_URL}/ai/generar-desde-archivo`, {
+      const tiposSalidaStr = tiposSalidaIA.join(",");
+      const resIA = await fetch(`${API_URL}/ai/generar-desde-archivo?tiposSalida=${encodeURIComponent(tiposSalidaStr)}`, {
         method: "POST", credentials: "include", body: fd,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -369,7 +405,21 @@ export default function CrearModuloPage() {
       setProgreso(90); setMsgProgreso("Guardando módulo…");
       const resM = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
-        body: JSON.stringify({ nombre: d.titulo || nombre, descripcion: d.descripcion || "", tipoModulo: "ESPECIALIZADO_IA", esEspecializadoIa: true, activo: true, empresaId: usuario?.empresaId ?? null }),
+        body: JSON.stringify({
+          nombre:        d.titulo || nombre,
+          descripcion:   d.descripcion || "",
+          tipoModulo:    "ESPECIALIZADO_IA",
+          esEspecializadoIa: true,
+          activo:        true,
+          empresaId:     usuario?.empresaId ?? null,
+          idioma,
+          duracion,
+          tiposSalida:   tiposSalidaStr,
+          descripcion:   d.descripcion || "",
+          testPreguntas: null,
+          scriptPodcast: d.scriptPodcast ?? null,
+          scriptVideo:   d.scriptVideo   ?? null,
+        }),
       });
       if (!resM.ok) throw new Error();
       setProgreso(100); setMsgProgreso("¡Módulo creado!"); setGenerado(true);
@@ -804,7 +854,44 @@ export default function CrearModuloPage() {
                 </div>
                 <div className="p-6">
                   <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+
+                  {/* Tipo de contenido a generar */}
                   <div className="mt-5" style={{height:"1px",background:"var(--gris-borde)"}}/>
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold mb-3" style={{color:"var(--texto-secundario)"}}>¿Qué quieres generar?</p>
+                    <div className="flex flex-col gap-2">
+                      {COMBOS.map((combo, idx) => {
+                        const sel = comboActivo === idx;
+                        return (
+                          <button key={idx} onClick={() => setTiposSalidaIA(combo.keys)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all w-full"
+                            style={{ border:`1.5px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: sel ? "var(--azul-egm-light)" : "var(--gris-pagina)" }}>
+                            <div className="flex gap-1 shrink-0">
+                              {combo.keys.map((k) => {
+                                const t = TIPOS_SALIDA.find((x) => x.key === k)!;
+                                return (
+                                  <span key={k} className="w-6 h-6 rounded-lg flex items-center justify-center"
+                                    style={{ background: sel ? t.color : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>
+                                    {t.icon}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold leading-tight" style={{ color: sel ? "var(--azul-egm)" : "var(--texto-primario)" }}>{combo.label}</p>
+                              <p className="text-[11px] mt-0.5" style={{ color:"var(--texto-muted)" }}>{combo.desc}</p>
+                            </div>
+                            <div className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center"
+                              style={{ border:`2px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: sel ? "var(--azul-egm)" : "transparent" }}>
+                              {sel && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-4" style={{height:"1px",background:"var(--gris-borde)"}}/>
                   {!puedeGenerar&&<p className="text-xs mt-4 px-3 py-2 rounded-lg flex items-center gap-2" style={{background:"#fef9c3",color:"#854d0e"}}>⚠ {archivosIA.length===0?"Sube al menos un archivo":"Escribe un nombre para el módulo"}</p>}
                   <button onClick={iniciarGeneracion} disabled={generando||!puedeGenerar}
                     className="w-full mt-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
