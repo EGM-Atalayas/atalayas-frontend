@@ -70,7 +70,9 @@ export default function NotifMenu({ noLeidas, onVerTodas, onMarcarLeidas }: Noti
     onMarcarLeidas();
     closeMenu();
     if (notif.enlace) {
-      router.push(notif.enlace);
+      const enlace = notif.enlace
+        .replace("/formacion/modulo/", "/dashboard/formacion/");
+      router.push(enlace);
     }
   }
 
