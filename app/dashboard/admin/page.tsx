@@ -222,11 +222,23 @@ function AdminContent() {
 
   const resetFormModulo = () => { setEditingModulo(null); setShowFormModulo(false); };
   const handleEditModulo = (f: ModuloConProgreso) => { setEditingModulo(f); setShowFormModulo(true); };
-  const handleDeleteModulo = async (moduloId: string) => {
+
+  const handleDesactivarModulo = async (moduloId: string) => {
+    if (!confirm("¿Desactivar este módulo? Dejará de ser visible para los empleados.")) return;
     try {
-      await apiFetch(`${API_URL}/modulos/${moduloId}/desactivar`, { method: "PATCH" });
+      const res = await apiFetch(`${API_URL}/modulos/${moduloId}/desactivar`, { method: "PATCH" });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error al desactivar"); return; }
       await refreshData();
-    } catch { console.error("Error al desactivar módulo"); }
+    } catch { alert("Error al desactivar el módulo"); }
+  };
+
+  const handleEliminarModulo = async (moduloId: string) => {
+    if (!confirm("¿Eliminar este módulo permanentemente? Esta acción no se puede deshacer.")) return;
+    try {
+      const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
+      await refreshData();
+    } catch { alert("Error al eliminar el módulo"); }
   };
 
   function getInitials(nombre: string, apellidos?: string | null) {
@@ -925,18 +937,6 @@ function AdminContent() {
               </button>
             </div>
 
-            {/* ModuloForm */}
-            {showFormModulo && (
-              <div className="mb-8">
-                <ModuloForm
-                  editando={editingModulo}
-                  empresaId={usuario?.empresaId}
-                  onSave={() => { resetFormModulo(); refreshData(); }}
-                  onCancel={resetFormModulo}
-                />
-              </div>
-            )}
-
             {/* Grid de módulos */}
             {formaciones.length === 0 ? (
               <div className="rounded-2xl flex flex-col items-center justify-center py-20 text-center mb-6"
@@ -1027,17 +1027,24 @@ function AdminContent() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end gap-3 mt-4 pt-3"
+                      <div className="flex items-center justify-end gap-2 mt-4 pt-3"
                         style={{ borderTop: "1px solid var(--gris-borde)" }}>
                         {f.empresaId !== null ? (
                           <>
                             <button onClick={() => handleEditModulo(f)}
-                              className="text-xs font-semibold hover:underline" style={{ color: "var(--azul-egm)" }}>
+                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
                               Editar
                             </button>
-                            <button onClick={() => handleDeleteModulo(f.moduloId)}
-                              className="text-xs font-semibold hover:underline" style={{ color: "var(--error)" }}>
-                              Desactivar
+                            <button onClick={() => handleDesactivarModulo(f.moduloId)}
+                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                              style={{ background: "#fef9c3", color: "#854d0e" }}>
+                              {f.activo ? "Desactivar" : "Activar"}
+                            </button>
+                            <button onClick={() => handleEliminarModulo(f.moduloId)}
+                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                              style={{ background: "var(--error-light)", color: "var(--error)" }}>
+                              Eliminar
                             </button>
                           </>
                         ) : (
@@ -1121,6 +1128,16 @@ function AdminContent() {
           </>
         )}
       </div>
+
+      {/* Modal edición módulo — overlay global */}
+      {showFormModulo && (
+        <ModuloForm
+          editando={editingModulo}
+          empresaId={usuario?.empresaId}
+          onSave={() => { resetFormModulo(); refreshData(); }}
+          onCancel={resetFormModulo}
+        />
+      )}
     </>
   );
 }
