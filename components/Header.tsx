@@ -21,7 +21,7 @@ function getInitials(nombre: string): string {
   return nombre.split(" ").slice(0, 2).map((n) => n[0]?.toUpperCase() ?? "").join("");
 }
 
-// 👑 Enlaces exclusivos para el SuperAdmin
+// Enlaces exclusivos para el SuperAdmin
 const SUPERADMIN_LINKS = [
   { label: "Inicio", path: "/superadmin" },
   { label: "Empresas", path: "/superadmin/empresas" },
@@ -38,12 +38,10 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
 
-  // 🕵️‍♂️ DETECTAMOS SI ES SUPERADMIN 
-  // (Asumiendo que el código de rol es ROLE_ADMIN. Si en vuestro backend se llama diferente, cámbialo aquí)
+  // DETECTAMOS SI ES SUPERADMIN 
   const isSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN" || pathname.startsWith("/superadmin");
 
-  // 🔀 LÓGICA DE RUTAS DINÁMICAS
-  // Si es SuperAdmin, usamos nuestras rutas. Si no, usamos el sistema global del equipo.
+  // LÓGICA DE RUTAS DINÁMICAS
   let linksToRender = [];
   if (isSuperAdmin) {
     linksToRender = SUPERADMIN_LINKS;
@@ -91,7 +89,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   const initials       = usuario?.nombre ? getInitials(usuario.nombre) : "U";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
   
-  // Configuramos dónde van los botones dependiendo de quién esté logueado
   const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
   const linkPerfil = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/perfil";
   const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/configuracion";
@@ -131,7 +128,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         {/* Navegación desktop unificada */}
         <nav className="hidden sm:flex items-stretch flex-1">
           {linksToRender.map((link) => {
-            // Lógica para que se marque activo incluso en sub-rutas (ej: /superadmin/empresas)
             const isActive = pathname === link.path || (pathname.startsWith(link.path) && link.path !== linkLogo);
             return (
               <NavButton
@@ -144,31 +140,35 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           })}
         </nav>
 
-        {/* Lado derecho */}
-        <div className="ml-auto flex items-stretch gap-0">
+        {/* Lado derecho - Modificado para alinear verticalmente en móvil */}
+        <div className="ml-auto flex items-center h-full gap-2 sm:gap-0">
 
           {/* Campana */}
-          <NotifMenu
-            noLeidas={noLeidas}
-            onVerTodas={() => router.push(linkNotificaciones)}
-            onMarcarLeidas={marcarTodasLeidas}
-          />
+          <div className="flex items-center h-full">
+            <NotifMenu
+              noLeidas={noLeidas}
+              onVerTodas={() => router.push(linkNotificaciones)}
+              onMarcarLeidas={marcarTodasLeidas}
+            />
+          </div>
 
-          {/* Divisor */}
+          {/* Divisor (solo desktop) */}
           <div className="hidden sm:block w-px self-stretch my-4"
             style={{ background: "rgba(255,255,255,0.2)" }} />
 
           {/* Avatar + menú — solo desktop */}
-          <UserMenu
-            nombreMostrado={nombreMostrado}
-            empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
-            initials={initials}
-            logoEmpresa={logoEmpresa}
-            avatarUrl={usuario?.avatarUrl}
-            onPerfil={() => router.push(linkPerfil)}
-            onConfiguracion={() => router.push(linkConfiguracion)}
-            onCerrarSesion={handleLogout}
-          />
+          <div className="hidden sm:flex items-center h-full">
+            <UserMenu
+              nombreMostrado={nombreMostrado}
+              empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
+              initials={initials}
+              logoEmpresa={logoEmpresa}
+              avatarUrl={usuario?.avatarUrl}
+              onPerfil={() => router.push(linkPerfil)}
+              onConfiguracion={() => router.push(linkConfiguracion)}
+              onCerrarSesion={handleLogout}
+            />
+          </div>
 
           {/* Hamburguesa — solo móvil */}
           <button

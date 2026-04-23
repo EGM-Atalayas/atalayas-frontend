@@ -138,7 +138,7 @@ function normalizarNombre(raw: string): string {
 const MAX_PUESTO = 60;
 
 export default function PerfilPage() {
-  const { usuario, setUsuario } = useAuth();
+  const { usuario, guardarUsuario } = useAuth();
   const router   = useRouter();
   const pathname = usePathname();
 
@@ -268,7 +268,7 @@ export default function PerfilPage() {
         setPerfil(updated);
         resetForm(updated);
         // Actualizar contexto solo con los campos que usa la UI global (navbar, etc.)
-        setUsuario({
+        guardarUsuario({
           ...usuario!,
           nombre:     updated.nombre,
           apellidos:  updated.apellidos,
@@ -446,7 +446,7 @@ export default function PerfilPage() {
       if (!res.ok) throw new Error("Error al subir la imagen");
       const data = await res.json();
       setPerfil((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : prev);
-      setUsuario({ ...usuario!, avatarUrl: data.avatarUrl });
+      guardarUsuario({ ...usuario!, avatarUrl: data.avatarUrl });
     } catch {
       alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
     } finally {
