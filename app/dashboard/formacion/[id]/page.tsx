@@ -218,15 +218,20 @@ export default function Page() {
           setModuloApi(data);
           const base = apiToMock(data);
           const { completados, activoId: savedActivo } = cargarEstado(id);
-          setModulo(aplicarEstado(base, completados));
-          setActivoId(savedActivo);
+          const moduloConEstado = aplicarEstado(base, completados);
+          setModulo(moduloConEstado);
+          // Si el módulo ya está 100% completado, empezar desde el primer ítem
+          const yaCompletado = completados.length >= moduloConEstado.totalItems;
+          setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
           return;
         }
       } catch { /* fallback */ }
       // Fallback: datos mock legacy
       const { completados, activoId: savedActivo } = cargarEstado(id);
-      setModulo(aplicarEstado(getMockBase(id), completados));
-      setActivoId(savedActivo);
+      const moduloConEstado = aplicarEstado(getMockBase(id), completados);
+      setModulo(moduloConEstado);
+      const yaCompletado = completados.length >= moduloConEstado.totalItems;
+      setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
     };
     cargar();
   }, [id]);
@@ -478,6 +483,20 @@ export default function Page() {
 
         {/* CONTENIDO PRINCIPAL */}
         <main className="flex-1 min-w-0">
+
+          {/* Banner módulo ya completado */}
+          {progPct === 100 && (
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl mb-4"
+              style={{ background: "var(--exito-light)", border: "1px solid var(--exito)" }}>
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-semibold" style={{ color: "var(--exito)" }}>
+                Módulo completado — puedes revisar todo el contenido libremente
+              </p>
+            </div>
+          )}
+
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
 
@@ -519,31 +538,35 @@ export default function Page() {
               <div className="flex items-center justify-between px-8 py-5"
                 style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
                 <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                  {activo.completado
-                    ? "Ya completaste este contenido — puedes revisarlo cuando quieras"
-                    : verificado
-                      ? "Contenido revisado. Puedes marcarlo como completado."
-                      : activo.tipo === "texto" ? "Lee el contenido completo para poder completarlo"
-                        : activo.subtipo === "podcast" ? "Escucha el podcast completo para poder completarlo"
-                        : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
-                        : activo.tipo === "pdf" ? "Confirma que has leído el documento para poder completarlo"
-                        : "Revisa el contenido para poder completarlo"}
+                  {progPct === 100
+                    ? "Módulo completado — revisando contenido"
+                    : activo.completado
+                      ? "Ya completaste este contenido — puedes revisarlo cuando quieras"
+                      : verificado
+                        ? "Contenido revisado. Puedes marcarlo como completado."
+                        : activo.tipo === "texto" ? "Lee el contenido completo para poder completarlo"
+                          : activo.subtipo === "podcast" ? "Escucha el podcast completo para poder completarlo"
+                          : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
+                          : activo.tipo === "pdf" ? "Confirma que has leído el documento para poder completarlo"
+                          : "Revisa el contenido para poder completarlo"}
                 </p>
-                <button
-                  onClick={marcarCompletado}
-                  disabled={activo.completado || completando || (!verificado && !activo.completado)}
-                  className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
-                  style={{
-                    background: activo.completado ? "var(--exito-light)" : verificado ? "var(--azul-egm)" : "var(--gris-borde)",
-                    color: activo.completado ? "var(--exito)" : verificado ? "var(--blanco)" : "var(--texto-muted)",
-                    cursor: (!verificado && !activo.completado) ? "not-allowed" : "pointer",
-                    opacity: completando ? 0.5 : 1,
-                  }}
-                  onMouseEnter={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
-                  onMouseLeave={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
-                >
-                  {completando ? "Guardando..." : activo.completado ? "Completado" : "Completado y continuar"}
-                </button>
+                {progPct < 100 && (
+                  <button
+                    onClick={marcarCompletado}
+                    disabled={activo.completado || completando || (!verificado && !activo.completado)}
+                    className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
+                    style={{
+                      background: activo.completado ? "var(--exito-light)" : verificado ? "var(--azul-egm)" : "var(--gris-borde)",
+                      color: activo.completado ? "var(--exito)" : verificado ? "var(--blanco)" : "var(--texto-muted)",
+                      cursor: (!verificado && !activo.completado) ? "not-allowed" : "pointer",
+                      opacity: completando ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+                    onMouseLeave={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
+                  >
+                    {completando ? "Guardando..." : activo.completado ? "Completado" : "Completado y continuar"}
+                  </button>
+                )}
               </div>
             )}
           </div>
