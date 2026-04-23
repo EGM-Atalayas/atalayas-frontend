@@ -53,6 +53,13 @@ const SHADOW_TXT = "0 2px 8px rgba(0,0,0,0.65)";
 
 const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z";
 
+const CATEGORIA_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  Novedad: { bg: "rgba(34,197,94,0.22)",  text: "#bbf7d0", border: "rgba(34,197,94,0.3)"   },
+  Aviso:   { bg: "rgba(251,191,36,0.22)", text: "#fde68a", border: "rgba(251,191,36,0.32)" },
+  Evento:  { bg: "rgba(167,139,250,0.2)", text: "#ddd6fe", border: "rgba(167,139,250,0.3)" },
+  General: { bg: "rgba(255,255,255,0.1)", text: "rgba(255,255,255,0.78)", border: "rgba(255,255,255,0.16)" },
+};
+
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 function formatDate(iso?: string | null) {
   if (!iso) return "";
@@ -108,11 +115,14 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
-      {fuente === "egm" && categoria && categoria !== "General" && (
-        <span className={cls} style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.16)" }}>
-          {categoria}
-        </span>
-      )}
+      {fuente === "egm" && categoria && (() => {
+        const col = CATEGORIA_COLORS[categoria] ?? CATEGORIA_COLORS.General;
+        return (
+          <span className={cls} style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
+            {categoria}
+          </span>
+        );
+      })()}
       {destacado && (
         <span className={cls} style={{ background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }}>
           ★ Destacado
@@ -455,14 +465,22 @@ export default function ComunicacionPage() {
               <div className="mb-10">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className={topItems.length === 1 ? "w-full" : "featured-card-large"}>
-                    <FeaturedCard item={topItems[0]} size="large" onOpen={() => setModalItem(topItems[0])} fill />
+                    <FeaturedCard item={topItems[0]} size="large" onOpen={() => setModalItem(topItems[0])} fill
+                      esAdmin={esAdmin}
+                      onEdit={() => abrirEditar(topItems[0]._raw as Noticia)}
+                      onDelete={() => handleDesactivar((topItems[0]._raw as Noticia).anuncioId)}
+                    />
                   </div>
                   {topItems.length > 1 && (
                     <div className="hidden md:flex flex-col gap-3"
                       style={{ flex: 1, justifyContent: topItems.length < 4 ? "flex-start" : "stretch" }}>
                       {topItems.slice(1, 4).map((item) => (
                         <div key={item.id} style={{ flex: topItems.length < 4 ? "0 0 auto" : 1, height: topItems.length < 4 ? "120px" : undefined }}>
-                          <FeaturedCard item={item} size="small" onOpen={() => setModalItem(item)} fill />
+                          <FeaturedCard item={item} size="small" onOpen={() => setModalItem(item)} fill
+                            esAdmin={esAdmin}
+                            onEdit={() => abrirEditar(item._raw as Noticia)}
+                            onDelete={() => handleDesactivar((item._raw as Noticia).anuncioId)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -578,8 +596,9 @@ function FeedList({ items, esAdmin, esMobil, nombreEmpresa, onOpen, onEdit, onDe
 }
 
 // ── FEATURED CARD ─────────────────────────────────────────────────────────────
-function FeaturedCard({ item, size, onOpen, fill = false }: {
+function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDelete }: {
   item: FeedItem; size: "large" | "small"; onOpen: () => void; fill?: boolean;
+  esAdmin?: boolean; onEdit?: () => void; onDelete?: () => void;
 }) {
   const isLarge   = size === "large";
   const bgGradient = item.fuente === "egm" ? GRAD_EGM : GRAD_EMP;
@@ -622,6 +641,27 @@ function FeaturedCard({ item, size, onOpen, fill = false }: {
       <div className="absolute inset-0" style={{ background: isLarge
         ? "linear-gradient(to top, rgba(3,10,25,0.97) 30%, rgba(3,10,25,0.18) 62%, transparent 100%)"
         : "linear-gradient(to top, rgba(3,10,25,0.97) 42%, rgba(3,10,25,0.12) 72%, transparent 100%)" }} />
+
+      {/* ── Botones admin (empresa) ────────────────────────────────────── */}
+      {esAdmin && item.fuente === "empresa" && (
+        <div className="absolute top-3 right-3 z-10 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}>
+          <button onClick={onEdit}
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
+            style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1px solid rgba(255,255,255,0.28)", backdropFilter: "blur(4px)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.3)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}>
+            Editar
+          </button>
+          <button onClick={onDelete}
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
+            style={{ background: "rgba(200,75,49,0.55)", color: "#fff", border: "1px solid rgba(200,75,49,0.6)", backdropFilter: "blur(4px)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(200,75,49,0.8)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(200,75,49,0.55)")}>
+            Eliminar
+          </button>
+        </div>
+      )}
 
       {/* ── Grande ─────────────────────────────────────────────────────── */}
       {isLarge && (
