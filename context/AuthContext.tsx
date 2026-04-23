@@ -23,6 +23,7 @@ interface Usuario {
 interface AuthContextType {
   usuario: Usuario | null;
   setUsuario: (u: Usuario | null) => void;
+  guardarUsuario: (u: Usuario | null) => void;
   logout: () => Promise<void>;
   loginInvitado: () => void;
 }
@@ -31,42 +32,69 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [cargando, setCargando] = useState(false); // Cambiado a false para no mostrar loading
 
   useEffect(() => {
-    const isGuest = localStorage.getItem("guest");
-    if (isGuest) {
-      loginInvitado();
-    } else {
-      checkSession();
-    }
+    recuperarSesion();
   }, []);
 
-  const checkSession = async () => {
-    if (usuario?.invitado) return;
+  const recuperarSesion = async () => {
     try {
+      const isGuest = localStorage.getItem("guest");
+      const token = localStorage.getItem("accessToken");
+
+      if (isGuest) {
+        loginInvitado();
+        return;
+      }
+
+      if (!token) {
+        console.log("[AuthContext] No hay token ni guest");
+        return;
+      }
+
+      console.log("[AuthContext] ✅ Intentando recuperar sesión con token");
       const res = await apiFetch(`${API_URL}/auth/me`);
+
       if (!res.ok) {
-        setUsuario(null);
+        console.log("[AuthContext] ❌ /auth/me no respondió OK:", res.status);
+        localStorage.removeItem("accessToken");
         return;
       }
+
       const data: Usuario = await res.json();
+      console.log("[AuthContext] 📦 /auth/me devolvió:", { nombre: data.nombre, rol: data.codigoRol });
+
       if (!data.activo) {
-        await logout();
+        console.log("[AuthContext] ❌ Usuario no activo");
+        localStorage.removeItem("accessToken");
         return;
       }
+
+      console.log("[AuthContext] ✅ Sesión recuperada para:", data.nombre);
       setUsuario(data);
-    } catch {
-      setUsuario(null);
+    } catch (error) {
+      console.error("[AuthContext] ❌ Error recuperando sesión:", error);
     }
   };
 
   const logout = async () => {
     try {
       await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
+    } catch (error) {
+      console.error("[AuthContext] Error en logout:", error);
     } finally {
       localStorage.removeItem("guest");
       localStorage.removeItem("accessToken");
       setUsuario(null);
+    }
+  };
+
+  // Función auxiliar para guardar usuario
+  const guardarUsuario = (nuevoUsuario: Usuario | null) => {
+    setUsuario(nuevoUsuario);
+    if (nuevoUsuario) {
+      console.log("[AuthContext] Usuario guardado:", nuevoUsuario.nombre);
     }
   };
 
@@ -78,11 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       activo: true,
     };
     localStorage.setItem("guest", "true");
-    setUsuario(guestUser);
+    guardarUsuario(guestUser);
   };
 
+  // Si ya sabemos quién eres (o si sabemos que no estás logueado), mostramos la app normal
   return (
-    <AuthContext.Provider value={{ usuario, setUsuario, logout, loginInvitado }}>
+    <AuthContext.Provider value={{ usuario, setUsuario, guardarUsuario, logout, loginInvitado }}>
       {children}
     </AuthContext.Provider>
   );

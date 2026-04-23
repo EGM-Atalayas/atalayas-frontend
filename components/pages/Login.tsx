@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const { setUsuario, loginInvitado } = useAuth();
+  const { guardarUsuario, loginInvitado } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +68,9 @@ const LoginPage: React.FC = () => {
           localStorage.setItem("accessToken", data.accessToken);
         }
 
-        setUsuario({
+        console.log("[Login] Usuario logueado:", { nombre: data.nombre, codigoRol: data.codigoRol });
+
+        guardarUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,
           codigoRol: data.codigoRol,

@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import ChatbotIA from "@/components/ui/ChatbotIA";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { usuario, setUsuario } = useAuth();
+  const { usuario, guardarUsuario } = useAuth();
   const [verificando, setVerificando] = useState(true);
   const router = useRouter();
 
@@ -24,8 +24,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (res.ok) return res.json();
         throw new Error("No autenticado");
       })
-      .then((data) => setUsuario(data))
-      .catch(() => setUsuario(null))
+      .then((data) => guardarUsuario(data))
+      .catch(() => guardarUsuario(null))
       .finally(() => setVerificando(false));
   }, []);
 
