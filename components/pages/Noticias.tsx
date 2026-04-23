@@ -9,44 +9,52 @@ import {
   editarNoticia,
   desactivarNoticia,
 } from "../../lib/api/noticias";
-import type {
-  Comunicado,
-  CategoriaComunicado,
-  Noticia,
-  NoticiaInput,
-} from "../../lib/types/noticias";
+import type { Comunicado, Noticia, NoticiaInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
 
-// ── CONSTANTES ─────────────────────────────────────────────────────────────────
-const CATEGORIAS: CategoriaComunicado[] = ["Novedad", "Aviso", "Evento", "General"];
+// ── TIPOS ──────────────────────────────────────────────────────────────────────
+interface FeedItem {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  imagenUrl?: string | null;
+  fecha: string;
+  fuente: "egm" | "empresa";
+  categoria?: string | null;
+  destacado: boolean;
+  esNuevoItem: boolean;
+  _raw: Comunicado | Noticia;
+}
 
-const CATEGORIA_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Novedad: { bg: "#e8f5ee", text: "#1a6b3a", border: "#9dcdb3" },
-  Aviso:   { bg: "#fef3c7", text: "#92400e", border: "#fbbf24" },
-  Evento:  { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
-  General: { bg: "var(--gris-superficie)", text: "var(--texto-secundario)", border: "var(--gris-borde)" },
+type FiltroFuente = "todos" | "egm" | "empresa";
+type Orden = "reciente" | "antiguo";
+
+// ── CONSTANTES ─────────────────────────────────────────────────────────────────
+const ORDEN_LABELS: Record<Orden, string> = {
+  reciente: "Más reciente",
+  antiguo:  "Más antiguo",
 };
 
 const EMPTY_FORM: NoticiaInput = {
-  titulo:    "",
-  contenido: "",
-  esGlobal:  false,
-  empresaId: null,
-  imagenUrl: null,
+  titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
 };
+
+const GRAD_BTN  = "linear-gradient(135deg, var(--azul-accion) 0%, var(--azul-egm) 100%)";
+const GRAD_EGM  = "linear-gradient(135deg, var(--azul-egm) 0%, var(--marino) 100%)";
+const GRAD_EMP  = "linear-gradient(135deg, #2d5a3d 0%, #1a3a26 100%)";
+const SHADOW_TXT = "0 2px 8px rgba(0,0,0,0.65)";
+
+const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z";
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 function formatDate(iso?: string | null) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("es-ES", {
-    day: "numeric", month: "short", year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function esNuevo(iso?: string | null): boolean {
   if (!iso) return false;
-  const diff = Date.now() - new Date(iso).getTime();
-  return diff < 7 * 24 * 60 * 60 * 1000;
+  return Date.now() - new Date(iso).getTime() < 7 * 24 * 60 * 60 * 1000;
 }
 
 function estaExpirado(iso?: string | null): boolean {
@@ -54,41 +62,108 @@ function estaExpirado(iso?: string | null): boolean {
   return new Date(iso).getTime() < Date.now();
 }
 
-function ordenarComunicados(lista: Comunicado[], orden: string): Comunicado[] {
-  const copia = [...lista];
-  if (orden === "reciente") return copia.sort((a, b) => new Date(b.fechaPublicacion ?? b.comunicadoId).getTime() - new Date(a.fechaPublicacion ?? a.comunicadoId).getTime());
-  if (orden === "antiguo")  return copia.sort((a, b) => new Date(a.fechaPublicacion ?? a.comunicadoId).getTime() - new Date(b.fechaPublicacion ?? b.comunicadoId).getTime());
-  if (orden === "az")       return copia.sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
-  return copia;
+function ordenarFeed(items: FeedItem[], orden: Orden): FeedItem[] {
+  return [...items].sort((a, b) =>
+    orden === "antiguo"
+      ? new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+      : new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+  );
+}
+
+// ── SUBCOMPONENTES REUTILIZABLES ───────────────────────────────────────────────
+function MegaphoneIcon({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1} style={{ opacity: 0.2 }}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={MEGAPHONE} />
+    </svg>
+  );
+}
+
+function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md" }: {
+  fuente: "egm" | "empresa";
+  nombreEmpresa?: string | null;
+  categoria?: string | null;
+  destacado?: boolean;
+  esNuevoItem?: boolean;
+  size?: "sm" | "md";
+}) {
+  const sm = size === "sm";
+  const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
+
+  return (
+    <>
+      {fuente === "egm" ? (
+        <span className={cls} style={{ background: "rgba(27,63,126,0.42)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }}>
+          EGM Atalayas
+        </span>
+      ) : (
+        <span className={cls} style={{ background: "rgba(45,90,61,0.55)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }}>
+          {nombreEmpresa ?? "Empresa"}
+        </span>
+      )}
+      {fuente === "egm" && categoria && categoria !== "General" && (
+        <span className={cls} style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.16)" }}>
+          {categoria}
+        </span>
+      )}
+      {destacado && (
+        <span className={cls} style={{ background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }}>
+          ★ Destacado
+        </span>
+      )}
+      {esNuevoItem && (
+        <span className={cls} style={{ background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }}>
+          Nuevo
+        </span>
+      )}
+    </>
+  );
 }
 
 // ── COMPONENTE PRINCIPAL ───────────────────────────────────────────────────────
 export default function ComunicacionPage() {
   const { usuario } = useAuth();
 
-  const esAdmin    = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
-  const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
 
-  const [seccion, setSeccion] = useState<"egm" | "empresa">("egm");
-
-  // Comunicados EGM
-  const [comunicados, setComunicados]               = useState<Comunicado[]>([]);
+  // Datos
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [anuncios, setAnuncios]       = useState<Noticia[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
-  const [categoriaActiva, setCategoriaActiva]       = useState<"Todos" | CategoriaComunicado>("Todos");
-  const [orden, setOrden]                           = useState("reciente");
-  const [modalComunicado, setModalComunicado]       = useState<Comunicado | null>(null);
+  const [loadingAnuncios, setLoadingAnuncios]       = useState(true);
 
-  // Anuncios empresa
-  const [anuncios, setAnuncios]               = useState<Noticia[]>([]);
-  const [loadingAnuncios, setLoadingAnuncios] = useState(true);
-  const [showForm, setShowForm]               = useState(false);
-  const [editando, setEditando]               = useState<Noticia | null>(null);
-  const [form, setForm]                       = useState<NoticiaInput>(EMPTY_FORM);
-  const [submitting, setSubmitting]           = useState(false);
-  const [formError, setFormError]             = useState<string | null>(null);
-  const [modalAnuncio, setModalAnuncio]       = useState<Noticia | null>(null);
+  // UI
+  const [filtroFuente, setFiltroFuente] = useState<FiltroFuente>("todos");
+  const [orden, setOrden]               = useState<Orden>("reciente");
+  const [showOrden, setShowOrden]       = useState(false);
+  const [modalItem, setModalItem]       = useState<FeedItem | null>(null);
+  const [esMobil, setEsMobil]           = useState(false);
+  const [visibles, setVisibles]         = useState(6);
 
-  // ── CARGA ─────────────────────────────────────────────────────────────────────
+  // Formulario
+  const [showForm, setShowForm]     = useState(false);
+  const [editando, setEditando]     = useState<Noticia | null>(null);
+  const [form, setForm]             = useState<NoticiaInput>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError]   = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = () => setEsMobil(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (!showOrden) return;
+    const close = (e: MouseEvent) => {
+      if (!(e.target as Element).closest(".orden-dropdown")) setShowOrden(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [showOrden]);
+
+  // ── CARGA ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     cargarComunicados();
     if (usuario?.empresaId) cargarAnuncios();
@@ -100,19 +175,16 @@ export default function ComunicacionPage() {
     setLoadingComunicados(true);
     try {
       const data = await getComunicados();
-      const activos = data.filter((c) => c.activo && !estaExpirado(c.fechaExpiracion));
-      // Destacados primero, luego por fecha
-      activos.sort((a, b) => {
-        if (a.destacado && !b.destacado) return -1;
-        if (!a.destacado && b.destacado) return 1;
-        return new Date(b.fechaPublicacion ?? "").getTime() - new Date(a.fechaPublicacion ?? "").getTime();
-      });
+      const activos = data
+        .filter((c) => c.activo && !estaExpirado(c.fechaExpiracion))
+        .sort((a, b) => {
+          if (a.destacado && !b.destacado) return -1;
+          if (!a.destacado && b.destacado) return 1;
+          return new Date(b.fechaPublicacion ?? "").getTime() - new Date(a.fechaPublicacion ?? "").getTime();
+        });
       setComunicados(activos);
-    } catch {
-      setComunicados([]);
-    } finally {
-      setLoadingComunicados(false);
-    }
+    } catch { setComunicados([]); }
+    finally { setLoadingComunicados(false); }
   }
 
   async function cargarAnuncios() {
@@ -120,39 +192,23 @@ export default function ComunicacionPage() {
     try {
       const data = await getNoticias(usuario?.empresaId);
       setAnuncios(data.filter((n) => n.activo));
-    } catch {
-      setAnuncios([]);
-    } finally {
-      setLoadingAnuncios(false);
-    }
+    } catch { setAnuncios([]); }
+    finally { setLoadingAnuncios(false); }
   }
 
-  // ── HANDLERS ANUNCIOS ─────────────────────────────────────────────────────────
+  // ── HANDLERS FORMULARIO ────────────────────────────────────────────────────
   function abrirCrear() {
     setForm({ ...EMPTY_FORM, empresaId: usuario?.empresaId ?? null });
-    setEditando(null);
-    setShowForm(true);
-    setFormError(null);
+    setEditando(null); setShowForm(true); setFormError(null);
   }
 
   function abrirEditar(n: Noticia) {
-    setForm({
-      titulo:    n.titulo,
-      contenido: n.contenido,
-      esGlobal:  n.esGlobal,
-      empresaId: n.empresaId,
-      imagenUrl: n.imagenUrl ?? null,
-    });
-    setEditando(n);
-    setShowForm(true);
-    setFormError(null);
+    setForm({ titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal, empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null });
+    setEditando(n); setShowForm(true); setFormError(null);
   }
 
   function cerrarForm() {
-    setShowForm(false);
-    setEditando(null);
-    setForm(EMPTY_FORM);
-    setFormError(null);
+    setShowForm(false); setEditando(null); setForm(EMPTY_FORM); setFormError(null);
   }
 
   async function handleSubmit() {
@@ -160,433 +216,324 @@ export default function ComunicacionPage() {
       setFormError("El título y el contenido son obligatorios");
       return;
     }
-    setSubmitting(true);
-    setFormError(null);
+    setSubmitting(true); setFormError(null);
     try {
-      if (editando) {
-        await editarNoticia(editando.anuncioId, form);
-      } else {
-        await crearNoticia(form);
-      }
+      if (editando) await editarNoticia(editando.anuncioId, form);
+      else await crearNoticia(form);
       await cargarAnuncios();
       cerrarForm();
-    } catch {
-      setFormError("Error al guardar. Inténtalo de nuevo.");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
+    finally { setSubmitting(false); }
   }
 
   async function handleDesactivar(id: string) {
     if (!confirm("¿Seguro que quieres eliminar este anuncio?")) return;
-    try {
-      await desactivarNoticia(id);
-      await cargarAnuncios();
-    } catch {}
+    try { await desactivarNoticia(id); await cargarAnuncios(); } catch {}
   }
 
-  // ── DATOS FILTRADOS ───────────────────────────────────────────────────────────
-  const comunicadosFiltrados = (() => {
-    let lista = categoriaActiva === "Todos"
-      ? comunicados
-      : comunicados.filter((c) => c.categoria === categoriaActiva);
-    // Destacados siempre primero dentro del filtro
-    const dest  = lista.filter((c) => c.destacado);
-    const resto = ordenarComunicados(lista.filter((c) => !c.destacado), orden);
-    return [...dest, ...resto];
-  })();
+  // ── FEED ───────────────────────────────────────────────────────────────────
+  const feedEGM: FeedItem[] = comunicados.map((c) => ({
+    id: c.comunicadoId, titulo: c.titulo, descripcion: c.mensaje,
+    imagenUrl: c.imagenUrl, fecha: c.fechaPublicacion ?? "",
+    fuente: "egm", categoria: c.categoria, destacado: c.destacado,
+    esNuevoItem: esNuevo(c.fechaPublicacion), _raw: c,
+  }));
 
-  const [destacado, ...restoComunicados] = comunicadosFiltrados;
+  const feedEmpresa: FeedItem[] = anuncios.map((n) => ({
+    id: n.anuncioId, titulo: n.titulo, descripcion: n.contenido,
+    imagenUrl: n.imagenUrl, fecha: n.creadoEn,
+    fuente: "empresa", categoria: null, destacado: false,
+    esNuevoItem: esNuevo(n.creadoEn), _raw: n,
+  }));
 
-  // ── RENDER ────────────────────────────────────────────────────────────────────
+  const feedCompleto = ordenarFeed([...feedEGM, ...feedEmpresa], "reciente");
+
+  const topItems = [...feedEGM, ...feedEmpresa]
+    .sort((a, b) => {
+      if (a.destacado && !b.destacado) return -1;
+      if (!a.destacado && b.destacado) return 1;
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    })
+    .slice(0, 4);
+
+  const topIds   = new Set(topItems.map((i) => i.id));
+  const feedResto = feedCompleto.filter((i) => !topIds.has(i.id));
+
+  const feedFiltrado = ordenarFeed(
+    filtroFuente === "todos" ? feedResto : feedCompleto.filter((i) => i.fuente === filtroFuente),
+    orden
+  );
+
+  const cargando = loadingComunicados || loadingAnuncios;
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full">
-      <DashboardHero
-        prefijo="Centro de "
-        titulo="Comunicación."
-        imagenFondo="/background-comunicacion-empleado.jpg"
-      />
+      <style>{`
+        .featured-card-large { height: 280px; width: 100%; }
+        @media (min-width: 768px) { .featured-card-large { height: 420px; flex: 0 0 55%; width: auto; } }
+        .group:hover .card-img { transform: scale(1.04); }
+        .card-img { transition: transform 0.4s ease; }
+      `}</style>
 
-      <div className="px-6 md:px-10 lg:px-16 pt-14 pb-16">
-        {/* Pestañas */}
-        <div className="flex gap-1 mb-8 border-b" style={{ borderColor: "var(--gris-borde)" }}>
-          <SeccionTab
-            label="Noticias EGM"
-            badge={comunicados.length}
-            activo={seccion === "egm"}
-            onClick={() => setSeccion("egm")}
-          />
-          {usuario?.empresaId && (
-            <SeccionTab
-              label={`Anuncios de ${usuario.nombreEmpresa ?? "tu empresa"}`}
-              badge={anuncios.length}
-              activo={seccion === "empresa"}
-              onClick={() => setSeccion("empresa")}
-            />
-          )}
-        </div>
+      <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.jpg" />
 
-        {/* ══ SECCIÓN EGM ═══════════════════════════════════════════════════════ */}
-        {seccion === "egm" && (
-          <>
-            {/* Filtros */}
-            <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium mr-1" style={{ color: "var(--texto-muted)" }}>
-                  Categoría:
-                </span>
-                {(["Todos", ...CATEGORIAS] as const).map((cat) => {
-                  const activo = categoriaActiva === cat;
-                  const colores = cat !== "Todos" ? CATEGORIA_COLORS[cat] : null;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setCategoriaActiva(cat)}
-                      className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-                      style={{
-                        background:  activo ? (colores?.bg  ?? "var(--azul-egm)") : "var(--gris-superficie)",
-                        color:       activo ? (colores?.text ?? "#fff")            : "var(--texto-secundario)",
-                        border:      `1.5px solid ${activo ? (colores?.border ?? "var(--azul-egm)") : "var(--gris-borde)"}`,
-                      }}
-                    >
-                      {cat}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: "var(--texto-muted)" }}>Ordenar:</span>
-                <select
-                  value={orden}
-                  onChange={(e) => setOrden(e.target.value)}
-                  className="text-sm rounded-lg px-3 py-1.5 focus:outline-none"
-                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+      <div className="px-6 md:px-10 lg:px-16 pt-8 md:pt-12 pb-20">
+
+        {/* ── BARRA FILTROS ───────────────────────────────────────────────── */}
+        {!cargando && (
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2 md:gap-3">
+            <div className="flex items-center gap-2" style={{ overflowX: esMobil ? "auto" : "visible", scrollbarWidth: "none" }}>
+              {([
+                { key: "todos",   label: "Todos" },
+                { key: "egm",     label: "EGM Atalayas" },
+                ...(usuario?.empresaId ? [{ key: "empresa", label: usuario.nombreEmpresa ?? "Tu empresa" }] : []),
+              ] as { key: FiltroFuente; label: string }[]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFiltroFuente(key)}
+                  className="shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all"
+                  style={{
+                    background: filtroFuente === key ? GRAD_BTN : "var(--blanco)",
+                    color:  filtroFuente === key ? "#fff" : "var(--texto-secundario)",
+                    border: `1.5px solid ${filtroFuente === key ? "transparent" : "var(--gris-borde)"}`,
+                    boxShadow: filtroFuente === key ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                  }}
                 >
-                  <option value="reciente">Más reciente</option>
-                  <option value="az">A–Z por título</option>
-                  <option value="antiguo">Más antiguo</option>
-                </select>
-              </div>
+                  {label}
+                  {key === "todos" && feedCompleto.length > 0 && (
+                    <span className="ml-1.5 text-xs opacity-70">({feedCompleto.length})</span>
+                  )}
+                </button>
+              ))}
             </div>
 
-            {loadingComunicados ? (
-              <Spinner />
-            ) : comunicadosFiltrados.length === 0 ? (
-              <EstadoVacio
-                titulo={categoriaActiva === "Todos" ? "Sin comunicados publicados" : `Sin comunicados de tipo "${categoriaActiva}"`}
-                descripcion={categoriaActiva === "Todos"
-                  ? "Cuando EGM Atalayas publique comunicados aparecerán aquí."
-                  : "Prueba con otra categoría o selecciona Todos."}
-                icono={<IconMegaphone />}
-              />
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                {/* Tarjeta destacada / primera */}
-                {destacado && (
-                  <div
-                    className="relative rounded-2xl overflow-hidden cursor-pointer group"
-                    style={{ minHeight: "420px" }}
-                    onClick={() => setModalComunicado(destacado)}
-                  >
-                    {destacado.imagenUrl ? (
-                      <img
-                        src={destacado.imagenUrl}
-                        alt={destacado.titulo}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)" }} />
-                    )}
-                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(10,20,40,0.92) 40%, rgba(10,20,40,0.1) 100%)" }} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-8">
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
-                        {destacado.destacado && (
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(251,191,36,0.2)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.4)" }}>
-                            ★ Destacado
-                          </span>
-                        )}
-                        {esNuevo(destacado.fechaPublicacion) && (
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(71,141,98,0.25)", color: "#3aad66", border: "1px solid rgba(71,141,98,0.4)" }}>
-                            Nuevo
-                          </span>
-                        )}
-                        {destacado.categoria && (
-                          <BadgeCategoria categoria={destacado.categoria} dark />
-                        )}
-                        <div className="w-4 h-px ml-1" style={{ background: "rgba(255,255,255,0.4)" }} />
-                        <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-                          {formatDate(destacado.fechaPublicacion)}
-                        </span>
-                      </div>
-                      <h2 className="text-2xl font-semibold leading-snug mb-3 text-white">
-                        {destacado.titulo}
-                      </h2>
-                      <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.65)" }}>
-                        {destacado.mensaje}
-                      </p>
-                      <div className="mt-4 flex items-center justify-end">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+            <div className="flex items-center gap-2 md:ml-auto self-end md:self-auto">
+              {/* Ordenar */}
+              <div className="relative orden-dropdown">
+                <button
+                  onClick={() => setShowOrden((v) => !v)}
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all"
+                  style={{
+                    background: showOrden ? GRAD_BTN : orden !== "reciente" ? "var(--azul-accion-light)" : "var(--blanco)",
+                    color: showOrden ? "#fff" : orden !== "reciente" ? "var(--azul-accion)" : "var(--texto-secundario)",
+                    border: `1.5px solid ${showOrden ? "transparent" : orden !== "reciente" ? "var(--azul-accion)" : "var(--gris-borde)"}`,
+                    boxShadow: showOrden ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                  }}
+                >
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M6 12h12M10 17h4" />
+                  </svg>
+                  <span>Ordenar</span>
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                    style={{ transition: "transform 0.2s", transform: showOrden ? "rotate(180deg)" : "rotate(0deg)" }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showOrden && (
+                  <div className="absolute right-0 top-full mt-2 z-20 rounded-xl py-1 overflow-hidden"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", minWidth: "190px" }}>
+                    {(Object.entries(ORDEN_LABELS) as [Orden, string][]).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => { setOrden(key); setShowOrden(false); setVisibles(6); }}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors"
+                        style={{
+                          background: orden === key ? "var(--azul-accion-light)" : "transparent",
+                          color: orden === key ? "var(--azul-accion)" : "var(--texto-primario)",
+                          fontWeight: orden === key ? 600 : 400,
+                        }}
+                        onMouseEnter={(e) => { if (orden !== key) e.currentTarget.style.background = "var(--gris-superficie)"; }}
+                        onMouseLeave={(e) => { if (orden !== key) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {label}
+                        {orden === key && (
+                          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
-                        </div>
-                      </div>
-                    </div>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 )}
-
-                {/* Lista de resto */}
-                <div className="flex flex-col gap-5">
-                  {restoComunicados.map((c) => (
-                    <div
-                      key={c.comunicadoId}
-                      className="flex gap-4 group cursor-pointer"
-                      onClick={() => setModalComunicado(c)}
-                    >
-                      <div className="shrink-0 rounded-xl overflow-hidden" style={{ width: "110px", height: "80px" }}>
-                        {c.imagenUrl ? (
-                          <img src={c.imagenUrl} alt={c.titulo} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                        ) : (
-                          <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)" }} />
-                        )}
-                      </div>
-                      <div className="flex flex-col justify-center min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                          {c.destacado && (
-                            <span className="text-[10px] font-semibold" style={{ color: "#f59e0b" }}>★</span>
-                          )}
-                          {esNuevo(c.fechaPublicacion) && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "#e8f5ee", color: "#1a6b3a", border: "1px solid #9dcdb3" }}>
-                              Nuevo
-                            </span>
-                          )}
-                          {c.categoria && <BadgeCategoria categoria={c.categoria} />}
-                          <span className="text-xs ml-auto" style={{ color: "var(--texto-muted)" }}>
-                            {formatDate(c.fechaPublicacion)}
-                          </span>
-                        </div>
-                        <h3 className="text-base font-semibold leading-snug line-clamp-2 transition-opacity group-hover:opacity-70" style={{ color: "var(--texto-primario)" }}>
-                          {c.titulo}
-                        </h3>
-                        <p className="text-sm mt-1 line-clamp-2 leading-relaxed" style={{ color: "var(--texto-muted)" }}>
-                          {c.mensaje}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
-            )}
-          </>
-        )}
 
-        {/* ══ SECCIÓN EMPRESA ═══════════════════════════════════════════════════ */}
-        {seccion === "empresa" && usuario?.empresaId && (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold" style={{ color: "var(--texto-primario)" }}>
-                  Anuncios de {usuario.nombreEmpresa ?? "tu empresa"}
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                  {esAdmin ? "Visibles solo para los empleados de tu empresa" : "Comunicados internos de tu empresa"}
-                </p>
-              </div>
               {esAdmin && (
                 <button
                   onClick={abrirCrear}
-                  className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                  style={{ background: "var(--azul-egm)", color: "#fff" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                  className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                  style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)" }}
                 >
                   + Nuevo anuncio
                 </button>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Formulario inline (solo admin) */}
-            {showForm && esAdmin && (
-              <div className="rounded-xl p-6 mb-6" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
-                    {editando ? "Editar anuncio" : "Nuevo anuncio"}
-                  </h3>
-                  <button onClick={cerrarForm} className="text-xl leading-none" style={{ color: "var(--texto-muted)" }}>×</button>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <FormField label="Título" required>
-                    <input
-                      type="text"
-                      value={form.titulo}
-                      onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                      placeholder="Ej: Recordatorio reunión de equipo"
-                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                    />
-                  </FormField>
-                  <FormField label="Contenido" required>
-                    <textarea
-                      value={form.contenido}
-                      onChange={(e) => setForm({ ...form, contenido: e.target.value })}
-                      placeholder="Escribe el contenido del anuncio..."
-                      rows={4}
-                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
-                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                    />
-                  </FormField>
-                  <FormField label="Imagen (URL opcional)">
-                    <input
-                      type="url"
-                      value={form.imagenUrl ?? ""}
-                      onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                      placeholder="https://..."
-                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                    />
-                  </FormField>
-                </div>
-                {formError && <p className="text-sm mt-3" style={{ color: "var(--error)" }}>{formError}</p>}
-                <div className="flex gap-2 justify-end pt-4 mt-2" style={{ borderTop: "1px solid var(--gris-superficie)" }}>
-                  <button onClick={cerrarForm} className="text-sm px-4 py-2 rounded-lg" style={{ color: "var(--texto-secundario)" }}>
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="text-sm font-semibold px-5 py-2 rounded-lg disabled:opacity-50"
-                    style={{ background: "var(--azul-egm)", color: "#fff" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-                  >
-                    {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar anuncio"}
-                  </button>
+        {/* ── FORMULARIO INLINE (admin) ────────────────────────────────────── */}
+        {showForm && esAdmin && (
+          <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
+                {editando ? "Editar anuncio" : "Nuevo anuncio de empresa"}
+              </h3>
+              <button onClick={cerrarForm}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-lg leading-none transition-colors"
+                style={{ color: "var(--texto-muted)", background: "var(--gris-superficie)" }}>
+                ×
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <FormField label="Título" required>
+                <input type="text" value={form.titulo}
+                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                  placeholder="Ej: Recordatorio reunión de equipo"
+                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none transition-colors"
+                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
+                />
+              </FormField>
+              <FormField label="Contenido" required>
+                <textarea value={form.contenido}
+                  onChange={(e) => setForm({ ...form, contenido: e.target.value })}
+                  placeholder="Escribe el contenido del anuncio..."
+                  rows={4}
+                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none resize-none transition-colors"
+                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
+                />
+              </FormField>
+              <FormField label="Imagen (URL opcional)">
+                <input type="url" value={form.imagenUrl ?? ""}
+                  onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
+                  placeholder="https://..."
+                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
+                />
+              </FormField>
+            </div>
+
+            {formError && <p className="text-sm mt-3" style={{ color: "var(--error)" }}>{formError}</p>}
+
+            <div className="flex gap-2 justify-end pt-5 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+              <button onClick={cerrarForm}
+                className="text-sm px-4 py-2 rounded-xl transition-colors"
+                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
+                Cancelar
+              </button>
+              <button onClick={handleSubmit} disabled={submitting}
+                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50"
+                style={{ background: GRAD_BTN, color: "#fff" }}>
+                {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar anuncio"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── CONTENIDO PRINCIPAL ─────────────────────────────────────────── */}
+        {cargando ? (
+          <Spinner />
+        ) : feedCompleto.length === 0 ? (
+          <EstadoVacio
+            titulo="Sin comunicados publicados"
+            descripcion="Cuando EGM Atalayas o tu empresa publiquen comunicados aparecerán aquí."
+            accion={esAdmin ? "Crear primer anuncio" : undefined}
+            onAccion={esAdmin ? abrirCrear : undefined}
+          />
+        ) : filtroFuente === "todos" ? (
+          <>
+            {/* Grid 1 grande + pequeñas */}
+            {topItems.length > 0 && (
+              <div className="mb-10">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className={topItems.length === 1 ? "w-full" : "featured-card-large"}>
+                    <FeaturedCard item={topItems[0]} size="large" onOpen={() => setModalItem(topItems[0])} fill />
+                  </div>
+                  {topItems.length > 1 && (
+                    <div className="hidden md:flex flex-col gap-3"
+                      style={{ flex: 1, justifyContent: topItems.length < 4 ? "flex-start" : "stretch" }}>
+                      {topItems.slice(1, 4).map((item) => (
+                        <div key={item.id} style={{ flex: topItems.length < 4 ? "0 0 auto" : 1, height: topItems.length < 4 ? "120px" : undefined }}>
+                          <FeaturedCard item={item} size="small" onOpen={() => setModalItem(item)} fill />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {loadingAnuncios ? (
-              <Spinner />
-            ) : anuncios.length === 0 ? (
-              <EstadoVacio
-                titulo="Sin anuncios publicados"
-                descripcion={
-                  esAdmin
-                    ? "Crea el primer anuncio para que tus empleados estén al día."
-                    : "Tu empresa aún no ha publicado ningún anuncio."
-                }
-                icono={<IconMegaphone />}
-                accion={esAdmin ? "Crear primer anuncio" : undefined}
-                onAccion={esAdmin ? abrirCrear : undefined}
-              />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {anuncios.map((n) => (
-                  <div
-                    key={n.anuncioId}
-                    className="rounded-xl overflow-hidden cursor-pointer group"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", borderLeft: "3px solid var(--verde-oliva)" }}
-                    onClick={() => !showForm && setModalAnuncio(n)}
-                  >
-                    {/* Imagen si existe */}
-                    {n.imagenUrl && (
-                      <div className="w-full overflow-hidden" style={{ height: "160px" }}>
-                        <img src={n.imagenUrl} alt={n.titulo} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      </div>
-                    )}
-                    <div className="px-6 py-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                              {usuario.nombreEmpresa ?? "Tu empresa"}
-                            </span>
-                            {esNuevo(n.creadoEn) && (
-                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#e8f5ee", color: "#1a6b3a", border: "1px solid #9dcdb3" }}>
-                                Nuevo
-                              </span>
-                            )}
-                            <span className="text-xs ml-auto" style={{ color: "var(--texto-muted)" }}>
-                              {formatDate(n.creadoEn)}
-                            </span>
-                          </div>
-                          <h3 className="text-base font-semibold mb-1.5" style={{ color: "var(--texto-primario)" }}>{n.titulo}</h3>
-                          <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--texto-secundario)" }}>{n.contenido}</p>
-                        </div>
-                        {esAdmin && (
-                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => abrirEditar(n)}
-                              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handleDesactivar(n.anuncioId)}
-                              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                              style={{ color: "var(--error)", border: "1px solid var(--error-light)" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+            {/* Feed — items no mostrados en el grid */}
+            {feedResto.length > 0 && (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-sm font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
+                    Más publicaciones
+                  </span>
+                  <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
+                </div>
+                <FeedList
+                  items={feedResto.slice(0, visibles)}
+                  esAdmin={esAdmin}
+                  esMobil={esMobil}
+                  nombreEmpresa={usuario?.nombreEmpresa}
+                  onOpen={setModalItem}
+                  onEdit={(item) => abrirEditar(item._raw as Noticia)}
+                  onDelete={(item) => handleDesactivar((item._raw as Noticia).anuncioId)}
+                />
+                {feedResto.length > visibles && (
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={() => setVisibles((v) => v + 6)}
+                      className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-secundario)", background: "var(--blanco)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--azul-accion)", e.currentTarget.style.color = "var(--azul-accion)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)", e.currentTarget.style.color = "var(--texto-secundario)")}
+                    >
+                      Ver más publicaciones
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </>
+        ) : feedFiltrado.length === 0 ? (
+          <EstadoVacio
+            titulo={`Sin publicaciones de ${filtroFuente === "egm" ? "EGM Atalayas" : (usuario?.nombreEmpresa ?? "tu empresa")}`}
+            descripcion="Prueba con el filtro Todos para ver todas las publicaciones."
+          />
+        ) : (
+          <FeedList
+            items={feedFiltrado}
+            esAdmin={esAdmin}
+            esMobil={esMobil}
+            nombreEmpresa={usuario?.nombreEmpresa}
+            onOpen={setModalItem}
+            onEdit={(item) => abrirEditar(item._raw as Noticia)}
+            onDelete={(item) => handleDesactivar((item._raw as Noticia).anuncioId)}
+          />
         )}
       </div>
 
-      {/* ══ MODAL COMUNICADO EGM ══════════════════════════════════════════════════ */}
-      {modalComunicado && (
-        <Modal onClose={() => setModalComunicado(null)}>
-          {modalComunicado.imagenUrl && (
-            <div className="w-full overflow-hidden rounded-t-2xl" style={{ height: "220px" }}>
-              <img src={modalComunicado.imagenUrl} alt={modalComunicado.titulo} className="w-full h-full object-cover" />
+      {/* ── MODAL ─────────────────────────────────────────────────────────── */}
+      {modalItem && (
+        <Modal onClose={() => setModalItem(null)}>
+          <div className="relative w-full rounded-t-2xl overflow-hidden" style={{ height: "200px" }}>
+            {modalItem.imagenUrl ? (
+              <img src={modalItem.imagenUrl} alt={modalItem.titulo} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full" style={{ background: modalItem.fuente === "egm" ? GRAD_EGM : GRAD_EMP }} />
+            )}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,15,35,0.82) 0%, transparent 55%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 flex items-center gap-2 flex-wrap">
+              <Badge fuente={modalItem.fuente} nombreEmpresa={usuario?.nombreEmpresa} destacado={modalItem.destacado} esNuevoItem={modalItem.esNuevoItem} />
+              <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>{formatDate(modalItem.fecha)}</span>
             </div>
-          )}
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              {modalComunicado.destacado && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" }}>★ Destacado</span>
-              )}
-              {esNuevo(modalComunicado.fechaPublicacion) && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#e8f5ee", color: "#1a6b3a", border: "1px solid #9dcdb3" }}>Nuevo</span>
-              )}
-              {modalComunicado.categoria && <BadgeCategoria categoria={modalComunicado.categoria} />}
-              <span className="text-xs ml-auto" style={{ color: "var(--texto-muted)" }}>{formatDate(modalComunicado.fechaPublicacion)}</span>
-            </div>
-            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--texto-primario)" }}>{modalComunicado.titulo}</h2>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--texto-secundario)" }}>{modalComunicado.mensaje}</p>
           </div>
-        </Modal>
-      )}
-
-      {/* ══ MODAL ANUNCIO EMPRESA ═════════════════════════════════════════════════ */}
-      {modalAnuncio && (
-        <Modal onClose={() => setModalAnuncio(null)}>
-          {modalAnuncio.imagenUrl && (
-            <div className="w-full overflow-hidden rounded-t-2xl" style={{ height: "200px" }}>
-              <img src={modalAnuncio.imagenUrl} alt={modalAnuncio.titulo} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                {usuario?.nombreEmpresa ?? "Tu empresa"}
-              </span>
-              <span className="text-xs ml-auto" style={{ color: "var(--texto-muted)" }}>{formatDate(modalAnuncio.creadoEn)}</span>
-            </div>
-            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--texto-primario)" }}>{modalAnuncio.titulo}</h2>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--texto-secundario)" }}>{modalAnuncio.contenido}</p>
+          <div className="p-6 md:p-8">
+            <h2 className="text-xl font-bold mb-4 leading-snug" style={{ color: "var(--texto-primario)" }}>{modalItem.titulo}</h2>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--texto-secundario)" }}>{modalItem.descripcion}</p>
           </div>
         </Modal>
       )}
@@ -594,69 +541,268 @@ export default function ComunicacionPage() {
   );
 }
 
-// ── SUBCOMPONENTES ────────────────────────────────────────────────────────────
-
-function SeccionTab({ label, badge, activo, onClick }: {
-  label: string; badge: number; activo: boolean; onClick: () => void;
+// ── FEED LIST ─────────────────────────────────────────────────────────────────
+function FeedList({ items, esAdmin, esMobil, nombreEmpresa, onOpen, onEdit, onDelete }: {
+  items: FeedItem[];
+  esAdmin: boolean;
+  esMobil: boolean;
+  nombreEmpresa?: string | null;
+  onOpen: (item: FeedItem) => void;
+  onEdit: (item: FeedItem) => void;
+  onDelete: (item: FeedItem) => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="relative flex items-center gap-2 pb-4 px-3 text-sm font-medium transition-colors"
-      style={{ color: activo ? "var(--azul-egm)" : "var(--texto-muted)" }}
-    >
-      {label}
-      {badge > 0 && (
-        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-          style={{
-            background: activo ? "var(--azul-egm)" : "var(--gris-superficie)",
-            color:      activo ? "#fff"             : "var(--texto-muted)",
-          }}>
-          {badge}
-        </span>
-      )}
-      {activo && (
-        <div className="absolute bottom-0 left-0 w-full h-0.5 rounded-full" style={{ background: "var(--azul-egm)" }} />
-      )}
-    </button>
+    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+      {items.map((item, i) => (
+        <FeedRow
+          key={item.id}
+          item={item}
+          isLast={i === items.length - 1}
+          esAdmin={esAdmin}
+          esMobil={esMobil}
+          nombreEmpresa={nombreEmpresa}
+          onOpen={() => onOpen(item)}
+          onEdit={() => onEdit(item)}
+          onDelete={() => onDelete(item)}
+        />
+      ))}
+    </div>
   );
 }
 
-function BadgeCategoria({ categoria, dark = false }: { categoria: string; dark?: boolean }) {
-  const colores = CATEGORIA_COLORS[categoria] ?? CATEGORIA_COLORS.General;
-  if (dark) {
-    return (
-      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
-        style={{ color: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.1)" }}>
-        {categoria}
-      </span>
-    );
-  }
-  return (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: colores.bg, color: colores.text, border: `1px solid ${colores.border}` }}>
-      {categoria}
-    </span>
-  );
-}
+// ── FEATURED CARD ─────────────────────────────────────────────────────────────
+function FeaturedCard({ item, size, onOpen, fill = false }: {
+  item: FeedItem; size: "large" | "small"; onOpen: () => void; fill?: boolean;
+}) {
+  const isLarge   = size === "large";
+  const bgGradient = item.fuente === "egm" ? GRAD_EGM : GRAD_EMP;
 
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
+      className="relative rounded-2xl overflow-hidden cursor-pointer group"
+      style={{
+        minHeight: (isLarge && !fill) ? "420px" : undefined,
+        height: fill ? "100%" : undefined,
+        outline: "1.5px solid transparent",
+        boxShadow: "0 0 0 rgba(0,0,0,0)",
+        transition: "outline-color 0.25s, box-shadow 0.25s",
+      }}
+      onClick={onOpen}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.outline = "1.5px solid rgba(255,255,255,0.22)";
+        e.currentTarget.style.boxShadow = isLarge
+          ? "0 8px 32px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.1)"
+          : "0 4px 18px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.outline = "1.5px solid transparent";
+        e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+      }}
     >
+      {/* Fondo */}
+      {item.imagenUrl ? (
+        <img src={item.imagenUrl} alt={item.titulo} className="card-img absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ background: bgGradient }}>
+          <MegaphoneIcon size={isLarge ? 72 : 36} />
+        </div>
+      )}
+
+      {/* Overlays */}
+      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.38) 100%)" }} />
+      <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0" style={{ background: "rgba(0,0,0,0.15)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(3,10,25,0.52) 0%, transparent 32%)" }} />
+      <div className="absolute inset-0" style={{ background: isLarge
+        ? "linear-gradient(to top, rgba(3,10,25,0.97) 30%, rgba(3,10,25,0.18) 62%, transparent 100%)"
+        : "linear-gradient(to top, rgba(3,10,25,0.97) 42%, rgba(3,10,25,0.12) 72%, transparent 100%)" }} />
+
+      {/* ── Grande ─────────────────────────────────────────────────────── */}
+      {isLarge && (
+        <>
+          <div className="absolute top-5 right-6">
+            <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)", textShadow: SHADOW_TXT }}>
+              {formatDate(item.fecha)}
+            </span>
+          </div>
+          <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-10">
+            <div className="flex items-center gap-2 mb-2 md:mb-3 flex-wrap">
+              <Badge fuente={item.fuente} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} />
+            </div>
+            <h2 className="text-white leading-tight mb-2 md:mb-3 max-w-xl"
+              style={{ fontWeight: 800, fontSize: "clamp(1.1rem, 4vw, 2.1rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
+              {item.titulo}
+            </h2>
+            <p className="text-sm md:text-base leading-relaxed line-clamp-2 max-w-lg"
+              style={{ color: "rgba(255,255,255,0.7)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              {item.descripcion}
+            </p>
+            <div className="mt-3 md:mt-6 flex items-center gap-2 transition-opacity opacity-55 group-hover:opacity-100">
+              <span className="text-sm font-semibold text-white" style={{ textShadow: SHADOW_TXT }}>Leer más</span>
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Pequeña ─────────────────────────────────────────────────────── */}
+      {!isLarge && (
+        <div className="absolute inset-0 flex flex-col justify-end p-4 gap-1.5" style={{ paddingBottom: "14px" }}>
+          <span className="absolute top-3.5 right-4 text-xs font-semibold"
+            style={{ color: "rgba(255,255,255,0.82)", textShadow: SHADOW_TXT }}>
+            {formatDate(item.fecha)}
+          </span>
+          <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
+            <Badge fuente={item.fuente} categoria={item.categoria} esNuevoItem={item.esNuevoItem} size="sm" />
+          </div>
+          <div className="flex items-end justify-between gap-2">
+            <h2 className="text-white leading-tight line-clamp-2 flex-1 min-w-0"
+              style={{ fontWeight: 800, fontSize: "clamp(0.88rem, 1.2vw, 1.05rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
+              {item.titulo}
+            </h2>
+            <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-70 group-hover:opacity-100 group-hover:scale-110"
+              style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.32)" }}>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── FEED ROW ──────────────────────────────────────────────────────────────────
+function FeedRow({ item, isLast, esAdmin, esMobil, nombreEmpresa, onOpen, onEdit, onDelete }: {
+  item: FeedItem; isLast: boolean; esAdmin: boolean; esMobil: boolean;
+  nombreEmpresa?: string | null;
+  onOpen: () => void; onEdit: () => void; onDelete: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const accentColor = item.fuente === "egm" ? "var(--azul-accion)" : "var(--verde-oliva)";
+
+  return (
+    <div
+      className="flex items-center gap-3 md:gap-5 cursor-pointer transition-colors"
+      style={{
+        borderBottom: isLast ? "none" : "1px solid var(--gris-borde)",
+        background: hovered ? "var(--gris-superficie)" : "transparent",
+        paddingTop: esMobil ? "12px" : "20px",
+        paddingBottom: esMobil ? "12px" : "20px",
+        paddingLeft: 0,
+        paddingRight: esMobil ? "12px" : "20px",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onOpen}
+    >
+      {/* Acento izquierdo: borde en desktop, margen en móvil */}
       <div
-        className="relative w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ background: "var(--blanco)", maxHeight: "85vh", overflowY: "auto" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold"
-          style={{ background: "rgba(0,0,0,0.12)", color: "var(--texto-primario)" }}
-        >
+        className="self-stretch shrink-0 rounded-full"
+        style={{
+          width: esMobil ? "12px" : "3px",
+          background: (!esMobil && hovered) ? accentColor : "transparent",
+          transition: "background 0.2s",
+          marginLeft: esMobil ? 0 : "16px",
+        }}
+      />
+
+      {/* Thumbnail */}
+      <div className="shrink-0 rounded-xl overflow-hidden" style={{ width: esMobil ? "76px" : "160px", height: esMobil ? "60px" : "110px" }}>
+        {item.imagenUrl ? (
+          <img src={item.imagenUrl} alt={item.titulo}
+            className="w-full h-full object-cover transition-transform duration-400"
+            style={{ transform: hovered ? "scale(1.04)" : "scale(1)" }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"
+            style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
+            <MegaphoneIcon size={esMobil ? 20 : 32} />
+          </div>
+        )}
+      </div>
+
+      {/* Texto */}
+      <div className="flex-1 min-w-0 flex flex-col" style={{ gap: esMobil ? "3px" : "6px" }}>
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          <span className="text-[10px] font-medium shrink-0" style={{ color: "var(--texto-muted)" }}>{formatDate(item.fecha)}</span>
+          <span className="shrink-0" style={{ color: "var(--gris-borde)" }}>·</span>
+          {item.fuente === "egm" ? (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              style={{ background: "rgba(27,63,126,0.09)", color: "var(--azul-egm)", border: "1px solid rgba(27,63,126,0.18)" }}>
+              EGM Atalayas
+            </span>
+          ) : (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+              {nombreEmpresa ?? "Tu empresa"}
+            </span>
+          )}
+          {item.esNuevoItem && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              style={{ background: "#e8f5ee", color: "#1a6b3a", border: "1px solid #9dcdb3" }}>
+              Nuevo
+            </span>
+          )}
+        </div>
+
+        <h3 className="font-bold leading-snug line-clamp-2 transition-colors"
+          style={{ fontSize: esMobil ? "0.82rem" : "1.05rem", color: hovered ? "var(--azul-accion)" : "var(--texto-primario)" }}>
+          {item.titulo}
+        </h3>
+
+        {!esMobil && (
+          <p className="text-sm line-clamp-1 leading-relaxed" style={{ color: "var(--texto-muted)" }}>
+            {item.descripcion}
+          </p>
+        )}
+      </div>
+
+      {/* Acciones admin */}
+      {esAdmin && item.fuente === "empresa" && (
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onEdit} className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            Editar
+          </button>
+          <button onClick={onDelete} className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--error)", border: "1px solid var(--error-light)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            Eliminar
+          </button>
+        </div>
+      )}
+
+      {/* Flecha */}
+      {!(esAdmin && item.fuente === "empresa") && (
+        <div className="shrink-0 transition-opacity" style={{ opacity: hovered ? 0.7 : 0.35 }}>
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SUBCOMPONENTES ─────────────────────────────────────────────────────────────
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}>
+      <div className="relative w-full max-w-lg rounded-2xl overflow-hidden"
+        style={{ background: "var(--blanco)", maxHeight: "88vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose}
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-base transition-colors"
+          style={{ background: "rgba(0,0,0,0.1)", color: "var(--texto-primario)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.18)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.1)")}>
           ×
         </button>
         {children}
@@ -678,43 +824,33 @@ function FormField({ label, required, children }: { label: string; required?: bo
 
 function Spinner() {
   return (
-    <div className="flex items-center justify-center py-20">
+    <div className="flex items-center justify-center py-24">
       <div className="w-6 h-6 border-2 rounded-full animate-spin"
         style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
     </div>
   );
 }
 
-function EstadoVacio({ titulo, descripcion, icono, accion, onAccion }: {
-  titulo: string; descripcion: string; icono: React.ReactNode; accion?: string; onAccion?: () => void;
+function EstadoVacio({ titulo, descripcion, accion, onAccion }: {
+  titulo: string; descripcion: string; accion?: string; onAccion?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl"
-      style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+    <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl"
+      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
       <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-        {icono}
+        style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)" }}>
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d={MEGAPHONE} />
+        </svg>
       </div>
-      <p className="text-base font-medium mb-1" style={{ color: "var(--texto-primario)" }}>{titulo}</p>
+      <p className="text-base font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>{titulo}</p>
       <p className="text-sm max-w-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>{descripcion}</p>
       {accion && onAccion && (
-        <button onClick={onAccion} className="mt-4 text-sm font-semibold px-4 py-2 rounded-lg"
-          style={{ background: "var(--azul-egm)", color: "#fff" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-        >
+        <button onClick={onAccion} className="mt-5 text-sm font-semibold px-5 py-2.5 rounded-xl"
+          style={{ background: GRAD_BTN, color: "#fff" }}>
           {accion}
         </button>
       )}
     </div>
-  );
-}
-
-function IconMegaphone() {
-  return (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-    </svg>
   );
 }
