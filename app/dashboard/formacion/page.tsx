@@ -319,8 +319,8 @@ export default function FormacionPage() {
                           : { background: "var(--gris-superficie)", color: "var(--texto-muted)", borderColor: "var(--gris-borde)" }
                       }
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
                       </svg>
                       Solo especializados IA
                     </button>
@@ -572,12 +572,23 @@ function CourseCard({
         </div>
 
         {/* Tipo badge */}
-        <span
-          className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded self-start"
-          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-        >
-          {MODULO_TIPO_LABEL[m.tipoModulo] ?? m.tipoModulo}
-        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded self-start"
+            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+          >
+            {MODULO_TIPO_LABEL[m.tipoModulo] ?? m.tipoModulo}
+          </span>
+          {m.esEspecializadoIa && (
+            <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded self-start"
+              style={{ background: "#f3e8ff", color: "#7c3aed" }}>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
+              </svg>
+              IA
+            </span>
+          )}
+        </div>
 
         {/* CTA button */}
         <button
