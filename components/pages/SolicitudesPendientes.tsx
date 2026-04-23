@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaCheck, FaTimes, FaBuilding, FaEnvelope, FaIdCard, FaUserTie, FaRegCalendarAlt } from "react-icons/fa";
-import { getEmpresas, actualizarEstadoEmpresa } from "@/lib/api/empresas";
+import { getEmpresas, actualizarEstadoEmpresa, rechazarSolicitudEmpresa } from "@/lib/api/empresas";
 
 export interface SolicitudDB {
   empresaId: string;
@@ -51,7 +51,11 @@ const SolicitudesPendientes: React.FC = () => {
     setSolicitudes((prev) => prev.filter((sol) => sol.empresaId !== id));
 
     try {
-      await actualizarEstadoEmpresa(id, accion);
+      if (accion === "RECHAZADA") {
+        await rechazarSolicitudEmpresa(id);
+      } else {
+        await actualizarEstadoEmpresa(id, accion);
+      }
     } catch (error) {
       console.error(`Error al ${accion}:`, error);
       alert(`El servidor devolvió un error al intentar ${accion === 'APROBADA' ? 'aprobar' : 'rechazar'}. César debe revisar los logs del backend.`);

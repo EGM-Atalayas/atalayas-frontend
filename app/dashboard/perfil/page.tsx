@@ -8,6 +8,7 @@ import { API_URL, apiFetch } from "@/lib/api";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
+  Play, FileText, Download,
 } from "lucide-react";
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
@@ -212,23 +213,26 @@ export default function PerfilPage() {
         const data: PerfilCompleto = await res.json();
         setPerfil(data);
         resetForm(data);
+        return;
       }
     } catch {
-      if (usuario) {
-        const fallback: PerfilCompleto = {
-          usuarioId: usuario.usuarioId ?? "",
-          nombre: usuario.nombre ?? "",
-          apellidos: usuario.apellidos ?? "",
-          email: usuario.email ?? "",
-          avatarUrl: usuario.avatarUrl,
-          nombreEmpresa: usuario.nombreEmpresa,
-          nombreRol: usuario.nombreRol,
-        };
-        setPerfil(fallback);
-        resetForm(fallback);
-      }
+      // error de red — cae al fallback
     } finally {
       setLoading(false);
+    }
+    // Fallback: respuesta no-ok o error de red
+    if (usuario) {
+      const fallback: PerfilCompleto = {
+        usuarioId: usuario.usuarioId ?? "",
+        nombre: usuario.nombre ?? "",
+        apellidos: usuario.apellidos ?? "",
+        email: usuario.email ?? "",
+        avatarUrl: usuario.avatarUrl,
+        nombreEmpresa: usuario.nombreEmpresa,
+        nombreRol: usuario.nombreRol,
+      };
+      setPerfil(fallback);
+      resetForm(fallback);
     }
   };
 
@@ -333,6 +337,74 @@ export default function PerfilPage() {
     await patchPerfil({ bannerUrl: src });
     setSavingBanner(false);
     setShowBannerPicker(false);
+  };
+
+  const handleDescargarCertificado = async (titulo: string) => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const nombre = `${perfil?.nombre ?? ""} ${perfil?.apellidos ?? ""}`.trim();
+    const fecha = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+
+    // Fondo
+    doc.setFillColor(245, 247, 250);
+    doc.rect(0, 0, W, H, "F");
+
+    // Borde decorativo
+    doc.setDrawColor(27, 63, 126);
+    doc.setLineWidth(1.2);
+    doc.rect(10, 10, W - 20, H - 20);
+    doc.setLineWidth(0.4);
+    doc.rect(12, 12, W - 24, H - 24);
+
+    // Título
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(28);
+    doc.setTextColor(27, 63, 126);
+    doc.text("CERTIFICADO DE FORMACIÓN", W / 2, 42, { align: "center" });
+
+    // Línea decorativa
+    doc.setDrawColor(163, 181, 53);
+    doc.setLineWidth(1);
+    doc.line(W / 2 - 60, 48, W / 2 + 60, 48);
+
+    // Cuerpo
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Se certifica que", W / 2, 65, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(20, 20, 20);
+    doc.text(nombre, W / 2, 78, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(80, 80, 80);
+    doc.text("ha completado satisfactoriamente el curso", W / 2, 92, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(17);
+    doc.setTextColor(27, 63, 126);
+    doc.text(titulo, W / 2, 105, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Expedido el ${fecha}`, W / 2, 118, { align: "center" });
+
+    // Firma
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.5);
+    doc.line(W / 2 - 40, H - 32, W / 2 + 40, H - 32);
+    doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Atalayas Ciudad Empresarial", W / 2, H - 26, { align: "center" });
+
+    const nombreArchivo = `Certificado_${titulo.replace(/\s+/g, "_")}_${nombre.replace(/\s+/g, "_")}.pdf`;
+    doc.save(nombreArchivo);
   };
 
   const handleEnviarSugerencia = async () => {
@@ -451,6 +523,9 @@ export default function PerfilPage() {
           50%  { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
+        .buzon-card.buzon-focused {
+          border-color: var(--azul-egm) !important;
+        }
       `}</style>
 
       {/* ── Hero con imagen de fondo + contenido encima ── */}
@@ -463,9 +538,8 @@ export default function PerfilPage() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: "center 40%" }}
         />
-        <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.60)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.55) 50%, rgba(13,27,46,0.30) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.50) 0%, transparent 40%)" }} />
 
         {/* Contenido sobre la imagen */}
         <div className="relative z-10 w-full px-6 sm:px-12 lg:px-24 py-10 sm:py-14">
@@ -499,7 +573,7 @@ export default function PerfilPage() {
             {/* Nombre + empresa */}
             <div className="text-center sm:text-left min-w-0">
               <p className="text-xs font-bold uppercase tracking-widest mb-1.5"
-                style={{ color: "var(--verde-oliva-hover)", animation: "heroFadeUp 0.6s ease both" }}>
+                style={{ color: "rgba(255,255,255,0.85)", animation: "heroFadeUp 0.6s ease both" }}>
                 {perfil?.nombreEmpresa ?? ""}
               </p>
               <div style={{ animation: "heroFadeUp 0.6s ease 0.08s both" }}>
@@ -550,14 +624,13 @@ export default function PerfilPage() {
           onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.75)"}
           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.55)"}
         >
-          <Camera className="sm:hidden" size={20} strokeWidth={2} />
-          <Camera className="hidden sm:block" size={17} strokeWidth={2} />
-          <span className="hidden sm:inline">Cambiar portada</span>
+          <Camera size={15} strokeWidth={2} />
+          <span>Cambiar portada</span>
         </button>
       </div>
 
       {/* ── Contenido ── */}
-      <div className="px-6 sm:px-12 lg:px-20 pt-14 pb-16 flex flex-col gap-14">
+      <div className="px-6 sm:px-12 lg:px-20 pt-12 pb-16 flex flex-col gap-14">
 
         {/* ── Datos personales — ancho completo ── */}
         <div className="flex flex-col gap-7">
@@ -587,14 +660,14 @@ export default function PerfilPage() {
                 </button>
                 <button onClick={handleGuardar} disabled={saving}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity"
-                  style={{ background: "var(--azul-egm)", color: "#fff", opacity: saving ? 0.7 : 1 }}>
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: saving ? 0.7 : 1 }}>
                   <Check size={13} /> {saving ? "Guardando…" : "Guardar"}
                 </button>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 min-w-0">
 
             {/* Nombre */}
             <div className="flex flex-col gap-2 min-w-0">
@@ -747,9 +820,7 @@ export default function PerfilPage() {
 
             {/* Disponibilidad */}
             <div className="flex flex-col gap-2 min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-                Disponibilidad
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Disponibilidad</p>
               {editando ? (
                 <div ref={dispRef} className="relative w-full">
                   {/* Trigger */}
@@ -811,7 +882,6 @@ export default function PerfilPage() {
 
           </div>
 
-          <div className="border-b" style={{ borderColor: "var(--gris-borde)" }} />
         </div>
 
         {/* ── Sección formación ── */}
@@ -831,7 +901,7 @@ export default function PerfilPage() {
           {/* Quesito formación — ocupa todo el ancho si no hay segunda tarjeta */}
           <div className={`rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7 relative overflow-hidden${!haySegundaTarjeta && !moduloPreview ? " sm:col-span-2" : ""}`}
             style={{ background: "var(--azul-egm)", border: "1px solid transparent" }}>
-            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 90% 20%, rgba(163,181,53,0.28) 0%, transparent 55%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 90% 20%, rgba(163,181,53,0.45) 0%, transparent 60%)", pointerEvents: "none" }} />
             <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
               <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
                 <path fill="none" strokeWidth="2.5" stroke="rgba(255,255,255,0.12)"
@@ -879,7 +949,7 @@ export default function PerfilPage() {
                 <button
                   onClick={() => router.push("/dashboard/formacion")}
                   className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  style={{ background: "var(--azul-egm)", color: "#fff" }}
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
                 >
                   Continuar <ChevronRight size={13} />
                 </button>
@@ -926,7 +996,7 @@ export default function PerfilPage() {
                 <button
                   onClick={() => router.push("/dashboard/formacion")}
                   className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  style={{ background: "var(--azul-egm)", color: "#fff" }}
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
                 >
                   {pctModuloActual > 0 ? "Continuar" : "Empezar"} <ChevronRight size={13} />
                 </button>
@@ -938,147 +1008,183 @@ export default function PerfilPage() {
 
         </div>{/* fin sección formación */}
 
-        {/* ── Separador ── */}
-        <div className="border-b" style={{ borderColor: "var(--gris-borde)" }} />
+{/* ── Buzón (izquierda) + Certificados/Configuración (derecha) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
 
-        {/* ── Buzón + lateral ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-14 gap-y-14">
-
-          {/* Buzón de sugerencias */}
-          <div className="lg:col-span-2 flex flex-col gap-7">
+          {/* ── Columna izquierda: Buzón ── */}
+          <div className="flex flex-col gap-4">
             <h2 style={{
               fontFamily: "var(--font-raleway), sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-              lineHeight: 1.1,
+              fontWeight: 700,
+              fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
+              lineHeight: 1.2,
               color: "var(--texto-primario)",
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.01em",
             }}>Buzón de sugerencias</h2>
 
-            <div className="flex flex-col gap-5">
-              <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tu opinión llega directamente al equipo. Elige a quién va dirigida.</p>
+            {/* Card unificada */}
+            <div className="buzon-card flex flex-col rounded-2xl overflow-hidden flex-1"
+              style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", transition: "border-color 0.15s" }}>
 
-              <div className="flex gap-2">
-                {(["EMPRESA", "EGM"] as const).map((d) => {
-                  const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
-                  const selected = destinatarioSug === d;
-                  return (
-                    <button key={d} type="button"
-                      onClick={() => setDestinatarioSug(d)}
-                      className="px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors"
-                      style={{
-                        background: selected ? "var(--azul-egm)" : "transparent",
-                        color: selected ? "#fff" : "var(--texto-secundario)",
-                        borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
-                      }}>
-                      {label}
-                    </button>
-                  );
-                })}
+              {/* Cabecera: destinatario */}
+              <div className="flex items-center gap-4 px-5 py-3"
+                style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+                <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
+                  Enviar a
+                </p>
+                <div className="flex gap-2">
+                  {(["EMPRESA", "EGM"] as const).map((d) => {
+                    const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
+                    const selected = destinatarioSug === d;
+                    return (
+                      <button key={d} type="button"
+                        onClick={() => setDestinatarioSug(d)}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold border"
+                        style={{
+                          background: selected ? "var(--azul-egm)" : "transparent",
+                          color: selected ? "#fff" : "var(--texto-secundario)",
+                          borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
+                          transition: "background 0.35s, color 0.35s, border-color 0.35s",
+                          boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
+                        }}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Textarea */}
               <textarea
                 value={sugerencia}
                 onChange={(e) => { setSugerencia(e.target.value.slice(0, 500)); if (estadoSug !== "idle") setEstadoSug("idle"); }}
-                placeholder="Escribe tu sugerencia, idea o comentario…"
-                rows={5}
-                className="w-full px-3 py-2.5 text-sm rounded-xl border outline-none resize-none transition-colors"
-                style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)", lineHeight: 1.6 }}
-                onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                placeholder={destinatarioSug === "EMPRESA"
+                  ? "Escribe tu sugerencia para tu empresa…"
+                  : "Escribe tu mensaje a EGM Atalayas…"}
+                rows={3}
+                className="w-full px-5 py-4 text-base outline-none resize-none flex-1"
+                style={{ color: "var(--texto-primario)", lineHeight: 1.6, background: "transparent", border: "none", minHeight: "140px" }}
+                onFocus={(e) => e.currentTarget.closest(".buzon-card")?.classList.add("buzon-focused")}
+                onBlur={(e) => e.currentTarget.closest(".buzon-card")?.classList.remove("buzon-focused")}
               />
 
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs" style={{ color: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--texto-muted)" }}>
-                  {sugerencia.length > 0 ? `${sugerencia.length}/500` : ""}
-                </p>
-                {estadoSug === "ok" ? (
-                  <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--exito)" }}>
-                    <Check size={15} /> Enviado correctamente
+              {/* Footer: barra de progreso + botón */}
+              <div className="flex flex-col gap-0"
+                style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+                {/* Barra de progreso */}
+                <div style={{ height: "2px", background: "var(--gris-borde)" }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${(sugerencia.length / 500) * 100}%`,
+                    background: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--azul-egm)",
+                    transition: "width 0.2s, background 0.3s",
+                    borderRadius: "0 2px 2px 0",
+                  }} />
+                </div>
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <p className="text-xs" style={{ color: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--texto-muted)", opacity: sugerencia.length === 0 ? 0.4 : 1, transition: "opacity 0.2s, color 0.3s" }}>
+                    {sugerencia.length}/500
+                  </p>
+                  <div>
+                    {estadoSug === "ok" ? (
+                      <div className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--exito)" }}>
+                        <Check size={14} strokeWidth={2.5} /> Enviado
+                      </div>
+                    ) : estadoSug === "error" ? (
+                      <p className="text-xs font-medium" style={{ color: "var(--error)" }}>Error al enviar, inténtalo de nuevo</p>
+                    ) : (
+                      <button
+                        onClick={handleEnviarSugerencia}
+                        disabled={!sugerencia.trim() || enviandoSug}
+                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold"
+                        style={{
+                          background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
+                          color: "#fff",
+                          opacity: (!sugerencia.trim() || enviandoSug) ? 0.45 : 1,
+                          transition: "opacity 0.2s",
+                          cursor: (!sugerencia.trim() || enviandoSug) ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {enviandoSug ? "Enviando…" : "Enviar"}
+                      </button>
+                    )}
                   </div>
-                ) : estadoSug === "error" ? (
-                  <p className="text-sm" style={{ color: "var(--error)" }}>Error al enviar, inténtalo de nuevo</p>
-                ) : (
-                  <button
-                    onClick={handleEnviarSugerencia}
-                    disabled={!sugerencia.trim() || enviandoSug}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity"
-                    style={{ background: "var(--azul-egm)", color: "#fff", opacity: (!sugerencia.trim() || enviandoSug) ? 0.5 : 1 }}
-                  >
-                    {enviandoSug ? "Enviando…" : "Enviar"}
-                  </button>
-                )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Columna lateral: Certificados + Configuración */}
-          <div className="flex flex-col gap-14">
-
-            {/* Certificados */}
-            <div className="flex flex-col gap-7">
+          {/* Certificados */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
               <h2 style={{
                 fontFamily: "var(--font-raleway), sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-                lineHeight: 1.1,
+                fontWeight: 700,
+                fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
+                lineHeight: 1.2,
                 color: "var(--texto-primario)",
-                letterSpacing: "-0.02em",
+                letterSpacing: "-0.01em",
               }}>Certificados</h2>
+              <span className="inline-flex items-center justify-center rounded-full text-xs font-bold px-2 py-0.5"
+                style={{ background: "var(--azul-egm)", color: "#fff", minWidth: "1.5rem" }}>
+                3
+              </span>
+            </div>
 
-              {modulos.filter(m => progreso.find(px => px.contenidoId === m.moduloId)?.completado).length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Aún no has completado ningún curso.</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {modulos.filter(m => progreso.find(px => px.contenidoId === m.moduloId)?.completado).map((m) => (
-                    <div key={m.moduloId} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: "var(--azul-egm-light)" }}>
-                        <Award size={15} style={{ color: "var(--azul-egm)" }} />
-                      </div>
-                      <p className="text-sm font-medium flex-1 min-w-0 leading-tight" style={{ color: "var(--texto-primario)" }}>
+            {false ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl text-center"
+                style={{ border: "1px dashed var(--gris-borde)", background: "var(--blanco)", minHeight: "180px" }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "var(--azul-egm-light)" }}>
+                  <Award size={18} style={{ color: "var(--azul-egm)" }} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Sin certificados aún</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Completa un curso para obtener el tuyo</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: "260px" }}>
+                {[
+                  { moduloId: "mock1", titulo: "Introducción al onboarding", tipoModulo: "VIDEO" },
+                  { moduloId: "mock2", titulo: "Herramientas digitales", tipoModulo: "VIDEO" },
+                  { moduloId: "mock3", titulo: "Prevención de riesgos laborales", tipoModulo: "DOCUMENTO" },
+                ].map((m) => (
+                  <div key={m.moduloId} className="flex items-center gap-3 px-4 py-3 rounded-2xl shrink-0"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: "var(--azul-egm-light)" }}>
+                      {m.tipoModulo === "VIDEO"
+                        ? <Play size={16} style={{ color: "var(--azul-egm)" }} />
+                        : <FileText size={16} style={{ color: "var(--azul-egm)" }} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-semibold leading-tight truncate" style={{ color: "var(--texto-primario)" }}>
                         {m.titulo}
                       </p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                        {m.tipoModulo === "VIDEO" ? "Vídeo" : "Documento"}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <button
+                      onClick={() => handleDescargarCertificado(m.titulo)}
+                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium"
+                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", transition: "background 0.15s" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--gris-borde)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "var(--gris-superficie)"}
+                      title={`Descargar certificado de ${m.titulo}`}
+                    >
+                      <Download size={13} />
+                      <span className="hidden sm:inline">Descargar</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-            {/* Configuración */}
-            <div className="flex flex-col gap-7">
-              <h2 style={{
-                fontFamily: "var(--font-raleway), sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-                lineHeight: 1.1,
-                color: "var(--texto-primario)",
-                letterSpacing: "-0.02em",
-              }}>Configuración</h2>
-
-              <button
-                onClick={() => router.push("/dashboard/configuracion")}
-                className="flex items-center gap-4 p-5 rounded-2xl text-left w-full"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "var(--gris-pagina)"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "var(--blanco)"}
-              >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm" style={{ color: "var(--texto-primario)" }}>Ajustes de cuenta</p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Contraseña y notificaciones</p>
-                </div>
-                <ChevronRight size={16} style={{ color: "var(--texto-muted)", flexShrink: 0 }} />
-              </button>
-            </div>
 
           </div>
+
         </div>
 
       </div>

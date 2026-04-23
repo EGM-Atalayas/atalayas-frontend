@@ -33,6 +33,20 @@ export async function actualizarEstadoEmpresa(id: string, estadoAEnviar: string)
   }
 }
 
+// Rechazar una solicitud de empresa pendiente (endpoint específico del backend)
+export async function rechazarSolicitudEmpresa(id: string): Promise<void> {
+  const response = await apiFetch(`${API_URL}/empresas/${id}/solicitud`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accion: "rechazar" }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Error al rechazar la solicitud");
+  }
+}
+
 // Activar / desactivar una empresa aprobada (toggle de activo)
 export async function toggleActivacionEmpresa(id: string): Promise<void> {
   const response = await apiFetch(`${API_URL}/empresas/${id}/activacion`, {
