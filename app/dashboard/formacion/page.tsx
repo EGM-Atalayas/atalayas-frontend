@@ -170,7 +170,7 @@ export default function FormacionPage() {
             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
           >
-            ⚙️ Gestionar módulos
+            Gestionar módulos
           </button>
         </div>
       )}
@@ -581,25 +581,32 @@ function CourseCard({
 
         {/* CTA button */}
         <button
-          className="mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
-          onClick={() => !isCompletado && router.push(`/dashboard/formacion/${m.moduloId}`)}
+          className="mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+          onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
           style={
             isCompletado
-              ? { background: "#D1FAE5", color: "#065F46", cursor: "default" }
+              ? { background: "#D1FAE5", color: "#065F46", border: "1px solid #6ee7b7" }
               : isEnProgreso
               ? { background: "var(--blanco)", border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }
               : { background: "var(--azul-egm)", color: "var(--blanco)" }
           }
           onMouseEnter={(e) => {
-            if (!isCompletado && isEnProgreso) e.currentTarget.style.background = "var(--gris-superficie)";
-            if (!isCompletado && !isEnProgreso) e.currentTarget.style.background = "var(--azul-egm-hover)";
+            if (isCompletado) e.currentTarget.style.background = "#bbf7d0";
+            else if (isEnProgreso) e.currentTarget.style.background = "var(--gris-superficie)";
+            else e.currentTarget.style.background = "var(--azul-egm-hover)";
           }}
           onMouseLeave={(e) => {
-            if (!isCompletado && isEnProgreso) e.currentTarget.style.background = "var(--blanco)";
-            if (!isCompletado && !isEnProgreso) e.currentTarget.style.background = "var(--azul-egm)";
+            if (isCompletado) e.currentTarget.style.background = "#D1FAE5";
+            else if (isEnProgreso) e.currentTarget.style.background = "var(--blanco)";
+            else e.currentTarget.style.background = "var(--azul-egm)";
           }}
         >
-          {isCompletado ? "✓ Completado" : isEnProgreso ? "Continuar" : "Empezar"}
+          {isCompletado && (
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {isCompletado ? "Completado — Revisar" : isEnProgreso ? "Continuar" : "Empezar"}
         </button>
       </div>
     </div>
