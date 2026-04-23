@@ -994,10 +994,13 @@ function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
           style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)" }}>
           <h2 className="text-xl font-bold text-white mb-4">{slide.titulo}</h2>
           <div className="flex flex-col gap-2">
-            {slide.contenido.split("\n").filter(Boolean).map((line, i) => (
+            {(Array.isArray(slide.contenido)
+              ? slide.contenido
+              : String(slide.contenido).split("\n").filter(Boolean)
+            ).map((line: string, i: number) => (
               <div key={i} className="flex items-start gap-2.5">
                 <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ background: "#6366f1" }} />
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{line.replace(/^[-•*]\s*/,"")}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{String(line).replace(/^[-•*]\s*/,"")}</p>
               </div>
             ))}
           </div>
