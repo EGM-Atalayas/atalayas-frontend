@@ -429,7 +429,7 @@ export default function CrearModuloPage() {
         body: JSON.stringify({
           nombre:        d.titulo || nombre,
           descripcion:   d.descripcion || "",
-          tipoModulo:    "ESPECIALIZADO_IA",
+          tipoModulo:    "ESPECIFICA",
           esEspecializadoIa: true,
           activo:        true,
           empresaId:     usuario?.empresaId ?? null,
@@ -1044,16 +1044,8 @@ export default function CrearModuloPage() {
                     </div>
                   </div>
 
-                  {!generando && !errorIA && (
-                    <button onClick={iniciarGeneracion}
-                      className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
-                      style={{ background:"linear-gradient(135deg,var(--azul-egm),#A3B535)", color:"#fff", boxShadow:"0 4px 16px rgba(163,181,53,0.3)" }}>
-                      <IconSpark /> Generar módulo con IA
-                    </button>
-                  )}
-
                   {generando && (
-                    <div>
+                    <div className="mb-4">
                       <button disabled
                         className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
                         style={{ background:"linear-gradient(135deg,var(--azul-egm),#A3B535)", color:"#fff", opacity:0.85 }}>
@@ -1070,12 +1062,11 @@ export default function CrearModuloPage() {
                   )}
 
                   {errorIA && !generando && (
-                    <div className="mt-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#dc2626" }}>
+                    <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#dc2626" }}>
                       <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       <div>
                         <p className="text-xs font-semibold">Error al generar el módulo</p>
                         <p className="text-xs mt-0.5">{errorIA}</p>
-                        <button onClick={iniciarGeneracion} className="mt-2 text-xs font-semibold underline">Reintentar</button>
                       </div>
                     </div>
                   )}
