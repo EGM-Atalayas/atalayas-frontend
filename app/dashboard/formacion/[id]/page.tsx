@@ -408,12 +408,23 @@ export default function Page() {
         >
           <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
             {/* Tipo del módulo como badge */}
-            <span
-              className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2"
-              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-            >
-              {modulo.tipo}
-            </span>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+              >
+                {modulo.tipo}
+              </span>
+              {modulo.esEspecializadoIa && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  style={{ background: "#f3e8ff", color: "#7c3aed" }}>
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
+                  </svg>
+                  IA
+                </span>
+              )}
+            </div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--texto-primario)" }}>
                 Contenidos
@@ -571,240 +582,8 @@ export default function Page() {
             )}
           </div>
 
-          {/* IA Assistant — solo en módulos especializados IA */}
-          {modulo.esEspecializadoIa && (
-            <div className="mt-6">
-              <AsistenteIA contenidoTitulo={activo.titulo} />
-            </div>
-          )}
         </main>
       </div>
-    </div>
-  );
-}
-
-// ── ASISTENTE IA ──────────────────────────────────────────────────────────────
-
-function getMockIAData(titulo: string): {
-  resumen: string[];
-  preguntas: { pregunta: string; respuesta: string }[];
-} {
-  // Vary mocks slightly based on the content title
-  if (titulo.toLowerCase().includes("evaluación") || titulo.toLowerCase().includes("quiz")) {
-    return {
-      resumen: [
-        "Esta evaluación pone a prueba los conocimientos adquiridos a lo largo del módulo.",
-        "Se requiere un mínimo de aciertos para superar la prueba y obtener el certificado.",
-        "Revisa los contenidos anteriores antes de intentar la evaluación final.",
-      ],
-      preguntas: [
-        { pregunta: "¿Cuántos intentos tengo para aprobar?", respuesta: "Puedes intentarlo tantas veces como necesites. Cada intento reinicia las preguntas para que puedas practicar sin límite." },
-        { pregunta: "¿Qué pasa si no apruebo?", respuesta: "Si no superas la evaluación, puedes repasar el material y volver a intentarlo. No hay penalización por los intentos fallidos." },
-        { pregunta: "¿Se guarda mi progreso automáticamente?", respuesta: "Sí, el progreso se guarda en tu navegador. Si cierras la página y vuelves, encontrarás el módulo en el mismo estado." },
-      ],
-    };
-  }
-  if (titulo.toLowerCase().includes("video")) {
-    return {
-      resumen: [
-        "El vídeo presenta los conceptos fundamentales del módulo de forma visual y práctica.",
-        "Se incluyen demostraciones reales del entorno empresarial de Atalayas.",
-        "Toma nota de los puntos clave que se resaltan durante la reproducción.",
-      ],
-      preguntas: [
-        { pregunta: "¿Puedo ver el vídeo varias veces?", respuesta: "Sí, puedes reproducir el vídeo cuantas veces necesites antes de marcarlo como completado." },
-        { pregunta: "¿Hay subtítulos disponibles?", respuesta: "El vídeo incluye subtítulos en castellano. Puedes activarlos desde los controles del reproductor." },
-        { pregunta: "¿El contenido del vídeo entra en el quiz?", respuesta: "Sí, los conceptos presentados en el vídeo son la base de la evaluación final del módulo." },
-      ],
-    };
-  }
-  // Default for texto, pdf, and anything else
-  return {
-    resumen: [
-      "Este contenido cubre los fundamentos teóricos esenciales del módulo.",
-      "Se abordan casos prácticos aplicables directamente al entorno de Atalayas.",
-      "Presta especial atención a los recuadros de \"Punto clave\" que resumen lo más importante.",
-    ],
-    preguntas: [
-      { pregunta: "¿Qué conceptos son más importantes de este contenido?", respuesta: "Los puntos clave destacados en recuadros azules contienen los conceptos que con más frecuencia aparecen en la evaluación final. Te recomendamos anotarlos." },
-      { pregunta: "¿Puedo volver a este contenido después de completarlo?", respuesta: "Sí, una vez completado puedes acceder al contenido en cualquier momento desde el índice lateral para repasar." },
-      { pregunta: "¿Hay material complementario disponible?", respuesta: "En el apartado de documentación encontrarás recursos adicionales en PDF con información ampliada sobre los temas tratados." },
-    ],
-  };
-}
-
-function AsistenteIA({ contenidoTitulo }: { contenidoTitulo: string }) {
-  const [open, setOpen] = useState(true);
-  const [preguntaActiva, setPreguntaActiva] = useState<number | null>(null);
-  const [inputVal, setInputVal] = useState("");
-  const [respuesta, setRespuesta] = useState("");
-
-  const { resumen, preguntas } = getMockIAData(contenidoTitulo);
-
-  const handleSend = () => {
-    if (!inputVal.trim()) return;
-    setRespuesta("Estoy procesando tu consulta sobre \"" + inputVal.trim() + "\"… Dame un momento.");
-    setInputVal("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSend();
-  };
-
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid #e9d5ff" }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-white text-lg leading-none select-none">✦</span>
-          <span className="text-sm font-bold text-white">Asistente IA</span>
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(255,255,255,0.18)", color: "white", letterSpacing: "0.05em" }}
-          >
-            BETA
-          </span>
-        </div>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="text-white transition-opacity"
-          style={{ opacity: 0.75 }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.75")}
-          aria-label={open ? "Colapsar asistente" : "Expandir asistente"}
-        >
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            {open
-              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              : <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            }
-          </svg>
-        </button>
-      </div>
-
-      {/* Body */}
-      {open && (
-        <div
-          className="flex flex-col gap-5 px-5 py-4"
-          style={{ background: "white" }}
-        >
-          {/* Resumen IA */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
-              Resumen del contenido
-            </p>
-            <ul className="flex flex-col gap-2">
-              {resumen.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-sm font-bold shrink-0" style={{ color: "#7c3aed" }}>•</span>
-                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Preguntas sugeridas */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
-              Preguntas frecuentes
-            </p>
-            <div className="flex flex-col gap-2">
-              {preguntas.map((item, i) => {
-                const isActive = preguntaActiva === i;
-                return (
-                  <div key={i}>
-                    <button
-                      onClick={() => setPreguntaActiva(isActive ? null : i)}
-                      className="text-xs px-3 py-2 rounded-full border transition-all text-left"
-                      style={{
-                        background: isActive ? "#7c3aed" : "transparent",
-                        color: isActive ? "white" : "var(--texto-primario)",
-                        borderColor: isActive ? "#7c3aed" : "#e9d5ff",
-                        fontWeight: isActive ? 600 : 400,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background = "#faf5ff";
-                          e.currentTarget.style.borderColor = "#a855f7";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background = "transparent";
-                          e.currentTarget.style.borderColor = "#e9d5ff";
-                        }
-                      }}
-                    >
-                      {item.pregunta}
-                    </button>
-                    {isActive && (
-                      <div
-                        className="mt-2 rounded-xl px-4 py-3 text-sm"
-                        style={{
-                          background: "#faf5ff",
-                          borderLeft: "3px solid #7c3aed",
-                          color: "var(--texto-secundario)",
-                        }}
-                      >
-                        {item.respuesta}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Respuesta del chat si existe */}
-          {respuesta && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{
-                background: "#faf5ff",
-                borderLeft: "3px solid #a855f7",
-                color: "var(--texto-secundario)",
-              }}
-            >
-              {respuesta}
-            </div>
-          )}
-
-          {/* Input de chat */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe tu pregunta..."
-              className="flex-1 text-sm rounded-xl border px-3 py-2 outline-none transition-colors"
-              style={{
-                borderColor: "#e9d5ff",
-                color: "var(--texto-primario)",
-                background: "white",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#a855f7")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#e9d5ff")}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!inputVal.trim()}
-              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-              onMouseEnter={(e) => { if (inputVal.trim()) e.currentTarget.style.opacity = "0.85"; }}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Enviar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
