@@ -9,6 +9,7 @@ import { getModulosConProgreso } from "@/lib/api/modulos";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import { API_URL } from "@/lib/api";
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -18,22 +19,30 @@ function formatFecha(iso: string) {
 type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal: number };
 
 const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
-  { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
+  {
+    moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
     descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al área.",
     tipoModulo: "IDENTIDAD", orden: 1, activo: true, empresaId: null, esEspecializadoIa: false,
-    creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4 },
-  { moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",
+    creadoEn: "", actualizadoEn: "", status: "en progreso", totalItems: 6, completadosLocal: 4
+  },
+  {
+    moduloId: "mock-2", nombre: "Comunicación Efectiva en el Trabajo",
     descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",
     tipoModulo: "DESARROLLO", orden: 2, activo: true, empresaId: null, esEspecializadoIa: false,
-    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 5, completadosLocal: 0 },
-  { moduloId: "mock-3", nombre: "PRL — Prevención de Riesgos Laborales",
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 5, completadosLocal: 0
+  },
+  {
+    moduloId: "mock-3", nombre: "PRL — Prevención de Riesgos Laborales",
     descripcion: "Formación obligatoria en seguridad, higiene y prevención de riesgos en el trabajo.",
     tipoModulo: "BASICA", orden: 3, activo: true, empresaId: null, esEspecializadoIa: false,
-    creadoEn: "", actualizadoEn: "", status: "completado", totalItems: 4, completadosLocal: 4 },
-  { moduloId: "mock-4", nombre: "Digitalización y Herramientas Colaborativas",
+    creadoEn: "", actualizadoEn: "", status: "completado", totalItems: 4, completadosLocal: 4
+  },
+  {
+    moduloId: "mock-4", nombre: "Digitalización y Herramientas Colaborativas",
     descripcion: "Aprende a usar las herramientas digitales del entorno laboral moderno.",
     tipoModulo: "ESPECIFICA", orden: 4, activo: true, empresaId: null, esEspecializadoIa: false,
-    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 8, completadosLocal: 0 },
+    creadoEn: "", actualizadoEn: "", status: "pendiente", totalItems: 8, completadosLocal: 0
+  },
 ];
 
 const FORMACION_IMAGES_BY_ID: Record<string, string> = {
@@ -44,14 +53,14 @@ const FORMACION_IMAGES_BY_ID: Record<string, string> = {
 };
 
 const FORMACION_IMAGES_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid", "atalayas"],    imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva", "trabajo"],       imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["prl", "prevenci", "riesgos", "laboral"],  imagen: "/diversidad.jpg" },
-  { keywords: ["digitaliz", "herramienta", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad"],                 imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["metodolog", "agil"],                      imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["cibersegur", "datos"],                    imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["diversidad", "inclusi"],                  imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid", "atalayas"], imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva", "trabajo"], imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["prl", "prevenci", "riesgos", "laboral"], imagen: "/diversidad.jpg" },
+  { keywords: ["digitaliz", "herramienta", "colaborat"], imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad"], imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["metodolog", "agil"], imagen: "/metodologias-agiles.jpg" },
+  { keywords: ["cibersegur", "datos"], imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.jpg" },
 ];
 
 function getFormacionImage(moduloId: string, nombre: string): string | undefined {
@@ -73,18 +82,18 @@ function saveProgress(map: Record<string, number>) {
 }
 function applyProgress(base: FormacionLocal[], map: Record<string, number>): FormacionLocal[] {
   return base.map((f) => {
-    const c   = map[f.moduloId] ?? f.completadosLocal;
+    const c = map[f.moduloId] ?? f.completadosLocal;
     const pct = c / f.totalItems;
-    const st  = pct >= 1 ? "completado" : c > 0 ? "en progreso" : "pendiente";
+    const st = pct >= 1 ? "completado" : c > 0 ? "en progreso" : "pendiente";
     return { ...f, completadosLocal: c, status: st };
   });
 }
 
 const SERVICIOS = [
   {
-    label:  "Coche compartido",
-    desc:   "Ahorra hasta 2.500€/año compartiendo ruta.",
-    href:   "https://www.lokinn.com/compartir-coche/atalayas",
+    label: "Coche compartido",
+    desc: "Ahorra hasta 2.500€/año compartiendo ruta.",
+    href: "https://www.lokinn.com/compartir-coche/atalayas",
     activo: true,
     icono: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -93,9 +102,9 @@ const SERVICIOS = [
     ),
   },
   {
-    label:  "Autobús lanzadera",
-    desc:   "Línea 7P con horarios laborales.",
-    href:   "https://atalayas.com/autobus-lanzadera/",
+    label: "Autobús lanzadera",
+    desc: "Línea 7P con horarios laborales.",
+    href: "https://atalayas.com/autobus-lanzadera/",
     activo: true,
     icono: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -104,9 +113,9 @@ const SERVICIOS = [
     ),
   },
   {
-    label:  "Aparcamiento VAO",
-    desc:   "Plazas para grupos que comparten vehículo.",
-    href:   "https://atalayas.com/aparcamientovao/",
+    label: "Aparcamiento VAO",
+    desc: "Plazas para grupos que comparten vehículo.",
+    href: "https://atalayas.com/aparcamientovao/",
     activo: true,
     icono: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -115,9 +124,9 @@ const SERVICIOS = [
     ),
   },
   {
-    label:  "Guardería",
-    desc:   "Conciliación familiar en el área.",
-    href:   null,
+    label: "Guardería",
+    desc: "Conciliación familiar en el área.",
+    href: null,
     activo: false,
     icono: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -126,9 +135,9 @@ const SERVICIOS = [
     ),
   },
   {
-    label:  "Descuentos y ventajas",
-    desc:   "Beneficios para trabajadores del parque.",
-    href:   null,
+    label: "Descuentos y ventajas",
+    desc: "Beneficios para trabajadores del parque.",
+    href: null,
     activo: false,
     icono: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -140,13 +149,13 @@ const SERVICIOS = [
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
 export default function Empleado() {
-  const router      = useRouter();
+  const router = useRouter();
   const { usuario } = useAuth();
 
-  const [noticias, setNoticias]               = useState<Noticia[]>([]);
-  const [formaciones, setFormaciones]         = useState<ModuloConProgreso[]>([]);
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
+  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
   const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
-  const [cargando, setCargando]               = useState(true);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     async function cargarDatos() {
@@ -173,7 +182,7 @@ export default function Empleado() {
   const avanzarModulo = (moduloId: string) => {
     setFormacionesLocal((prev) => {
       const map = loadProgress();
-      const m   = prev.find((f) => f.moduloId === moduloId);
+      const m = prev.find((f) => f.moduloId === moduloId);
       if (!m || m.completadosLocal >= m.totalItems) return prev;
       const next = Math.min(m.completadosLocal + 1, m.totalItems);
       map[moduloId] = next;
@@ -187,47 +196,57 @@ export default function Empleado() {
     ? formaciones.map((f) => ({ ...f, totalItems: 0, completadosLocal: 0 }))
     : formacionesLocal;
 
-  const completados   = formDisplay.filter((m) => m.status === "completado").length;
+  const completados = formDisplay.filter((m) => m.status === "completado").length;
   const totalProgress = formDisplay.length > 0
     ? Math.round((completados / formDisplay.length) * 100)
     : 0;
   const siguientePaso = formDisplay.find((f) => f.status !== "completado");
-  const hayModulos    = formDisplay.length > 0;
-  const hayProgreso   = hayModulos && completados > 0;
-  const noticiasEGM     = noticias.filter((n) => n.esGlobal);
+  const hayModulos = formDisplay.length > 0;
+  const hayProgreso = hayModulos && completados > 0;
+  const noticiasEGM = noticias.filter((n) => n.esGlobal);
   const noticiasEmpresa = noticias.filter((n) => !n.esGlobal);
 
   // Transforma Noticia[] → ComunicadoItem[] para el carrusel
   const carouselItems: ComunicadoItem[] = noticias.length > 0
     ? noticias.map((n) => ({
-        id:       n.anuncioId,
-        titulo:   n.titulo,
-        mensaje:  n.contenido,
-        fecha:    n.creadoEn,
-        tipo:     n.esGlobal ? "egm" : "empresa",
-      }))
+      id: n.anuncioId,
+      titulo: n.titulo,
+      mensaje: n.contenido,
+      fecha: n.creadoEn,
+      tipo: n.esGlobal ? "egm" : "empresa",
+    }))
     : [
-        { id: "m1", tipo: "egm", categoria: "Novedades", fecha: "2026-04-10T09:00:00Z",
-          titulo: "Apertura del nuevo espacio de coworking en el Edificio A",
-          mensaje: "El nuevo espacio cuenta con 40 puestos, salas de reuniones y zona de descanso. Disponible desde el 1 de mayo.",
-          imagenUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80" },
-        { id: "m2", tipo: "egm", categoria: "Eventos", fecha: "2026-04-08T10:30:00Z",
-          titulo: "Jornada de networking: Empresas del Parque — Mayo 2026",
-          mensaje: "15 de mayo en el Salón de Actos del Edificio Central a partir de las 18:00h. Confirmad asistencia antes del 10 de mayo.",
-          imagenUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80" },
-        { id: "m3", tipo: "egm", categoria: "Avisos", fecha: "2026-04-05T08:00:00Z",
-          titulo: "Mantenimiento programado del parking — 20 de abril",
-          mensaje: "Trabajos de mantenimiento en parking exterior de 08:00 a 14:00h. Plazas zona B inhabilitadas.",
-          imagenUrl: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&q=80" },
-        { id: "m4", tipo: "egm", categoria: "Novedades", fecha: "2026-03-28T11:00:00Z",
-          titulo: "Nueva cafetería disponible en el Edificio C",
-          mensaje: "Horario 07:30–16:30h, menú del día con descuento para empleados del parque.",
-          imagenUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80" },
-        { id: "m5", tipo: "egm", categoria: "Avisos", fecha: "2026-03-20T09:00:00Z",
-          titulo: "Actualización del protocolo de acceso con tarjeta",
-          mensaje: "A partir del 25 de abril se renovará el sistema de control de acceso. Solicita tu nueva tarjeta en recepción.",
-          imagenUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" },
-      ];
+      {
+        id: "m1", tipo: "egm", categoria: "Novedades", fecha: "2026-04-10T09:00:00Z",
+        titulo: "Apertura del nuevo espacio de coworking en el Edificio A",
+        mensaje: "El nuevo espacio cuenta con 40 puestos, salas de reuniones y zona de descanso. Disponible desde el 1 de mayo.",
+        imagenUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80"
+      },
+      {
+        id: "m2", tipo: "egm", categoria: "Eventos", fecha: "2026-04-08T10:30:00Z",
+        titulo: "Jornada de networking: Empresas del Parque — Mayo 2026",
+        mensaje: "15 de mayo en el Salón de Actos del Edificio Central a partir de las 18:00h. Confirmad asistencia antes del 10 de mayo.",
+        imagenUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80"
+      },
+      {
+        id: "m3", tipo: "egm", categoria: "Avisos", fecha: "2026-04-05T08:00:00Z",
+        titulo: "Mantenimiento programado del parking — 20 de abril",
+        mensaje: "Trabajos de mantenimiento en parking exterior de 08:00 a 14:00h. Plazas zona B inhabilitadas.",
+        imagenUrl: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&q=80"
+      },
+      {
+        id: "m4", tipo: "egm", categoria: "Novedades", fecha: "2026-03-28T11:00:00Z",
+        titulo: "Nueva cafetería disponible en el Edificio C",
+        mensaje: "Horario 07:30–16:30h, menú del día con descuento para empleados del parque.",
+        imagenUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80"
+      },
+      {
+        id: "m5", tipo: "egm", categoria: "Avisos", fecha: "2026-03-20T09:00:00Z",
+        titulo: "Actualización del protocolo de acceso con tarjeta",
+        mensaje: "A partir del 25 de abril se renovará el sistema de control de acceso. Solicita tu nueva tarjeta en recepción.",
+        imagenUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+      },
+    ];
 
   if (cargando) {
     return (
@@ -258,48 +277,48 @@ export default function Empleado() {
           style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
 
         <div className="relative z-10 w-full px-10 lg:px-16 py-16">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
-              style={{ color: "var(--verde-oliva-hover)" }}>
-              {usuario?.nombreEmpresa ?? "Mi empresa"}
-              <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
-              {new Date().toLocaleDateString("es-ES", {
-                weekday: "long", day: "numeric", month: "long",
-              }).replace(/^\w/, (c) => c.toUpperCase())}
-            </p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
+            style={{ color: "var(--verde-oliva-hover)" }}>
+            {usuario?.nombreEmpresa ?? "Mi empresa"}
+            <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
+            {new Date().toLocaleDateString("es-ES", {
+              weekday: "long", day: "numeric", month: "long",
+            }).replace(/^\w/, (c) => c.toUpperCase())}
+          </p>
 
-            <div className="leading-none flex flex-wrap items-center gap-x-3">
-              <span
-                className="text-white"
-                style={{
-                  fontSize:      "clamp(3.5rem, 7vw, 4.5rem)",
-                  fontFamily:    "var(--font-poppins), sans-serif",
-                  fontWeight:    300,
-                  letterSpacing: "-0.03em",
-                  animation:     "heroFadeUp 0.8s ease both",
-                }}
-              >
-                Hola,
-              </span>
-              <span
-                style={{
-                  fontSize:        "clamp(3.5rem, 7vw, 6rem)",
-                  fontFamily:      "'Instrument Serif', serif",
-                  fontStyle:       "italic",
-                  fontWeight:      400,
-                  letterSpacing:   "-0.01em",
-                  lineHeight:      1,
-                  background:      "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-                  backgroundSize:  "300% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  animation:       "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
-                }}
-              >
-                {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-              </span>
-            </div>
-            <style>{`
+          <div className="leading-none flex flex-wrap items-center gap-x-3">
+            <span
+              className="text-white"
+              style={{
+                fontSize: "clamp(3.5rem, 7vw, 4.5rem)",
+                fontFamily: "var(--font-poppins), sans-serif",
+                fontWeight: 300,
+                letterSpacing: "-0.03em",
+                animation: "heroFadeUp 0.8s ease both",
+              }}
+            >
+              Hola,
+            </span>
+            <span
+              style={{
+                fontSize: "clamp(3.5rem, 7vw, 6rem)",
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+                background: "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+                backgroundSize: "300% 100%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                animation: "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
+              }}
+            >
+              {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
+            </span>
+          </div>
+          <style>{`
               @keyframes heroFadeUp {
                 from { opacity: 0; transform: translateY(24px); }
                 to   { opacity: 1; transform: translateY(0); }
@@ -366,22 +385,22 @@ export default function Empleado() {
                       <div
                         className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
                         style={{
-                          background:           s.activo ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
-                          border:               s.activo ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.07)",
-                          backdropFilter:       "blur(8px)",
+                          background: s.activo ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
+                          border: s.activo ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.07)",
+                          backdropFilter: "blur(8px)",
                           WebkitBackdropFilter: "blur(8px)",
-                          boxShadow:            s.activo ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
+                          boxShadow: s.activo ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
                         }}
                       >
                         {/* Icono */}
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                           style={{
-                            background:           s.activo ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
-                            border:               s.activo ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.06)",
-                            backdropFilter:       "blur(4px)",
+                            background: s.activo ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
+                            border: s.activo ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.06)",
+                            backdropFilter: "blur(4px)",
                             WebkitBackdropFilter: "blur(4px)",
-                            color:                s.activo ? "white" : "rgba(255,255,255,0.2)",
+                            color: s.activo ? "white" : "rgba(255,255,255,0.2)",
                           }}
                         >
                           {s.icono}
@@ -411,8 +430,8 @@ export default function Empleado() {
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
                             style={{
                               background: "rgba(255,255,255,0.07)",
-                              color:      "rgba(255,255,255,0.25)",
-                              border:     "1px solid rgba(255,255,255,0.08)",
+                              color: "rgba(255,255,255,0.25)",
+                              border: "1px solid rgba(255,255,255,0.08)",
                             }}>
                             Próx.
                           </span>
@@ -426,17 +445,17 @@ export default function Empleado() {
                         onMouseEnter={(e) => {
                           const d = e.currentTarget.firstElementChild as HTMLElement;
                           if (d) {
-                            d.style.background  = "rgba(255,255,255,0.17)";
+                            d.style.background = "rgba(255,255,255,0.17)";
                             d.style.borderColor = "rgba(255,255,255,0.28)";
-                            d.style.transform   = "translateY(-1px)";
+                            d.style.transform = "translateY(-1px)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           const d = e.currentTarget.firstElementChild as HTMLElement;
                           if (d) {
-                            d.style.background  = "rgba(255,255,255,0.10)";
+                            d.style.background = "rgba(255,255,255,0.10)";
                             d.style.borderColor = "rgba(255,255,255,0.18)";
-                            d.style.transform   = "translateY(0)";
+                            d.style.transform = "translateY(0)";
                           }
                         }}>
                         {content}
@@ -468,8 +487,8 @@ export default function Empleado() {
                   {completados === 0
                     ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
                     : completados === formDisplay.length
-                    ? "🎉 ¡Has completado toda tu formación!"
-                    : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
+                      ? "🎉 ¡Has completado toda tu formación!"
+                      : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
                 </p>
               )}
             </div>
@@ -598,30 +617,30 @@ export default function Empleado() {
               {[
                 {
                   label: "Team building",
-                  desc:  "Integración y trabajo en equipo entre empresas del parque",
+                  desc: "Integración y trabajo en equipo entre empresas del parque",
                   fecha: "Jun 2025",
                   inscritos: 18,
                   color: "#7c3aed",
-                  bg:    "#ede9fe",
-                  icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+                  bg: "#ede9fe",
+                  icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
                 },
                 {
                   label: "En Femenino",
-                  desc:  "Liderazgo, igualdad e inspiración en el entorno empresarial",
+                  desc: "Liderazgo, igualdad e inspiración en el entorno empresarial",
                   fecha: "Jul 2025",
                   inscritos: 31,
                   color: "#be185d",
-                  bg:    "#fce7f3",
-                  icon:  "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
+                  bg: "#fce7f3",
+                  icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
                 },
                 {
                   label: "Eventos empresariales",
-                  desc:  "Actividades de networking entre las empresas del parque",
+                  desc: "Actividades de networking entre las empresas del parque",
                   fecha: "Mensual",
                   inscritos: 60,
                   color: "var(--azul-egm)",
-                  bg:    "var(--azul-egm-light)",
-                  icon:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+                  bg: "var(--azul-egm-light)",
+                  icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
                 },
               ].map((ini) => (
                 <div
@@ -663,9 +682,9 @@ export default function Empleado() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 divide-x" style={{ borderColor: "var(--gris-borde)" }}>
               {[
-                { emoji: "💬", titulo: "Foro del parque",         desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
-                { emoji: "📌", titulo: "Anuncios de comunidad",   desc: "Comunicados transversales del parque empresarial EGM." },
-                { emoji: "🤝", titulo: "Directorio de empresas",  desc: "Conoce las empresas y equipos que comparten espacio contigo." },
+                { emoji: "💬", titulo: "Foro del parque", desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
+                { emoji: "📌", titulo: "Anuncios de comunidad", desc: "Comunicados transversales del parque empresarial EGM." },
+                { emoji: "🤝", titulo: "Directorio de empresas", desc: "Conoce las empresas y equipos que comparten espacio contigo." },
               ].map((item, i) => (
                 <div key={i} className="px-5 py-4 flex flex-col gap-2">
                   <span className="text-2xl leading-none">{item.emoji}</span>
@@ -687,16 +706,16 @@ export default function Empleado() {
 function TituloSeccion({ children, noMargin, letras }: {
   children: React.ReactNode;
   noMargin?: boolean;
-  letras?:  boolean;
+  letras?: boolean;
 }) {
   return (
     <h2
       className={noMargin ? "" : "mb-6"}
       style={{
-        fontSize:      "clamp(2rem, 2.8vw, 2.8rem)",
-        fontFamily:    "'Instrument Serif', serif",
-        fontWeight:    400,
-        color:         "var(--texto-primario)",
+        fontSize: "clamp(2rem, 2.8vw, 2.8rem)",
+        fontFamily: "'Instrument Serif', serif",
+        fontWeight: 400,
+        color: "var(--texto-primario)",
         letterSpacing: letras ? "0.04em" : "-0.02em",
       }}
     >
@@ -734,7 +753,7 @@ function SeccionComunicaciones({ noticiasEGM, noticiasEmpresa }: {
         style={{ background: "var(--gris-pagina)" }}
       >
         {noticiasEGM.length > 0 && (
-          <ColumnaNoticia tipo="egm"     noticias={noticiasEGM}     conBorde={tieneAmbas} />
+          <ColumnaNoticia tipo="egm" noticias={noticiasEGM} conBorde={tieneAmbas} />
         )}
         {noticiasEmpresa.length > 0 && (
           <ColumnaNoticia tipo="empresa" noticias={noticiasEmpresa} conBorde={false} />
@@ -747,9 +766,9 @@ function SeccionComunicaciones({ noticiasEGM, noticiasEmpresa }: {
 function ColumnaNoticia({ tipo, noticias, conBorde }: {
   tipo: "egm" | "empresa"; noticias: Noticia[]; conBorde: boolean;
 }) {
-  const esEGM  = tipo === "egm";
-  const acento = esEGM ? "var(--azul-egm)"  : "var(--verde-oliva)";
-  const label  = esEGM ? "EGM Atalayas"     : "Tu empresa";
+  const esEGM = tipo === "egm";
+  const acento = esEGM ? "var(--azul-egm)" : "var(--verde-oliva)";
+  const label = esEGM ? "EGM Atalayas" : "Tu empresa";
 
   return (
     <div className="p-5"
@@ -769,9 +788,9 @@ function ColumnaNoticia({ tipo, noticias, conBorde }: {
           <div key={n.anuncioId}
             className="rounded-xl px-4 py-3 transition-colors"
             style={{
-              background:  "var(--blanco)",
-              border:      "1px solid var(--gris-borde)",
-              borderLeft:  `3px solid ${acento}`,
+              background: "var(--blanco)",
+              border: "1px solid var(--gris-borde)",
+              borderLeft: `3px solid ${acento}`,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
@@ -800,30 +819,30 @@ function ColumnaNoticia({ tipo, noticias, conBorde }: {
 
 // ── TARJETA MÓDULO ────────────────────────────────────────────────────────────
 const TIPO_ACENTO: Record<string, { bg: string; text: string; label: string }> = {
-  IDENTIDAD:   { bg: "var(--azul-egm-light)",   text: "var(--azul-egm)",    label: "Identidad Corporativa" },
-  BASICA:      { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", label: "Formación Básica" },
-  ESPECIFICA:  { bg: "var(--info-light)",        text: "var(--info)",        label: "Formación Específica" },
-  DESARROLLO:  { bg: "var(--advertencia-light)", text: "var(--advertencia)", label: "Desarrollo Profesional" },
-  SEGURIDAD:   { bg: "#FFF1F0",                  text: "#C84B31",            label: "Seguridad Laboral" },
-  RECOMPENSAS: { bg: "var(--exito-light)",       text: "var(--exito)",       label: "Recompensas" },
-  COMUNIDAD:   { bg: "var(--gris-superficie)",   text: "var(--texto-muted)", label: "Comunidad" },
+  IDENTIDAD: { bg: "var(--azul-egm-light)", text: "var(--azul-egm)", label: "Identidad Corporativa" },
+  BASICA: { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", label: "Formación Básica" },
+  ESPECIFICA: { bg: "var(--info-light)", text: "var(--info)", label: "Formación Específica" },
+  DESARROLLO: { bg: "var(--advertencia-light)", text: "var(--advertencia)", label: "Desarrollo Profesional" },
+  SEGURIDAD: { bg: "#FFF1F0", text: "#C84B31", label: "Seguridad Laboral" },
+  RECOMPENSAS: { bg: "var(--exito-light)", text: "var(--exito)", label: "Recompensas" },
+  COMUNIDAD: { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Comunidad" },
 };
 
 const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }> = {
-  completado:    { bg: "var(--exito-light)",     text: "var(--exito)",       label: "Completado" },
-  "en progreso": { bg: "var(--azul-egm-light)",  text: "var(--azul-egm)",    label: "En progreso" },
-  pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
+  completado: { bg: "var(--exito-light)", text: "var(--exito)", label: "Completado" },
+  "en progreso": { bg: "var(--azul-egm-light)", text: "var(--azul-egm)", label: "En progreso" },
+  pendiente: { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
 };
 
 function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
-  modulo:     FormacionLocal;
-  index:      number;
-  onClick:    () => void;
+  modulo: FormacionLocal;
+  index: number;
+  onClick: () => void;
   onAvanzar?: () => void;
-  esMock?:    boolean;
+  esMock?: boolean;
   imagenUrl?: string;
 }) {
-  const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
+  const tipo = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
   const completado = modulo.status === "completado";
   const enProgreso = modulo.status === "en progreso";
 
@@ -837,8 +856,8 @@ function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
       className="w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200"
       style={{
         background: "var(--blanco)",
-        border:     enProgreso ? `2px solid ${tipo.text}` : "1px solid var(--gris-borde)",
-        boxShadow:  enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)",
+        border: enProgreso ? `2px solid ${tipo.text}` : "1px solid var(--gris-borde)",
+        boxShadow: enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)",
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.09)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
@@ -861,7 +880,7 @@ function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
           style={{
             background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
-            color:      completado || enProgreso ? "white" : "var(--texto-muted)",
+            color: completado || enProgreso ? "white" : "var(--texto-muted)",
           }}
         >
           {completado ? (
