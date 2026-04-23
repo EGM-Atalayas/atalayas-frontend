@@ -176,8 +176,8 @@ function cargarEstado(id: string): { completados: string[]; activoId: string } {
   return { completados: [], activoId: "c1" };
 }
 
-function guardarEstado(id: string, completados: string[], activoId: string) {
-  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId })); }
+function guardarEstado(id: string, completados: string[], activoId: string, total: number) {
+  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId, total })); }
   catch { /* noop */ }
 }
 
@@ -201,6 +201,7 @@ export default function Page() {
   const [moduloApi, setModuloApi] = useState<ModuloAPI | null>(null);
   const [activoId, setActivoId] = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
+  const [moduloCompletado, setModuloCompletado] = useState(false);
 
   // Carga el módulo desde la API; si falla usa el mock legacy
   useEffect(() => {
@@ -230,7 +231,7 @@ export default function Page() {
   useEffect(() => {
     if (!id || !modulo) return;
     const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
-    guardarEstado(id, hechos, activoId);
+    guardarEstado(id, hechos, activoId, modulo.totalItems);
   }, [modulo, activoId]);
 
   if (!modulo) return null;
@@ -244,16 +245,22 @@ export default function Page() {
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
       const siguiente = modulo.contenidos[idx + 1];
+      const nuevosCompletados = modulo.completados + 1;
       setModulo((m) => m ? ({
         ...m,
-        completados: m.completados + 1,
+        completados: nuevosCompletados,
         contenidos: m.contenidos.map((c, i) => {
           if (c.id === activoId) return { ...c, completado: true };
           if (i === idx + 1) return { ...c, bloqueado: false };
           return c;
         }),
       }) : null);
-      if (siguiente) setActivoId(siguiente.id);
+      if (siguiente) {
+        setActivoId(siguiente.id);
+      } else {
+        // Último ítem — módulo completado
+        setModuloCompletado(true);
+      }
       setCompletando(false);
     }, 600);
   };
@@ -270,6 +277,49 @@ export default function Page() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+
+      {/* ── MODAL MÓDULO COMPLETADO ───────────────────────────────────────────── */}
+      {moduloCompletado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+          <div className="w-full max-w-sm rounded-3xl text-center overflow-hidden shadow-2xl"
+            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            {/* Banner verde */}
+            <div className="py-8 px-6" style={{ background: "linear-gradient(135deg,#16a34a 0%,#4ade80 100%)" }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ background: "rgba(255,255,255,0.25)" }}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xl font-bold text-white">¡Módulo completado!</p>
+              <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.85)" }}>
+                Has completado <strong>{modulo.nombre}</strong>
+              </p>
+            </div>
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-sm mb-5" style={{ color: "var(--texto-secundario)" }}>
+                Enhorabuena 🎉 Has terminado todos los contenidos de este módulo. Tu progreso queda guardado.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => router.push("/dashboard/formacion")}
+                  className="w-full py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: "linear-gradient(135deg,var(--azul-egm),#A3B535)", color: "#fff", boxShadow: "0 4px 12px rgba(0,82,204,0.3)" }}>
+                  Volver a mis formaciones
+                </button>
+                <button
+                  onClick={() => setModuloCompletado(false)}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ color: "var(--texto-muted)" }}>
+                  Revisar contenido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div
