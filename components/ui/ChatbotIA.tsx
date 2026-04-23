@@ -858,8 +858,8 @@ export default function ChatbotIA() {
           className={`chatbot-fab${isMobile ? "" : " chatbot-fab-drag"}`}
           onMouseDown={onFabMouseDown}
           onClick={handleFabClick}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
+          onMouseEnter={() => { if (!isMobile) setShowTooltip(true) }}
+          onMouseLeave={() => { if (!isMobile) setShowTooltip(false) }}
           aria-label="Abrir asistente IA"
           style={{
             width: `${FAB_SIZE}px`,
