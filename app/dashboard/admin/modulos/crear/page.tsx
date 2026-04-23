@@ -429,7 +429,7 @@ export default function CrearModuloPage() {
         body: JSON.stringify({
           nombre:        d.titulo || nombre,
           descripcion:   d.descripcion || "",
-          tipoModulo:    "ESPECIFICA",
+          tipoModulo:    "ESPECIALIZADO_IA",
           esEspecializadoIa: true,
           activo:        true,
           empresaId:     usuario?.empresaId ?? null,
