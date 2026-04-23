@@ -42,6 +42,13 @@ const EMPTY_FORM: NoticiaInput = {
 const GRAD_BTN  = "linear-gradient(135deg, var(--azul-accion) 0%, var(--azul-egm) 100%)";
 const GRAD_EGM  = "linear-gradient(135deg, var(--azul-egm) 0%, var(--marino) 100%)";
 const GRAD_EMP  = "linear-gradient(135deg, #2d5a3d 0%, #1a3a26 100%)";
+
+// Colores activos por filtro (fondo, sombra)
+const FILTRO_STYLES: Record<FiltroFuente, { bg: string; shadow: string }> = {
+  todos:   { bg: GRAD_BTN,  shadow: "0 2px 8px rgba(37,99,235,0.25)" },
+  egm:     { bg: GRAD_EGM,  shadow: "0 2px 8px rgba(27,63,126,0.30)" },
+  empresa: { bg: GRAD_EMP,  shadow: "0 2px 8px rgba(45,90,61,0.30)"  },
+};
 const SHADOW_TXT = "0 2px 8px rgba(0,0,0,0.65)";
 
 const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z";
@@ -294,10 +301,10 @@ export default function ComunicacionPage() {
                   onClick={() => setFiltroFuente(key)}
                   className="shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all"
                   style={{
-                    background: filtroFuente === key ? GRAD_BTN : "var(--blanco)",
-                    color:  filtroFuente === key ? "#fff" : "var(--texto-secundario)",
-                    border: `1.5px solid ${filtroFuente === key ? "transparent" : "var(--gris-borde)"}`,
-                    boxShadow: filtroFuente === key ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                    background: filtroFuente === key ? FILTRO_STYLES[key].bg : "var(--blanco)",
+                    color:      filtroFuente === key ? "#fff" : "var(--texto-secundario)",
+                    border:     `1.5px solid ${filtroFuente === key ? "transparent" : "var(--gris-borde)"}`,
+                    boxShadow:  filtroFuente === key ? FILTRO_STYLES[key].shadow : "none",
                   }}
                 >
                   {label}
