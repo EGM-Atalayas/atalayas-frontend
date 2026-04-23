@@ -58,7 +58,7 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
     try {
       let imagenPortadaUrl = portadaUrl;
       if (portadaFile) {
-        imagenPortadaUrl = await subirImagenModulo(portadaFile, editando?.moduloId ?? "nuevo");
+        imagenPortadaUrl = await subirImagenModulo(portadaFile);
       }
 
       const payload = {
