@@ -44,11 +44,12 @@ interface ModuloAPI {
   duracion:         string | null;
   audiencia:        string | null;
   esEspecializadoIa: boolean;
-  testPreguntas:    string | null;
-  scriptPodcast:    string | null;
-  scriptVideo:      string | null;
-  podcastAudioUrl:  string | null;
-  tiposSalida:      string | null;
+  testPreguntas:      string | null;
+  contenidoMarkdown:  string | null;
+  scriptPodcast:      string | null;
+  scriptVideo:        string | null;
+  podcastAudioUrl:    string | null;
+  tiposSalida:        string | null;
   activo:           boolean;
 }
 
@@ -451,7 +452,7 @@ export default function Page() {
 
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
-              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} />}
+              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={moduloApi?.contenidoMarkdown ?? null} />}
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} />}
               {activo.tipo === "video" && activo.subtipo === "slides"  && moduloApi?.scriptVideo  && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo />}
@@ -769,25 +770,58 @@ function IconoTipo({ tipo, size = 16 }: { tipo: TipoContenido; size?: number }) 
   );
 }
 
-function ContenidoTexto({ descripcion }: { descripcion: string }) {
-  if (!descripcion) {
+function renderMarkdown(texto: string): React.ReactNode[] {
+  const lineas = texto.split("\n");
+  const elementos: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lineas.length) {
+    const linea = lineas[i];
+    if (!linea.trim()) { i++; continue; }
+    // Encabezados
+    if (linea.startsWith("### ")) {
+      elementos.push(<h3 key={i} className="text-base font-bold mt-6 mb-2" style={{ color: "var(--texto-primario)" }}>{linea.slice(4)}</h3>);
+    } else if (linea.startsWith("## ")) {
+      elementos.push(<h2 key={i} className="text-lg font-bold mt-8 mb-3" style={{ color: "var(--texto-primario)" }}>{linea.slice(3)}</h2>);
+    } else if (linea.startsWith("# ")) {
+      elementos.push(<h1 key={i} className="text-xl font-bold mt-8 mb-3" style={{ color: "var(--texto-primario)" }}>{linea.slice(2)}</h1>);
+    // Listas
+    } else if (linea.startsWith("- ") || linea.startsWith("* ")) {
+      const items: string[] = [];
+      while (i < lineas.length && (lineas[i].startsWith("- ") || lineas[i].startsWith("* "))) {
+        items.push(lineas[i].slice(2));
+        i++;
+      }
+      elementos.push(
+        <ul key={`ul-${i}`} className="list-disc pl-5 mb-4 space-y-1">
+          {items.map((item, j) => (
+            <li key={j} className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>{item}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    // Negritas simples (**texto**)
+    } else {
+      const formateado = linea.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      elementos.push(
+        <p key={i} className="text-sm leading-relaxed mb-3" style={{ color: "var(--texto-secundario)" }}
+          dangerouslySetInnerHTML={{ __html: formateado }} />
+      );
+    }
+    i++;
+  }
+  return elementos;
+}
+
+function ContenidoTexto({ descripcion, contenidoMarkdown }: { descripcion: string; contenidoMarkdown?: string | null }) {
+  const texto = contenidoMarkdown || descripcion;
+  if (!texto) {
     return (
       <p className="text-sm leading-relaxed" style={{ color: "var(--texto-muted)" }}>
         Este módulo no tiene descripción. El administrador puede añadir contenido editando el módulo.
       </p>
     );
   }
-  // Renderiza cada párrafo separado por salto de línea
-  const parrafos = descripcion.split(/\n+/).filter(Boolean);
-  return (
-    <div>
-      {parrafos.map((p, i) => (
-        <p key={i} className="text-sm leading-relaxed mb-4" style={{ color: "var(--texto-secundario)" }}>
-          {p}
-        </p>
-      ))}
-    </div>
-  );
+  return <div className="prose-sm max-w-none">{renderMarkdown(texto)}</div>;
 }
 
 function ContenidoVideo() {

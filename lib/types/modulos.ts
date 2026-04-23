@@ -41,6 +41,7 @@ export interface Modulo {
   testPreguntas?: string;
   imagenPortadaUrl?: string | null;
   tiposSalida?: string;
+  contenidoMarkdown?: string | null;
   scriptPodcast?: string | null;
   scriptVideo?: string | null;
   podcastAudioUrl?: string | null;
