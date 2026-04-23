@@ -59,14 +59,14 @@ function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: st
 
 type ModuloEnriquecido = ModuloConProgreso & { duracion: string; porcentaje: number };
 
-const TOTAL_ITEMS_POR_MODULO = 5; // igual que en la página de detalle
-
 function leerPorcentajeLS(moduloId: string): number | null {
   try {
     const raw = localStorage.getItem(`egm_modulo_${moduloId}`);
     if (!raw) return null;
-    const { completados } = JSON.parse(raw) as { completados: string[] };
-    return Math.round((completados.length / TOTAL_ITEMS_POR_MODULO) * 100);
+    const { completados, total } = JSON.parse(raw) as { completados: string[]; total?: number };
+    const totalItems = total ?? 5; // fallback para datos legacy
+    if (totalItems === 0) return 0;
+    return Math.min(100, Math.round((completados.length / totalItems) * 100));
   } catch { return null; }
 }
 

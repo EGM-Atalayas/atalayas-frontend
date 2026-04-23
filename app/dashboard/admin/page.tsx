@@ -223,13 +223,34 @@ function AdminContent() {
   const resetFormModulo = () => { setEditingModulo(null); setShowFormModulo(false); };
   const handleEditModulo = (f: ModuloConProgreso) => { setEditingModulo(f); setShowFormModulo(true); };
 
-  const handleDesactivarModulo = async (moduloId: string) => {
-    if (!confirm("¿Desactivar este módulo? Dejará de ser visible para los empleados.")) return;
+  const handleDesactivarModulo = async (modulo: ModuloConProgreso) => {
+    const estaActivo = modulo.activo;
+    const msg = estaActivo
+      ? "¿Desactivar este módulo? Dejará de ser visible para los empleados."
+      : "¿Activar este módulo? Volverá a ser visible para los empleados.";
+    if (!confirm(msg)) return;
     try {
-      const res = await apiFetch(`${API_URL}/modulos/${moduloId}/desactivar`, { method: "PATCH" });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error al desactivar"); return; }
+      let res;
+      if (estaActivo) {
+        res = await apiFetch(`${API_URL}/modulos/${modulo.moduloId}/desactivar`, { method: "PATCH" });
+      } else {
+        // Reactivar: PUT con activo: true preservando el resto de campos
+        res = await apiFetch(`${API_URL}/modulos/${modulo.moduloId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            nombre: modulo.nombre,
+            descripcion: modulo.descripcion,
+            tipoModulo: modulo.tipoModulo,
+            audiencia: modulo.audiencia ?? "todos",
+            activo: true,
+            empresaId: modulo.empresaId,
+            imagenPortadaUrl: modulo.imagenPortadaUrl ?? null,
+          }),
+        });
+      }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
       await refreshData();
-    } catch { alert("Error al desactivar el módulo"); }
+    } catch { alert("Error al cambiar el estado del módulo"); }
   };
 
   const handleEliminarModulo = async (moduloId: string) => {
@@ -966,8 +987,9 @@ function AdminContent() {
                       key={f.moduloId}
                       className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
                       style={{
-                        background: "var(--blanco)",
-                        border: "1px solid var(--gris-borde)",
+                        background: f.activo ? "var(--blanco)" : "var(--gris-pagina)",
+                        border: `1px solid ${f.activo ? "var(--gris-borde)" : "var(--gris-borde)"}`,
+                        opacity: f.activo ? 1 : 0.65,
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
                       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
@@ -976,11 +998,13 @@ function AdminContent() {
                       {f.imagenPortadaUrl ? (
                         <div className="w-full h-36 relative overflow-hidden shrink-0">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover" />
+                          <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover"
+                            style={{ filter: f.activo ? "none" : "grayscale(100%)" }} />
                           <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
                         </div>
                       ) : (
-                        <div className="w-full h-2 shrink-0" style={{ background: accentColor }} />
+                        <div className="w-full h-2 shrink-0"
+                          style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
                       )}
                       <div className="p-5 flex flex-col flex-1">
                       {/* Badges */}
@@ -998,6 +1022,12 @@ function AdminContent() {
                           <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
                             style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
                             Tu empresa
+                          </span>
+                        )}
+                        {!f.activo && (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
+                            Desactivado
                           </span>
                         )}
                       </div>
@@ -1036,7 +1066,7 @@ function AdminContent() {
                               style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
                               Editar
                             </button>
-                            <button onClick={() => handleDesactivarModulo(f.moduloId)}
+                            <button onClick={() => handleDesactivarModulo(f)}
                               className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
                               style={{ background: "#fef9c3", color: "#854d0e" }}>
                               {f.activo ? "Desactivar" : "Activar"}
