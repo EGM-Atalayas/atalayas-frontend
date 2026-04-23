@@ -176,8 +176,8 @@ function cargarEstado(id: string): { completados: string[]; activoId: string } {
   return { completados: [], activoId: "c1" };
 }
 
-function guardarEstado(id: string, completados: string[], activoId: string) {
-  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId })); }
+function guardarEstado(id: string, completados: string[], activoId: string, total: number) {
+  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId, total })); }
   catch { /* noop */ }
 }
 
@@ -201,6 +201,11 @@ export default function Page() {
   const [moduloApi, setModuloApi] = useState<ModuloAPI | null>(null);
   const [activoId, setActivoId] = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
+  const [moduloCompletado, setModuloCompletado] = useState(false);
+  const [verificado, setVerificado] = useState(false);
+
+  // Reset verificado cada vez que el usuario cambia de ítem
+  React.useEffect(() => { setVerificado(false); }, [activoId]);
 
   // Carga el módulo desde la API; si falla usa el mock legacy
   useEffect(() => {
@@ -230,7 +235,7 @@ export default function Page() {
   useEffect(() => {
     if (!id || !modulo) return;
     const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
-    guardarEstado(id, hechos, activoId);
+    guardarEstado(id, hechos, activoId, modulo.totalItems);
   }, [modulo, activoId]);
 
   if (!modulo) return null;
@@ -244,16 +249,22 @@ export default function Page() {
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
       const siguiente = modulo.contenidos[idx + 1];
+      const nuevosCompletados = modulo.completados + 1;
       setModulo((m) => m ? ({
         ...m,
-        completados: m.completados + 1,
+        completados: nuevosCompletados,
         contenidos: m.contenidos.map((c, i) => {
           if (c.id === activoId) return { ...c, completado: true };
           if (i === idx + 1) return { ...c, bloqueado: false };
           return c;
         }),
       }) : null);
-      if (siguiente) setActivoId(siguiente.id);
+      if (siguiente) {
+        setActivoId(siguiente.id);
+      } else {
+        // Último ítem — módulo completado
+        setModuloCompletado(true);
+      }
       setCompletando(false);
     }, 600);
   };
@@ -270,6 +281,49 @@ export default function Page() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+
+      {/* ── MODAL MÓDULO COMPLETADO ───────────────────────────────────────────── */}
+      {moduloCompletado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+          <div className="w-full max-w-sm rounded-3xl text-center overflow-hidden shadow-2xl"
+            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            {/* Banner verde */}
+            <div className="py-8 px-6" style={{ background: "linear-gradient(135deg,#16a34a 0%,#4ade80 100%)" }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ background: "rgba(255,255,255,0.25)" }}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xl font-bold text-white">¡Módulo completado!</p>
+              <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.85)" }}>
+                Has completado <strong>{modulo.nombre}</strong>
+              </p>
+            </div>
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-sm mb-5" style={{ color: "var(--texto-secundario)" }}>
+                Enhorabuena. Has terminado todos los contenidos de este módulo. Tu progreso queda guardado.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => router.push("/dashboard/formacion")}
+                  className="w-full py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: "linear-gradient(135deg,var(--azul-egm),#A3B535)", color: "#fff", boxShadow: "0 4px 12px rgba(0,82,204,0.3)" }}>
+                  Volver a mis formaciones
+                </button>
+                <button
+                  onClick={() => setModuloCompletado(false)}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ color: "var(--texto-muted)" }}>
+                  Revisar contenido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div
@@ -452,11 +506,11 @@ export default function Page() {
 
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
-              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={moduloApi?.contenidoMarkdown ?? null} />}
-              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} />}
-              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} />}
-              {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo />}
-              {activo.tipo === "pdf" && <ContenidoPDF />}
+              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={moduloApi?.contenidoMarkdown ?? null} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "pdf" && <ContenidoPDF onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
             </div>
 
@@ -465,20 +519,29 @@ export default function Page() {
               <div className="flex items-center justify-between px-8 py-5"
                 style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
                 <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                  {activo.completado ? "Ya completaste este contenido" : "Marca como completado para desbloquear el siguiente"}
+                  {activo.completado
+                    ? "Ya completaste este contenido — puedes revisarlo cuando quieras"
+                    : verificado
+                      ? "Contenido revisado. Puedes marcarlo como completado."
+                      : activo.tipo === "texto" ? "Lee el contenido completo para poder completarlo"
+                        : activo.subtipo === "podcast" ? "Escucha el podcast completo para poder completarlo"
+                        : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
+                        : "Revisa el contenido para poder completarlo"}
                 </p>
                 <button
                   onClick={marcarCompletado}
-                  disabled={activo.completado || completando}
-                  className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-50"
+                  disabled={activo.completado || completando || (!verificado && !activo.completado)}
+                  className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
                   style={{
-                    background: activo.completado ? "var(--exito-light)" : "var(--azul-egm)",
-                    color: activo.completado ? "var(--exito)" : "var(--blanco)",
+                    background: activo.completado ? "var(--exito-light)" : verificado ? "var(--azul-egm)" : "var(--gris-borde)",
+                    color: activo.completado ? "var(--exito)" : verificado ? "var(--blanco)" : "var(--texto-muted)",
+                    cursor: (!verificado && !activo.completado) ? "not-allowed" : "pointer",
+                    opacity: completando ? 0.5 : 1,
                   }}
-                  onMouseEnter={(e) => { if (!activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
-                  onMouseLeave={(e) => { if (!activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
+                  onMouseEnter={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+                  onMouseLeave={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
                 >
-                  {completando ? "Guardando..." : activo.completado ? "✓ Completado" : "Completado y continuar →"}
+                  {completando ? "Guardando..." : activo.completado ? "Completado" : "Completado y continuar"}
                 </button>
               </div>
             )}
@@ -812,8 +875,25 @@ function renderMarkdown(texto: string): React.ReactNode[] {
   return elementos;
 }
 
-function ContenidoTexto({ descripcion, contenidoMarkdown }: { descripcion: string; contenidoMarkdown?: string | null }) {
+function ContenidoTexto({ descripcion, contenidoMarkdown, onVerificado }: { descripcion: string; contenidoMarkdown?: string | null; onVerificado?: () => void }) {
   const texto = contenidoMarkdown || descripcion;
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const verificadoRef = React.useRef(false);
+
+  const handleScroll = React.useCallback(() => {
+    if (verificadoRef.current || !scrollRef.current) return;
+    const el = scrollRef.current;
+    const llegadoAlFinal = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+    if (llegadoAlFinal) { verificadoRef.current = true; onVerificado?.(); }
+  }, [onVerificado]);
+
+  // Si el contenido es corto y no hay scroll, verificar al montar
+  React.useEffect(() => {
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    if (el.scrollHeight <= el.clientHeight + 40) { onVerificado?.(); }
+  }, [texto, onVerificado]);
+
   if (!texto) {
     return (
       <p className="text-sm leading-relaxed" style={{ color: "var(--texto-muted)" }}>
@@ -821,10 +901,18 @@ function ContenidoTexto({ descripcion, contenidoMarkdown }: { descripcion: strin
       </p>
     );
   }
-  return <div className="prose-sm max-w-none">{renderMarkdown(texto)}</div>;
+  return (
+    <div ref={scrollRef} onScroll={handleScroll}
+      className="prose-sm max-w-none overflow-y-auto pr-1"
+      style={{ maxHeight: "55vh" }}>
+      {renderMarkdown(texto)}
+      <div className="h-4" /> {/* Padding inferior para facilitar detección del final */}
+    </div>
+  );
 }
 
-function ContenidoVideo() {
+function ContenidoVideo({ onVerificado }: { onVerificado?: () => void }) {
+  const [visto, setVisto] = React.useState(false);
   return (
     <div>
       <div className="rounded-2xl overflow-hidden mb-6 flex items-center justify-center"
@@ -837,21 +925,23 @@ function ContenidoVideo() {
             </svg>
           </div>
           <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Vídeo formativo · 12 min
+            Video formativo · 12 min
           </p>
         </div>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
-        En este vídeo aprenderás a identificar, inspeccionar y utilizar correctamente los equipos
-        de protección individual para trabajos en altura: arneses, líneas de vida, cascos y calzado
-        de seguridad homologados.
-      </p>
+      {!visto && (
+        <button onClick={() => { setVisto(true); onVerificado?.(); }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold mt-2"
+          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+          He visto el video completo
+        </button>
+      )}
     </div>
   );
 }
 
 // ── PODCAST ──────────────────────────────────────────────────────────────────
-function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: string }) {
+function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; audioUrl?: string; onVerificado?: () => void }) {
   // Si hay URL de audio real (ElevenLabs MP3), usamos <audio>; si no, Web Speech API como fallback
   const tieneAudioReal = !!audioUrl;
   const audioRef = React.useRef<HTMLAudioElement>(null);
@@ -881,7 +971,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(script);
     utterance.lang = "es-ES"; utterance.rate = 0.95; utterance.pitch = 1;
-    utterance.onend = () => { setReproduciendo(false); setPausado(false); };
+    utterance.onend = () => { setReproduciendo(false); setPausado(false); onVerificado?.(); };
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
   };
@@ -905,7 +995,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
         <audio
           ref={audioRef}
           src={audioUrl}
-          onEnded={() => { setReproduciendo(false); setPausado(false); }}
+          onEnded={() => { setReproduciendo(false); setPausado(false); onVerificado?.(); }}
           onPlay={() => { setReproduciendo(true); setPausado(false); }}
           onPause={() => setPausado(true)}
           preload="metadata"
@@ -970,11 +1060,29 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
 // ── SLIDES VIDEO ─────────────────────────────────────────────────────────────
 interface Slide { numero: number; titulo: string; contenido: string; notas?: string; }
 
-function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
+function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: string; onVerificado?: () => void }) {
   const slides: Slide[] = React.useMemo(() => {
     try { return JSON.parse(scriptVideoJson) as Slide[]; } catch { return []; }
   }, [scriptVideoJson]);
   const [idx, setIdx] = React.useState(0);
+  const verificadoRef = React.useRef(false);
+
+  // Verificar al llegar a la última diapositiva
+  React.useEffect(() => {
+    if (slides.length > 0 && idx === slides.length - 1 && !verificadoRef.current) {
+      verificadoRef.current = true;
+      onVerificado?.();
+    }
+  }, [idx, slides.length, onVerificado]);
+
+  // Si solo hay 1 slide, verificar al montar
+  React.useEffect(() => {
+    if (slides.length === 1 && !verificadoRef.current) {
+      verificadoRef.current = true;
+      onVerificado?.();
+    }
+  }, [slides.length, onVerificado]);
+
   if (slides.length === 0) return <p className="text-sm" style={{ color: "var(--texto-muted)" }}>No hay slides disponibles.</p>;
   const slide = slides[idx];
   return (
@@ -1028,7 +1136,8 @@ function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
   );
 }
 
-function ContenidoPDF() {
+function ContenidoPDF({ onVerificado }: { onVerificado?: () => void }) {
+  const [leido, setLeido] = React.useState(false);
   return (
     <div>
       <div className="rounded-2xl flex items-center gap-5 px-6 py-5 mb-6"
@@ -1052,10 +1161,28 @@ function ContenidoPDF() {
           Descargar
         </button>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
+      <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--texto-secundario)" }}>
         Descarga y lee el documento antes de marcar este contenido como completado. Contiene los
         formularios de registro obligatorios que deberás cumplimentar en cada intervención.
       </p>
+      {!leido ? (
+        <button
+          onClick={() => { setLeido(true); onVerificado?.(); }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid var(--azul-egm)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-light)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm-light)")}>
+          He leído el documento completo
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
+          style={{ background: "var(--exito-light)", border: "1px solid var(--exito)" }}>
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <p className="text-sm font-semibold" style={{ color: "var(--exito)" }}>Documento confirmado como leído</p>
+        </div>
+      )}
     </div>
   );
 }
