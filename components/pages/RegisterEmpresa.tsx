@@ -1,4 +1,3 @@
-// src/components/pages/RegisterEmpresa.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -32,14 +31,72 @@ const RegisterEmpresa: React.FC = () => {
     passwordAdmin: "",
   });
 
+  const [erroresValidacion, setErroresValidacion] = useState({
+    cif: "",
+    telefono: "",
+  });
+  
+  // Nuevos estados para los checks legales
+  const [aceptarTerminos, setAceptarTerminos] = useState(false);
+  const [aceptarPrivacidad, setAceptarPrivacidad] = useState(false);
+
+  // Validación de CIF: 1 letra + 8 números (ej: B12345678)
+  const validarCIF = (cif: string): boolean => {
+    const cifRegex = /^[A-Za-z]\d{8}$/;
+    return cifRegex.test(cif);
+  };
+
+  // Validación de Teléfono: 9 números (opcional)
+  const validarTelefono = (telefono: string): boolean => {
+    if (!telefono) return true;
+    const telefonoRegex = /^[0-9]{9}$/;
+    return telefonoRegex.test(telefono);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Limpiar errores cuando el usuario empieza a escribir
+    if (name === "cif" && erroresValidacion.cif) {
+      setErroresValidacion((prev) => ({ ...prev, cif: "" }));
+    }
+    if (name === "telefono" && erroresValidacion.telefono) {
+      setErroresValidacion((prev) => ({ ...prev, telefono: "" }));
+    }
   };
 
-  const nextStep = () => { setErrorMensaje(""); setPaso((p) => p + 1); };
+  const nextStep = () => {
+    setErrorMensaje("");
+    
+    // Validar CIF si estamos en paso 1
+    if (paso === 1) {
+      if (!validarCIF(formData.cif)) {
+        setErroresValidacion((prev) => ({ 
+          ...prev, 
+          cif: "CIF inválido. Debe ser: 1 letra + 8 números (ej: B12345678)" 
+        }));
+        return;
+      }
+
+      // Validar teléfono si está relleno
+      if (formData.telefono && !validarTelefono(formData.telefono)) {
+        setErroresValidacion((prev) => ({ 
+          ...prev, 
+          telefono: "Teléfono inválido. Debe contener 9 dígitos numéricos" 
+        }));
+        return;
+      }
+
+      setErroresValidacion({ cif: "", telefono: "" });
+    }
+
+    setPaso((p) => p + 1);
+  };
+
   const prevStep = () => {
     setErrorMensaje("");
+    setErroresValidacion({ cif: "", telefono: "" });
     if (paso === 1) router.push("/login");
     else setPaso((p) => p - 1);
   };
@@ -64,7 +121,7 @@ const RegisterEmpresa: React.FC = () => {
         body:    JSON.stringify(payload),
       });
       if (response.ok) {
-        setPaso(3);
+        setPaso(4);
       } else {
         const errorData = await response.json().catch(() => ({}));
         let errMsg = "Error del servidor";
@@ -96,12 +153,22 @@ const RegisterEmpresa: React.FC = () => {
     e.target.style.boxShadow   = "none";
   };
 
-  const isStep1Valid = !!(formData.nombreEmpresa && formData.cif && formData.emailEmpresa);
+  const isStep1Valid = !!(
+    formData.nombreEmpresa && 
+    formData.cif && 
+    validarCIF(formData.cif) &&
+    formData.emailEmpresa &&
+    (!formData.telefono || validarTelefono(formData.telefono))
+  );
   const isStep2Valid = !!(formData.nombreAdmin && formData.apellidosAdmin && formData.emailAdmin && formData.passwordAdmin);
+  
+  // Variable para comprobar si el paso 3 está listo para enviarse
+  const isReadyToSubmit = aceptarTerminos && aceptarPrivacidad && !isLoading;
 
   const steps = [
     { num: 1, label: "Empresa",       sub: "Datos generales"   },
     { num: 2, label: "Administrador", sub: "Cuenta de acceso"  },
+    { num: 3, label: "Verificación",  sub: "Revisa tus datos"  },
   ];
 
   /* ═══════════════════ PASO 1 ═══════════════════ */
@@ -124,7 +191,12 @@ const RegisterEmpresa: React.FC = () => {
         <div>
           <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>CIF</label>
           <input type="text" name="cif" value={formData.cif} onChange={handleChange}
-            placeholder="B12345678" required className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+            placeholder="B12345678" required className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} 
+            maxLength={9}
+          />
+          {erroresValidacion.cif && (
+            <p className="text-sm mt-1" style={{ color: "#EF4444" }}>{erroresValidacion.cif}</p>
+          )}
         </div>
         <div>
           <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>Sector</label>
@@ -156,7 +228,12 @@ const RegisterEmpresa: React.FC = () => {
           Teléfono <span className="font-normal" style={{ color: "#9CA3AF" }}>(opcional)</span>
         </label>
         <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
-          placeholder="600 000 000" className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+          placeholder="600000000" className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} 
+          maxLength={9}
+        />
+        {erroresValidacion.telefono && (
+          <p className="text-sm mt-1" style={{ color: "#EF4444" }}>{erroresValidacion.telefono}</p>
+        )}
       </div>
 
       <button type="button" onClick={nextStep} disabled={!isStep1Valid}
@@ -212,25 +289,153 @@ const RegisterEmpresa: React.FC = () => {
           placeholder="••••••••" required className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
       </div>
 
-      <button type="submit" disabled={!isStep2Valid || isLoading}
+      <button type="button" onClick={nextStep} disabled={!isStep2Valid}
         className="w-full py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
         style={{
-          background:           (isStep2Valid && !isLoading) ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
+          background:           isStep2Valid ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
           border:               "1px solid rgba(255,255,255,0.18)",
-          color:                (isStep2Valid && !isLoading) ? "#ffffff" : "#8aa6cc",
+          color:                isStep2Valid ? "#ffffff" : "#8aa6cc",
           backdropFilter:       "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          boxShadow:            (isStep2Valid && !isLoading) ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
+          boxShadow:            isStep2Valid ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
         }}
-        onMouseEnter={(e) => { if (isStep2Valid && !isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
-        onMouseLeave={(e) => { if (isStep2Valid && !isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
+        onMouseEnter={(e) => { if (isStep2Valid) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
+        onMouseLeave={(e) => { if (isStep2Valid) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
       >
-        {isLoading ? <span className="loading-dots">Enviando</span> : <> Enviar solicitud <FiArrowRight /> </>}
+        Continuar <FiArrowRight />
       </button>
     </div>
   );
 
-  /* ═══════════════════ ÉXITO ═══════════════════ */
+  /* ═══════════════════ PASO 3 ═══════════════════ */
+  const renderPaso3 = () => (
+    <div className="flex flex-col gap-5">
+      <div>
+        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+          Verifica tus datos
+        </h2>
+        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Revisa la información antes de enviar la solicitud.</p>
+      </div>
+
+      {/* Sección Empresa */}
+      <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: "#1B3F7E" }}>Datos de la Empresa</h3>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p style={{ color: "#6B7A8D" }}>Nombre de empresa</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.nombreEmpresa}</p>
+          </div>
+          <div>
+            <p style={{ color: "#6B7A8D" }}>CIF</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.cif}</p>
+          </div>
+          <div>
+            <p style={{ color: "#6B7A8D" }}>Sector</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.sector}</p>
+          </div>
+          <div>
+            <p style={{ color: "#6B7A8D" }}>Email de contacto</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.emailEmpresa}</p>
+          </div>
+          {formData.telefono && (
+            <div>
+              <p style={{ color: "#6B7A8D" }}>Teléfono</p>
+              <p className="font-medium" style={{ color: "#0f1923" }}>{formData.telefono}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sección Administrador */}
+      <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: "#1B3F7E" }}>Datos del Administrador</h3>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p style={{ color: "#6B7A8D" }}>Nombre</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.nombreAdmin}</p>
+          </div>
+          <div>
+            <p style={{ color: "#6B7A8D" }}>Apellidos</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.apellidosAdmin}</p>
+          </div>
+          <div className="col-span-2">
+            <p style={{ color: "#6B7A8D" }}>Email</p>
+            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.emailAdmin}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Checkboxes Legales */}
+      <div className="flex flex-col gap-2">
+        {/* Términos y Condiciones */}
+        <div className="flex items-start gap-3 p-4 rounded-lg transition-colors" style={{ background: aceptarTerminos ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.1)" }}>
+          <input
+            type="checkbox"
+            checked={aceptarTerminos}
+            onChange={(e) => setAceptarTerminos(e.target.checked)}
+            className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
+            style={{ accentColor: "#1B3F7E" }}
+          />
+          <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarTerminos(!aceptarTerminos)}>
+            He leído y acepto los <Link href="/terminos" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "#1B3F7E", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Términos y Condiciones</Link> de uso de la plataforma Atalayas.
+          </label>
+        </div>
+
+        {/* Política de Privacidad */}
+        <div className="flex items-start gap-3 p-4 rounded-lg transition-colors" style={{ background: aceptarPrivacidad ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.1)" }}>
+          <input
+            type="checkbox"
+            checked={aceptarPrivacidad}
+            onChange={(e) => setAceptarPrivacidad(e.target.checked)}
+            className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
+            style={{ accentColor: "#1B3F7E" }}
+          />
+          <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarPrivacidad(!aceptarPrivacidad)}>
+            He leído y acepto la <Link href="/privacidad" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "#1B3F7E", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Política de Privacidad</Link> relativa al tratamiento de mis datos personales.
+          </label>
+        </div>
+      </div>
+
+      {errorMensaje && (
+        <div className="p-4 rounded-lg text-sm" style={{ background: "#FEE2E2", border: "1px solid #FECACA", color: "#991B1B" }}>
+          {errorMensaje}
+        </div>
+      )}
+
+      <div className="flex gap-4 mt-2">
+        <button type="button" onClick={prevStep}
+          className="flex-1 py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
+          style={{
+            background: "rgba(27,63,126,0.1)",
+            border: "1px solid rgba(27,63,126,0.22)",
+            color: "#1B3F7E",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.15)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.1)"; }}
+        >
+          <FiChevronLeft /> Atrás
+        </button>
+
+        <button type="button" onClick={handleSubmit} disabled={!isReadyToSubmit}
+          className="flex-1 py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{
+            background:           isReadyToSubmit ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
+            border:               "1px solid rgba(255,255,255,0.18)",
+            color:                isReadyToSubmit ? "#ffffff" : "#8aa6cc",
+            backdropFilter:       "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow:            isReadyToSubmit ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
+          }}
+          onMouseEnter={(e) => { if (isReadyToSubmit) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
+          onMouseLeave={(e) => { if (isReadyToSubmit) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
+        >
+          {isLoading ? <span className="loading-dots">Enviando</span> : <> Enviar solicitud <FiArrowRight /> </>}
+        </button>
+      </div>
+    </div>
+  );
+
+  /* ═══════════════════ PASO 4 (ÉXITO) ═══════════════════ */
   const renderExito = () => (
     <div className="flex flex-col items-center justify-center gap-6 text-center py-10">
       <div className="w-20 h-20 rounded-full flex items-center justify-center"
@@ -272,10 +477,8 @@ const RegisterEmpresa: React.FC = () => {
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
         style={{ background: "url('/background-empresa.jpg') no-repeat center center", backgroundSize: "cover" }}
       >
-        {/* Sombreado igual que Login */}
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
 
-        {/* Logo + stepper — centrado igual que Login */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="h-32 sm:h-44 w-auto brightness-0 invert" />
@@ -341,7 +544,7 @@ const RegisterEmpresa: React.FC = () => {
           )}
 
           {/* Error */}
-          {errorMensaje && paso < 3 && (
+          {errorMensaje && paso < 4 && (
             <div className="text-sm text-center py-3 px-4 rounded-lg mb-4"
               style={{ background: "#FDECEA", border: "1px solid #C84B31", color: "#C84B31" }}>
               {errorMensaje}
@@ -351,10 +554,11 @@ const RegisterEmpresa: React.FC = () => {
           <form onSubmit={paso === 2 ? handleSubmit : (e) => e.preventDefault()} className="flex flex-col">
             {paso === 1 && renderPaso1()}
             {paso === 2 && renderPaso2()}
-            {paso === 3 && renderExito()}
+            {paso === 3 && renderPaso3()}
+            {paso === 4 && renderExito()}
           </form>
 
-          {paso < 3 && (
+          {paso < 4 && (
             <div className="text-center mt-4">
               <p className="text-sm" style={{ color: "#6B7A8D" }}>
                 ¿Ya tienes cuenta?{" "}
