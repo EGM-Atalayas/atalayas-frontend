@@ -60,7 +60,8 @@ Siempre en español.`
   })
 }
 
-function generarPdfDesdeContenido(titulo: string, contenido: string): Buffer {
+// ARREGLO: Ya no devolvemos un Buffer, devolvemos un ArrayBuffer puro
+function generarPdfDesdeContenido(titulo: string, contenido: string): ArrayBuffer {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -125,7 +126,8 @@ function generarPdfDesdeContenido(titulo: string, contenido: string): Buffer {
     )
   }
 
-  return Buffer.from(doc.output("arraybuffer"))
+  // Devolvemos el ArrayBuffer directamente sin pasar por Node Buffer
+  return doc.output("arraybuffer");
 }
 
 export async function POST(req: NextRequest) {
@@ -143,13 +145,18 @@ export async function POST(req: NextRequest) {
     const contenido = await generarContenidoIA(body.titulo, body.descripcion, body.tipo || "general")
 
     // Generar PDF
-    const pdfBuffer = generarPdfDesdeContenido(body.titulo, contenido)
+    const arrayBuffer = generarPdfDesdeContenido(body.titulo, contenido)
+
+    // ARREGLO: Convertir a Uint8Array que es perfectamente asimilable por NextResponse en Edge
+    const uint8Array = new Uint8Array(arrayBuffer);
 
     // Devolver como descarga
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(uint8Array, {
+      status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="comunicado_${Date.now()}.pdf"`,
+        "Content-Length": uint8Array.byteLength.toString(),
       },
     })
   } catch (error) {
