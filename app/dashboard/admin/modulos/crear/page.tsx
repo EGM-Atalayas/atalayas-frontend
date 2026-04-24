@@ -506,11 +506,11 @@ export default function CrearModuloPage() {
         </div>
       </div>
 
-      <div className="px-10 lg:px-16 py-10">
+      <div className="px-6 lg:px-10 py-8">
 
         {/* ── SELECCIÓN MODO ── */}
         {modo === null && (
-          <div className="fade-up max-w-2xl mx-auto">
+          <div className="fade-up max-w-3xl mx-auto">
             <p className="text-sm font-semibold mb-6 text-center" style={{ color:"var(--texto-muted)" }}>¿Cómo quieres crear el módulo?</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {[
@@ -536,7 +536,7 @@ export default function CrearModuloPage() {
 
         {/* ══ MODO MANUAL ══ */}
         {modo === "manual" && !guardado && (
-          <div className="fade-up max-w-2xl mx-auto">
+          <div className="fade-up max-w-5xl mx-auto">
             <Stepper paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} pasos={PASOS_MANUAL} />
 
             {/* PASO 1: Información */}
@@ -550,49 +550,52 @@ export default function CrearModuloPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+                  {/* 2 columnas: campos izquierda, portada derecha */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+                    <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
 
-                  {/* Imagen de portada */}
-                  <div className="mt-4">
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Imagen de portada</label>
-                    {portadaPreview ? (
-                      <div className="relative rounded-xl overflow-hidden" style={{ height: "160px", border: "1.5px solid var(--gris-borde)" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={portadaPreview} alt="Portada" className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => { setPortadaFile(null); setPortadaPreview(""); }}
-                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-80"
-                          style={{ background: "rgba(0,0,0,0.55)" }}
-                          title="Eliminar imagen">
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => inputPortadaRef.current?.click()}
-                        className="rounded-xl flex flex-col items-center gap-2 cursor-pointer transition-all py-7"
-                        style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--texto-muted)" }}>
-                          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                        </svg>
-                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Haz clic para subir una imagen de portada</p>
-                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WEBP — max 5 MB</p>
-                      </div>
-                    )}
-                    <input
-                      ref={inputPortadaRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (!f) return;
-                        setPortadaFile(f);
-                        setPortadaPreview(URL.createObjectURL(f));
-                      }}
-                    />
+                    {/* Imagen de portada */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Imagen de portada</label>
+                      {portadaPreview ? (
+                        <div className="relative rounded-xl overflow-hidden" style={{ height: "200px", border: "1.5px solid var(--gris-borde)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={portadaPreview} alt="Portada" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => { setPortadaFile(null); setPortadaPreview(""); }}
+                            className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-80"
+                            style={{ background: "rgba(0,0,0,0.55)" }}
+                            title="Eliminar imagen">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => inputPortadaRef.current?.click()}
+                          className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
+                          style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)", height: "200px" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
+                          <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--texto-muted)" }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                          <p className="text-sm text-center px-2" style={{ color: "var(--texto-muted)" }}>Haz clic para subir portada</p>
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WEBP</p>
+                        </div>
+                      )}
+                      <input
+                        ref={inputPortadaRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          setPortadaFile(f);
+                          setPortadaPreview(URL.createObjectURL(f));
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(2)} disabledNext={!nombre.trim()} />
@@ -622,15 +625,15 @@ export default function CrearModuloPage() {
                         if (f) { setArchivoM({ nombre:f.name, tamano:formatBytes(f.size), tipo:getTipo(f.name) }); setArchivoMRaw(f); }
                       }}
                       onClick={() => inputRef.current?.click()}
-                      className="rounded-xl flex flex-col items-center gap-3 cursor-pointer transition-all py-10"
-                      style={{ border:`2px dashed ${draggingM ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: draggingM ? "var(--azul-egm-light)" : "var(--gris-pagina)" }}>
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: draggingM ? "var(--azul-egm)" : "var(--gris-superficie)", color: draggingM ? "#fff" : "var(--texto-muted)" }}>
-                        <IconUpload />
+                      className="rounded-xl flex flex-col items-center gap-3 cursor-pointer transition-all"
+                      style={{ border:`2px dashed ${draggingM ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: draggingM ? "var(--azul-egm-light)" : "var(--gris-pagina)", minHeight: "220px", justifyContent: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: draggingM ? "var(--azul-egm)" : "var(--gris-superficie)", color: draggingM ? "#fff" : "var(--texto-muted)" }}>
+                        <IconUpload sz={6} />
                       </div>
-                      <p className="text-sm" style={{ color:"var(--texto-muted)" }}>
+                      <p className="text-sm font-medium" style={{ color:"var(--texto-muted)" }}>
                         Arrastra un archivo o <span style={{ color:"var(--azul-egm)", textDecoration:"underline" }}>selecciona</span>
                       </p>
-                      <p className="text-xs" style={{ color:"var(--texto-muted)" }}>PDF, DOCX, PPT, MP4, MP3</p>
+                      <p className="text-xs" style={{ color:"var(--texto-muted)" }}>PDF, DOCX, PPT, MP4, MP3 — max 10 MB</p>
                       <input ref={inputRef} type="file" accept=".pdf,.docx,.ppt,.pptx,.mp4,.mp3,.txt" className="hidden"
                         onChange={(e) => { const f = e.target.files?.[0]; if (f) { setArchivoM({ nombre:f.name, tamano:formatBytes(f.size), tipo:getTipo(f.name) }); setArchivoMRaw(f); } }} />
                     </div>
@@ -669,7 +672,8 @@ export default function CrearModuloPage() {
                     <p className="text-xs" style={{ color:"var(--texto-muted)" }}>¿Quién puede ver este módulo?</p>
                   </div>
                 </div>
-                <div className="p-6 flex flex-col gap-3">
+                <div className="p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
                   {([
                     { key: "todos" as AudienciaTipo,          label: "Todos los empleados",      desc: "Visible para cualquier empleado de la empresa",          icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, accent:"var(--azul-egm)", bg:"var(--azul-egm-light)" },
                     { key: "administradores" as AudienciaTipo, label: "Solo administradores",    desc: "Visible únicamente para administradores de empresa",      icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,                                                                                                                                                                                                                         accent:"#7c3aed",         bg:"#f3e8ff" },
@@ -695,6 +699,7 @@ export default function CrearModuloPage() {
                       </button>
                     );
                   })}
+                  </div>
 
                   {audiencia === "departamento" && (
                     <div className="fade-up mt-1 rounded-xl p-4" style={{ background:"var(--gris-pagina)", border:"1px solid var(--gris-borde)" }}>
@@ -836,7 +841,7 @@ export default function CrearModuloPage() {
 
         {/* ══ MODO IA ══ */}
         {modo === "ia" && !generado && (
-          <div className="fade-up max-w-2xl mx-auto">
+          <div className="fade-up max-w-5xl mx-auto">
             <Stepper paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} pasos={PASOS_IA} />
 
             {/* IA PASO 1: Información */}
@@ -850,49 +855,52 @@ export default function CrearModuloPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+                  {/* 2 columnas: campos izquierda, portada derecha */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+                    <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
 
-                  {/* Imagen de portada IA */}
-                  <div className="mt-4">
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Imagen de portada</label>
-                    {portadaIAPreview ? (
-                      <div className="relative rounded-xl overflow-hidden" style={{ height: "160px", border: "1.5px solid var(--gris-borde)" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={portadaIAPreview} alt="Portada" className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => { setPortadaIAFile(null); setPortadaIAPreview(""); }}
-                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-80"
-                          style={{ background: "rgba(0,0,0,0.55)" }}
-                          title="Eliminar imagen">
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => inputPortadaIARef.current?.click()}
-                        className="rounded-xl flex flex-col items-center gap-2 cursor-pointer transition-all py-7"
-                        style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#A3B535"; e.currentTarget.style.background = "rgba(163,181,53,0.07)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--texto-muted)" }}>
-                          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                        </svg>
-                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Haz clic para subir una imagen de portada</p>
-                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WEBP — max 5 MB</p>
-                      </div>
-                    )}
-                    <input
-                      ref={inputPortadaIARef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (!f) return;
-                        setPortadaIAFile(f);
-                        setPortadaIAPreview(URL.createObjectURL(f));
-                      }}
-                    />
+                    {/* Imagen de portada IA */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--texto-secundario)" }}>Imagen de portada</label>
+                      {portadaIAPreview ? (
+                        <div className="relative rounded-xl overflow-hidden" style={{ height: "200px", border: "1.5px solid var(--gris-borde)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={portadaIAPreview} alt="Portada" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => { setPortadaIAFile(null); setPortadaIAPreview(""); }}
+                            className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-80"
+                            style={{ background: "rgba(0,0,0,0.55)" }}
+                            title="Eliminar imagen">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => inputPortadaIARef.current?.click()}
+                          className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
+                          style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)", height: "200px" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#A3B535"; e.currentTarget.style.background = "rgba(163,181,53,0.07)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
+                          <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--texto-muted)" }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                          <p className="text-sm text-center px-2" style={{ color: "var(--texto-muted)" }}>Haz clic para subir portada</p>
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WEBP</p>
+                        </div>
+                      )}
+                      <input
+                        ref={inputPortadaIARef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          setPortadaIAFile(f);
+                          setPortadaIAPreview(URL.createObjectURL(f));
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo}
@@ -918,15 +926,15 @@ export default function CrearModuloPage() {
                     onDragLeave={() => setDraggingIA(false)}
                     onDrop={(e) => { e.preventDefault(); setDraggingIA(false); procesarArchivosIA(e.dataTransfer.files); }}
                     onClick={() => inputIARef.current?.click()}
-                    className="rounded-xl flex flex-col items-center gap-3 cursor-pointer py-10 transition-all"
-                    style={{ border:`2px dashed ${draggingIA ? "#A3B535" : "var(--gris-borde)"}`, background: draggingIA ? "rgba(163,181,53,0.07)" : "var(--gris-pagina)" }}>
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: draggingIA ? "#A3B535" : "var(--gris-superficie)", color: draggingIA ? "#fff" : "var(--texto-muted)" }}>
-                      <IconUpload />
+                    className="rounded-xl flex flex-col items-center gap-3 cursor-pointer transition-all"
+                    style={{ border:`2px dashed ${draggingIA ? "#A3B535" : "var(--gris-borde)"}`, background: draggingIA ? "rgba(163,181,53,0.07)" : "var(--gris-pagina)", minHeight: "220px", justifyContent: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: draggingIA ? "#A3B535" : "var(--gris-superficie)", color: draggingIA ? "#fff" : "var(--texto-muted)" }}>
+                      <IconUpload sz={6} />
                     </div>
-                    <p className="text-sm" style={{ color:"var(--texto-muted)" }}>
+                    <p className="text-sm font-medium" style={{ color:"var(--texto-muted)" }}>
                       Arrastra o <span style={{ color:"#A3B535", textDecoration:"underline" }}>selecciona</span>
                     </p>
-                    <p className="text-xs" style={{ color:"var(--texto-muted)" }}>PDF, DOCX, PPT, TXT, MP4, MP3</p>
+                    <p className="text-xs" style={{ color:"var(--texto-muted)" }}>PDF, DOCX, PPT, TXT, MP4, MP3 — max 10 MB</p>
                     <input ref={inputIARef} type="file" multiple accept=".pdf,.docx,.ppt,.pptx,.mp4,.mp3,.txt" className="hidden"
                       onChange={(e) => procesarArchivosIA(e.target.files)} />
                   </div>
@@ -970,7 +978,8 @@ export default function CrearModuloPage() {
                     <p className="text-xs" style={{ color:"var(--texto-muted)" }}>Elige qué formatos creará la IA a partir de tu documento</p>
                   </div>
                 </div>
-                <div className="p-6 flex flex-col gap-2">
+                <div className="p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                   {COMBOS.map((combo, idx) => {
                     const sel = comboActivo === idx;
                     return (
@@ -999,6 +1008,7 @@ export default function CrearModuloPage() {
                       </button>
                     );
                   })}
+                  </div>
 
                   <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo}
                     onNext={() => setPasoIA(4)} labelNext="Continuar" />
@@ -1017,65 +1027,82 @@ export default function CrearModuloPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  {/* Resumen de configuración */}
-                  <div className="rounded-xl p-4 mb-5 flex flex-col gap-3" style={{ background:"var(--gris-pagina)", border:"1px solid var(--gris-borde)" }}>
-                    <p className="text-xs font-bold uppercase tracking-wide" style={{ color:"var(--texto-muted)" }}>Resumen</p>
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-semibold w-20 shrink-0" style={{ color:"var(--texto-muted)" }}>Módulo</span>
-                      <span className="text-sm font-semibold" style={{ color:"var(--texto-primario)" }}>{nombre}</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-semibold w-20 shrink-0" style={{ color:"var(--texto-muted)" }}>Documento</span>
-                      <span className="text-sm" style={{ color:"var(--texto-primario)" }}>{archivosIA[0]?.nombre}</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-semibold w-20 shrink-0" style={{ color:"var(--texto-muted)" }}>Contenido</span>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {tiposSalidaIA.map((t) => {
-                          const info = TIPOS_SALIDA.find((x) => x.key === t)!;
-                          return (
-                            <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                              style={{ background: info.bg, color: info.color }}>
-                              {info.icon} {info.label}
-                            </span>
-                          );
-                        })}
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+                    {/* Resumen de configuración */}
+                    <div className="rounded-xl p-5 flex flex-col gap-4" style={{ background:"var(--gris-pagina)", border:"1px solid var(--gris-borde)" }}>
+                      <p className="text-xs font-bold uppercase tracking-wide" style={{ color:"var(--texto-muted)" }}>Resumen de la configuración</p>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Módulo</span>
+                          <span className="text-sm font-semibold" style={{ color:"var(--texto-primario)" }}>{nombre}</span>
+                        </div>
+                        {descripcion && (
+                          <div className="flex items-start gap-3">
+                            <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Descripción</span>
+                            <span className="text-sm leading-relaxed" style={{ color:"var(--texto-secundario)" }}>{descripcion}</span>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Documento</span>
+                          <span className="text-sm" style={{ color:"var(--texto-primario)" }}>{archivosIA[0]?.nombre}</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Idioma</span>
+                          <span className="text-sm" style={{ color:"var(--texto-primario)" }}>{{ es: "Español", en: "Inglés", ca: "Valenciano" }[idioma] ?? idioma}</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Contenido</span>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {tiposSalidaIA.map((t) => {
+                              const info = TIPOS_SALIDA.find((x) => x.key === t)!;
+                              return (
+                                <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                  style={{ background: info.bg, color: info.color }}>
+                                  {info.icon} {info.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Panel de generación */}
+                    <div className="flex flex-col justify-between gap-4">
+                      {generando && (
+                        <div>
+                          <button disabled
+                            className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                            style={{ background:"linear-gradient(135deg,var(--azul-egm),#A3B535)", color:"#fff", opacity:0.85 }}>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Generando…
+                          </button>
+                          <div className="mt-4">
+                            <div className="w-full rounded-full overflow-hidden" style={{ height:"5px", background:"var(--gris-superficie)" }}>
+                              <div className="h-full rounded-full transition-all duration-700" style={{ width:`${progreso}%`, background:"linear-gradient(90deg,var(--azul-egm),#A3B535)" }} />
+                            </div>
+                            <p className="text-xs text-center mt-2" style={{ color:"var(--texto-muted)" }}>{msgProgreso}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {errorIA && !generando && (
+                        <div className="px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#dc2626" }}>
+                          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                          <div>
+                            <p className="text-xs font-semibold">Error al generar el módulo</p>
+                            <p className="text-xs mt-0.5">{errorIA}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {!generando && (
+                        <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo}
+                          onNext={iniciarGeneracion} disabledNext={generando}
+                          labelNext={errorIA ? "Reintentar" : "Generar módulo con IA"} />
+                      )}
                     </div>
                   </div>
-
-                  {generando && (
-                    <div className="mb-4">
-                      <button disabled
-                        className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                        style={{ background:"linear-gradient(135deg,var(--azul-egm),#A3B535)", color:"#fff", opacity:0.85 }}>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Generando…
-                      </button>
-                      <div className="mt-4">
-                        <div className="w-full rounded-full overflow-hidden" style={{ height:"5px", background:"var(--gris-superficie)" }}>
-                          <div className="h-full rounded-full transition-all duration-700" style={{ width:`${progreso}%`, background:"linear-gradient(90deg,var(--azul-egm),#A3B535)" }} />
-                        </div>
-                        <p className="text-xs text-center mt-2" style={{ color:"var(--texto-muted)" }}>{msgProgreso}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {errorIA && !generando && (
-                    <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#dc2626" }}>
-                      <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      <div>
-                        <p className="text-xs font-semibold">Error al generar el módulo</p>
-                        <p className="text-xs mt-0.5">{errorIA}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {!generando && (
-                    <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo}
-                      onNext={iniciarGeneracion} disabledNext={generando}
-                      labelNext={errorIA ? "Reintentar" : "Generar módulo con IA"} />
-                  )}
                 </div>
               </div>
             )}
