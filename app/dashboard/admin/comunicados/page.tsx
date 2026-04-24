@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+import { useState, useEffect, useRef } from "react";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
   getComunicados,
@@ -10,7 +8,29 @@ import {
   editarComunicado,
   desactivarComunicado,
 } from "@/lib/api/noticias";
+import { subirImagenModulo } from "@/lib/supabase";
 import type { Comunicado, ComunicadoInput, CategoriaComunicado } from "@/lib/types/noticias";
+
+const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+
+// ── IA helper ─────────────────────────────────────────────────────────────────
+async function llamarIA(prompt: string): Promise<string> {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: prompt }], context: {} }),
+  });
+  if (!res.ok || !res.body) throw new Error("IA no disponible");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let out = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    out += dec.decode(value);
+  }
+  return out.trim();
+}
 
 // ── CONSTANTES ─────────────────────────────────────────────────────────────────
 const CATEGORIAS: CategoriaComunicado[] = ["Novedad", "Aviso", "Evento", "General"];
@@ -52,6 +72,14 @@ export default function ComunicadosAdminPage() {
   const [submitting, setSubmitting]       = useState(false);
   const [formError, setFormError]         = useState<string | null>(null);
   const [filtroEstado, setFiltroEstado]   = useState<"todos" | "activos" | "expirados">("activos");
+
+  // Image upload
+  const [imagenModo, setImagenModo]       = useState<"url" | "upload">("url");
+  const [uploadingImg, setUploadingImg]   = useState(false);
+  const fileInputRef                      = useRef<HTMLInputElement>(null);
+
+  // IA
+  const [aiLoading, setAiLoading]         = useState<"titulo" | "mensaje" | null>(null);
 
   useEffect(() => { cargar(); }, []);
 
@@ -95,6 +123,54 @@ export default function ComunicadosAdminPage() {
     setEditando(null);
     setForm(EMPTY_FORM);
     setFormError(null);
+    setImagenModo("url");
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true);
+    try {
+      const url = await subirImagenModulo(file);
+      setForm((f) => ({ ...f, imagenUrl: url }));
+      setImagenModo("url"); // show preview via url tab
+    } catch {
+      setFormError("Error al subir la imagen. Inténtalo de nuevo.");
+    } finally {
+      setUploadingImg(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function sugerirConIA(campo: "titulo" | "mensaje") {
+    if (campo === "mensaje" && !form.mensaje.trim() && !form.titulo.trim()) {
+      setFormError("Escribe algo en el título o mensaje antes de usar la IA.");
+      return;
+    }
+    if (campo === "titulo" && !form.mensaje.trim() && !form.titulo.trim()) {
+      setFormError("Escribe el mensaje antes de sugerir un título.");
+      return;
+    }
+    setAiLoading(campo);
+    setFormError(null);
+    try {
+      if (campo === "titulo") {
+        const base = form.mensaje.trim() || form.titulo.trim();
+        const sugerencia = await llamarIA(
+          `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado empresarial con el siguiente contenido. Devuelve SOLO el título, sin comillas, sin puntuación final ni explicaciones.\n\nContenido: ${base}`
+        );
+        setForm((f) => ({ ...f, titulo: sugerencia }));
+      } else {
+        const sugerencia = await llamarIA(
+          `Mejora la redacción de este mensaje de comunicado empresarial. Hazlo más claro, profesional y fácil de leer. Devuelve SOLO el texto mejorado, sin explicaciones ni comentarios adicionales.\n\nTexto original: ${form.mensaje}`
+        );
+        setForm((f) => ({ ...f, mensaje: sugerencia }));
+      }
+    } catch {
+      setFormError("La IA no está disponible en este momento.");
+    } finally {
+      setAiLoading(null);
+    }
   }
 
   async function handleSubmit() {
@@ -197,49 +273,158 @@ export default function ComunicadosAdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Título */}
               <div className="md:col-span-2">
-                <FormField label="Título" required>
-                  <input
-                    type="text"
-                    value={form.titulo}
-                    onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                    placeholder="Ej: Apertura del nuevo espacio de coworking"
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                </FormField>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
+                    Título <span style={{ color: "var(--error)" }}>*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => sugerirConIA("titulo")}
+                    disabled={aiLoading === "titulo"}
+                    className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-60"
+                    style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                    onMouseEnter={(e) => !aiLoading && (e.currentTarget.style.background = "#dbeafe")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                  >
+                    {aiLoading === "titulo" ? (
+                      <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                    ) : (
+                      <span>✨</span>
+                    )}
+                    {aiLoading === "titulo" ? "Generando..." : "Sugerir título"}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={form.titulo}
+                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                  placeholder="Ej: Apertura del nuevo espacio de coworking"
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
               </div>
 
               {/* Mensaje */}
               <div className="md:col-span-2">
-                <FormField label="Mensaje" required>
-                  <textarea
-                    value={form.mensaje}
-                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                    placeholder="Escribe el contenido completo del comunicado..."
-                    rows={5}
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                </FormField>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
+                    Mensaje <span style={{ color: "var(--error)" }}>*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      {form.mensaje.length} caracteres
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => sugerirConIA("mensaje")}
+                      disabled={aiLoading === "mensaje" || !form.mensaje.trim()}
+                      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-50"
+                      style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                      onMouseEnter={(e) => !aiLoading && form.mensaje.trim() && (e.currentTarget.style.background = "#dbeafe")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                    >
+                      {aiLoading === "mensaje" ? (
+                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                      ) : (
+                        <span>✨</span>
+                      )}
+                      {aiLoading === "mensaje" ? "Mejorando..." : "Mejorar con IA"}
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={form.mensaje}
+                  onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                  placeholder="Escribe el contenido completo del comunicado..."
+                  rows={5}
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
               </div>
 
-              {/* URL imagen */}
+              {/* Imagen */}
               <div className="md:col-span-2">
-                <FormField label="Imagen (URL, opcional)">
-                  <input
-                    type="url"
-                    value={form.imagenUrl ?? ""}
-                    onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                    placeholder="https://..."
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                  {form.imagenUrl && (
-                    <img src={form.imagenUrl} alt="preview" className="mt-2 rounded-lg object-cover" style={{ height: "120px", width: "100%", objectFit: "cover" }}
-                      onError={(e) => (e.currentTarget.style.display = "none")}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>Imagen (opcional)</label>
+                  <div className="flex gap-1 rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                    {(["url", "upload"] as const).map((modo) => (
+                      <button key={modo} type="button" onClick={() => setImagenModo(modo)}
+                        className="text-xs px-3 py-1 font-medium transition-all"
+                        style={{
+                          background: imagenModo === modo ? GRAD_BTN : "transparent",
+                          color: imagenModo === modo ? "#fff" : "var(--texto-secundario)",
+                        }}
+                      >
+                        {modo === "url" ? "URL" : "Subir archivo"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {imagenModo === "url" ? (
+                  <>
+                    <input
+                      type="url"
+                      value={form.imagenUrl ?? ""}
+                      onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
+                      placeholder="https://..."
+                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
                     />
-                  )}
-                </FormField>
+                    {form.imagenUrl && (
+                      <div className="relative mt-2">
+                        <img src={form.imagenUrl} alt="preview" className="rounded-lg object-cover w-full"
+                          style={{ height: "140px", objectFit: "cover" }}
+                          onError={(e) => (e.currentTarget.style.display = "none")}
+                        />
+                        <button
+                          type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}
+                        >×</button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImg}
+                      className="w-full flex flex-col items-center justify-center gap-2 rounded-lg py-6 text-sm transition-colors disabled:opacity-60"
+                      style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+                      onMouseEnter={(e) => !uploadingImg && (e.currentTarget.style.borderColor = "#93c5fd")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                    >
+                      {uploadingImg ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <span>Subiendo imagen...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                          </svg>
+                          <span>Haz clic para seleccionar una imagen</span>
+                          <span className="text-xs">JPG, PNG, WebP — máx. 5 MB</span>
+                        </>
+                      )}
+                    </button>
+                    {form.imagenUrl && (
+                      <div className="relative mt-2">
+                        <img src={form.imagenUrl} alt="preview" className="rounded-lg w-full object-cover"
+                          style={{ height: "140px", objectFit: "cover" }} />
+                        <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full"
+                          style={{ background: "rgba(22,163,74,0.85)", color: "#fff" }}>✓ Subida correctamente</span>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>×</button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Categoría */}
@@ -406,21 +591,27 @@ export default function ComunicadosAdminPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => abrirEditar(c)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                          style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          className="flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                          style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
                         >
+                          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-3 1 1-3a4 4 0 01.828-1.414z" />
+                          </svg>
                           Editar
                         </button>
                         {c.activo && !expirado && (
                           <button
                             onClick={() => handleDesactivar(c.comunicadoId)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                            style={{ color: "var(--error)", border: "1px solid var(--error-light)" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            className="flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                            style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}
                           >
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                             Desactivar
                           </button>
                         )}
