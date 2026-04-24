@@ -33,3 +33,23 @@ export async function subirImagenModulo(file: File): Promise<string> {
   const { data } = client.storage.from("modulos").getPublicUrl(ruta);
   return data.publicUrl;
 }
+
+/**
+ * Sube un documento (PDF u otro) al bucket "modulos" de Supabase Storage
+ * y devuelve la URL pública y el nombre original del archivo.
+ */
+export async function subirAdjunto(file: File): Promise<{ url: string; nombre: string }> {
+  const client = getClient();
+  const ext    = file.name.split(".").pop() ?? "pdf";
+  const nombre = `${crypto.randomUUID()}.${ext}`;
+  const ruta   = `adjuntos/${nombre}`;
+
+  const { error } = await client.storage
+    .from("modulos")
+    .upload(ruta, file, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`Error al subir adjunto: ${error.message}`);
+
+  const { data } = client.storage.from("modulos").getPublicUrl(ruta);
+  return { url: data.publicUrl, nombre: file.name };
+}
