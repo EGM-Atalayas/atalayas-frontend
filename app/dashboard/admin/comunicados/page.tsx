@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
   getComunicados,
@@ -156,8 +158,7 @@ export default function ComunicadosAdminPage() {
           <button
             onClick={abrirCrear}
             className="text-sm font-semibold px-4 py-2.5 rounded-lg"
-            style={{ background: "var(--azul-egm)", color: "#fff" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+            style={{ background: GRAD_BTN, color: "#fff" }}
             onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
           >
             + Nuevo comunicado
@@ -172,9 +173,10 @@ export default function ComunicadosAdminPage() {
               onClick={() => setFiltroEstado(f)}
               className="px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-all"
               style={{
-                background: filtroEstado === f ? "var(--azul-egm)" : "var(--gris-superficie)",
-                color:      filtroEstado === f ? "#fff"             : "var(--texto-secundario)",
-                border:     `1.5px solid ${filtroEstado === f ? "var(--azul-egm)" : "var(--gris-borde)"}`,
+                background: filtroEstado === f ? GRAD_BTN : "var(--gris-superficie)",
+                color:      filtroEstado === f ? "#fff"   : "var(--texto-secundario)",
+                border:     `1.5px solid ${filtroEstado === f ? "transparent" : "var(--gris-borde)"}`,
+                boxShadow:  filtroEstado === f ? "0 2px 8px rgba(37,99,235,0.22)" : "none",
               }}
             >
               {f === "activos" ? "Activos" : f === "expirados" ? "Expirados / Inactivos" : "Todos"}
@@ -319,8 +321,7 @@ export default function ComunicadosAdminPage() {
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="text-sm font-semibold px-5 py-2 rounded-lg disabled:opacity-50"
-                style={{ background: "var(--azul-egm)", color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                style={{ background: GRAD_BTN, color: "#fff" }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
               >
                 {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
@@ -343,8 +344,7 @@ export default function ComunicadosAdminPage() {
             </p>
             {filtroEstado === "activos" && (
               <button onClick={abrirCrear} className="mt-4 text-sm font-semibold px-4 py-2 rounded-lg"
-                style={{ background: "var(--azul-egm)", color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                style={{ background: GRAD_BTN, color: "#fff" }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
               >
                 Crear primer comunicado

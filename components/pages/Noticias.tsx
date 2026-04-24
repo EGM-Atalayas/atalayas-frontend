@@ -53,11 +53,20 @@ const SHADOW_TXT = "0 2px 8px rgba(0,0,0,0.65)";
 
 const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z";
 
-const CATEGORIA_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+// Colores para fondos OSCUROS (cards con overlay)
+const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: string }> = {
   Novedad: { bg: "rgba(34,197,94,0.22)",  text: "#bbf7d0", border: "rgba(34,197,94,0.3)"   },
   Aviso:   { bg: "rgba(251,191,36,0.22)", text: "#fde68a", border: "rgba(251,191,36,0.32)" },
   Evento:  { bg: "rgba(167,139,250,0.2)", text: "#ddd6fe", border: "rgba(167,139,250,0.3)" },
   General: { bg: "rgba(255,255,255,0.1)", text: "rgba(255,255,255,0.78)", border: "rgba(255,255,255,0.16)" },
+};
+
+// Colores para fondos CLAROS (feed list sobre blanco)
+const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
+  Novedad: { bg: "#dcfce7", text: "#166534", border: "#86efac" },
+  Aviso:   { bg: "#fef9c3", text: "#854d0e", border: "#fde047" },
+  Evento:  { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
+  General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
 };
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
@@ -93,30 +102,36 @@ function MegaphoneIcon({ size = 32 }: { size?: number }) {
   );
 }
 
-function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md" }: {
+function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md", dark = true }: {
   fuente: "egm" | "empresa";
   nombreEmpresa?: string | null;
   categoria?: string | null;
   destacado?: boolean;
   esNuevoItem?: boolean;
   size?: "sm" | "md";
+  dark?: boolean; // true = sobre fondo oscuro, false = sobre fondo claro
 }) {
   const sm = size === "sm";
   const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
+  const CATS = dark ? CATEGORIA_COLORS_DARK : CATEGORIA_COLORS_LIGHT;
 
   return (
     <>
       {fuente === "egm" ? (
-        <span className={cls} style={{ background: "rgba(27,63,126,0.42)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }}>
+        <span className={cls} style={dark
+          ? { background: "rgba(27,63,126,0.42)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }
+          : { background: "#dbeafe", color: "#1e3a8a", border: "1px solid #93c5fd" }}>
           EGM Atalayas
         </span>
       ) : (
-        <span className={cls} style={{ background: "rgba(45,90,61,0.55)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }}>
+        <span className={cls} style={dark
+          ? { background: "rgba(45,90,61,0.55)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }
+          : { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid #c8d97a" }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
       {fuente === "egm" && categoria && (() => {
-        const col = CATEGORIA_COLORS[categoria] ?? CATEGORIA_COLORS.General;
+        const col = CATS[categoria] ?? CATS.General;
         return (
           <span className={cls} style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
             {categoria}
@@ -124,12 +139,16 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         );
       })()}
       {destacado && (
-        <span className={cls} style={{ background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }}>
+        <span className={cls} style={dark
+          ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
+          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }}>
           ★ Destacado
         </span>
       )}
       {esNuevoItem && (
-        <span className={cls} style={{ background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }}>
+        <span className={cls} style={dark
+          ? { background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }
+          : { background: "#dcfce7", color: "#166534", border: "1px solid #86efac" }}>
           Nuevo
         </span>
       )}
@@ -512,9 +531,9 @@ export default function ComunicacionPage() {
                     <button
                       onClick={() => setVisibles((v) => v + 6)}
                       className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                      style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-secundario)", background: "var(--blanco)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--azul-accion)", e.currentTarget.style.color = "var(--azul-accion)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)", e.currentTarget.style.color = "var(--texto-secundario)")}
+                      style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.22)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
                       Ver más publicaciones
                     </button>
@@ -772,26 +791,10 @@ function FeedRow({ item, isLast, esAdmin, esMobil, nombreEmpresa, onOpen, onEdit
 
       {/* Texto */}
       <div className="flex-1 min-w-0 flex flex-col" style={{ gap: esMobil ? "3px" : "6px" }}>
-        <div className="flex items-center gap-1.5 overflow-hidden">
+        <div className="flex items-center gap-1.5 overflow-hidden flex-wrap">
           <span className="text-[10px] font-medium shrink-0" style={{ color: "var(--texto-muted)" }}>{formatDate(item.fecha)}</span>
           <span className="shrink-0" style={{ color: "var(--gris-borde)" }}>·</span>
-          {item.fuente === "egm" ? (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-              style={{ background: "rgba(27,63,126,0.09)", color: "var(--azul-egm)", border: "1px solid rgba(27,63,126,0.18)" }}>
-              EGM Atalayas
-            </span>
-          ) : (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-              style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-              {nombreEmpresa ?? "Tu empresa"}
-            </span>
-          )}
-          {item.esNuevoItem && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-              style={{ background: "#e8f5ee", color: "#1a6b3a", border: "1px solid #9dcdb3" }}>
-              Nuevo
-            </span>
-          )}
+          <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} esNuevoItem={item.esNuevoItem} size="sm" dark={false} />
         </div>
 
         <h3 className="font-bold leading-snug line-clamp-2 transition-colors"
