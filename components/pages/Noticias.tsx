@@ -39,8 +39,8 @@ const EMPTY_FORM: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
 };
 
-const GRAD_BTN  = "linear-gradient(135deg, var(--azul-accion) 0%, var(--azul-egm) 100%)";
-const GRAD_EGM  = "linear-gradient(135deg, var(--azul-egm) 0%, var(--marino) 100%)";
+const GRAD_BTN  = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+const GRAD_EGM  = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
 const GRAD_EMP  = "linear-gradient(135deg, #2d5a3d 0%, #1a3a26 100%)";
 
 // Colores activos por filtro (fondo, sombra)
@@ -351,9 +351,9 @@ export default function ComunicacionPage() {
                   onClick={() => setShowOrden((v) => !v)}
                   className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all"
                   style={{
-                    background: showOrden ? GRAD_BTN : orden !== "reciente" ? "var(--azul-accion-light)" : "var(--blanco)",
-                    color: showOrden ? "#fff" : orden !== "reciente" ? "var(--azul-accion)" : "var(--texto-secundario)",
-                    border: `1.5px solid ${showOrden ? "transparent" : orden !== "reciente" ? "var(--azul-accion)" : "var(--gris-borde)"}`,
+                    background: showOrden ? GRAD_BTN : orden !== "reciente" ? "#eff6ff" : "var(--blanco)",
+                    color: showOrden ? "#fff" : orden !== "reciente" ? "#2563eb" : "var(--texto-secundario)",
+                    border: `1.5px solid ${showOrden ? "transparent" : orden !== "reciente" ? "#2563eb" : "var(--gris-borde)"}`,
                     boxShadow: showOrden ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
                   }}
                 >
@@ -376,8 +376,8 @@ export default function ComunicacionPage() {
                         onClick={() => { setOrden(key); setShowOrden(false); setVisibles(6); }}
                         className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors"
                         style={{
-                          background: orden === key ? "var(--azul-accion-light)" : "transparent",
-                          color: orden === key ? "var(--azul-accion)" : "var(--texto-primario)",
+                          background: orden === key ? "#eff6ff" : "transparent",
+                          color: orden === key ? "#2563eb" : "var(--texto-primario)",
                           fontWeight: orden === key ? 600 : 400,
                         }}
                         onMouseEnter={(e) => { if (orden !== key) e.currentTarget.style.background = "var(--gris-superficie)"; }}
