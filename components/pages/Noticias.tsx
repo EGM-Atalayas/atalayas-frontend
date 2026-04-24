@@ -574,263 +574,26 @@ export default function ComunicacionPage() {
 
         {/* ── FORMULARIO INLINE (admin) ────────────────────────────────────── */}
         {showForm && esAdmin && (
-          <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
-                {editando ? "Editar anuncio" : "Nuevo anuncio de empresa"}
-              </h3>
-              <button onClick={cerrarForm}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-lg leading-none transition-colors"
-                style={{ color: "var(--texto-muted)", background: "var(--gris-superficie)" }}>
-                ×
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-
-              {/* Título + IA */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
-                    Título <span style={{ color: "var(--error)" }}>*</span>
-                  </label>
-                  <button type="button" onClick={() => sugerirConIA("titulo")}
-                    disabled={aiLoading === "titulo"}
-                    className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-60"
-                    style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
-                    onMouseEnter={(e) => !aiLoading && (e.currentTarget.style.background = "#dbeafe")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                  >
-                    {aiLoading === "titulo"
-                      ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                      : <span>✨</span>}
-                    {aiLoading === "titulo" ? "Generando..." : "Sugerir título"}
-                  </button>
-                </div>
-                <input type="text" value={form.titulo}
-                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                  placeholder="Ej: Recordatorio reunión de equipo"
-                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none transition-colors"
-                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                />
-              </div>
-
-              {/* Contenido + IA + contador */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
-                    Descripción <span style={{ color: "var(--error)" }}>*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
-                    <button type="button" onClick={() => sugerirConIA("contenido")}
-                      disabled={aiLoading === "contenido" || !form.contenido.trim()}
-                      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-50"
-                      style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
-                      onMouseEnter={(e) => !aiLoading && form.contenido.trim() && (e.currentTarget.style.background = "#dbeafe")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                    >
-                      {aiLoading === "contenido"
-                        ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                        : <span>✨</span>}
-                      {aiLoading === "contenido" ? "Mejorando..." : "Mejorar con IA"}
-                    </button>
-                  </div>
-                </div>
-                <textarea value={form.contenido}
-                  onChange={(e) => setForm({ ...form, contenido: e.target.value })}
-                  placeholder="Escribe el contenido del anuncio..."
-                  rows={4}
-                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none resize-none transition-colors"
-                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                />
-              </div>
-
-              {/* Imagen: URL o subir archivo */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>Imagen (opcional)</label>
-                  <div className="flex gap-0 rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                    {(["url", "upload"] as const).map((modo) => (
-                      <button key={modo} type="button" onClick={() => setImagenModo(modo)}
-                        className="text-xs px-3 py-1 font-medium transition-all"
-                        style={{ background: imagenModo === modo ? GRAD_BTN : "transparent", color: imagenModo === modo ? "#fff" : "var(--texto-secundario)" }}
-                      >
-                        {modo === "url" ? "URL" : "Subir archivo"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {imagenModo === "url" ? (
-                  <>
-                    <input type="url" value={form.imagenUrl ?? ""}
-                      onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                      placeholder="https://..."
-                      className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
-                      style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                    />
-                    {form.imagenUrl && (
-                      <div className="relative mt-2">
-                        <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
-                          style={{ height: "130px", objectFit: "cover" }}
-                          onError={(e) => (e.currentTarget.style.display = "none")}
-                        />
-                        <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>×</button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                      className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-5 text-sm transition-colors disabled:opacity-60"
-                      style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
-                      onMouseEnter={(e) => !uploadingImg && (e.currentTarget.style.borderColor = "#93c5fd")}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
-                    >
-                      {uploadingImg ? (
-                        <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                      ) : (
-                        <><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                        </svg>
-                        <span>Seleccionar imagen</span>
-                        <span className="text-xs">JPG, PNG, WebP</span></>
-                      )}
-                    </button>
-                    {form.imagenUrl && (
-                      <div className="relative mt-2">
-                        <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "130px", objectFit: "cover" }} />
-                        <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(22,163,74,0.85)", color: "#fff" }}>✓ Subida</span>
-                        <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>×</button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-            </div>
-
-              {/* Video URL */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
-                  Video (YouTube o Vimeo, opcional)
-                </label>
-                <input type="url" value={form.videoUrl ?? ""}
-                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
-                  placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
-                  className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
-                  style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                />
-                {form.videoUrl && getVideoEmbedUrl(form.videoUrl) && (
-                  <div className="mt-2 rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                    <iframe src={getVideoEmbedUrl(form.videoUrl)!} className="w-full h-full" allowFullScreen />
-                  </div>
-                )}
-              </div>
-
-              {/* Adjunto PDF */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
-                  Documento adjunto (PDF, opcional)
-                </label>
-                <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
-                {form.adjuntoUrl ? (
-                  <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl"
-                    style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span className="text-sm flex-1 truncate" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
-                    <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
-                      className="text-xs px-2 py-0.5 rounded-full" style={{ color: "var(--error)", background: "var(--error-light)" }}>
-                      Quitar
-                    </button>
-                  </div>
-                ) : (
-                  <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                    className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
-                    style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => !uploadingAdj && (e.currentTarget.style.borderColor = "#93c5fd")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}>
-                    {uploadingAdj ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></> :
-                      <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg><span>Adjuntar documento (PDF, Word...)</span></>}
-                  </button>
-                )}
-              </div>
-
-              {/* Enlace externo / CTA */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
-                  Enlace externo (opcional)
-                </label>
-                <div className="flex flex-col gap-2">
-                  <input type="url" value={form.enlaceUrl ?? ""}
-                    onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
-                    placeholder="https://..."
-                    className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
-                    style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                  />
-                  {form.enlaceUrl && (
-                    <input type="text" value={form.enlaceTexto ?? ""}
-                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
-                      placeholder='Texto del botón (ej: "Más información", "Inscríbete")'
-                      className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
-                      style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-primario)" }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Opciones: fijado + estado */}
-              <div className="flex flex-col gap-2 pt-1">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input type="checkbox" checked={form.fijado ?? false}
-                    onChange={(e) => setForm({ ...form, fijado: e.target.checked })}
-                    className="w-4 h-4 rounded" style={{ accentColor: "#2563eb" }} />
-                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>
-                    📌 Fijar en la parte superior
-                  </span>
-                </label>
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input type="checkbox" checked={form.estado === "borrador"}
-                    onChange={(e) => setForm({ ...form, estado: e.target.checked ? "borrador" : "publicado" })}
-                    className="w-4 h-4 rounded" style={{ accentColor: "#2563eb" }} />
-                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>
-                    Guardar como borrador (no visible para empleados)
-                  </span>
-                </label>
-              </div>
-
-            {formError && <p className="text-sm mt-1" style={{ color: "var(--error)" }}>{formError}</p>}
-
-            <div className="flex gap-2 justify-end pt-5 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-              <button onClick={cerrarForm}
-                className="text-sm px-4 py-2 rounded-xl transition-colors"
-                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
-                Cancelar
-              </button>
-              <button type="button" onClick={abrirPreview}
-                className="text-sm px-4 py-2 rounded-xl transition-colors"
-                style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
-                Previsualizar
-              </button>
-              <button onClick={handleSubmit} disabled={submitting}
-                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50"
-                style={{ background: GRAD_BTN, color: "#fff" }}>
-                {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
-              </button>
-            </div>
-          </div>
+          <FormAnuncio
+            form={form}
+            setForm={setForm}
+            editando={editando}
+            submitting={submitting}
+            formError={formError}
+            imagenModo={imagenModo}
+            setImagenModo={setImagenModo}
+            uploadingImg={uploadingImg}
+            uploadingAdj={uploadingAdj}
+            aiLoading={aiLoading}
+            fileInputRef={fileInputRef}
+            adjuntoRef={adjuntoRef}
+            onClose={cerrarForm}
+            onSubmit={handleSubmit}
+            onPreview={abrirPreview}
+            onImageUpload={handleImageUpload}
+            onAdjuntoUpload={handleAdjuntoUpload}
+            onSugerirIA={sugerirConIA}
+          />
         )}
 
         {/* ── CONTENIDO PRINCIPAL ─────────────────────────────────────────── */}
@@ -1316,6 +1079,398 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
           ×
         </button>
         {children}
+      </div>
+    </div>
+  );
+}
+
+// ── SVG ICONS ─────────────────────────────────────────────────────────────────
+function IconX({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+function IconSparkle() {
+  return (
+    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+    </svg>
+  );
+}
+function IconUpload() {
+  return (
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    </svg>
+  );
+}
+function IconDoc() {
+  return (
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
+// ── SEPARADOR DE SECCIÓN ──────────────────────────────────────────────────────
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <span className="text-xs font-semibold uppercase tracking-widest shrink-0"
+        style={{ color: "var(--texto-muted)", letterSpacing: "0.08em" }}>
+        {label}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
+    </div>
+  );
+}
+
+// ── CAMPO LABEL WRAPPER ───────────────────────────────────────────────────────
+function FieldLabel({ label, required, right }: { label: string; required?: boolean; right?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between mb-2">
+      <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
+        {label}{required && <span className="ml-0.5" style={{ color: "var(--error)" }}>*</span>}
+      </label>
+      {right}
+    </div>
+  );
+}
+
+// ── ESTILOS COMPARTIDOS DE INPUT ──────────────────────────────────────────────
+const inputStyle: React.CSSProperties = {
+  border: "1.5px solid var(--gris-borde)",
+  background: "var(--gris-superficie)",
+  color: "var(--texto-primario)",
+  transition: "border-color 0.15s",
+};
+function onFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "#93c5fd";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(147,197,253,0.18)";
+}
+function onBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "var(--gris-borde)";
+  e.currentTarget.style.boxShadow = "none";
+}
+
+// ── BOTÓN IA ──────────────────────────────────────────────────────────────────
+function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
+  loading: boolean; disabled?: boolean; label: string; loadingLabel: string; onClick: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick} disabled={loading || disabled}
+      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-50"
+      style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+      onMouseEnter={(e) => { if (!loading && !disabled) e.currentTarget.style.background = "#dbeafe"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; }}>
+      {loading
+        ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+        : <IconSparkle />}
+      {loading ? loadingLabel : label}
+    </button>
+  );
+}
+
+// ── FORMULARIO ANUNCIO ────────────────────────────────────────────────────────
+function FormAnuncio({
+  form, setForm, editando, submitting, formError,
+  imagenModo, setImagenModo, uploadingImg, uploadingAdj, aiLoading,
+  fileInputRef, adjuntoRef,
+  onClose, onSubmit, onPreview, onImageUpload, onAdjuntoUpload, onSugerirIA,
+}: {
+  form: NoticiaInput;
+  setForm: React.Dispatch<React.SetStateAction<NoticiaInput>>;
+  editando: Noticia | null;
+  submitting: boolean;
+  formError: string | null;
+  imagenModo: "url" | "upload";
+  setImagenModo: (m: "url" | "upload") => void;
+  uploadingImg: boolean;
+  uploadingAdj: boolean;
+  aiLoading: "titulo" | "contenido" | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  adjuntoRef: React.RefObject<HTMLInputElement | null>;
+  onClose: () => void;
+  onSubmit: () => void;
+  onPreview: () => void;
+  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAdjuntoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSugerirIA: (campo: "titulo" | "contenido") => void;
+}) {
+  // Cierre con Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const embedUrl = form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null;
+
+  return (
+    <div className="rounded-2xl mb-8 overflow-hidden"
+      style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+
+      {/* Cabecera */}
+      <div className="flex items-start justify-between px-6 pt-5 pb-4"
+        style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+        <div>
+          <h3 className="text-lg font-bold" style={{ color: "var(--texto-primario)" }}>
+            {editando ? "Editar anuncio" : "Nuevo anuncio"}
+          </h3>
+          <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>
+            {editando ? "Modifica los datos del anuncio y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
+          </p>
+        </div>
+        <button onClick={onClose}
+          className="flex items-center justify-center rounded-lg transition-colors mt-0.5"
+          style={{ width: 32, height: 32, color: "var(--texto-muted)", background: "var(--gris-superficie)", flexShrink: 0 }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "var(--error)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-muted)"; }}
+          title="Cerrar (Esc)">
+          <IconX size={15} />
+        </button>
+      </div>
+
+      {/* Cuerpo */}
+      <div className="px-6 py-5 flex flex-col gap-5">
+
+        {/* Título */}
+        <div>
+          <FieldLabel label="Título" required
+            right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => onSugerirIA("titulo")} />}
+          />
+          <input type="text" value={form.titulo}
+            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+            placeholder="Ej: Recordatorio reunión de equipo"
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+        </div>
+
+        {/* Descripción */}
+        <div>
+          <FieldLabel label="Descripción" required
+            right={
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>
+                  {form.contenido.length} car.
+                </span>
+                <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
+                  label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => onSugerirIA("contenido")} />
+              </div>
+            }
+          />
+          <textarea value={form.contenido}
+            onChange={(e) => setForm({ ...form, contenido: e.target.value })}
+            placeholder={"Escribe la descripción. Puedes usar **negrita** y - listas."}
+            rows={4}
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none resize-none"
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+        </div>
+
+        {/* ── MULTIMEDIA ────────────────────────────────────── */}
+        <SectionDivider label="Multimedia" />
+
+        {/* Imagen */}
+        <div>
+          <FieldLabel label="Imagen"
+            right={
+              <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                {(["url", "upload"] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => setImagenModo(m)}
+                    className="text-xs px-3 py-1 font-medium transition-all"
+                    style={{ background: imagenModo === m ? GRAD_BTN : "transparent", color: imagenModo === m ? "#fff" : "var(--texto-secundario)" }}>
+                    {m === "url" ? "URL" : "Subir"}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          {imagenModo === "url" ? (
+            <>
+              <input type="url" value={form.imagenUrl ?? ""}
+                onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
+                placeholder="https://..."
+                className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+                style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+              />
+              {form.imagenUrl && (
+                <div className="relative mt-2.5">
+                  <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
+                    style={{ height: "140px", objectFit: "cover" }}
+                    onError={(e) => (e.currentTarget.style.display = "none")} />
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.5)")}>
+                    <IconX size={13} />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={onImageUpload} className="hidden" />
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
+                className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-6 text-sm transition-colors disabled:opacity-60"
+                style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+                onMouseEnter={(e) => { if (!uploadingImg) e.currentTarget.style.borderColor = "#93c5fd"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                {uploadingImg
+                  ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                  : <><IconUpload /><span>Seleccionar imagen</span><span className="text-xs">JPG, PNG, WebP</span></>}
+              </button>
+              {form.imagenUrl && (
+                <div className="relative mt-2.5">
+                  <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "140px", objectFit: "cover" }} />
+                  <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}>
+                    <IconX size={13} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Video */}
+        <div>
+          <FieldLabel label="Video (YouTube o Vimeo)" />
+          <input type="url" value={form.videoUrl ?? ""}
+            onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+            placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+          {embedUrl && (
+            <div className="mt-2.5 rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+              <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+            </div>
+          )}
+        </div>
+
+        {/* Adjunto */}
+        <div>
+          <FieldLabel label="Documento adjunto (PDF)" />
+          <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={onAdjuntoUpload} className="hidden" />
+          {form.adjuntoUrl ? (
+            <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl"
+              style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
+              <span style={{ color: "#16a34a" }}><IconDoc /></span>
+              <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>
+                {form.adjuntoNombre ?? "Documento"}
+              </span>
+              <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+                style={{ color: "var(--error)", background: "var(--error-light)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
+                Quitar
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
+              style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+              onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+              {uploadingAdj
+                ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                : <><IconDoc /><span>Adjuntar documento (PDF, Word...)</span></>}
+            </button>
+          )}
+        </div>
+
+        {/* ── PUBLICACIÓN ───────────────────────────────────── */}
+        <SectionDivider label="Publicación" />
+
+        {/* Enlace externo */}
+        <div>
+          <FieldLabel label="Enlace externo" />
+          <input type="url" value={form.enlaceUrl ?? ""}
+            onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+            placeholder="https://..."
+            className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+          {form.enlaceUrl && (
+            <input type="text" value={form.enlaceTexto ?? ""}
+              onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+              placeholder='Texto del botón — ej: "Más información", "Inscríbete"'
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none mt-2"
+              style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+            />
+          )}
+        </div>
+
+        {/* Opciones */}
+        <div className="flex flex-col gap-3">
+          <label className="flex items-center gap-3 cursor-pointer select-none group/check">
+            <input type="checkbox" checked={form.fijado ?? false}
+              onChange={(e) => setForm({ ...form, fijado: e.target.checked })}
+              className="w-4 h-4 rounded shrink-0" style={{ accentColor: "#2563eb" }} />
+            <div>
+              <span className="text-sm font-medium block" style={{ color: "var(--texto-primario)" }}>
+                Fijar en la parte superior
+              </span>
+              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                El anuncio aparecerá siempre en primer lugar
+              </span>
+            </div>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" checked={form.estado === "borrador"}
+              onChange={(e) => setForm({ ...form, estado: e.target.checked ? "borrador" : "publicado" })}
+              className="w-4 h-4 rounded shrink-0" style={{ accentColor: "#2563eb" }} />
+            <div>
+              <span className="text-sm font-medium block" style={{ color: "var(--texto-primario)" }}>
+                Guardar como borrador
+              </span>
+              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                No será visible para los empleados hasta que lo publiques
+              </span>
+            </div>
+          </label>
+        </div>
+
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 flex items-center justify-between gap-3"
+        style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-superficie)" }}>
+        <div className="flex-1">
+          {formError && <p className="text-sm" style={{ color: "var(--error)" }}>{formError}</p>}
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={onClose}
+            className="text-sm px-4 py-2 rounded-xl font-medium transition-colors"
+            style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--blanco)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            Cancelar
+          </button>
+          <button type="button" onClick={onPreview}
+            className="text-sm px-4 py-2 rounded-xl font-medium transition-colors"
+            style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
+            Previsualizar
+          </button>
+          <button onClick={onSubmit} disabled={submitting}
+            className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-opacity"
+            style={{ background: GRAD_BTN, color: "#fff" }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+            {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
+          </button>
+        </div>
       </div>
     </div>
   );
