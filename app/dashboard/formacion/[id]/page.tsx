@@ -14,50 +14,51 @@ import { apiFetch, API_URL } from "@/lib/api";
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
 
 interface Contenido {
-  id:         string;
-  titulo:     string;
-  tipo:       TipoContenido;
-  subtipo?:   "podcast" | "slides";
-  duracion?:  string;
+  id: string;
+  titulo: string;
+  tipo: TipoContenido;
+  subtipo?: "podcast" | "slides";
+  duracion?: string;
   completado: boolean;
-  bloqueado:  boolean;
+  bloqueado: boolean;
 }
 
 interface ModuloMock {
-  id:               string;
-  nombre:           string;
-  descripcion:      string;
-  tipo:             string;
-  totalItems:       number;
-  completados:      number;
+  id: string;
+  nombre: string;
+  descripcion: string;
+  tipo: string;
+  totalItems: number;
+  completados: number;
   esEspecializadoIa: boolean;
-  contenidos:       Contenido[];
+  contenidos: Contenido[];
 }
 
 // ── MÓDULO REAL (API) ─────────────────────────────────────────────────────────
 interface ModuloAPI {
-  moduloId:         string;
-  nombre:           string;
-  descripcion:      string | null;
-  tipoModulo:       string;
-  idioma:           string | null;
-  duracion:         string | null;
-  audiencia:        string | null;
+  moduloId: string;
+  nombre: string;
+  descripcion: string | null;
+  tipoModulo: string;
+  idioma: string | null;
+  duracion: string | null;
+  audiencia: string | null;
   esEspecializadoIa: boolean;
-  testPreguntas:    string | null;
-  scriptPodcast:    string | null;
-  scriptVideo:      string | null;
-  podcastAudioUrl:  string | null;
-  tiposSalida:      string | null;
-  activo:           boolean;
+  testPreguntas: string | null;
+  contenidoMarkdown: string | null;
+  scriptPodcast: string | null;
+  scriptVideo: string | null;
+  podcastAudioUrl: string | null;
+  tiposSalida: string | null;
+  activo: boolean;
 }
 
 const TIPO_LABEL: Record<string, string> = {
-  GENERAL:         "General",
-  ESPECIALIZADO:   "Específico",
-  ESPECIALIZADO_IA:"Generado con IA",
-  CUMPLIMIENTO:    "Cumplimiento normativo",
-  ONBOARDING:      "Onboarding",
+  GENERAL: "General",
+  ESPECIALIZADO: "Específico",
+  ESPECIALIZADO_IA: "Generado con IA",
+  CUMPLIMIENTO: "Cumplimiento normativo",
+  ONBOARDING: "Onboarding",
 };
 
 // ── IMÁGENES POR MÓDULO ───────────────────────────────────────────────────────
@@ -72,13 +73,13 @@ const FORMACION_IMG_BY_ID: Record<string, string> = {
 };
 
 const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
+  { keywords: ["incorporac", "bienvenid"], imagen: "/background-formacion-empleado.jpg" },
+  { keywords: ["comunicac", "efectiva"], imagen: "/comunicacion-trabajo.jpg" },
+  { keywords: ["herramienta", "digital", "colaborat"], imagen: "/herramientas-digitales.jpg" },
+  { keywords: ["negociaci", "habilidad", "directiv"], imagen: "/negociacion-habilidades.jpg" },
+  { keywords: ["cibersegur", "datos", "rgpd"], imagen: "/ciberseguridad-datos.jpg" },
   { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.jpg" },
 ];
 
 function getHeroImg(id: string, nombre: string): string {
@@ -91,13 +92,13 @@ function getHeroImg(id: string, nombre: string): string {
 // ── MOCK ─────────────────────────────────────────────────────────────────────
 // Mapa de módulos mock — cubre los IDs del listado de formación
 const MOCKS: Record<string, Pick<ModuloMock, "nombre" | "descripcion" | "tipo" | "esEspecializadoIa">> = {
-  "1": { nombre: "Incorporación y Bienvenida a Atalayas",         descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al área.", tipo: "Identidad Corporativa",  esEspecializadoIa: false },
-  "2": { nombre: "Comunicación Efectiva en el Trabajo",            descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.",   tipo: "Desarrollo Profesional", esEspecializadoIa: false },
-  "3": { nombre: "Introducción a Herramientas Digitales",          descripcion: "Uso de las plataformas y herramientas digitales del área empresarial.",      tipo: "Formación Básica",       esEspecializadoIa: false },
-  "4": { nombre: "Negociación y Habilidades Directivas",           descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.",    tipo: "Formación Específica",   esEspecializadoIa: true  },
-  "5": { nombre: "Ciberseguridad y Protección de Datos",           descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.",          tipo: "Formación Básica",       esEspecializadoIa: false },
-  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles",   descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.",  tipo: "Desarrollo Profesional", esEspecializadoIa: true  },
-  "7": { nombre: "Diversidad e Inclusión en la Empresa",           descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.",          tipo: "Comunidad",              esEspecializadoIa: false },
+  "1": { nombre: "Incorporación y Bienvenida a Atalayas", descripcion: "Conoce la empresa, sus valores y procedimientos de incorporación al área.", tipo: "Identidad Corporativa", esEspecializadoIa: false },
+  "2": { nombre: "Comunicación Efectiva en el Trabajo", descripcion: "Estrategias para mejorar la comunicación interna y externa con tu equipo.", tipo: "Desarrollo Profesional", esEspecializadoIa: false },
+  "3": { nombre: "Introducción a Herramientas Digitales", descripcion: "Uso de las plataformas y herramientas digitales del área empresarial.", tipo: "Formación Básica", esEspecializadoIa: false },
+  "4": { nombre: "Negociación y Habilidades Directivas", descripcion: "Técnicas avanzadas de negociación para entornos empresariales exigentes.", tipo: "Formación Específica", esEspecializadoIa: true },
+  "5": { nombre: "Ciberseguridad y Protección de Datos", descripcion: "Buenas prácticas de seguridad informática y cumplimiento del RGPD.", tipo: "Formación Básica", esEspecializadoIa: false },
+  "6": { nombre: "Gestión de Proyectos con Metodologías Ágiles", descripcion: "Scrum, Kanban y otras metodologías para gestionar equipos de forma eficaz.", tipo: "Desarrollo Profesional", esEspecializadoIa: true },
+  "7": { nombre: "Diversidad e Inclusión en la Empresa", descripcion: "Cultura inclusiva y gestión de la diversidad en el entorno laboral.", tipo: "Comunidad", esEspecializadoIa: false },
 };
 
 function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
@@ -128,13 +129,13 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
 function apiToMock(moduloApi: ModuloAPI): ModuloMock {
   const contenidos = buildContenidos(moduloApi);
   return {
-    id:               moduloApi.moduloId,
-    nombre:           moduloApi.nombre,
-    descripcion:      moduloApi.descripcion ?? "",
-    tipo:             TIPO_LABEL[moduloApi.tipoModulo] ?? moduloApi.tipoModulo,
+    id: moduloApi.moduloId,
+    nombre: moduloApi.nombre,
+    descripcion: moduloApi.descripcion ?? "",
+    tipo: TIPO_LABEL[moduloApi.tipoModulo] ?? moduloApi.tipoModulo,
     esEspecializadoIa: moduloApi.esEspecializadoIa,
-    totalItems:       contenidos.length,
-    completados:      0,
+    totalItems: contenidos.length,
+    completados: 0,
     contenidos,
   };
 }
@@ -142,25 +143,25 @@ function apiToMock(moduloApi: ModuloAPI): ModuloMock {
 // Fallback para módulos legacy (IDs numéricos del mock original)
 function getMockBase(id: string): ModuloMock {
   const meta = MOCKS[id] ?? {
-    nombre:            "Módulo de Formación",
-    descripcion:       "Completa todos los pasos para obtener tu certificado.",
-    tipo:              "Formación",
+    nombre: "Módulo de Formación",
+    descripcion: "Completa todos los pasos para obtener tu certificado.",
+    tipo: "Formación",
     esEspecializadoIa: false,
   };
   return {
     id,
-    nombre:            meta.nombre,
-    descripcion:       meta.descripcion,
-    tipo:              meta.tipo,
+    nombre: meta.nombre,
+    descripcion: meta.descripcion,
+    tipo: meta.tipo,
     esEspecializadoIa: meta.esEspecializadoIa ?? false,
-    totalItems:        5,
-    completados:       0,
+    totalItems: 5,
+    completados: 0,
     contenidos: [
-      { id: "c1", titulo: "Introducción y conceptos clave",    tipo: "texto", duracion: "5 min",  completado: false, bloqueado: false },
-      { id: "c2", titulo: "Desarrollo del tema principal",      tipo: "video", duracion: "12 min", completado: false, bloqueado: true  },
-      { id: "c3", titulo: "Casos prácticos y aplicación",      tipo: "texto", duracion: "8 min",  completado: false, bloqueado: true  },
-      { id: "c4", titulo: "Documentación y recursos",           tipo: "pdf",   duracion: "10 min", completado: false, bloqueado: true  },
-      { id: "c5", titulo: "Evaluación final del módulo",        tipo: "quiz",  duracion: "15 min", completado: false, bloqueado: true  },
+      { id: "c1", titulo: "Introducción y conceptos clave", tipo: "texto", duracion: "5 min", completado: false, bloqueado: false },
+      { id: "c2", titulo: "Desarrollo del tema principal", tipo: "video", duracion: "12 min", completado: false, bloqueado: true },
+      { id: "c3", titulo: "Casos prácticos y aplicación", tipo: "texto", duracion: "8 min", completado: false, bloqueado: true },
+      { id: "c4", titulo: "Documentación y recursos", tipo: "pdf", duracion: "10 min", completado: false, bloqueado: true },
+      { id: "c5", titulo: "Evaluación final del módulo", tipo: "quiz", duracion: "15 min", completado: false, bloqueado: true },
     ],
   };
 }
@@ -175,8 +176,8 @@ function cargarEstado(id: string): { completados: string[]; activoId: string } {
   return { completados: [], activoId: "c1" };
 }
 
-function guardarEstado(id: string, completados: string[], activoId: string) {
-  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId })); }
+function guardarEstado(id: string, completados: string[], activoId: string, total: number) {
+  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId, total })); }
   catch { /* noop */ }
 }
 
@@ -185,21 +186,26 @@ function aplicarEstado(base: ModuloMock, completados: string[]): ModuloMock {
   const contenidos = base.contenidos.map((c, i) => ({
     ...c,
     completado: set.has(c.id),
-    bloqueado:  i > 0 && !set.has(base.contenidos[i - 1].id),
+    bloqueado: i > 0 && !set.has(base.contenidos[i - 1].id),
   }));
   return { ...base, completados: completados.length, contenidos };
 }
 
 // ── PÁGINA ────────────────────────────────────────────────────────────────────
 export default function Page() {
-  const router  = useRouter();
+  const router = useRouter();
   const rawParams = useParams();
-  const id      = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
+  const id = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
 
-  const [modulo,      setModulo]      = useState<ModuloMock | null>(null);
-  const [moduloApi,   setModuloApi]   = useState<ModuloAPI | null>(null);
-  const [activoId,    setActivoId]    = useState<string>("c1");
+  const [modulo, setModulo] = useState<ModuloMock | null>(null);
+  const [moduloApi, setModuloApi] = useState<ModuloAPI | null>(null);
+  const [activoId, setActivoId] = useState<string>("c1");
   const [completando, setCompletando] = useState(false);
+  const [moduloCompletado, setModuloCompletado] = useState(false);
+  const [verificado, setVerificado] = useState(false);
+
+  // Reset verificado cada vez que el usuario cambia de ítem
+  React.useEffect(() => { setVerificado(false); }, [activoId]);
 
   // Carga el módulo desde la API; si falla usa el mock legacy
   useEffect(() => {
@@ -212,15 +218,20 @@ export default function Page() {
           setModuloApi(data);
           const base = apiToMock(data);
           const { completados, activoId: savedActivo } = cargarEstado(id);
-          setModulo(aplicarEstado(base, completados));
-          setActivoId(savedActivo);
+          const moduloConEstado = aplicarEstado(base, completados);
+          setModulo(moduloConEstado);
+          // Si el módulo ya está 100% completado, empezar desde el primer ítem
+          const yaCompletado = completados.length >= moduloConEstado.totalItems;
+          setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
           return;
         }
       } catch { /* fallback */ }
       // Fallback: datos mock legacy
       const { completados, activoId: savedActivo } = cargarEstado(id);
-      setModulo(aplicarEstado(getMockBase(id), completados));
-      setActivoId(savedActivo);
+      const moduloConEstado = aplicarEstado(getMockBase(id), completados);
+      setModulo(moduloConEstado);
+      const yaCompletado = completados.length >= moduloConEstado.totalItems;
+      setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
     };
     cargar();
   }, [id]);
@@ -229,12 +240,12 @@ export default function Page() {
   useEffect(() => {
     if (!id || !modulo) return;
     const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
-    guardarEstado(id, hechos, activoId);
+    guardarEstado(id, hechos, activoId, modulo.totalItems);
   }, [modulo, activoId]);
 
   if (!modulo) return null;
 
-  const activo  = modulo.contenidos.find((c) => c.id === activoId) ?? modulo.contenidos[0];
+  const activo = modulo.contenidos.find((c) => c.id === activoId) ?? modulo.contenidos[0];
   const progPct = Math.round((modulo.completados / modulo.totalItems) * 100);
 
   const marcarCompletado = () => {
@@ -243,16 +254,22 @@ export default function Page() {
     setTimeout(() => {
       const idx = modulo.contenidos.findIndex((c) => c.id === activoId);
       const siguiente = modulo.contenidos[idx + 1];
+      const nuevosCompletados = modulo.completados + 1;
       setModulo((m) => m ? ({
         ...m,
-        completados: m.completados + 1,
+        completados: nuevosCompletados,
         contenidos: m.contenidos.map((c, i) => {
           if (c.id === activoId) return { ...c, completado: true };
-          if (i === idx + 1)     return { ...c, bloqueado: false };
+          if (i === idx + 1) return { ...c, bloqueado: false };
           return c;
         }),
       }) : null);
-      if (siguiente) setActivoId(siguiente.id);
+      if (siguiente) {
+        setActivoId(siguiente.id);
+      } else {
+        // Último ítem — módulo completado
+        setModuloCompletado(true);
+      }
       setCompletando(false);
     }, 600);
   };
@@ -262,13 +279,56 @@ export default function Page() {
     switch (tipo) {
       case "texto": return "#3b82f6"; // blue
       case "video": return "#a855f7"; // purple
-      case "pdf":   return "#ef4444"; // red
-      case "quiz":  return "#f97316"; // orange
+      case "pdf": return "#ef4444"; // red
+      case "quiz": return "#f97316"; // orange
     }
   };
 
   return (
     <div className="flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+
+      {/* ── MODAL MÓDULO COMPLETADO ───────────────────────────────────────────── */}
+      {moduloCompletado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+          <div className="w-full max-w-sm rounded-3xl text-center overflow-hidden shadow-2xl"
+            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            {/* Banner verde */}
+            <div className="py-8 px-6" style={{ background: "linear-gradient(135deg,#16a34a 0%,#4ade80 100%)" }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ background: "rgba(255,255,255,0.25)" }}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xl font-bold text-white">¡Módulo completado!</p>
+              <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.85)" }}>
+                Has completado <strong>{modulo.nombre}</strong>
+              </p>
+            </div>
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-sm mb-5" style={{ color: "var(--texto-secundario)" }}>
+                Enhorabuena 🎉 Has terminado todos los contenidos de este módulo. Tu progreso queda guardado.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => router.push("/dashboard/formacion")}
+                  className="w-full py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: "linear-gradient(135deg,var(--azul-egm),#A3B535)", color: "#fff", boxShadow: "0 4px 12px rgba(0,82,204,0.3)" }}>
+                  Volver a mis formaciones
+                </button>
+                <button
+                  onClick={() => setModuloCompletado(false)}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ color: "var(--texto-muted)" }}>
+                  Revisar contenido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div
@@ -292,48 +352,48 @@ export default function Page() {
         <div className="relative z-10 w-full py-14">
           <div className="w-full px-8 sm:px-12">
 
-          {/* Breadcrumb */}
-          <button
-            onClick={() => router.push("/dashboard/formacion")}
-            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5 transition-colors"
-            style={{ color: "var(--verde-oliva-hover)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Centro de Formación
-            <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
-            {modulo.tipo}
-          </button>
+            {/* Breadcrumb */}
+            <button
+              onClick={() => router.push("/dashboard/formacion")}
+              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5 transition-colors"
+              style={{ color: "var(--verde-oliva-hover)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Centro de Formación
+              <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
+              {modulo.tipo}
+            </button>
 
-          {/* Título */}
-          <h1
-            className="text-white leading-tight mb-5 text-left"
-            style={{
-              fontSize:      "clamp(2.2rem, 4vw, 3rem)",
-              fontFamily:    "var(--font-poppins), sans-serif",
-              fontWeight:    700,
-              letterSpacing: "-0.02em",
-              maxWidth:      "820px",
-            }}
-          >
-            {modulo.nombre}
-          </h1>
+            {/* Título */}
+            <h1
+              className="text-white leading-tight mb-5 text-left"
+              style={{
+                fontSize: "clamp(2.2rem, 4vw, 3rem)",
+                fontFamily: "var(--font-poppins), sans-serif",
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                maxWidth: "820px",
+              }}
+            >
+              {modulo.nombre}
+            </h1>
 
-          {/* Barra de progreso */}
-          <div className="flex items-center gap-3" style={{ maxWidth: "280px" }}>
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progPct}%`, background: "var(--verde-oliva-hover)" }}
-              />
+            {/* Barra de progreso */}
+            <div className="flex items-center gap-3" style={{ maxWidth: "280px" }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progPct}%`, background: "var(--verde-oliva-hover)" }}
+                />
+              </div>
+              <span className="text-xs font-bold shrink-0" style={{ color: "var(--verde-oliva-hover)" }}>
+                {progPct}% · {modulo.completados}/{modulo.totalItems}
+              </span>
             </div>
-            <span className="text-xs font-bold shrink-0" style={{ color: "var(--verde-oliva-hover)" }}>
-              {progPct}% · {modulo.completados}/{modulo.totalItems}
-            </span>
-          </div>
           </div>
         </div>
       </div>
@@ -343,17 +403,28 @@ export default function Page() {
 
         {/* ÍNDICE LATERAL */}
         <aside
-          className="w-[22rem] shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
+          className="w-88 shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
         >
           <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
             {/* Tipo del módulo como badge */}
-            <span
-              className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2"
-              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-            >
-              {modulo.tipo}
-            </span>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+              >
+                {modulo.tipo}
+              </span>
+              {modulo.esEspecializadoIa && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  style={{ background: "#f3e8ff", color: "#7c3aed" }}>
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
+                  </svg>
+                  IA
+                </span>
+              )}
+            </div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--texto-primario)" }}>
                 Contenidos
@@ -370,7 +441,7 @@ export default function Page() {
           </div>
           <div className="py-2">
             {modulo.contenidos.map((c, i) => {
-              const esActivo    = c.id === activoId;
+              const esActivo = c.id === activoId;
               const esBloqueado = c.bloqueado && !c.completado;
               const activeBorderColor = borderColorForTipo(c.tipo);
               return (
@@ -380,10 +451,10 @@ export default function Page() {
                   disabled={esBloqueado}
                   className="w-full text-left flex items-center gap-3 px-4 py-3 transition-colors"
                   style={{
-                    background:  esActivo    ? "var(--azul-egm-light)" : "transparent",
-                    cursor:      esBloqueado ? "not-allowed"           : "pointer",
-                    opacity:     esBloqueado ? 0.4                     : 1,
-                    borderLeft:  esActivo
+                    background: esActivo ? "var(--azul-egm-light)" : "transparent",
+                    cursor: esBloqueado ? "not-allowed" : "pointer",
+                    opacity: esBloqueado ? 0.4 : 1,
+                    borderLeft: esActivo
                       ? `3px solid ${activeBorderColor}`
                       : "3px solid transparent",
                   }}
@@ -393,8 +464,8 @@ export default function Page() {
                   {/* Estado */}
                   <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
                     style={{
-                      background: c.completado ? "var(--exito)"           : esActivo ? "var(--azul-egm)"    : "var(--gris-superficie)",
-                      color:      c.completado ? "var(--blanco)"          : esActivo ? "var(--blanco)"      : "var(--texto-muted)",
+                      background: c.completado ? "var(--exito)" : esActivo ? "var(--azul-egm)" : "var(--gris-superficie)",
+                      color: c.completado ? "var(--blanco)" : esActivo ? "var(--blanco)" : "var(--texto-muted)",
                     }}>
                     {c.completado ? (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -423,6 +494,20 @@ export default function Page() {
 
         {/* CONTENIDO PRINCIPAL */}
         <main className="flex-1 min-w-0">
+
+          {/* Banner módulo ya completado */}
+          {progPct === 100 && (
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl mb-4"
+              style={{ background: "var(--exito-light)", border: "1px solid var(--exito)" }}>
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-semibold" style={{ color: "var(--exito)" }}>
+                Módulo completado — puedes revisar todo el contenido libremente
+              </p>
+            </div>
+          )}
+
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
 
@@ -451,12 +536,12 @@ export default function Page() {
 
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
-              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} />}
-              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} />}
-              {activo.tipo === "video" && activo.subtipo === "slides"  && moduloApi?.scriptVideo  && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} />}
-              {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo />}
-              {activo.tipo === "pdf"   && <ContenidoPDF />}
-              {activo.tipo === "quiz"  && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
+              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={moduloApi?.contenidoMarkdown ?? null} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "pdf" && <ContenidoPDF onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
             </div>
 
             {/* Footer — no aparece en quiz (tiene su propio CTA) */}
@@ -464,259 +549,41 @@ export default function Page() {
               <div className="flex items-center justify-between px-8 py-5"
                 style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
                 <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                  {activo.completado ? "Ya completaste este contenido" : "Marca como completado para desbloquear el siguiente"}
+                  {progPct === 100
+                    ? "Módulo completado — revisando contenido"
+                    : activo.completado
+                      ? "Ya completaste este contenido — puedes revisarlo cuando quieras"
+                      : verificado
+                        ? "Contenido revisado. Puedes marcarlo como completado."
+                        : activo.tipo === "texto" ? "Lee el contenido completo para poder completarlo"
+                          : activo.subtipo === "podcast" ? "Escucha el podcast completo para poder completarlo"
+                          : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
+                          : activo.tipo === "pdf" ? "Confirma que has leído el documento para poder completarlo"
+                          : "Revisa el contenido para poder completarlo"}
                 </p>
-                <button
-                  onClick={marcarCompletado}
-                  disabled={activo.completado || completando}
-                  className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-50"
-                  style={{
-                    background: activo.completado ? "var(--exito-light)" : "var(--azul-egm)",
-                    color:      activo.completado ? "var(--exito)"       : "var(--blanco)",
-                  }}
-                  onMouseEnter={(e) => { if (!activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
-                  onMouseLeave={(e) => { if (!activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
-                >
-                  {completando ? "Guardando..." : activo.completado ? "✓ Completado" : "Completado y continuar →"}
-                </button>
+                {progPct < 100 && (
+                  <button
+                    onClick={marcarCompletado}
+                    disabled={activo.completado || completando || (!verificado && !activo.completado)}
+                    className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
+                    style={{
+                      background: activo.completado ? "var(--exito-light)" : verificado ? "var(--azul-egm)" : "var(--gris-borde)",
+                      color: activo.completado ? "var(--exito)" : verificado ? "var(--blanco)" : "var(--texto-muted)",
+                      cursor: (!verificado && !activo.completado) ? "not-allowed" : "pointer",
+                      opacity: completando ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+                    onMouseLeave={(e) => { if (verificado && !activo.completado) e.currentTarget.style.background = "var(--azul-egm)"; }}
+                  >
+                    {completando ? "Guardando..." : activo.completado ? "Completado" : "Completado y continuar"}
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          {/* IA Assistant — solo en módulos especializados IA */}
-          {modulo.esEspecializadoIa && (
-            <div className="mt-6">
-              <AsistenteIA contenidoTitulo={activo.titulo} />
-            </div>
-          )}
         </main>
       </div>
-    </div>
-  );
-}
-
-// ── ASISTENTE IA ──────────────────────────────────────────────────────────────
-
-function getMockIAData(titulo: string): {
-  resumen: string[];
-  preguntas: { pregunta: string; respuesta: string }[];
-} {
-  // Vary mocks slightly based on the content title
-  if (titulo.toLowerCase().includes("evaluación") || titulo.toLowerCase().includes("quiz")) {
-    return {
-      resumen: [
-        "Esta evaluación pone a prueba los conocimientos adquiridos a lo largo del módulo.",
-        "Se requiere un mínimo de aciertos para superar la prueba y obtener el certificado.",
-        "Revisa los contenidos anteriores antes de intentar la evaluación final.",
-      ],
-      preguntas: [
-        { pregunta: "¿Cuántos intentos tengo para aprobar?", respuesta: "Puedes intentarlo tantas veces como necesites. Cada intento reinicia las preguntas para que puedas practicar sin límite." },
-        { pregunta: "¿Qué pasa si no apruebo?", respuesta: "Si no superas la evaluación, puedes repasar el material y volver a intentarlo. No hay penalización por los intentos fallidos." },
-        { pregunta: "¿Se guarda mi progreso automáticamente?", respuesta: "Sí, el progreso se guarda en tu navegador. Si cierras la página y vuelves, encontrarás el módulo en el mismo estado." },
-      ],
-    };
-  }
-  if (titulo.toLowerCase().includes("video")) {
-    return {
-      resumen: [
-        "El vídeo presenta los conceptos fundamentales del módulo de forma visual y práctica.",
-        "Se incluyen demostraciones reales del entorno empresarial de Atalayas.",
-        "Toma nota de los puntos clave que se resaltan durante la reproducción.",
-      ],
-      preguntas: [
-        { pregunta: "¿Puedo ver el vídeo varias veces?", respuesta: "Sí, puedes reproducir el vídeo cuantas veces necesites antes de marcarlo como completado." },
-        { pregunta: "¿Hay subtítulos disponibles?", respuesta: "El vídeo incluye subtítulos en castellano. Puedes activarlos desde los controles del reproductor." },
-        { pregunta: "¿El contenido del vídeo entra en el quiz?", respuesta: "Sí, los conceptos presentados en el vídeo son la base de la evaluación final del módulo." },
-      ],
-    };
-  }
-  // Default for texto, pdf, and anything else
-  return {
-    resumen: [
-      "Este contenido cubre los fundamentos teóricos esenciales del módulo.",
-      "Se abordan casos prácticos aplicables directamente al entorno de Atalayas.",
-      "Presta especial atención a los recuadros de \"Punto clave\" que resumen lo más importante.",
-    ],
-    preguntas: [
-      { pregunta: "¿Qué conceptos son más importantes de este contenido?", respuesta: "Los puntos clave destacados en recuadros azules contienen los conceptos que con más frecuencia aparecen en la evaluación final. Te recomendamos anotarlos." },
-      { pregunta: "¿Puedo volver a este contenido después de completarlo?", respuesta: "Sí, una vez completado puedes acceder al contenido en cualquier momento desde el índice lateral para repasar." },
-      { pregunta: "¿Hay material complementario disponible?", respuesta: "En el apartado de documentación encontrarás recursos adicionales en PDF con información ampliada sobre los temas tratados." },
-    ],
-  };
-}
-
-function AsistenteIA({ contenidoTitulo }: { contenidoTitulo: string }) {
-  const [open, setOpen]                       = useState(true);
-  const [preguntaActiva, setPreguntaActiva]   = useState<number | null>(null);
-  const [inputVal, setInputVal]               = useState("");
-  const [respuesta, setRespuesta]             = useState("");
-
-  const { resumen, preguntas } = getMockIAData(contenidoTitulo);
-
-  const handleSend = () => {
-    if (!inputVal.trim()) return;
-    setRespuesta("Estoy procesando tu consulta sobre \"" + inputVal.trim() + "\"… Dame un momento.");
-    setInputVal("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSend();
-  };
-
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid #e9d5ff" }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-white text-lg leading-none select-none">✦</span>
-          <span className="text-sm font-bold text-white">Asistente IA</span>
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(255,255,255,0.18)", color: "white", letterSpacing: "0.05em" }}
-          >
-            BETA
-          </span>
-        </div>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="text-white transition-opacity"
-          style={{ opacity: 0.75 }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.75")}
-          aria-label={open ? "Colapsar asistente" : "Expandir asistente"}
-        >
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            {open
-              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              : <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            }
-          </svg>
-        </button>
-      </div>
-
-      {/* Body */}
-      {open && (
-        <div
-          className="flex flex-col gap-5 px-5 py-4"
-          style={{ background: "white" }}
-        >
-          {/* Resumen IA */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
-              Resumen del contenido
-            </p>
-            <ul className="flex flex-col gap-2">
-              {resumen.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-sm font-bold shrink-0" style={{ color: "#7c3aed" }}>•</span>
-                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Preguntas sugeridas */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--texto-muted)" }}>
-              Preguntas frecuentes
-            </p>
-            <div className="flex flex-col gap-2">
-              {preguntas.map((item, i) => {
-                const isActive = preguntaActiva === i;
-                return (
-                  <div key={i}>
-                    <button
-                      onClick={() => setPreguntaActiva(isActive ? null : i)}
-                      className="text-xs px-3 py-2 rounded-full border transition-all text-left"
-                      style={{
-                        background:   isActive ? "#7c3aed"              : "transparent",
-                        color:        isActive ? "white"                : "var(--texto-primario)",
-                        borderColor:  isActive ? "#7c3aed"              : "#e9d5ff",
-                        fontWeight:   isActive ? 600                    : 400,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background   = "#faf5ff";
-                          e.currentTarget.style.borderColor  = "#a855f7";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background   = "transparent";
-                          e.currentTarget.style.borderColor  = "#e9d5ff";
-                        }
-                      }}
-                    >
-                      {item.pregunta}
-                    </button>
-                    {isActive && (
-                      <div
-                        className="mt-2 rounded-xl px-4 py-3 text-sm"
-                        style={{
-                          background:  "#faf5ff",
-                          borderLeft:  "3px solid #7c3aed",
-                          color:       "var(--texto-secundario)",
-                        }}
-                      >
-                        {item.respuesta}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Respuesta del chat si existe */}
-          {respuesta && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{
-                background: "#faf5ff",
-                borderLeft: "3px solid #a855f7",
-                color:      "var(--texto-secundario)",
-              }}
-            >
-              {respuesta}
-            </div>
-          )}
-
-          {/* Input de chat */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe tu pregunta..."
-              className="flex-1 text-sm rounded-xl border px-3 py-2 outline-none transition-colors"
-              style={{
-                borderColor:     "#e9d5ff",
-                color:           "var(--texto-primario)",
-                background:      "white",
-              }}
-              onFocus={(e)  => (e.currentTarget.style.borderColor = "#a855f7")}
-              onBlur={(e)   => (e.currentTarget.style.borderColor = "#e9d5ff")}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!inputVal.trim()}
-              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-              onMouseEnter={(e) => { if (inputVal.trim()) e.currentTarget.style.opacity = "0.85"; }}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Enviar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -725,7 +592,7 @@ function AsistenteIA({ contenidoTitulo }: { contenidoTitulo: string }) {
 
 function ProgresoCircular({ pct }: { pct: number }) {
   const r = 28;
-  const circ   = 2 * Math.PI * r;
+  const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
   return (
     <svg width="72" height="72" viewBox="0 0 72 72">
@@ -769,28 +636,86 @@ function IconoTipo({ tipo, size = 16 }: { tipo: TipoContenido; size?: number }) 
   );
 }
 
-function ContenidoTexto({ descripcion }: { descripcion: string }) {
-  if (!descripcion) {
+function renderMarkdown(texto: string): React.ReactNode[] {
+  const lineas = texto.split("\n");
+  const elementos: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lineas.length) {
+    const linea = lineas[i];
+    if (!linea.trim()) { i++; continue; }
+    // Encabezados
+    if (linea.startsWith("### ")) {
+      elementos.push(<h3 key={i} className="text-base font-bold mt-6 mb-2" style={{ color: "var(--texto-primario)" }}>{linea.slice(4)}</h3>);
+    } else if (linea.startsWith("## ")) {
+      elementos.push(<h2 key={i} className="text-lg font-bold mt-8 mb-3" style={{ color: "var(--texto-primario)" }}>{linea.slice(3)}</h2>);
+    } else if (linea.startsWith("# ")) {
+      elementos.push(<h1 key={i} className="text-xl font-bold mt-8 mb-3" style={{ color: "var(--texto-primario)" }}>{linea.slice(2)}</h1>);
+      // Listas
+    } else if (linea.startsWith("- ") || linea.startsWith("* ")) {
+      const items: string[] = [];
+      while (i < lineas.length && (lineas[i].startsWith("- ") || lineas[i].startsWith("* "))) {
+        items.push(lineas[i].slice(2));
+        i++;
+      }
+      elementos.push(
+        <ul key={`ul-${i}`} className="list-disc pl-5 mb-4 space-y-1">
+          {items.map((item, j) => (
+            <li key={j} className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>{item}</li>
+          ))}
+        </ul>
+      );
+      continue;
+      // Negritas simples (**texto**)
+    } else {
+      const formateado = linea.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      elementos.push(
+        <p key={i} className="text-sm leading-relaxed mb-3" style={{ color: "var(--texto-secundario)" }}
+          dangerouslySetInnerHTML={{ __html: formateado }} />
+      );
+    }
+    i++;
+  }
+  return elementos;
+}
+
+function ContenidoTexto({ descripcion, contenidoMarkdown, onVerificado }: { descripcion: string; contenidoMarkdown?: string | null; onVerificado?: () => void }) {
+  const texto = contenidoMarkdown || descripcion;
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const verificadoRef = React.useRef(false);
+
+  const handleScroll = React.useCallback(() => {
+    if (verificadoRef.current || !scrollRef.current) return;
+    const el = scrollRef.current;
+    const llegadoAlFinal = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+    if (llegadoAlFinal) { verificadoRef.current = true; onVerificado?.(); }
+  }, [onVerificado]);
+
+  // Si el contenido es corto y no hay scroll, verificar al montar
+  React.useEffect(() => {
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    if (el.scrollHeight <= el.clientHeight + 40) { onVerificado?.(); }
+  }, [texto, onVerificado]);
+
+  if (!texto) {
     return (
       <p className="text-sm leading-relaxed" style={{ color: "var(--texto-muted)" }}>
         Este módulo no tiene descripción. El administrador puede añadir contenido editando el módulo.
       </p>
     );
   }
-  // Renderiza cada párrafo separado por salto de línea
-  const parrafos = descripcion.split(/\n+/).filter(Boolean);
   return (
-    <div>
-      {parrafos.map((p, i) => (
-        <p key={i} className="text-sm leading-relaxed mb-4" style={{ color: "var(--texto-secundario)" }}>
-          {p}
-        </p>
-      ))}
+    <div ref={scrollRef} onScroll={handleScroll}
+      className="prose-sm max-w-none overflow-y-auto pr-1"
+      style={{ maxHeight: "55vh" }}>
+      {renderMarkdown(texto)}
+      <div className="h-4" />
     </div>
   );
 }
 
-function ContenidoVideo() {
+function ContenidoVideo({ onVerificado }: { onVerificado?: () => void }) {
+  const [visto, setVisto] = React.useState(false);
   return (
     <div>
       <div className="rounded-2xl overflow-hidden mb-6 flex items-center justify-center"
@@ -807,22 +732,24 @@ function ContenidoVideo() {
           </p>
         </div>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
-        En este vídeo aprenderás a identificar, inspeccionar y utilizar correctamente los equipos
-        de protección individual para trabajos en altura: arneses, líneas de vida, cascos y calzado
-        de seguridad homologados.
-      </p>
+      {!visto && (
+        <button onClick={() => { setVisto(true); onVerificado?.(); }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold mt-2"
+          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+          He visto el video completo
+        </button>
+      )}
     </div>
   );
 }
 
 // ── PODCAST ──────────────────────────────────────────────────────────────────
-function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: string }) {
+function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; audioUrl?: string; onVerificado?: () => void }) {
   // Si hay URL de audio real (ElevenLabs MP3), usamos <audio>; si no, Web Speech API como fallback
   const tieneAudioReal = !!audioUrl;
   const audioRef = React.useRef<HTMLAudioElement>(null);
   const [reproduciendo, setReproduciendo] = React.useState(false);
-  const [pausado,       setPausado]       = React.useState(false);
+  const [pausado, setPausado] = React.useState(false);
 
   // ── Controles para <audio> nativo ─────────────────────────────────────────
   const iniciarAudio = () => {
@@ -847,7 +774,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(script);
     utterance.lang = "es-ES"; utterance.rate = 0.95; utterance.pitch = 1;
-    utterance.onend = () => { setReproduciendo(false); setPausado(false); };
+    utterance.onend = () => { setReproduciendo(false); setPausado(false); onVerificado?.(); };
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
   };
@@ -860,9 +787,9 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
   };
   const detenerSpeech = () => { window.speechSynthesis.cancel(); setReproduciendo(false); setPausado(false); };
 
-  const iniciar = tieneAudioReal ? iniciarAudio  : iniciarSpeech;
-  const pausar  = tieneAudioReal ? pausarAudio   : pausarSpeech;
-  const detener = tieneAudioReal ? detenerAudio  : detenerSpeech;
+  const iniciar = tieneAudioReal ? iniciarAudio : iniciarSpeech;
+  const pausar = tieneAudioReal ? pausarAudio : pausarSpeech;
+  const detener = tieneAudioReal ? detenerAudio : detenerSpeech;
 
   return (
     <div>
@@ -871,7 +798,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
         <audio
           ref={audioRef}
           src={audioUrl}
-          onEnded={() => { setReproduciendo(false); setPausado(false); }}
+          onEnded={() => { setReproduciendo(false); setPausado(false); onVerificado?.(); }}
           onPlay={() => { setReproduciendo(true); setPausado(false); }}
           onPause={() => setPausado(true)}
           preload="metadata"
@@ -882,7 +809,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
             <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/>
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path d="M19 10v2a7 7 0 01-14 0v-2" />
             </svg>
           </div>
           <div>
@@ -896,7 +823,7 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
           {!reproduciendo ? (
             <button onClick={iniciar} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold"
               style={{ background: "#6366f1", color: "#fff", boxShadow: "0 4px 14px rgba(99,102,241,0.4)" }}>
-              <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
               Reproducir
             </button>
           ) : (
@@ -904,23 +831,23 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
               <button onClick={pausar} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
                 {pausado
-                  ? <><svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Reanudar</>
-                  : <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pausar</>}
+                  ? <><svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>Reanudar</>
+                  : <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>Pausar</>}
               </button>
               <button onClick={detener} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
                 Detener
               </button>
             </>
           )}
           {reproduciendo && !pausado && (
             <div className="flex items-end gap-0.5 h-5">
-              {[1,2,3,4,5].map((i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="w-1 rounded-full"
-                  style={{ background: "#818cf8", animation: `eq${i} ${0.5+i*0.15}s ease-in-out infinite alternate`, height: `${8+i*3}px` }} />
+                  style={{ background: "#818cf8", animation: `eq${i} ${0.5 + i * 0.15}s ease-in-out infinite alternate`, height: `${8 + i * 3}px` }} />
               ))}
-              <style>{`${[1,2,3,4,5].map((i)=>`@keyframes eq${i}{from{transform:scaleY(0.4)}to{transform:scaleY(1)}}`).join("")}`}</style>
+              <style>{`${[1, 2, 3, 4, 5].map((i) => `@keyframes eq${i}{from{transform:scaleY(0.4)}to{transform:scaleY(1)}}`).join("")}`}</style>
             </div>
           )}
         </div>
@@ -936,11 +863,27 @@ function ContenidoPodcast({ script, audioUrl }: { script: string; audioUrl?: str
 // ── SLIDES VIDEO ─────────────────────────────────────────────────────────────
 interface Slide { numero: number; titulo: string; contenido: string; notas?: string; }
 
-function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
+function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: string; onVerificado?: () => void }) {
   const slides: Slide[] = React.useMemo(() => {
     try { return JSON.parse(scriptVideoJson) as Slide[]; } catch { return []; }
   }, [scriptVideoJson]);
   const [idx, setIdx] = React.useState(0);
+  const verificadoRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (slides.length > 0 && idx === slides.length - 1 && !verificadoRef.current) {
+      verificadoRef.current = true;
+      onVerificado?.();
+    }
+  }, [idx, slides.length, onVerificado]);
+
+  React.useEffect(() => {
+    if (slides.length === 1 && !verificadoRef.current) {
+      verificadoRef.current = true;
+      onVerificado?.();
+    }
+  }, [slides.length, onVerificado]);
+
   if (slides.length === 0) return <p className="text-sm" style={{ color: "var(--texto-muted)" }}>No hay slides disponibles.</p>;
   const slide = slides[idx];
   return (
@@ -960,10 +903,13 @@ function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
           style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)" }}>
           <h2 className="text-xl font-bold text-white mb-4">{slide.titulo}</h2>
           <div className="flex flex-col gap-2">
-            {slide.contenido.split("\n").filter(Boolean).map((line, i) => (
+            {(Array.isArray(slide.contenido)
+              ? slide.contenido
+              : String(slide.contenido).split("\n").filter(Boolean)
+            ).map((line: string, i: number) => (
               <div key={i} className="flex items-start gap-2.5">
                 <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ background: "#6366f1" }} />
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{line.replace(/^[-•*]\s*/,"")}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{String(line).replace(/^[-•*]\s*/, "")}</p>
               </div>
             ))}
           </div>
@@ -975,15 +921,15 @@ function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
         )}
       </div>
       <div className="flex items-center justify-between">
-        <button onClick={() => setIdx((p) => Math.max(0, p-1))} disabled={idx===0}
+        <button onClick={() => setIdx((p) => Math.max(0, p - 1))} disabled={idx === 0}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: idx===0 ? "var(--gris-superficie)" : "var(--blanco)", color: idx===0 ? "var(--texto-muted)" : "var(--texto-primario)", border: "1px solid var(--gris-borde)" }}>
+          style={{ background: idx === 0 ? "var(--gris-superficie)" : "var(--blanco)", color: idx === 0 ? "var(--texto-muted)" : "var(--texto-primario)", border: "1px solid var(--gris-borde)" }}>
           ← Anterior
         </button>
-        <span className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>{idx+1} de {slides.length}</span>
-        <button onClick={() => setIdx((p) => Math.min(slides.length-1, p+1))} disabled={idx===slides.length-1}
+        <span className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>{idx + 1} de {slides.length}</span>
+        <button onClick={() => setIdx((p) => Math.min(slides.length - 1, p + 1))} disabled={idx === slides.length - 1}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: idx===slides.length-1 ? "var(--gris-superficie)" : "var(--azul-egm)", color: idx===slides.length-1 ? "var(--texto-muted)" : "#fff" }}>
+          style={{ background: idx === slides.length - 1 ? "var(--gris-superficie)" : "var(--azul-egm)", color: idx === slides.length - 1 ? "var(--texto-muted)" : "#fff" }}>
           Siguiente →
         </button>
       </div>
@@ -991,7 +937,8 @@ function ContenidoSlides({ scriptVideoJson }: { scriptVideoJson: string }) {
   );
 }
 
-function ContenidoPDF() {
+function ContenidoPDF({ onVerificado }: { onVerificado?: () => void }) {
+  const [leido, setLeido] = React.useState(false);
   return (
     <div>
       <div className="rounded-2xl flex items-center gap-5 px-6 py-5 mb-6"
@@ -1015,10 +962,26 @@ function ContenidoPDF() {
           Descargar
         </button>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
+      <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--texto-secundario)" }}>
         Descarga y lee el documento antes de marcar este contenido como completado. Contiene los
         formularios de registro obligatorios que deberás cumplimentar en cada intervención.
       </p>
+      {!leido ? (
+        <button
+          onClick={() => { setLeido(true); onVerificado?.(); }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid var(--azul-egm)" }}>
+          He leído el documento completo
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
+          style={{ background: "var(--exito-light)", border: "1px solid var(--exito)" }}>
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <p className="text-sm font-semibold" style={{ color: "var(--exito)" }}>Documento confirmado como leído</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -1029,7 +992,7 @@ interface PreguntaQuiz { id: string; texto: string; opciones: string[]; correcta
 
 function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => void; testPreguntasJson: string | null }) {
   const [respuestas, setRespuestas] = useState<Record<string, number>>({});
-  const [enviado, setEnviado]       = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   // Parsear preguntas reales o usar fallback
   const PREGUNTAS: PreguntaQuiz[] = (() => {
@@ -1060,12 +1023,20 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
   if (enviado) {
     return (
       <div className="flex flex-col items-center text-center py-10">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5 text-3xl"
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
           style={{
             background: aprobado ? "var(--exito-light)" : "var(--error-light)",
-            border:     `2px solid ${aprobado ? "var(--exito)" : "var(--error)"}`,
+            border: `2px solid ${aprobado ? "var(--exito)" : "var(--error)"}`,
           }}>
-          {aprobado ? "🎉" : "📚"}
+          {aprobado ? (
+            <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--error)" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          )}
         </div>
         <h3 className="text-xl font-bold mb-2"
           style={{ color: "var(--texto-primario)", fontFamily: "'Playfair Display', serif" }}>
@@ -1122,17 +1093,17 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
                     onClick={() => setRespuestas((r) => ({ ...r, [p.id]: oi }))}
                     className="text-left flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
                     style={{
-                      border:     sel ? "2px solid var(--azul-egm)" : "1px solid var(--gris-borde)",
-                      background: sel ? "var(--azul-egm-light)"     : "var(--blanco)",
-                      color:      sel ? "var(--azul-egm)"           : "var(--texto-primario)",
+                      border: sel ? "2px solid var(--azul-egm)" : "1px solid var(--gris-borde)",
+                      background: sel ? "var(--azul-egm-light)" : "var(--blanco)",
+                      color: sel ? "var(--azul-egm)" : "var(--texto-primario)",
                       fontWeight: sel ? 600 : 400,
                     }}>
                     {/* Letter label */}
                     <span
                       className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
                       style={{
-                        background: sel ? "var(--azul-egm)"        : "var(--gris-superficie)",
-                        color:      sel ? "var(--blanco)"          : "var(--texto-muted)",
+                        background: sel ? "var(--azul-egm)" : "var(--gris-superficie)",
+                        color: sel ? "var(--blanco)" : "var(--texto-muted)",
                       }}
                     >
                       {LETRAS[oi]}
@@ -1150,7 +1121,7 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
         disabled={Object.keys(respuestas).length < PREGUNTAS.length}
         className="mt-8 w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
         style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-        onMouseEnter={(e) => { if (Object.keys(respuestas).length >= PREGUNTAS.length) e.currentTarget.style.background = "var(--azul-egm-hover)";}}
+        onMouseEnter={(e) => { if (Object.keys(respuestas).length >= PREGUNTAS.length) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
         onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
         Enviar respuestas
       </button>

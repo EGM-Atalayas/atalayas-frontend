@@ -1,25 +1,35 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Inicialización lazy — no explota al importar si las variables no están definidas
+let _client: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnon);
+function getClient(): SupabaseClient {
+  if (_client) return _client;
+  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error("Supabase no configurado: faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  _client = createClient(url, anon);
+  return _client;
+}
 
 /**
  * Sube una imagen al bucket "modulos" de Supabase Storage
  * y devuelve la URL pública.
  */
 export async function subirImagenModulo(file: File): Promise<string> {
-  const ext      = file.name.split(".").pop() ?? "jpg";
-  const nombre   = `${crypto.randomUUID()}.${ext}`;
-  const ruta     = `portadas/${nombre}`;
+  const client = getClient();
+  const ext    = file.name.split(".").pop() ?? "jpg";
+  const nombre = `${crypto.randomUUID()}.${ext}`;
+  const ruta   = `portadas/${nombre}`;
 
-  const { error } = await supabase.storage
+  const { error } = await client.storage
     .from("modulos")
     .upload(ruta, file, { contentType: file.type, upsert: false });
 
   if (error) throw new Error(`Error al subir imagen: ${error.message}`);
 
-  const { data } = supabase.storage.from("modulos").getPublicUrl(ruta);
+  const { data } = client.storage.from("modulos").getPublicUrl(ruta);
   return data.publicUrl;
 }

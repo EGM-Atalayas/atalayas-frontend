@@ -4,40 +4,46 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
+import { getActividadReciente } from "@/lib/api/progreso";
+import type { ActividadItem } from "@/lib/types/progreso";
 
 interface ResumenAdmin {
-  nombreEmpresa:     string;
-  usuariosActivos:   number;
+  nombreEmpresa: string;
+  usuariosActivos: number;
   usuariosInactivos: number;
 }
 
 interface Anuncio {
-  anuncioId:     string;
-  empresaId:     string;
-  titulo:        string;
-  contenido:     string;
-  esGlobal:      boolean;
-  activo:        boolean;
-  creadoPor:     string;
-  creadoEn:      string;
+  anuncioId: string;
+  empresaId: string;
+  titulo: string;
+  contenido: string;
+  esGlobal: boolean;
+  activo: boolean;
+  creadoPor: string;
+  creadoEn: string;
   actualizadoEn: string;
 }
 
 // ── Mock data (sustituir cuando la API lo soporte) ──────────────────────────
 const MOCK_MODULOS = [
   { id: "m1", nombre: "Prevención de Riesgos Laborales", completados: 18, enProgreso: 6, pendientes: 4, total: 28 },
-  { id: "m2", nombre: "Protección de Datos (RGPD)",      completados: 22, enProgreso: 3, pendientes: 3, total: 28 },
-  { id: "m3", nombre: "Habilidades de Comunicación",     completados: 12, enProgreso: 9, pendientes: 7, total: 28 },
-  { id: "m4", nombre: "Onboarding Corporativo",          completados: 25, enProgreso: 2, pendientes: 1, total: 28 },
+  { id: "m2", nombre: "Protección de Datos (RGPD)", completados: 22, enProgreso: 3, pendientes: 3, total: 28 },
+  { id: "m3", nombre: "Habilidades de Comunicación", completados: 12, enProgreso: 9, pendientes: 7, total: 28 },
+  { id: "m4", nombre: "Onboarding Corporativo", completados: 25, enProgreso: 2, pendientes: 1, total: 28 },
 ];
 
-const MOCK_ACTIVIDAD = [
-  { hora: "Hace 5 min",   texto: "Ana García completó «Prevención de Riesgos»",    tipo: "completado" },
-  { hora: "Hace 22 min",  texto: "Carlos Ruiz inició «Protección de Datos»",        tipo: "inicio"     },
-  { hora: "Hace 1 h",     texto: "María López obtuvo el 100% en Onboarding",        tipo: "logro"      },
-  { hora: "Hace 3 h",     texto: "5 empleados completaron «Habilidades Comunicación»", tipo: "grupo"   },
-  { hora: "Ayer",         texto: "Nuevo módulo «Excel Avanzado» publicado",          tipo: "nuevo"      },
-];
+function tiempoRelativo(timestamp: string): string {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "ahora mismo";
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "Ayer";
+  return `Hace ${d} días`;
+}
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -48,12 +54,12 @@ function TituloSeccion({ children, noMargin }: { children: React.ReactNode; noMa
     <h2
       className={noMargin ? "" : "mb-6"}
       style={{
-        fontSize:      "clamp(1.6rem, 2.4vw, 2.4rem)",
-        fontFamily:    "'Instrument Serif', serif",
-        fontWeight:    400,
-        color:         "var(--texto-primario)",
+        fontSize: "clamp(1.6rem, 2.4vw, 2.4rem)",
+        fontFamily: "'Instrument Serif', serif",
+        fontWeight: 400,
+        color: "var(--texto-primario)",
         letterSpacing: "-0.02em",
-        lineHeight:    1.2,
+        lineHeight: 1.2,
       }}
     >
       {children}
@@ -99,25 +105,28 @@ function ActividadIcon({ tipo }: { tipo: string }) {
 
 export default function AdminEmpresa() {
   const { usuario } = useAuth();
-  const router      = useRouter();
+  const router = useRouter();
 
-  const [resumen, setResumen]   = useState<ResumenAdmin | null>(null);
+  const [resumen, setResumen] = useState<ResumenAdmin | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+  const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [resRes, anunciosRes] = await Promise.all([
+        const [resRes, anunciosRes, actividadData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           apiFetch(`${API_URL}/anuncios`),
+          getActividadReciente(5).catch(() => [] as ActividadItem[]),
         ]);
-        if (resRes.ok)      setResumen(await resRes.json());
+        if (resRes.ok) setResumen(await resRes.json());
         if (anunciosRes.ok) {
           const data = await anunciosRes.json();
           setAnuncios(data.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
-      } catch {}
+        setActividad(actividadData);
+      } catch { }
       finally { setCargando(false); }
     }
     cargarDatos();
@@ -134,17 +143,17 @@ export default function AdminEmpresa() {
     );
   }
 
-  const nombreEmpresa   = resumen?.nombreEmpresa ?? usuario?.nombreEmpresa ?? "Mi empresa";
-  const firstName       = (usuario?.nombre ?? "Administrador").split(" ")[0];
-  const fechaHoy        = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+  const nombreEmpresa = resumen?.nombreEmpresa ?? usuario?.nombreEmpresa ?? "Mi empresa";
+  const firstName = (usuario?.nombre ?? "Administrador").split(" ")[0];
+  const fechaHoy = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
     .replace(/^\w/, (c) => c.toUpperCase());
 
   // Métricas reales + mockeadas
-  const activos        = resumen?.usuariosActivos   ?? 0;
-  const inactivos      = resumen?.usuariosInactivos ?? 0;
+  const activos = resumen?.usuariosActivos ?? 0;
+  const inactivos = resumen?.usuariosInactivos ?? 0;
   const totalEmpleados = activos + inactivos;
-  const progresoMedio  = 67; // mock — API pendiente
-  const modulosTotal   = MOCK_MODULOS.length;
+  const progresoMedio = 67; // mock — API pendiente
+  const modulosTotal = MOCK_MODULOS.length;
 
   return (
     <div>
@@ -170,10 +179,10 @@ export default function AdminEmpresa() {
       >
         <div
           style={{
-            position:           "absolute",
-            inset:              0,
-            backgroundImage:    "url('/background-dashboard.jpg')",
-            backgroundSize:     "cover",
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('/background-dashboard.jpg')",
+            backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         />
@@ -199,17 +208,17 @@ export default function AdminEmpresa() {
             </span>
             <span
               style={{
-                fontFamily:           "'Instrument Serif', serif",
-                fontStyle:            "italic",
-                fontWeight:           400,
-                fontSize:             "clamp(3rem, 6vw, 5rem)",
-                lineHeight:           1.05,
-                background:           "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-                backgroundSize:       "300% auto",
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(3rem, 6vw, 5rem)",
+                lineHeight: 1.05,
+                background: "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+                backgroundSize: "300% auto",
                 WebkitBackgroundClip: "text",
-                WebkitTextFillColor:  "transparent",
-                backgroundClip:       "text",
-                animation:            "heroFadeUp 0.7s ease 0.12s both, gradientShift 6s ease infinite",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                animation: "heroFadeUp 0.7s ease 0.12s both, gradientShift 6s ease infinite",
               }}
             >
               {firstName}
@@ -236,10 +245,10 @@ export default function AdminEmpresa() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
             {[
-              { valor: activos,            label: "Empleados activos",  sub: totalEmpleados > 0 ? `${Math.round((activos/totalEmpleados)*100)}% del total` : null, href: "/dashboard/admin?tab=empleados",    color: "var(--azul-egm)" },
-              { valor: inactivos,          label: "Sin acceso activo",  sub: inactivos > 0 ? "Gestionar →" : null,                                                 href: "/dashboard/admin?tab=empleados",    color: "var(--texto-muted)" },
-              { valor: `${progresoMedio}%`, label: "Progreso medio",   sub: null,                                                                                   href: null,                               color: "var(--verde-oliva)", barra: true },
-              { valor: modulosTotal,       label: "Módulos publicados", sub: "Ver formaciones →",                                                                   href: "/dashboard/admin?tab=formaciones",  color: "var(--texto-primario)" },
+              { valor: activos, label: "Empleados activos", sub: totalEmpleados > 0 ? `${Math.round((activos / totalEmpleados) * 100)}% del total` : null, href: "/dashboard/admin?tab=empleados", color: "var(--azul-egm)" },
+              { valor: inactivos, label: "Sin acceso activo", sub: inactivos > 0 ? "Gestionar →" : null, href: "/dashboard/admin?tab=empleados", color: "var(--texto-muted)" },
+              { valor: `${progresoMedio}%`, label: "Progreso medio", sub: null, href: null, color: "var(--verde-oliva)", barra: true },
+              { valor: modulosTotal, label: "Módulos publicados", sub: "Ver formaciones →", href: "/dashboard/admin?tab=formaciones", color: "var(--texto-primario)" },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -279,7 +288,7 @@ export default function AdminEmpresa() {
               <div className="flex flex-col gap-3">
                 {MOCK_MODULOS.map((mod) => {
                   const pctC = Math.round((mod.completados / mod.total) * 100);
-                  const pctP = Math.round((mod.enProgreso  / mod.total) * 100);
+                  const pctP = Math.round((mod.enProgreso / mod.total) * 100);
                   return (
                     <div key={mod.id} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                       <div className="flex items-center justify-between mb-2">
@@ -293,8 +302,8 @@ export default function AdminEmpresa() {
                       <div className="flex gap-4 mt-2">
                         {[
                           { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
-                          { n: mod.enProgreso,  label: "en progreso", color: "#f59e0b" },
-                          { n: mod.pendientes,  label: "pendientes",  color: "var(--gris-borde)" },
+                          { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
+                          { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
                         ].map((s) => (
                           <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
                             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
@@ -311,17 +320,24 @@ export default function AdminEmpresa() {
             {/* Actividad reciente */}
             <div className="lg:col-span-2">
               <TituloSeccion>Actividad reciente</TituloSeccion>
-              <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                {MOCK_ACTIVIDAD.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 px-4 py-3.5" style={{ borderBottom: i < MOCK_ACTIVIDAD.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
-                    <ActividadIcon tipo={item.tipo} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs leading-snug" style={{ color: "var(--texto-primario)" }}>{item.texto}</p>
-                      <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{item.hora}</p>
+              {actividad.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
+                  <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin actividad reciente</p>
+                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Aparecerá aquí cuando los empleados interactúen con los módulos</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                  {actividad.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 px-4 py-3.5" style={{ borderBottom: i < actividad.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
+                      <ActividadIcon tipo={item.tipo} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs leading-snug" style={{ color: "var(--texto-primario)" }}>{item.texto}</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{tiempoRelativo(item.timestamp)}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>
@@ -336,9 +352,9 @@ export default function AdminEmpresa() {
               <TituloSeccion>Acciones rápidas</TituloSeccion>
               <div className="flex flex-col gap-2">
                 {[
-                  { label: "Añadir empleado",  desc: "Registra un nuevo miembro del equipo",   href: "/dashboard/admin?tab=empleados",   bg: "var(--azul-egm-light)",   color: "var(--azul-egm)",  icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
-                  { label: "Nuevo módulo",     desc: "Crea contenido formativo para tu equipo", href: "/dashboard/admin/modulos/crear",    bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-                  { label: "Publicar anuncio", desc: "Comunica algo importante a tu equipo",   href: "/dashboard/admin?tab=anuncios",    bg: "#fef3c7",                 color: "#b45309",           icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
+                  { label: "Añadir empleado", desc: "Registra un nuevo miembro del equipo", href: "/dashboard/admin?tab=empleados", bg: "var(--azul-egm-light)", color: "var(--azul-egm)", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
+                  { label: "Nuevo módulo", desc: "Crea contenido formativo para tu equipo", href: "/dashboard/admin/modulos/crear", bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                  { label: "Publicar anuncio", desc: "Comunica algo importante a tu equipo", href: "/dashboard/admin?tab=anuncios", bg: "#fef3c7", color: "#b45309", icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
                 ].map((a) => (
                   <button
                     key={a.label}
