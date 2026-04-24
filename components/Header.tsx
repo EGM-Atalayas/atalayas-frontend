@@ -32,9 +32,9 @@ const SUPERADMIN_LINKS = [
 
 export default function Header({ logoEmpresa }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [noLeidas, setNoLeidas]     = useState(0);
+  const [noLeidas, setNoLeidas] = useState(0);
 
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
 
@@ -60,7 +60,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
       if (!res.ok) return;
       const data = await res.json();
       setNoLeidas(data.noLeidas ?? 0);
-    } catch {}
+    } catch { }
   }, [usuario]);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     try {
       await apiFetch(`${API_URL}/notificaciones/me/leer-todas`, { method: "PATCH" });
       setNoLeidas(0);
-    } catch {}
+    } catch { }
   };
 
   const handleLogout = async () => {
@@ -86,9 +86,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     setMobileOpen(false);
   };
 
-  const initials       = usuario?.nombre ? getInitials(usuario.nombre) : "U";
+  const initials = usuario?.nombre ? getInitials(usuario.nombre) : "U";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
-  
+
   const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
   const linkPerfil = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/perfil";
   const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/configuracion";
@@ -96,9 +96,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
   return (
     <header
-      className="w-full sticky top-0 z-[100]"
+      className="w-full sticky top-0 z-100"
       style={{
-        background:   "var(--azul-egm)",
+        background: "var(--azul-egm)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
     >
@@ -147,7 +147,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           <div className="flex items-center h-full">
             <NotifMenu
               noLeidas={noLeidas}
-              onVerTodas={() => router.push(linkNotificaciones)}
               onMarcarLeidas={marcarTodasLeidas}
             />
           </div>
@@ -205,7 +204,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
                   onClick={() => handleNavClick(link.path)}
                   className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors"
                   style={{
-                    color:      isActive ? "var(--blanco)" : "rgba(255,255,255,0.65)",
+                    color: isActive ? "var(--blanco)" : "rgba(255,255,255,0.65)",
                     background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
                     fontWeight: isActive ? 600 : 400,
                   }}
@@ -221,11 +220,11 @@ export default function Header({ logoEmpresa }: HeaderProps) {
               <div
                 className="rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                 style={{
-                  width:      "32px",
-                  height:     "32px",
+                  width: "32px",
+                  height: "32px",
                   background: "rgba(255,255,255,0.15)",
-                  color:      "var(--blanco)",
-                  border:     "2px solid rgba(255,255,255,0.3)",
+                  color: "var(--blanco)",
+                  border: "2px solid rgba(255,255,255,0.3)",
                 }}
               >
                 {initials}
@@ -266,15 +265,15 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
 // ── NAVBUTTON INTACTO ─────────────────────────────────────────────────────────
 interface NavButtonProps {
-  label:    string;
+  label: string;
   isActive: boolean;
-  onClick:  () => void;
+  onClick: () => void;
 }
 
 function NavButton({ label, isActive, onClick }: NavButtonProps) {
   const [hovered, setHovered] = useState(false);
-  const [origin, setOrigin]   = useState<"left" | "right">("left");
-  const buttonRef             = useRef<HTMLButtonElement>(null);
+  const [origin, setOrigin] = useState<"left" | "right">("left");
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (buttonRef.current) {
@@ -300,13 +299,13 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
       onMouseLeave={handleMouseLeave}
       className="relative flex items-center px-5 whitespace-nowrap border-none cursor-pointer h-full"
       style={{
-        fontSize:   "16px",
+        fontSize: "16px",
         fontWeight: isActive ? 700 : 500,
-        color:      isActive
+        color: isActive
           ? "var(--verde-oliva-hover)"
           : hovered
-          ? "rgba(255,255,255,0.95)"
-          : "rgba(255,255,255,0.6)",
+            ? "rgba(255,255,255,0.95)"
+            : "rgba(255,255,255,0.6)",
         background: "transparent",
         transition: "color 0.15s ease",
       }}
@@ -315,17 +314,17 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
       {!isActive && (
         <span
           style={{
-            position:        "absolute",
-            bottom:          "25px", 
-            left:            "12px",
-            right:           "12px",
-            height:          "2px",
-            background:      "var(--verde-oliva-hover)",
-            borderRadius:    "2px",
-            display:         "block",
-            transform:       hovered ? "scaleX(1)" : "scaleX(0)",
+            position: "absolute",
+            bottom: "25px",
+            left: "12px",
+            right: "12px",
+            height: "2px",
+            background: "var(--verde-oliva-hover)",
+            borderRadius: "2px",
+            display: "block",
+            transform: hovered ? "scaleX(1)" : "scaleX(0)",
             transformOrigin: origin,
-            transition:      "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       )}
