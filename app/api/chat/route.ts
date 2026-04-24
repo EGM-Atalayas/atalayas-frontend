@@ -1,7 +1,17 @@
 export const runtime = "nodejs"
 
 import { NextRequest } from "next/server"
-import { chatCompletionStream, ChatMessage } from "@/lib/ai/provider"
+
+// La clave de IA ya NO vive en Vercel — el backend de Render la gestiona.
+// Este fichero actúa como proxy: construye el systemPrompt y reenvía al backend.
+const BACKEND_URL =
+  process.env.BACKEND_URL ??
+  "https://atalayas-backend-c25d.onrender.com/api/v1"
+
+interface ChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
 
 function buildSystemPrompt(context: {
   nombreUsuario?: string
@@ -64,23 +74,26 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = buildSystemPrompt(context ?? {})
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder()
-        try {
-          await chatCompletionStream(messages, systemPrompt, (chunk) => {
-            controller.enqueue(encoder.encode(chunk))
-          })
-        } catch (error) {
-          console.error("[/api/chat] Error en stream:", error)
-          controller.enqueue(encoder.encode("⚠️ Error al generar la respuesta."))
-        } finally {
-          controller.close()
-        }
-      },
+    // ── Proxy al backend de Render ────────────────────────────────────────────
+    // El backend tiene las claves de IA (Gemini / Groq) y devuelve el stream.
+    const backendRes = await fetch(`${BACKEND_URL}/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, systemPrompt }),
     })
 
-    return new Response(stream, {
+    if (!backendRes.ok || !backendRes.body) {
+      const status = backendRes.status
+      console.error("[/api/chat] Backend respondió con error:", status)
+      const errorMsg =
+        status >= 500
+          ? "⚠️ El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
+          : "⚠️ No se pudo procesar la consulta. Inténtalo de nuevo."
+      return new Response(errorMsg, { status: 502 })
+    }
+
+    // Pipe directo: el stream del backend llega al cliente sin modificaciones
+    return new Response(backendRes.body, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     })
   } catch (error) {
