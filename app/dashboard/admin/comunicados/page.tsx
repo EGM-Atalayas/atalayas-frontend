@@ -8,7 +8,7 @@ import {
   editarComunicado,
   desactivarComunicado,
 } from "@/lib/api/noticias";
-import { subirImagenModulo } from "@/lib/supabase";
+import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import type { Comunicado, ComunicadoInput, CategoriaComunicado } from "@/lib/types/noticias";
 
 const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
@@ -50,6 +50,12 @@ const EMPTY_FORM: ComunicadoInput = {
   destacado:        false,
   fechaPublicacion: null,
   fechaExpiracion:  null,
+  enlaceUrl:        null,
+  enlaceTexto:      null,
+  videoUrl:         null,
+  adjuntoUrl:       null,
+  adjuntoNombre:    null,
+  estado:           "publicado",
 };
 
 function formatDate(iso?: string | null) {
@@ -77,6 +83,10 @@ export default function ComunicadosAdminPage() {
   const [imagenModo, setImagenModo]       = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg]   = useState(false);
   const fileInputRef                      = useRef<HTMLInputElement>(null);
+
+  // Adjunto PDF
+  const [uploadingAdj, setUploadingAdj]  = useState(false);
+  const adjuntoRef                       = useRef<HTMLInputElement>(null);
 
   // IA
   const [aiLoading, setAiLoading]         = useState<"titulo" | "mensaje" | null>(null);
@@ -112,10 +122,17 @@ export default function ComunicadosAdminPage() {
       destacado:        c.destacado,
       fechaPublicacion: toInputDate(c.fechaPublicacion),
       fechaExpiracion:  toInputDate(c.fechaExpiracion),
+      enlaceUrl:        c.enlaceUrl ?? null,
+      enlaceTexto:      c.enlaceTexto ?? null,
+      videoUrl:         c.videoUrl ?? null,
+      adjuntoUrl:       c.adjuntoUrl ?? null,
+      adjuntoNombre:    c.adjuntoNombre ?? null,
+      estado:           c.estado ?? "publicado",
     });
     setEditando(c);
     setShowForm(true);
     setFormError(null);
+    setImagenModo("url");
   }
 
   function cerrarForm() {
@@ -140,6 +157,29 @@ export default function ComunicadosAdminPage() {
       setUploadingImg(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }
+
+  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAdj(true);
+    try {
+      const { url, nombre } = await subirAdjunto(file);
+      setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre }));
+    } catch {
+      setFormError("Error al subir el documento. Inténtalo de nuevo.");
+    } finally {
+      setUploadingAdj(false);
+      if (adjuntoRef.current) adjuntoRef.current.value = "";
+    }
+  }
+
+  function getVideoEmbedUrl(url: string): string | null {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vimeo = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+    return null;
   }
 
   async function sugerirConIA(campo: "titulo" | "mensaje") {
@@ -492,6 +532,93 @@ export default function ComunicadosAdminPage() {
                   Tras esta fecha el comunicado deja de mostrarse automáticamente.
                 </p>
               </FormField>
+
+              {/* Video */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Video (YouTube o Vimeo, opcional)
+                </label>
+                <input type="url" value={form.videoUrl ?? ""}
+                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                  placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
+                {form.videoUrl && getVideoEmbedUrl(form.videoUrl) && (
+                  <div className="mt-2 rounded-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                    <iframe src={getVideoEmbedUrl(form.videoUrl)!} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Adjunto PDF */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Documento adjunto (PDF, opcional)
+                </label>
+                <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
+                {form.adjuntoUrl ? (
+                  <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg"
+                    style={{ border: "1px solid #86efac", background: "#f0fdf4" }}>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="text-sm flex-1 truncate" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                      className="text-xs px-2 py-0.5 rounded-full" style={{ color: "var(--error)", background: "var(--error-light)" }}>
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+                    className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-60"
+                    style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+                    onMouseEnter={(e) => !uploadingAdj && (e.currentTarget.style.borderColor = "#93c5fd")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}>
+                    {uploadingAdj
+                      ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                      : <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg><span>Adjuntar documento (PDF, Word...)</span></>}
+                  </button>
+                )}
+              </div>
+
+              {/* Enlace externo / CTA */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Enlace externo (opcional)
+                </label>
+                <div className="flex flex-col gap-2">
+                  <input type="url" value={form.enlaceUrl ?? ""}
+                    onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                  />
+                  {form.enlaceUrl && (
+                    <input type="text" value={form.enlaceTexto ?? ""}
+                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                      placeholder='Texto del botón (ej: "Más información", "Inscríbete")'
+                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Estado borrador */}
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input type="checkbox" checked={form.estado === "borrador"}
+                    onChange={(e) => setForm({ ...form, estado: e.target.checked ? "borrador" : "publicado" })}
+                    className="w-4 h-4 rounded" style={{ accentColor: "#2563eb" }} />
+                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>
+                    Guardar como borrador (no visible para los usuarios)
+                  </span>
+                </label>
+              </div>
+
             </div>
 
             {formError && (
@@ -509,7 +636,7 @@ export default function ComunicadosAdminPage() {
                 style={{ background: GRAD_BTN, color: "#fff" }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
               >
-                {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
+                {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar comunicado"}
               </button>
             </div>
           </div>
@@ -569,6 +696,11 @@ export default function ComunicadosAdminPage() {
                               {c.categoria}
                             </span>
                           )}
+                          {c.estado === "borrador" && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }}>
+                              Borrador
+                            </span>
+                          )}
                           {(!c.activo || expirado) && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
                               {!c.activo ? "Inactivo" : "Expirado"}
@@ -577,13 +709,37 @@ export default function ComunicadosAdminPage() {
                         </div>
                         <h3 className="text-base font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>{c.titulo}</h3>
                         <p className="text-sm line-clamp-2 leading-relaxed" style={{ color: "var(--texto-muted)" }}>{c.mensaje}</p>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-4 mt-2 flex-wrap">
                           <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
                             Publicado: {formatDate(c.fechaPublicacion)}
                           </span>
                           {c.fechaExpiracion && (
                             <span className="text-xs" style={{ color: expirado ? "var(--error)" : "var(--texto-muted)" }}>
                               Expira: {formatDate(c.fechaExpiracion)}
+                            </span>
+                          )}
+                          {(c.vistas ?? 0) > 0 && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {c.vistas} {c.vistas === 1 ? "vista" : "vistas"}
+                            </span>
+                          )}
+                          {c.adjuntoUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              📎 {c.adjuntoNombre ?? "Adjunto"}
+                            </span>
+                          )}
+                          {c.enlaceUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              🔗 Enlace externo
+                            </span>
+                          )}
+                          {c.videoUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              🎬 Video
                             </span>
                           )}
                         </div>
