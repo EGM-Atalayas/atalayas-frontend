@@ -38,6 +38,9 @@ export default function SuperadminComunicadosPage() {
   const [iaCargando, setIaCargando] = useState(false);
   const [iaResumen, setIaResumen] = useState("");
   const [iaEtiquetas, setIaEtiquetas] = useState<string[]>([]);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
+  const [pdfGeneradoBlob, setPdfGeneradoBlob] = useState<Blob | null>(null);
+  const [pdfGeneradoPreviewUrl, setPdfGeneradoPreviewUrl] = useState("");
 
   const nombreArchivo = useMemo(() => {
     if (tipoContenido === "video") return videoFile?.name ?? "Ningún video seleccionado";
@@ -154,6 +157,50 @@ Instrucciones para los campos del JSON:
       setError(`Ocurrió un error: ${err.message || "Inténtalo de nuevo."}`);
     } finally {
       setIaCargando(false);
+    }
+  };
+
+  // --- GENERAR PDF DOCUMENTATIVO EXTENSO ---
+  const handleGenerarPdfDocumento = async () => {
+    if (!titulo.trim() || !descripcion.trim()) {
+      setError("Introduce título y descripción para generar el PDF documentativo.");
+      return;
+    }
+
+    setGenerandoPdf(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/comunicados-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: titulo.trim(),
+          descripcion: descripcion.trim(),
+          tipo: tipoContenido,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("No se pudo generar el PDF");
+      }
+
+      // Descargar el PDF
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `comunicado_${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setOkMsg("PDF documentativo generado y descargado correctamente.");
+    } catch {
+      setError("No se pudo generar el PDF documentativo. Intenta de nuevo.");
+    } finally {
+      setGenerandoPdf(false);
     }
   };
 
@@ -495,6 +542,24 @@ Instrucciones para los campos del JSON:
                   </button>
                 </div>
               )}
+              
+              {/* Botón para generar PDF documentativo */}
+              <button
+                type="button"
+                onClick={handleGenerarPdfDocumento}
+                disabled={generandoPdf}
+                className="mt-4 w-full bg-green-600 text-white font-semibold rounded-xl py-2.5 hover:bg-green-700 transition-colors disabled:opacity-70 flex justify-center items-center gap-2 text-sm"
+              >
+                {generandoPdf ? (
+                  <span className="animate-pulse flex items-center gap-2">
+                    📄 Generando PDF...
+                  </span>
+                ) : (
+                  <>
+                    📄 Generar PDF extenso
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
