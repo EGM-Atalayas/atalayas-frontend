@@ -14,31 +14,34 @@ const COLORES_SECTORES = [
 ];
 
 const COLORES_ROLES: Record<string, string> = {
-  SUPERADMIN: "#F59E0B",
-  ADMIN:      "#3B82F6",
-  EMPLEADO:   "#10B981",
-  INVITADO:   "#94A3B8",
+  ROLE_ADMIN:         "#F59E0B",
+  ROLE_ADMIN_EMPRESA: "#3B82F6",
+  ROLE_EMPLEADO:      "#10B981",
 };
 
 const ETIQUETA_ROL: Record<string, string> = {
-  SUPERADMIN: "SuperAdmins",
-  ADMIN:      "Admins Empresa",
-  EMPLEADO:   "Empleados",
-  INVITADO:   "Invitados",
+  ROLE_ADMIN:         "SuperAdmins",
+  ROLE_ADMIN_EMPRESA: "Admins Empresa",
+  ROLE_EMPLEADO:      "Empleados",
 };
 
 export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse> {
-  const [resEmpresas, resUsuarios] = await Promise.all([
-    apiFetch(`${API_URL}/empresas`),
-    apiFetch(`${API_URL}/usuarios`),
-  ]);
-
+  const resEmpresas = await apiFetch(`${API_URL}/empresas`);
   if (!resEmpresas.ok) throw new Error("Error al obtener empresas");
-  if (!resUsuarios.ok) throw new Error("Error al obtener usuarios");
-
   const empresas: any[] = await resEmpresas.json();
-  const usuarios: any[] = await resUsuarios.json();
 
+  let usuarios: any[] = [];
+  try {
+    const resUsuarios = await apiFetch(`${API_URL}/users`);
+    if (resUsuarios.ok) {
+      usuarios = await resUsuarios.json();
+      console.log("[DEBUG usuarios]", usuarios.slice(0, 3));
+    }
+  } catch {
+    console.warn("[Estadísticas] No se pudo cargar /users, continuando sin ellos.");
+  }
+
+  // ── SECTORES ─────────────────────────────────────────────────────────────────
   const conteoSectores: Record<string, number> = {};
   for (const emp of empresas) {
     if (emp.estadoSolicitud !== "APROBADA") continue;
@@ -52,20 +55,23 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     color: COLORES_SECTORES[i % COLORES_SECTORES.length],
   }));
 
+  // ── USUARIOS POR ROL ─────────────────────────────────────────────────────────
   const conteoRoles: Record<string, number> = {};
   for (const user of usuarios) {
-    const rol: string = (
-      user.codigoRol ?? user.rol ?? user.role ?? user.nombreRol ?? "DESCONOCIDO"
-    ).toUpperCase();
+    const rol: string =
+      user.codigoRol ?? user.rol ?? user.role ?? user.nombreRol ?? "DESCONOCIDO";
     conteoRoles[rol] = (conteoRoles[rol] ?? 0) + 1;
   }
 
+  console.log("[DEBUG conteoRoles]", conteoRoles);
+
   const usuariosPorRol = Object.entries(conteoRoles).map(([rol, cantidad]) => ({
-    rol: ETIQUETA_ROL[rol] ?? rol,
+    rol:      ETIQUETA_ROL[rol]   ?? rol,
     cantidad,
-    color: COLORES_ROLES[rol] ?? "#94A3B8",
+    color:    COLORES_ROLES[rol]  ?? "#94A3B8",
   }));
 
+  // ── CRECIMIENTO ──────────────────────────────────────────────────────────────
   const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const hoy = new Date();
 
@@ -82,8 +88,8 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     }).length;
 
     const empleadosHasta = usuarios.filter((u) => {
-      const rol = (u.codigoRol ?? u.rol ?? u.role ?? "").toUpperCase();
-      if (rol !== "EMPLEADO") return false;
+      const rol = u.codigoRol ?? u.rol ?? u.role ?? "";
+      if (rol !== "ROLE_EMPLEADO") return false;
       const fecha = new Date(u.creadoEn ?? u.fechaCreacion ?? u.createdAt ?? 0);
       return fecha.getFullYear() < anio || (fecha.getFullYear() === anio && fecha.getMonth() <= mes);
     }).length;

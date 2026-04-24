@@ -34,6 +34,7 @@ const comunidadItems = [
     imagen: "/logo-en-femenino.png",
     bg: "#8878c8",
     icono: null,
+    url: "https://atalayas.com/en-femenino/",
   },
   {
     label: "Autobús lanzadera",
@@ -41,6 +42,7 @@ const comunidadItems = [
     imagen: "/autobus.jpg",
     bg: null,
     icono: null,
+    url: "https://atalayas.com/autobus-lanzadera/",
   },
   {
     label: "Coche compartido",
@@ -48,6 +50,7 @@ const comunidadItems = [
     imagen: "/coche-compartido.jpg",
     bg: null,
     icono: null,
+    url: "https://atalayas.com/journify-coche-compartido/",
   },
   {
     label: "Aparcamiento VAO",
@@ -55,6 +58,7 @@ const comunidadItems = [
     imagen: "/aparcamiento-vao.png",
     bg: null,
     icono: null,
+    url: "https://atalayas.com/aparcamientovao/",
   },
   {
     label: "Empresarios de hoy y de mañana",
@@ -62,6 +66,7 @@ const comunidadItems = [
     imagen: "/empresas-hoy.jpg",
     bg: null,
     icono: null,
+    url: "https://atalayas.com/100-estudiantes-20-empresarios/",
   },
   {
     label: "Proyecto empresas solidarias",
@@ -69,6 +74,7 @@ const comunidadItems = [
     imagen: "/empresas-solidarias.png",
     bg: "#ffffff",
     icono: null,
+    url: "https://atalayas.com/empresas-solidarias/",
   },
   {
     label: "Voy en bici al trabajo",
@@ -76,6 +82,7 @@ const comunidadItems = [
     imagen: "/trabajo-bici.jpg",
     bg: null,
     icono: null,
+    url: "https://tu-url.com/bici",
   },
   {
     label: "Atalayas circular",
@@ -83,6 +90,7 @@ const comunidadItems = [
     imagen: "/atalayas-circular.jpg",
     bg: null,
     icono: null,
+    url: "https://tu-url.com/circular",
   },
 ];
 
@@ -423,8 +431,9 @@ export default function Invitado() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {comunidadItems.map((item) => (
               <div
-                key={item.label}
-                className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
+              key={item.label}
+              onClick={() => item.url && window.open(item.url, "_blank")}
+              className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
                 style={{
                   background: 'bg' in item && item.bg ? item.bg as string : "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.14)",
