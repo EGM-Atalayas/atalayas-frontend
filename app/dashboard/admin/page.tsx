@@ -365,7 +365,7 @@ function AdminContent() {
             {/* Header */}
             <div className="flex items-start justify-between mb-8">
               <div>
-                <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 400, color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                   Empleados
                 </h1>
                 <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
@@ -774,7 +774,7 @@ function AdminContent() {
             {/* Header */}
             <div className="flex items-start justify-between mb-8">
               <div>
-                <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 400, color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                   Gestión de Anuncios
                 </h1>
                 <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Comunica novedades a todos los empleados</p>
@@ -939,7 +939,7 @@ function AdminContent() {
             {/* Header */}
             <div className="flex items-start justify-between mb-8">
               <div>
-                <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: "clamp(1.8rem, 2.5vw, 2.2rem)", fontWeight: 400, color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                   Gestión de Módulos
                 </h1>
                 <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Administra los módulos formativos de tu empresa</p>
@@ -1095,7 +1095,7 @@ function AdminContent() {
             <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
               <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
                 <div>
-                  <p style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: "1.4rem", fontWeight: 400, color: "var(--texto-primario)" }}>
+                  <p style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "1.2rem", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                     Progreso del equipo
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Seguimiento individual por empleado</p>
