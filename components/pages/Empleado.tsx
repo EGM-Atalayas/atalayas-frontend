@@ -703,7 +703,7 @@ export default function Empleado() {
 }
 
 // ── TÍTULO DE SECCIÓN ─────────────────────────────────────────────────────────
-function TituloSeccion({ children, noMargin }: {
+function TituloSeccion({ children, noMargin, letras }: {
   children: React.ReactNode;
   noMargin?: boolean;
   letras?: boolean;
@@ -712,12 +712,11 @@ function TituloSeccion({ children, noMargin }: {
     <h2
       className={noMargin ? "" : "mb-6"}
       style={{
-        fontSize: "clamp(1.6rem, 2.8vw, 2.2rem)",
-        fontFamily: "var(--font-raleway), sans-serif",
-        fontWeight: 800,
+        fontSize: "clamp(2rem, 2.8vw, 2.8rem)",
+        fontFamily: "'Instrument Serif', serif",
+        fontWeight: 400,
         color: "var(--texto-primario)",
-        letterSpacing: "-0.02em",
-        lineHeight: 1.1,
+        letterSpacing: letras ? "0.04em" : "-0.02em",
       }}
     >
       {children}

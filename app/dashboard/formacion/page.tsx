@@ -113,18 +113,13 @@ export default function FormacionPage() {
   const [filtroTipo,   setFiltroTipo]   = useState<string>("todos");
   const [soloIA,       setSoloIA]       = useState(false);
   const [filtroOpen,   setFiltroOpen]   = useState(false);
-  const [gestionOpen,  setGestionOpen]  = useState(false);
-  const filtroRef  = useRef<HTMLDivElement>(null);
-  const gestionRef = useRef<HTMLDivElement>(null);
+  const filtroRef = useRef<HTMLDivElement>(null);
 
-  // Cierra los desplegables al hacer clic fuera
+  // Cierra el desplegable al hacer clic fuera
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (filtroRef.current && !filtroRef.current.contains(e.target as Node)) {
         setFiltroOpen(false);
-      }
-      if (gestionRef.current && !gestionRef.current.contains(e.target as Node)) {
-        setGestionOpen(false);
       }
     }
     document.addEventListener("mousedown", handler);
@@ -166,6 +161,20 @@ export default function FormacionPage() {
       <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.jpg" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
+      {isAdmin && (
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+            className="text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", color: "var(--texto-secundario)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
+          >
+            Gestionar módulos
+          </button>
+        </div>
+      )}
+
       {/* ── Loading ───────────────────────────────────────────────────── */}
       {loading && (
         <div className="flex items-center justify-center py-20">
@@ -177,7 +186,7 @@ export default function FormacionPage() {
         <>
           {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
           <div className="flex items-center justify-between gap-2 mb-10">
-            <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(2rem, 3vw, 2.6rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
               Módulos
             </h2>
             <div className="flex items-center gap-2">
@@ -339,69 +348,6 @@ export default function FormacionPage() {
               <span className="text-xs ml-1" style={{ color: "var(--texto-muted)" }}>
                 {modulosFiltrados.length} resultado{modulosFiltrados.length !== 1 ? "s" : ""}
               </span>
-            )}
-
-            {/* Botón gestión — solo admin */}
-            {isAdmin && (
-              <div className="relative" ref={gestionRef}>
-                <button
-                  onClick={() => setGestionOpen((v) => !v)}
-                  title="Gestión de módulos"
-                  className="flex items-center justify-center rounded-xl border transition-colors"
-                  style={{
-                    width: "38px", height: "38px",
-                    background:  gestionOpen ? "var(--azul-egm)" : "var(--blanco)",
-                    borderColor: gestionOpen ? "var(--azul-egm)" : "var(--gris-borde)",
-                    color:       gestionOpen ? "#ffffff" : "var(--texto-primario)",
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-
-                {gestionOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl overflow-hidden"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", minWidth: "200px" }}
-                  >
-                    <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-                      <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Gestión de módulos</p>
-                    </div>
-                    <div className="p-1.5 flex flex-col gap-0.5">
-                      <button
-                        onClick={() => { setGestionOpen(false); router.push("/dashboard/admin/modulos/crear"); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
-                        style={{ color: "var(--texto-primario)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                        </div>
-                        <span className="font-medium">Nuevo módulo</span>
-                      </button>
-                      <button
-                        onClick={() => { setGestionOpen(false); router.push("/dashboard/admin?tab=formaciones"); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
-                        style={{ color: "var(--texto-primario)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                          </svg>
-                        </div>
-                        <span className="font-medium">Gestionar módulos</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
             )}
             </div>
           </div>
