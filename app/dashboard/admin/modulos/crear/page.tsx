@@ -52,6 +52,29 @@ const IconMic    = () => <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none
 
 const ROLES_BLOQUEADOS = ["ROLE_EMPLEADO", "INVITADO"];
 
+// Parser del formato texto plano que devuelve el backend para preguntas:
+// "PREGUNTA X: texto\nA) ...\nB) ...\nCORRECTA: A"
+function parsearPreguntasTexto(texto: string): { texto: string; opciones: string[]; correcta: number }[] {
+  const preguntas: { texto: string; opciones: string[]; correcta: number }[] = [];
+  const bloques = texto.split(/PREGUNTA\s+\d+\s*:/i).filter((b) => b.trim());
+  for (const bloque of bloques) {
+    const lineas = bloque.split("\n").map((l) => l.trim()).filter((l) => l);
+    const textoPreg = lineas[0]?.trim() ?? "";
+    const opciones: string[] = [];
+    let correcta = 0;
+    for (const linea of lineas.slice(1)) {
+      const mOp = linea.match(/^([A-D])\)\s+(.+)/i);
+      if (mOp) opciones.push(mOp[2].trim());
+      const mCor = linea.match(/^CORRECTA\s*:\s*([A-D])/i);
+      if (mCor) correcta = Math.max(0, ["A","B","C","D"].indexOf(mCor[1].toUpperCase()));
+    }
+    if (textoPreg && opciones.length >= 2) {
+      preguntas.push({ texto: textoPreg, opciones, correcta });
+    }
+  }
+  return preguntas;
+}
+
 const PASOS_MANUAL = [
   { num: 1, label: "Información"  },
   { num: 2, label: "Archivo"      },
@@ -288,8 +311,10 @@ export default function CrearModuloPage() {
         body: JSON.stringify({ tema: nombre, descripcion }),
       });
       const data = res.ok ? await res.json() : null;
-      if (data?.preguntas) {
-        setPreguntas(data.preguntas.map((q: any) => ({ id: newId(), texto: q.texto, opciones: q.opciones, correcta: q.correcta ?? 0 })));
+      const rawTexto: string = data?.contenido ?? data?.preguntas ?? "";
+      const parsed = rawTexto ? parsearPreguntasTexto(rawTexto) : [];
+      if (parsed.length > 0) {
+        setPreguntas(parsed.map((q) => ({ id: newId(), texto: q.texto, opciones: q.opciones, correcta: q.correcta })));
       } else {
         setPreguntas([
           { id: newId(), texto: `¿Cuál es el objetivo principal de "${nombre}"?`, opciones: ["Opción A","Opción B","Opción C","Opción D"], correcta: 0 },
@@ -357,7 +382,9 @@ export default function CrearModuloPage() {
   const [portadaIAFile,    setPortadaIAFile]    = useState<File | null>(null);
   const [portadaIAPreview, setPortadaIAPreview] = useState<string>("");
 
-  const [tieneTestIA,   setTieneTestIA]   = useState(false);
+  const [tieneTestIA,        setTieneTestIA]        = useState(false);
+  const [numPreguntasIA,     setNumPreguntasIA]     = useState(5);
+  const [preguntasGeneradasIA, setPreguntasGeneradasIA] = useState<{ texto: string; opciones: string[]; correcta: number }[]>([]);
 
   // Tipos de salida seleccionados (al menos uno requerido)
   type TipoSalida = "documentacion" | "podcast" | "video";
@@ -475,22 +502,15 @@ export default function CrearModuloPage() {
           const resTest = await fetch(`${API_URL}/ai/generar-preguntas`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: JSON.stringify({ prompt: promptTest, tema: d.titulo || nombre, descripcion: d.descripcion || "", numPreguntas: 5 }),
+            body: JSON.stringify({ prompt: promptTest, tema: d.titulo || nombre, descripcion: d.descripcion || "", numPreguntas: numPreguntasIA }),
           });
           if (resTest.ok) {
             const dataTest = await resTest.json();
-            // El backend devuelve { contenido: "JSON con preguntas" }
-            const raw = dataTest?.contenido ?? dataTest?.preguntas;
-            if (raw) {
-              try {
-                const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-                const pregsArr = Array.isArray(parsed) ? parsed : parsed?.preguntas;
-                if (Array.isArray(pregsArr) && pregsArr.length > 0) {
-                  testJson = JSON.stringify(pregsArr.map((q: { texto: string; opciones: string[]; correcta: number }) => ({
-                    texto: q.texto, opciones: q.opciones, correcta: q.correcta ?? 0,
-                  })));
-                }
-              } catch { /* si no parsea, se queda sin test */ }
+            const rawTexto: string = dataTest?.contenido ?? dataTest?.preguntas ?? "";
+            const pregsMapeadas = rawTexto ? parsearPreguntasTexto(rawTexto) : [];
+            if (pregsMapeadas.length > 0) {
+              testJson = JSON.stringify(pregsMapeadas);
+              setPreguntasGeneradasIA(pregsMapeadas);
             }
           }
         } catch { /* si falla la generación del test, continuamos sin él */ }
@@ -535,7 +555,7 @@ export default function CrearModuloPage() {
     setArchivoM(null); setArchivoMRaw(null); setAudiencia("todos"); setDeptos([]); setTieneTest(false); setPreguntas([]); setGuardado(false); setErrorMsg("");
     setPortadaFile(null); setPortadaPreview("");
     setArchivosIA([]); setArchivosIARaw([]); setGenerado(false); setResultadoIA(null); setProgreso(0); setErrorIA(""); setTiposSalidaIA(["documentacion"]);
-    setTieneTestIA(false);
+    setTieneTestIA(false); setNumPreguntasIA(5); setPreguntasGeneradasIA([]);
     setPortadaIAFile(null); setPortadaIAPreview("");
   };
 
@@ -1107,15 +1127,37 @@ export default function CrearModuloPage() {
                 </div>
                 <div className="p-6">
                   {tieneTestIA ? (
-                    <div className="rounded-xl p-5 flex items-start gap-4" style={{ background:"rgba(163,181,53,0.07)", border:"1.5px solid rgba(163,181,53,0.3)" }}>
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background:"rgba(163,181,53,0.15)", color:"#A3B535" }}>
-                        <IconSpark />
-                      </div>
+                    <div className="flex flex-col gap-4">
+                      {/* Selector de número de preguntas */}
                       <div>
-                        <p className="text-sm font-semibold mb-1" style={{ color:"var(--texto-primario)" }}>Test generado automáticamente por IA</p>
-                        <p className="text-sm leading-relaxed" style={{ color:"var(--texto-secundario)" }}>
-                          Durante la generación del módulo, la IA creará <strong>5 preguntas de tipo test</strong> basadas en el contenido del documento. Las preguntas estarán disponibles al completar el módulo.
-                        </p>
+                        <label className="block text-xs font-semibold mb-2" style={{ color:"var(--texto-secundario)" }}>
+                          Número de preguntas
+                        </label>
+                        <div className="flex gap-2 flex-wrap">
+                          {[3, 5, 7, 10].map((n) => (
+                            <button key={n} onClick={() => setNumPreguntasIA(n)}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                              style={{
+                                border: `1.5px solid ${numPreguntasIA === n ? "#A3B535" : "var(--gris-borde)"}`,
+                                background: numPreguntasIA === n ? "rgba(163,181,53,0.1)" : "var(--gris-pagina)",
+                                color: numPreguntasIA === n ? "#A3B535" : "var(--texto-muted)",
+                              }}>
+                              {n} preguntas
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Info */}
+                      <div className="rounded-xl p-4 flex items-start gap-3" style={{ background:"rgba(163,181,53,0.07)", border:"1.5px solid rgba(163,181,53,0.25)" }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background:"rgba(163,181,53,0.15)", color:"#A3B535" }}>
+                          <IconSpark />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold mb-0.5" style={{ color:"var(--texto-primario)" }}>Generado automáticamente por IA</p>
+                          <p className="text-sm leading-relaxed" style={{ color:"var(--texto-secundario)" }}>
+                            La IA creará <strong>{numPreguntasIA} preguntas de tipo test</strong> basadas en el contenido del documento. Podrás ver una previsualización antes de finalizar.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -1180,7 +1222,7 @@ export default function CrearModuloPage() {
                         <div className="flex items-start gap-3">
                           <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Test</span>
                           <span className="text-sm" style={{ color: tieneTestIA ? "#15803d" : "var(--texto-muted)" }}>
-                            {tieneTestIA ? "Sí — generado por IA (5 preguntas)" : "No"}
+                            {tieneTestIA ? `Sí — generado por IA (${numPreguntasIA} preguntas)` : "No"}
                           </span>
                         </div>
                       </div>
@@ -1230,11 +1272,15 @@ export default function CrearModuloPage() {
 
         {/* ══ ÉXITO ══ */}
         {(guardado || generado) && (
-          <div className="fade-up max-w-lg mx-auto text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background:"var(--verde-oliva)", color:"#fff" }}><IconCheck /></div>
-            <h2 className="text-xl font-bold mb-2" style={{ color:"var(--texto-primario)" }}>¡Módulo creado correctamente!</h2>
-            <p className="text-sm mb-6" style={{ color:"var(--texto-muted)" }}><strong>{resultadoIA?.titulo || nombre}</strong> ya está disponible en la plataforma.</p>
+          <div className="fade-up max-w-2xl mx-auto">
+            {/* Cabecera éxito */}
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background:"var(--verde-oliva)", color:"#fff" }}><IconCheck /></div>
+              <h2 className="text-xl font-bold mb-2" style={{ color:"var(--texto-primario)" }}>¡Módulo creado correctamente!</h2>
+              <p className="text-sm" style={{ color:"var(--texto-muted)" }}><strong>{resultadoIA?.titulo || nombre}</strong> ya está disponible en la plataforma.</p>
+            </div>
 
+            {/* Badges tipos de salida */}
             {generado && tiposSalidaIA.length > 0 && (
               <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
                 {tiposSalidaIA.map((t) => {
@@ -1247,13 +1293,68 @@ export default function CrearModuloPage() {
                     </span>
                   );
                 })}
+                {generado && tieneTestIA && preguntasGeneradasIA.length > 0 && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background:"#f0fdf4", color:"#15803d", border:"1.5px solid #86efac" }}>
+                    <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3L22 4"/></svg>
+                    Test · {preguntasGeneradasIA.length} preguntas
+                  </span>
+                )}
               </div>
             )}
 
+            {/* Previsualización contenido */}
             {generado && resultadoIA?.contenido && (
-              <div className="rounded-xl p-4 mb-6 text-left" style={{ background:"var(--gris-pagina)", border:"1px solid var(--gris-borde)" }}>
-                <p className="text-xs font-semibold mb-2" style={{ color:"var(--texto-muted)" }}>Vista previa del contenido generado</p>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color:"var(--texto-secundario)" }}>{resultadoIA.contenido.slice(0, 500)}{resultadoIA.contenido.length > 500 ? "…" : ""}</p>
+              <div className="rounded-2xl overflow-hidden mb-4" style={{ border:"1px solid var(--gris-borde)" }}>
+                <div className="px-5 py-3 flex items-center gap-2" style={{ background:"var(--gris-pagina)", borderBottom:"1px solid var(--gris-borde)" }}>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color:"var(--azul-egm)" }}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color:"var(--texto-muted)" }}>Previsualización del contenido</p>
+                </div>
+                <div className="p-5 overflow-y-auto" style={{ maxHeight:"280px", background:"var(--blanco)" }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color:"var(--texto-secundario)" }}>
+                    {resultadoIA.contenido.slice(0, 1200)}{resultadoIA.contenido.length > 1200 ? "\n\n…(contenido completo disponible en el módulo)" : ""}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Previsualización preguntas del test */}
+            {generado && tieneTestIA && preguntasGeneradasIA.length > 0 && (
+              <div className="rounded-2xl overflow-hidden mb-6" style={{ border:"1px solid var(--gris-borde)" }}>
+                <div className="px-5 py-3 flex items-center gap-2" style={{ background:"var(--gris-pagina)", borderBottom:"1px solid var(--gris-borde)" }}>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color:"#15803d" }}>
+                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                  </svg>
+                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color:"var(--texto-muted)" }}>Preguntas del test generadas</p>
+                  <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background:"#f0fdf4", color:"#15803d" }}>{preguntasGeneradasIA.length} preguntas</span>
+                </div>
+                <div className="divide-y" style={{ borderColor:"var(--gris-borde)", background:"var(--blanco)" }}>
+                  {preguntasGeneradasIA.map((q, qi) => (
+                    <div key={qi} className="px-5 py-4">
+                      <p className="text-sm font-semibold mb-3" style={{ color:"var(--texto-primario)" }}>
+                        <span className="inline-block mr-2 px-1.5 py-0.5 rounded text-xs font-bold" style={{ background:"var(--azul-egm-light)", color:"var(--azul-egm)" }}>P{qi + 1}</span>
+                        {q.texto}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {q.opciones.map((op, oi) => (
+                          <div key={oi} className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                            style={{
+                              border: `1.5px solid ${q.correcta === oi ? "#16a34a" : "var(--gris-borde)"}`,
+                              background: q.correcta === oi ? "#f0fdf4" : "var(--gris-pagina)",
+                              color: q.correcta === oi ? "#15803d" : "var(--texto-secundario)",
+                            }}>
+                            {q.correcta === oi && (
+                              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            )}
+                            {op}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
