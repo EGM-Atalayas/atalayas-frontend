@@ -627,12 +627,14 @@ function CourseCard({
 
         {/* Tipo badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded self-start"
-            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-          >
-            {MODULO_TIPO_LABEL[m.tipoModulo] ?? m.tipoModulo}
-          </span>
+          {MODULO_TIPO_LABEL[m.tipoModulo] && (
+            <span
+              className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded self-start"
+              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+            >
+              {MODULO_TIPO_LABEL[m.tipoModulo]}
+            </span>
+          )}
           {m.esEspecializadoIa && (
             <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded self-start"
               style={{ background: "#f3e8ff", color: "#7c3aed" }}>

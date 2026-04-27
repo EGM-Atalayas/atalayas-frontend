@@ -1009,10 +1009,12 @@ function AdminContent() {
                       <div className="p-5 flex flex-col flex-1">
                       {/* Badges */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                          {MODULO_TIPO_LABEL[f.tipoModulo] ?? f.tipoModulo}
-                        </span>
+                        {MODULO_TIPO_LABEL[f.tipoModulo] && (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                            {MODULO_TIPO_LABEL[f.tipoModulo]}
+                          </span>
+                        )}
                         {f.empresaId === null ? (
                           <span className="text-xs px-2.5 py-1 rounded-full italic"
                             style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
