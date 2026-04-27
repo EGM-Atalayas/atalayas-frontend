@@ -10,7 +10,7 @@ import { subirImagenModulo } from "@/lib/supabase";
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Modo  = null | "manual" | "ia";
 type PasoManual = 1 | 2 | 3 | 4;
-type PasoIA     = 1 | 2 | 3 | 4;
+type PasoIA     = 1 | 2 | 3 | 4 | 5;
 
 interface Pregunta {
   id:       number;
@@ -63,7 +63,8 @@ const PASOS_IA = [
   { num: 1, label: "Información" },
   { num: 2, label: "Documento"   },
   { num: 3, label: "Contenido"   },
-  { num: 4, label: "Generar"     },
+  { num: 4, label: "Test"        },
+  { num: 5, label: "Generar"     },
 ];
 
 // Audiencia principal del módulo
@@ -356,6 +357,8 @@ export default function CrearModuloPage() {
   const [portadaIAFile,    setPortadaIAFile]    = useState<File | null>(null);
   const [portadaIAPreview, setPortadaIAPreview] = useState<string>("");
 
+  const [tieneTestIA,   setTieneTestIA]   = useState(false);
+
   // Tipos de salida seleccionados (al menos uno requerido)
   type TipoSalida = "documentacion" | "podcast" | "video";
   const TIPOS_SALIDA: { key: TipoSalida; label: string; desc: string; icon: React.ReactNode; color: string; bg: string }[] = [
@@ -408,6 +411,7 @@ export default function CrearModuloPage() {
     tiposSalidaIA.includes("documentacion") ? "Generando contenido formativo…" : null,
     tiposSalidaIA.includes("podcast") ? "Escribiendo guion de podcast…" : null,
     tiposSalidaIA.includes("video") ? "Creando slides del video…" : null,
+    tieneTestIA ? "Generando preguntas del test…" : null,
     "Finalizando módulo…",
   ].filter(Boolean) as string[];
 
@@ -459,6 +463,39 @@ export default function CrearModuloPage() {
       }
       const d = await resIA.json();
       setResultadoIA({ titulo: d.titulo || nombre, descripcion: d.descripcion || "", contenido: d.contenido || "" });
+
+      // Generar test con IA si está activado
+      let testJson: string | null = null;
+      if (tieneTestIA) {
+        setMsgProgreso("Generando preguntas del test…");
+        try {
+          const promptTest = d.contenido
+            ? d.contenido.substring(0, 3000)
+            : `${d.titulo || nombre}. ${d.descripcion || ""}`;
+          const resTest = await fetch(`${API_URL}/ai/generar-preguntas`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ prompt: promptTest, tema: d.titulo || nombre, descripcion: d.descripcion || "", numPreguntas: 5 }),
+          });
+          if (resTest.ok) {
+            const dataTest = await resTest.json();
+            // El backend devuelve { contenido: "JSON con preguntas" }
+            const raw = dataTest?.contenido ?? dataTest?.preguntas;
+            if (raw) {
+              try {
+                const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                const pregsArr = Array.isArray(parsed) ? parsed : parsed?.preguntas;
+                if (Array.isArray(pregsArr) && pregsArr.length > 0) {
+                  testJson = JSON.stringify(pregsArr.map((q: { texto: string; opciones: string[]; correcta: number }) => ({
+                    texto: q.texto, opciones: q.opciones, correcta: q.correcta ?? 0,
+                  })));
+                }
+              } catch { /* si no parsea, se queda sin test */ }
+            }
+          }
+        } catch { /* si falla la generación del test, continuamos sin él */ }
+      }
+
       setProgreso(90); setMsgProgreso("Guardando módulo…");
       const resM = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
@@ -472,7 +509,7 @@ export default function CrearModuloPage() {
           idioma,
           duracion,
           tiposSalida:       tiposSalidaStr,
-          testPreguntas:     null,
+          testPreguntas:     testJson,
           imagenPortadaUrl:  imagenPortadaUrl,
           contenidoMarkdown: d.contenido      ?? null,
           scriptPodcast:     d.scriptPodcast  ?? null,
@@ -498,6 +535,7 @@ export default function CrearModuloPage() {
     setArchivoM(null); setArchivoMRaw(null); setAudiencia("todos"); setDeptos([]); setTieneTest(false); setPreguntas([]); setGuardado(false); setErrorMsg("");
     setPortadaFile(null); setPortadaPreview("");
     setArchivosIA([]); setArchivosIARaw([]); setGenerado(false); setResultadoIA(null); setProgreso(0); setErrorIA(""); setTiposSalidaIA(["documentacion"]);
+    setTieneTestIA(false);
     setPortadaIAFile(null); setPortadaIAPreview("");
   };
 
@@ -507,7 +545,7 @@ export default function CrearModuloPage() {
   const heroSubtitle = () => {
     if (modo === null) return "Elige cómo quieres crear el módulo.";
     if (modo === "manual") return `Paso ${pasoManual} de 4 — ${PASOS_MANUAL[pasoManual - 1].label}`;
-    if (modo === "ia" && !generado) return `Paso ${pasoIA} de 4 — ${PASOS_IA[pasoIA - 1].label}`;
+    if (modo === "ia" && !generado) return `Paso ${pasoIA} de 5 — ${PASOS_IA[pasoIA - 1].label}`;
     return "";
   };
 
@@ -1052,8 +1090,47 @@ export default function CrearModuloPage() {
               </div>
             )}
 
-            {/* IA PASO 4: Generar */}
+            {/* IA PASO 4: Test */}
             {pasoIA === 4 && (
+              <div className="fade-up rounded-2xl overflow-hidden" style={{ background:"var(--blanco)", border:"1px solid var(--gris-borde)", boxShadow:"0 1px 6px rgba(0,0,0,0.04)" }}>
+                <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom:"1px solid var(--gris-borde)", background:"var(--gris-pagina)" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background:"#dcfce7", color:"#15803d" }}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold" style={{ color:"var(--texto-primario)" }}>Test de evaluación</p>
+                    <p className="text-xs" style={{ color:"var(--texto-muted)" }}>La IA generará las preguntas a partir del contenido del módulo (opcional)</p>
+                  </div>
+                  <Toggle value={tieneTestIA} onChange={setTieneTestIA} />
+                </div>
+                <div className="p-6">
+                  {tieneTestIA ? (
+                    <div className="rounded-xl p-5 flex items-start gap-4" style={{ background:"rgba(163,181,53,0.07)", border:"1.5px solid rgba(163,181,53,0.3)" }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background:"rgba(163,181,53,0.15)", color:"#A3B535" }}>
+                        <IconSpark />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold mb-1" style={{ color:"var(--texto-primario)" }}>Test generado automáticamente por IA</p>
+                        <p className="text-sm leading-relaxed" style={{ color:"var(--texto-secundario)" }}>
+                          Durante la generación del módulo, la IA creará <strong>5 preguntas de tipo test</strong> basadas en el contenido del documento. Las preguntas estarán disponibles al completar el módulo.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-center py-6" style={{ color:"var(--texto-muted)" }}>
+                      Activa el toggle si quieres que la IA genere un test al final del módulo.
+                    </p>
+                  )}
+                  <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo}
+                    onNext={() => setPasoIA(5)} labelNext="Continuar" />
+                </div>
+              </div>
+            )}
+
+            {/* IA PASO 5: Generar */}
+            {pasoIA === 5 && (
               <div className="fade-up rounded-2xl overflow-hidden" style={{ background:"var(--blanco)", border:"1px solid var(--gris-borde)", boxShadow:"0 1px 6px rgba(0,0,0,0.04)" }}>
                 <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom:"1px solid var(--gris-borde)", background:"var(--gris-pagina)" }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background:"rgba(163,181,53,0.15)", color:"#A3B535" }}><IconSpark /></div>
@@ -1099,6 +1176,12 @@ export default function CrearModuloPage() {
                               );
                             })}
                           </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color:"var(--texto-muted)" }}>Test</span>
+                          <span className="text-sm" style={{ color: tieneTestIA ? "#15803d" : "var(--texto-muted)" }}>
+                            {tieneTestIA ? "Sí — generado por IA (5 preguntas)" : "No"}
+                          </span>
                         </div>
                       </div>
                     </div>
