@@ -12,7 +12,8 @@ export type ModuloTipo =
   | "ESPECIFICA"
   | "DESARROLLO"
   | "RECOMPENSAS"
-  | "COMUNIDAD";
+  | "COMUNIDAD"
+  | "ONBOARDING";
 
 // Etiqueta legible para el frontend por cada tipo
 export const MODULO_TIPO_LABEL: Record<ModuloTipo, string> = {
@@ -22,6 +23,7 @@ export const MODULO_TIPO_LABEL: Record<ModuloTipo, string> = {
   DESARROLLO:  "Desarrollo Profesional",
   RECOMPENSAS: "Recompensas y Ventajas",
   COMUNIDAD:   "Comunidad",
+  ONBOARDING:  "Onboarding",
 };
 
 // Respuesta de GET /api/v1/modulos
