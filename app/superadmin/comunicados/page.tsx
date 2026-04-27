@@ -11,6 +11,7 @@ import {
   BsFilm, 
   BsFileEarmarkPdf 
 } from "react-icons/bs";
+import { jsPDF } from "jspdf";
 
 const TIPOS_CONTENIDO = [
   { key: "tutorial", label: "Tutorial", hint: "Guías paso a paso", Icon: BsBook },
@@ -21,7 +22,6 @@ const TIPOS_CONTENIDO = [
 export default function SuperadminComunicadosPage() {
   const [tipoContenido, setTipoContenido] = useState<"tutorial" | "curso" | "video">("tutorial");
   
-  // Estado para el Modo de ingreso (Manual o IA)
   const [modoIngreso, setModoIngreso] = useState<"manual" | "ia">("manual");
   const [promptIA, setPromptIA] = useState("");
 
@@ -38,9 +38,6 @@ export default function SuperadminComunicadosPage() {
   const [iaCargando, setIaCargando] = useState(false);
   const [iaResumen, setIaResumen] = useState("");
   const [iaEtiquetas, setIaEtiquetas] = useState<string[]>([]);
-  const [generandoPdf, setGenerandoPdf] = useState(false);
-  const [pdfGeneradoBlob, setPdfGeneradoBlob] = useState<Blob | null>(null);
-  const [pdfGeneradoPreviewUrl, setPdfGeneradoPreviewUrl] = useState("");
 
   const nombreArchivo = useMemo(() => {
     if (tipoContenido === "video") return videoFile?.name ?? "Ningún video seleccionado";
@@ -71,7 +68,7 @@ export default function SuperadminComunicadosPage() {
     return () => URL.revokeObjectURL(url);
   }, [tipoContenido, videoFile]);
 
-  // --- FUNCIÓN IA ---
+  // --- FUNCIÓN IA MÁGICA (TEXTO + PDF) ---
   const handleGenerarIACompleta = async () => {
     if (!promptIA.trim()) {
       setError("Dinos brevemente de qué trata el comunicado para que el asistente pueda trabajar.");
@@ -89,7 +86,6 @@ Genera estrictamente un objeto JSON válido con esta estructura exacta y sin for
 
 Contexto del comunicado:
 - Tipo de contenido: ${tipoContenido}
-- Archivo adjunto: ${nombreArchivo}
 - Petición del usuario: ${promptIA}
 
 Instrucciones para los campos del JSON:
@@ -100,111 +96,105 @@ Instrucciones para los campos del JSON:
 
       console.log("Enviando petición a la IA...", { prompt });
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/chat/generate-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: prompt }],
-          context: { rol: "Superadmin" },
+          prompt: prompt,
         }),
       });
 
+      console.log("Respuesta del servidor - Status:", res.status, "OK:", res.ok);
+
       if (!res.ok) {
-        throw new Error(`El servidor devolvió un error: ${res.status}`);
+        const errorText = await res.text();
+        console.error("📌 Status del servidor:", res.status);
+        console.error("📌 Respuesta de error del servidor:", errorText);
+        let errorMsg = "No se pudo generar el contenido";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMsg = errorData.error || errorMsg;
+        } catch {
+          errorMsg = errorText || errorMsg;
+        }
+        console.error("Mensaje de error procesado:", errorMsg);
+        throw new Error(errorMsg);
       }
 
-      const data = await res.json();
-      console.log("Datos recibidos de la API:", data);
+      const parsed = await res.json();
+      console.log("Respuesta parseada exitosamente");
+      console.log("Campos recibidos:", {
+        titulo: parsed?.titulo,
+        descripcion: parsed?.descripcion,
+        resumen: parsed?.resumen,
+        etiquetas: parsed?.etiquetas,
+        tieneOtrosCampos: Object.keys(parsed || {})
+      });
 
-      let parsed;
-
-      if (data && typeof data === 'object' && (data.titulo || data.descripcion)) {
-        parsed = data;
-        console.log("¡JSON detectado directamente del servidor!", parsed);
-      } 
-      else {
-        let raw = "";
-        if (typeof data?.message === "string") raw = data.message;
-        else if (typeof data?.text === "string") raw = data.text;
-        else if (typeof data?.response === "string") raw = data.response;
-        else if (typeof data?.content === "string") raw = data.content;
-        else if (data?.message?.content) raw = data.message.content;
-        else if (typeof data === "string") raw = data;
-        else raw = JSON.stringify(data);
-        
-        const cleanRaw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const jsonCandidate = cleanRaw.match(/\{[\s\S]*\}/)?.[0];
-        
-        if (!jsonCandidate) throw new Error("El asistente no generó el formato esperado.");
-        parsed = JSON.parse(jsonCandidate);
+      // Validar que tenemos título y descripción
+      if (!parsed?.titulo?.trim() || !parsed?.descripcion?.trim()) {
+        console.error("Validación fallida. Objeto recibido:", parsed);
+        throw new Error(`La IA generó campos incompletos. Recibido: ${JSON.stringify(parsed)}`);
       }
 
-      if (typeof parsed?.titulo === "string" && parsed.titulo.trim()) {
-        setTitulo(parsed.titulo.trim());
-      }
-      if (typeof parsed?.descripcion === "string" && parsed.descripcion.trim()) {
-        setDescripcion(parsed.descripcion.trim());
-      }
+      // Establecer los valores generados
+      setTitulo(parsed.titulo.trim());
+      setDescripcion(parsed.descripcion.trim());
       setIaResumen(typeof parsed?.resumen === "string" ? parsed.resumen : "");
       setIaEtiquetas(Array.isArray(parsed?.etiquetas) ? parsed.etiquetas.slice(0, 3) : []);
       
+      // Generar PDF automáticamente si no es video
+      if (tipoContenido !== "video") {
+        try {
+          console.log("Generando PDF automático...");
+          const pdfRes = await fetch("/api/comunicados-pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              titulo: parsed.titulo,
+              descripcion: parsed.descripcion,
+              tipo: tipoContenido,
+            }),
+          });
+
+          if (pdfRes.ok) {
+            const blob = await pdfRes.blob();
+            const file = new File([blob], `${parsed.titulo.replace(/\s+/g, "_").toLowerCase()}.pdf`, {
+              type: "application/pdf",
+            });
+            setPdfFile(file);
+            console.log("PDF generado exitosamente");
+          } else {
+            console.warn("No se pudo generar el PDF, pero continuar con el contenido de texto");
+          }
+        } catch (pdfError) {
+          console.warn("Error generando PDF automático:", pdfError);
+          // Continuar sin error si falla la generación del PDF
+        }
+      }
+      
       setModoIngreso("manual");
-      setOkMsg("¡Contenido generado con éxito! Puedes revisarlo o editarlo antes de publicarlo.");
-      setPromptIA(""); 
+      setOkMsg("¡Contenido generado con éxito! Puedes revisar el PDF y editar antes de publicar.");
+      setPromptIA("");
 
     } catch (err: any) {
-      console.error("Error detallado del asistente:", err);
-      setError(`Ocurrió un error: ${err.message || "Inténtalo de nuevo."}`);
+      console.error("❌ Error en generación de IA:", err);
+      console.error("Stack:", err.stack);
+      console.error("Detalles completos:", err.message);
+      
+      let mensajeError = err.message || "No se pudo generar el contenido. Intenta de nuevo.";
+      
+      // Si es un timeout, mostrar mensaje específico
+      if (err.name === "TimeoutError" || mensajeError.includes("timeout")) {
+        mensajeError = "⏱ La solicitud tardó demasiado. Intenta con un prompt más corto o espera unos segundos.";
+      }
+      
+      setError(`${mensajeError}`);
     } finally {
       setIaCargando(false);
     }
   };
 
-  // --- GENERAR PDF DOCUMENTATIVO EXTENSO ---
-  const handleGenerarPdfDocumento = async () => {
-    if (!titulo.trim() || !descripcion.trim()) {
-      setError("Introduce título y descripción para generar el PDF documentativo.");
-      return;
-    }
-
-    setGenerandoPdf(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/comunicados-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo: titulo.trim(),
-          descripcion: descripcion.trim(),
-          tipo: tipoContenido,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("No se pudo generar el PDF");
-      }
-
-      // Descargar el PDF
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `comunicado_${Date.now()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      setOkMsg("PDF documentativo generado y descargado correctamente.");
-    } catch {
-      setError("No se pudo generar el PDF documentativo. Intenta de nuevo.");
-    } finally {
-      setGenerandoPdf(false);
-    }
-  };
-
-  // --- SUBIDA DEL COMUNICADO AL BACKEND ---
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -317,7 +307,6 @@ Instrucciones para los campos del JSON:
 
         <form className="mt-7 grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
           
-          {/* Tarjetas de Tipo de Contenido */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {TIPOS_CONTENIDO.map((tipo) => {
               const active = tipoContenido === tipo.key;
@@ -326,7 +315,10 @@ Instrucciones para los campos del JSON:
                 <button
                   key={tipo.key}
                   type="button"
-                  onClick={() => setTipoContenido(tipo.key)}
+                  onClick={() => {
+                    setTipoContenido(tipo.key);
+                    if (tipo.key === "video") setPdfFile(null);
+                  }}
                   className="text-left rounded-2xl p-4 transition-all flex flex-col"
                   style={{
                     border: `1px solid ${active ? "#2563eb" : "#e2e8f0"}`,
@@ -343,15 +335,14 @@ Instrucciones para los campos del JSON:
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             
-            {/* Columna Izquierda: Entradas de Texto (Manual o IA) */}
             <div className="lg:col-span-3 rounded-2xl p-5 border border-slate-200 bg-slate-50 flex flex-col">
               
-              {/* TABS: Manual vs Asistente (Solución Móvil Aplicada) */}
-              <div className="flex flex-col sm:flex-row bg-slate-200/50 p-1 rounded-xl w-full md:w-max mb-5 gap-1">
+              {/* Ajuste responsive para los botones de Tabs */}
+              <div className="grid grid-cols-1 sm:flex sm:flex-row bg-slate-200/50 p-1 rounded-xl w-full md:w-max mb-5 gap-1">
                 <button
                   type="button"
                   onClick={() => setModoIngreso("manual")}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     modoIngreso === "manual" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
@@ -360,7 +351,7 @@ Instrucciones para los campos del JSON:
                 <button
                   type="button"
                   onClick={() => setModoIngreso("ia")}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                     modoIngreso === "ia" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
@@ -369,7 +360,6 @@ Instrucciones para los campos del JSON:
               </div>
 
               {modoIngreso === "ia" ? (
-                // --- VISTA ASISTENTE ---
                 <div className="flex-1 flex flex-col justify-center animate-fadeIn">
                   <label className="block text-sm font-semibold mb-3 text-slate-700">
                     ¿De qué trata este {tipoContenido}?
@@ -378,9 +368,18 @@ Instrucciones para los campos del JSON:
                     rows={4}
                     value={promptIA}
                     onChange={(e) => setPromptIA(e.target.value)}
-                    placeholder="Ej: Haz un tutorial explicando cómo registrarse en la plataforma y cambiar la contraseña..."
+                    placeholder={tipoContenido === "video" 
+                      ? "Ej: Un video mostrando las instalaciones del polígono..." 
+                      : "Ej: Haz un tutorial explicando cómo registrarse y genera un documento detallado con los pasos..."}
                     className="w-full rounded-xl px-4 py-3 text-sm resize-none border border-indigo-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-slate-400 shadow-inner"
                   />
+                  
+                  {tipoContenido !== "video" && (
+                    <p className="text-xs text-indigo-600 mt-2 font-medium flex items-center gap-1.5">
+                      <BsLightbulb /> La IA también generará automáticamente un PDF estructurado con la información.
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleGenerarIACompleta}
@@ -389,17 +388,16 @@ Instrucciones para los campos del JSON:
                   >
                     {iaCargando ? (
                       <span className="animate-pulse flex items-center gap-2">
-                        <BsLightbulb className="text-lg" /> Creando borrador...
+                        <BsLightbulb className="text-lg" /> Creando borrador y documento...
                       </span>
                     ) : (
                       <>
-                        <BsLightbulb className="text-lg" /> Generar Título y Descripción
+                        <BsLightbulb className="text-lg" /> Generar Contenido Mágico
                       </>
                     )}
                   </button>
                 </div>
               ) : (
-                // --- VISTA MANUAL ---
                 <div className="flex-1 flex flex-col animate-fadeIn">
                   <label className="block text-xs font-semibold mb-2 text-slate-600">
                     Título <span className="text-red-500">*</span>
@@ -425,7 +423,6 @@ Instrucciones para los campos del JSON:
                 </div>
               )}
 
-              {/* Muestra las etiquetas/resumen generados de fondo para que el usuario sepa que están ahí */}
               {(iaResumen || iaEtiquetas.length > 0) && modoIngreso === "manual" && (
                 <div className="mt-5 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl animate-fadeIn">
                   <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -449,7 +446,6 @@ Instrucciones para los campos del JSON:
               )}
             </div>
 
-            {/* Columna Derecha: Subida de Archivos */}
             <div className="lg:col-span-2 rounded-2xl p-4 border border-slate-200 bg-slate-50">
               <p className="text-xs font-semibold mb-2 text-slate-600">
                 {tipoContenido === "video" ? "Archivo de video" : "Archivo PDF"} <span className="text-red-500">*</span>
@@ -460,20 +456,22 @@ Instrucciones para los campos del JSON:
                 onDrop={handleDrop}
                 className="block rounded-2xl border-2 border-dashed p-5 cursor-pointer transition-all bg-white"
                 style={{
-                  borderColor: isDraggingFile ? "#2563eb" : "#cbd5e1",
-                  background: isDraggingFile ? "#eff6ff" : "#ffffff",
+                  borderColor: isDraggingFile ? "#2563eb" : pdfFile ? "#10b981" : "#cbd5e1",
+                  background: isDraggingFile ? "#eff6ff" : pdfFile ? "#ecfdf5" : "#ffffff",
                 }}
               >
                 <div className="flex justify-center mb-2">
                   {tipoContenido === "video" ? (
                     <BsFilm className={`text-4xl ${isDraggingFile ? "text-blue-500" : "text-slate-400"}`} />
                   ) : (
-                    <BsFileEarmarkPdf className={`text-4xl ${isDraggingFile ? "text-blue-500" : "text-slate-400"}`} />
+                    <BsFileEarmarkPdf className={`text-4xl ${pdfFile ? "text-emerald-500" : isDraggingFile ? "text-blue-500" : "text-slate-400"}`} />
                   )}
                 </div>
                 <p className="text-sm font-semibold mt-2 text-center text-slate-800">
                   {isDraggingFile
                     ? "Suelta el archivo aquí"
+                    : pdfFile 
+                    ? "¡PDF listo!"
                     : tipoContenido === "video"
                     ? "Arrastra o selecciona un video"
                     : "Arrastra o selecciona un PDF"}
@@ -497,7 +495,6 @@ Instrucciones para los campos del JSON:
                 />
               </label>
 
-              {/* Previsualizadores */}
               {tipoContenido === "video" && videoPreviewUrl && (
                 <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-black relative">
                   <video controls className="w-full h-auto max-h-64" src={videoPreviewUrl}>
@@ -510,7 +507,6 @@ Instrucciones para los campos del JSON:
                       setVideoPreviewUrl("");
                     }}
                     className="absolute top-2 right-2 p-2 rounded-lg bg-red-500/95 text-white hover:bg-red-600 transition-colors"
-                    title="Eliminar video"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
@@ -531,7 +527,6 @@ Instrucciones para los campos del JSON:
                       setPdfPreviewUrl("");
                     }}
                     className="absolute top-2 right-2 p-2 rounded-lg bg-red-500/95 text-white hover:bg-red-600 transition-colors"
-                    title="Eliminar PDF"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
@@ -542,36 +537,16 @@ Instrucciones para los campos del JSON:
                   </button>
                 </div>
               )}
-              
-              {/* Botón para generar PDF documentativo */}
-              <button
-                type="button"
-                onClick={handleGenerarPdfDocumento}
-                disabled={generandoPdf}
-                className="mt-4 w-full bg-green-600 text-white font-semibold rounded-xl py-2.5 hover:bg-green-700 transition-colors disabled:opacity-70 flex justify-center items-center gap-2 text-sm"
-              >
-                {generandoPdf ? (
-                  <span className="animate-pulse flex items-center gap-2">
-                    📄 Generando PDF...
-                  </span>
-                ) : (
-                  <>
-                    📄 Generar PDF extenso
-                  </>
-                )}
-              </button>
             </div>
           </div>
 
-          {/* Mensajes de feedback */}
           {error && (
-            <div className="text-sm px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-600">{error}</div>
+            <div className="text-sm px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-600 whitespace-pre-wrap">{error}</div>
           )}
           {okMsg && (
             <div className="text-sm px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600">{okMsg}</div>
           )}
 
-          {/* Botonera de abajo */}
           <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
             <button
               type="button"
