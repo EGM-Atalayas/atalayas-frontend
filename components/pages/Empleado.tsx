@@ -332,6 +332,81 @@ export default function Empleado() {
       </div>
 
       {/* ════════════════════════════════════════════
+          ONBOARDING BANNER
+      ════════════════════════════════════════════ */}
+      {siguientePaso && (
+        <div className="px-10 lg:px-16 pt-8">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] mb-3" style={{ color: "var(--texto-muted)" }}>
+            Continúa tu aprendizaje
+          </p>
+          <div
+            className="relative rounded-2xl overflow-hidden cursor-pointer group"
+            style={{ minHeight: "160px", boxShadow: "0 4px 24px rgba(0,0,0,0.15)" }}
+            onClick={() => router.push(`/dashboard/formacion/${siguientePaso.moduloId}`)}
+          >
+            {/* Fondo: imagen de portada o degradado */}
+            {siguientePaso.imagenPortadaUrl ? (
+              <img src={siguientePaso.imagenPortadaUrl} alt="" aria-hidden
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                style={{ objectPosition: "center 40%" }} />
+            ) : (
+              <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--marino) 0%, var(--azul-egm) 100%)" }} />
+            )}
+            {/* Overlays */}
+            <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.55)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,20,40,0.90) 0%, rgba(10,20,40,0.45) 55%, transparent 100%)" }} />
+
+            {/* Contenido */}
+            <div className="relative z-10 px-8 py-7 flex flex-col justify-between" style={{ minHeight: "160px" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {/* Badge tipo */}
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    {siguientePaso.status === "en progreso" ? "En progreso" : "Curso"}
+                  </span>
+                  <h2 className="text-xl font-bold text-white leading-snug mb-1 truncate" style={{ maxWidth: "560px" }}>
+                    {siguientePaso.nombre}
+                  </h2>
+                  {siguientePaso.descripcion && (
+                    <p className="text-sm line-clamp-1" style={{ color: "rgba(255,255,255,0.55)", maxWidth: "500px" }}>
+                      {siguientePaso.descripcion}
+                    </p>
+                  )}
+                </div>
+                {/* Botón Continuar */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/formacion/${siguientePaso.moduloId}`); }}
+                  className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: "var(--verde-oliva)", color: "#fff", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--verde-oliva-hover)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--verde-oliva)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  {siguientePaso.status === "en progreso" ? "Continuar" : "Empezar"}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Barra de progreso inferior */}
+              <div className="flex items-center gap-4 mt-5">
+                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: siguientePaso.status === "completado" ? "100%" : siguientePaso.status === "en progreso" ? `${totalProgress}%` : "0%",
+                      background: "linear-gradient(90deg, var(--verde-oliva), #fff)",
+                    }} />
+                </div>
+                <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  {siguientePaso.status === "completado" ? "100%" : siguientePaso.status === "en progreso" ? `${totalProgress}%` : "0%"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
           CONTENIDO
       ════════════════════════════════════════════ */}
       <div className="px-10 lg:px-16 pt-14 pb-16 flex flex-col gap-16">
