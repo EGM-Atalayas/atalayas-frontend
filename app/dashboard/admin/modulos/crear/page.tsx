@@ -559,7 +559,7 @@ export default function CrearModuloPage() {
       {/* ══ HEADER ══ */}
       <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
         <div className="px-8 lg:px-12 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
               <Link href="/dashboard" className="hover:underline">Dashboard</Link>
@@ -593,11 +593,11 @@ export default function CrearModuloPage() {
 
       {/* ══ CUERPO ══ */}
       <div className="px-8 lg:px-12 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
 
         {/* ── SELECCIÓN MODO ── */}
         {modo === null && (
-          <div className="fade-up max-w-4xl">
+          <div className="fade-up">
             <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>¿Cómo quieres crear el módulo?</p>
             <p className="text-sm mb-7" style={{ color: "var(--texto-muted)" }}>Elige el método de creación que mejor se adapte a tu contenido.</p>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
