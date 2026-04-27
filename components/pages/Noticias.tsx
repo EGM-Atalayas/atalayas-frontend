@@ -89,6 +89,19 @@ function formatDate(iso?: string | null) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function formatRelative(iso?: string | null): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const min  = Math.floor(diff / 60000);
+  const hrs  = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (min < 1)   return "Ahora mismo";
+  if (min < 60)  return `Hace ${min} min`;
+  if (hrs < 24)  return `Hace ${hrs} h`;
+  if (days < 7)  return `Hace ${days} día${days > 1 ? "s" : ""}`;
+  return formatDate(iso);
+}
+
 function esNuevo(iso?: string | null): boolean {
   if (!iso) return false;
   return Date.now() - new Date(iso).getTime() < 3 * 24 * 60 * 60 * 1000;
@@ -258,6 +271,16 @@ export default function ComunicacionPage() {
   // Preview antes de publicar
   const [previewItem, setPreviewItem] = useState<FeedItem | null>(null);
 
+  // Toast de confirmación
+  const [toast, setToast] = useState<string | null>(null);
+  function mostrarToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  // Índice de navegación en el modal de detalle
+  const [modalIndex, setModalIndex] = useState<number | null>(null);
+
   useEffect(() => {
     const check = () => setEsMobil(window.innerWidth < 768);
     check();
@@ -308,8 +331,9 @@ export default function ComunicacionPage() {
   }
 
   // ── ABRIR DETALLE ──────────────────────────────────────────────────────────
-  function abrirDetalle(item: FeedItem) {
+  function abrirDetalle(item: FeedItem, index?: number) {
     setModalItem(item);
+    setModalIndex(index ?? null);
     if (item.fuente === "empresa" && item.id) {
       registrarVistaNoticia(item.id);
     }
@@ -346,6 +370,7 @@ export default function ComunicacionPage() {
       else await crearNoticia(data);
       await cargarAnuncios();
       cerrarForm();
+      mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
     } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
     finally { setSubmitting(false); }
   }
@@ -538,7 +563,7 @@ export default function ComunicacionPage() {
                 <div className="flex flex-col md:flex-row gap-4" style={{ height: esMobil ? undefined : "380px" }}>
                   {/* Tarjeta grande */}
                   <div className="todos-card-large">
-                    <FeaturedCard item={todosTop[0]} size="large" onOpen={() => abrirDetalle(todosTop[0])} fill prominent
+                    <FeaturedCard item={todosTop[0]} size="large" onOpen={() => abrirDetalle(todosTop[0], 0)} fill prominent
                       puedeEditar={(todosTop[0].fuente === "empresa" && esAdmin) || (todosTop[0].fuente === "egm" && esAdminGeneral)}
                       onEdit={() => abrirEditar(todosTop[0]._raw as Noticia)}
                       onDelete={() => setConfirmDeleteId((todosTop[0]._raw as Noticia).anuncioId)}
@@ -547,9 +572,9 @@ export default function ComunicacionPage() {
                   {/* 2 pequeñas apiladas */}
                   {todosTop.length > 1 && (
                     <div className="hidden md:flex flex-col gap-4 flex-1">
-                      {todosTop.slice(1, 3).map((item) => (
+                      {todosTop.slice(1, 3).map((item, idx) => (
                         <div key={item.id} style={{ flex: 1 }}>
-                          <FeaturedCard item={item} size="large" onOpen={() => abrirDetalle(item)} fill compact
+                          <FeaturedCard item={item} size="large" onOpen={() => abrirDetalle(item, idx + 1)} fill compact
                             puedeEditar={(item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral)}
                             onEdit={() => abrirEditar(item._raw as Noticia)}
                             onDelete={() => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
@@ -693,110 +718,187 @@ export default function ComunicacionPage() {
         </div>
       )}
 
+      {/* ── TOAST ────────────────────────────────────────────────────────── */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-[200] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
+          style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg, #1b3f7e 0%, #2563eb 100%)", color: "#fff", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          {toast}
+          <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(12px) scale(0.95); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }`}</style>
+        </div>
+      )}
+
       {/* ── MODAL (contenido real o preview) ─────────────────────────────── */}
       {(modalItem || previewItem) && (() => {
-        const item = previewItem ?? modalItem!;
+        const item      = previewItem ?? modalItem!;
         const isPreview = !!previewItem;
-        const onClose = isPreview ? () => setPreviewItem(null) : () => setModalItem(null);
-        const embedUrl = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
+        const onClose   = isPreview ? () => setPreviewItem(null) : () => { setModalItem(null); setModalIndex(null); };
+        const embedUrl  = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
+        const puedeEditarItem = !isPreview && ((item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral));
+
+        // Navegación entre noticias
+        const navItems = feedCompleto;
+        const navIdx   = modalIndex ?? navItems.findIndex((i) => i.id === item.id);
+        const hasPrev  = !isPreview && navIdx > 0;
+        const hasNext  = !isPreview && navIdx < navItems.length - 1;
+        function goNext() { const next = navItems[navIdx + 1]; abrirDetalle(next, navIdx + 1); }
+        function goPrev() { const prev = navItems[navIdx - 1]; abrirDetalle(prev, navIdx - 1); }
+
         return (
-          <Modal onClose={onClose} zIndex={isPreview ? 120 : 50}>
+          <Modal onClose={onClose} zIndex={isPreview ? 120 : 50} maxWidth="42rem">
+            {/* Banner preview */}
             {isPreview && (
-              <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
+              <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
                 style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
                 <span>👁</span> Vista previa — así verán los usuarios este anuncio
               </div>
             )}
 
-            {/* Cabecera imagen / gradiente */}
-            <div className="relative w-full overflow-hidden" style={{ height: "240px" }}>
+            {/* ── Imagen cabecera — no scrollea ── */}
+            <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
               {item.imagenUrl ? (
                 <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"
                   style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
-                  <MegaphoneIcon size={64} />
+                  <MegaphoneIcon size={72} />
                 </div>
               )}
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.92) 0%, rgba(3,10,28,0.3) 50%, transparent 100%)" }} />
-              <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 flex items-end justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge fuente={item.fuente} nombreEmpresa={usuario?.nombreEmpresa} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
+
+              {/* Badges + fecha abajo */}
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge fuente={item.fuente} nombreEmpresa={usuario?.nombreEmpresa} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} topBar />
+                  {item.fijado && (
+                    <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(37,99,235,0.5)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)", backdropFilter: "blur(6px)" }}>
+                      <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                      Fijado
+                    </span>
+                  )}
                 </div>
-                <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)", textShadow: SHADOW_TXT }}>
-                  {formatDate(item.fecha)}
-                </span>
+                <div className="text-right">
+                  <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.9)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
+                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)", textShadow: SHADOW_TXT }}>{formatDate(item.fecha)}</p>
+                </div>
               </div>
+
+              {/* Flechas de navegación sobre la imagen */}
+              {hasPrev && (
+                <button onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
+                  style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.7)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.42)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+              )}
+              {hasNext && (
+                <button onClick={(e) => { e.stopPropagation(); goNext(); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
+                  style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.7)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.42)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              )}
             </div>
 
-            {/* Contenido */}
-            <div className="p-6 md:p-8">
-              <h2 className="font-bold leading-tight mb-4"
-                style={{ fontSize: "clamp(1.2rem, 3vw, 1.55rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+            {/* ── Contenido scrolleable ── */}
+            <div className="overflow-y-auto flex-1 px-6 py-6 md:px-8 md:py-7 flex flex-col gap-4">
+
+              {/* Título */}
+              <h2 className="font-bold leading-tight"
+                style={{ fontSize: "clamp(1.25rem, 3vw, 1.65rem)", color: "var(--texto-primario)", letterSpacing: "-0.025em", fontFamily: "var(--font-raleway), sans-serif" }}>
                 {item.titulo}
               </h2>
 
               {/* Texto con Markdown */}
-              <div style={{ fontSize: "0.95rem", color: "var(--texto-secundario)" }}>
+              <div style={{ fontSize: "0.95rem", color: "var(--texto-secundario)", lineHeight: 1.75 }}>
                 {renderMarkdown(item.descripcion)}
               </div>
 
               {/* Video embed */}
               {embedUrl && (
-                <div className="mt-6 rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                  <iframe src={embedUrl} className="w-full h-full" allowFullScreen
-                    style={{ border: "none" }} />
+                <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                  <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
                 </div>
               )}
 
               {/* Adjunto */}
               {item.adjuntoUrl && (
                 <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-                  className="mt-5 flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors"
                   style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <span className="text-sm font-semibold flex-1 truncate" style={{ color: "#2563eb" }}>
                     {item.adjuntoNombre ?? "Ver documento adjunto"}
                   </span>
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 </a>
               )}
 
               {/* CTA externo */}
               {item.enlaceUrl && (
                 <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-                  className="mt-4 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity"
-                  style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none" }}
+                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity"
+                  style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
                   onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
                   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
                   {item.enlaceTexto ?? "Más información"}
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
-                  </svg>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
                 </a>
               )}
 
-              {/* Vistas */}
-              {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
-                <p className="text-xs mt-5" style={{ color: "var(--texto-muted)" }}>
-                  {item.vistas} {item.vistas === 1 ? "visualización" : "visualizaciones"}
-                </p>
-              )}
-
-              <div className="mt-6 pt-4 flex justify-end" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                <button onClick={onClose}
-                  className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                  style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                  {isPreview ? "Cerrar vista previa" : "Cerrar"}
-                </button>
+              {/* Footer: vistas + acciones admin + cerrar */}
+              <div className="flex items-center justify-between gap-3 pt-4 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                <div className="flex items-center gap-1.5">
+                  {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+                      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                      {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
+                    </span>
+                  )}
+                  {!isPreview && navItems.length > 1 && (
+                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      {navIdx + 1} / {navItems.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {puedeEditarItem && (
+                    <>
+                      <button onClick={() => { onClose(); abrirEditar(item._raw as Noticia); }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                        style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
+                        Editar
+                      </button>
+                      <button onClick={() => { onClose(); setConfirmDeleteId((item._raw as Noticia).anuncioId); }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                        style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
+                        Eliminar
+                      </button>
+                    </>
+                  )}
+                  <button onClick={onClose}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    {isPreview ? "Cerrar vista previa" : "Cerrar"}
+                  </button>
+                </div>
               </div>
             </div>
           </Modal>
@@ -1227,24 +1329,34 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
 });
 
 // ── SUBCOMPONENTES ─────────────────────────────────────────────────────────────
-function Modal({ children, onClose, zIndex = 50 }: { children: React.ReactNode; onClose: () => void; zIndex?: number }) {
+function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { children: React.ReactNode; onClose: () => void; zIndex?: number; maxWidth?: string }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+      style={{ zIndex, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", animation: "modalBgIn 0.2s ease" }}
       onClick={onClose}>
-      <div className="relative w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ background: "var(--blanco)", maxHeight: "88vh", overflowY: "auto" }}
+      <div className="relative w-full flex flex-col rounded-2xl overflow-hidden"
+        style={{ maxWidth, maxHeight: "90vh", background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-4 right-4 z-10 flex items-center justify-center transition-all"
-          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--texto-primario)", cursor: "pointer" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.12)"; e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.borderColor = "rgba(220,38,38,0.25)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
-          title="Cerrar">
-          <IconX size={14} />
+          className="absolute top-3 right-3 z-20 flex items-center justify-center transition-all"
+          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.75)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.32)"; e.currentTarget.style.transform = "scale(1)"; }}
+          title="Cerrar (Esc)">
+          <IconX size={13} />
         </button>
         {children}
       </div>
+      <style>{`
+        @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      `}</style>
     </div>
   );
 }
