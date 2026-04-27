@@ -1059,7 +1059,6 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
   const [respuestas, setRespuestas] = useState<Record<string, number>>({});
   const [enviado, setEnviado] = useState(false);
 
-  // Parsear preguntas reales o usar fallback
   const PREGUNTAS: PreguntaQuiz[] = (() => {
     if (testPreguntasJson) {
       try {
@@ -1072,106 +1071,54 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
             correcta: q.correcta ?? 0,
           }));
         }
-      } catch { /* usa fallback */ }
+      } catch { /* fallback */ }
     }
-    return [
-      { id: "q1", texto: "¿Cuál es el objetivo principal de este módulo?", opciones: ["Opción A", "Opción B", "Opción C", "Opción D"], correcta: 0 },
-    ];
+    return [];
   })();
 
-  const correctas = enviado
-    ? PREGUNTAS.filter((p) => respuestas[p.id] === p.correcta).length
-    : 0;
-  const minAprobado = Math.ceil(PREGUNTAS.length * 0.6);
-  const aprobado = correctas >= minAprobado;
-
-  if (enviado) {
-    return (
-      <div className="flex flex-col items-center text-center py-10">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
-          style={{
-            background: aprobado ? "var(--exito-light)" : "var(--error-light)",
-            border: `2px solid ${aprobado ? "var(--exito)" : "var(--error)"}`,
-          }}>
-          {aprobado ? (
-            <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ) : (
-            <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--error)" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          )}
-        </div>
-        <h3 className="text-xl font-bold mb-2"
-          style={{ color: "var(--texto-primario)", fontFamily: "'Playfair Display', serif" }}>
-          {aprobado ? "¡Evaluación superada!" : "Sigue practicando"}
-        </h3>
-        <p className="text-sm mb-1" style={{ color: "var(--texto-muted)" }}>
-          Has respondido correctamente{" "}
-          <span className="font-bold" style={{ color: "var(--texto-primario)" }}>
-            {correctas} de {PREGUNTAS.length}
-          </span>{" "}
-          preguntas.
-        </p>
-        <p className="text-sm mb-8 font-semibold"
-          style={{ color: aprobado ? "var(--exito)" : "var(--error)" }}>
-          {aprobado ? "Módulo completado — certificado disponible" : `Necesitas al menos ${minAprobado} aciertos para aprobar`}
-        </p>
-        {aprobado ? (
-          <button onClick={onCompletar}
-            className="px-8 py-3 rounded-xl text-sm font-bold transition-opacity"
-            style={{ background: "var(--exito)", color: "var(--blanco)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-            Continuar al siguiente módulo →
-          </button>
-        ) : (
-          <button onClick={() => { setEnviado(false); setRespuestas({}); }}
-            className="px-8 py-3 rounded-xl text-sm font-bold transition-opacity"
-            style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-            Intentarlo de nuevo
-          </button>
-        )}
-      </div>
-    );
+  if (PREGUNTAS.length === 0) {
+    return <p className="text-sm py-4" style={{ color: "var(--texto-muted)" }}>No hay preguntas disponibles para este test.</p>;
   }
 
+  const todasRespondidas = Object.keys(respuestas).length >= PREGUNTAS.length;
+  const correctas = enviado ? PREGUNTAS.filter((p) => respuestas[p.id] === p.correcta).length : 0;
+  const aprobado = correctas >= Math.ceil(PREGUNTAS.length * 0.6);
+
   return (
-    <div>
-      <p className="text-sm mb-6" style={{ color: "var(--texto-muted)" }}>
-        Responde todas las preguntas. Necesitas acertar al menos 2 de 3 para aprobar.
-      </p>
-      <div className="flex flex-col gap-7">
-        {PREGUNTAS.map((p, pi) => (
+    <div className="flex flex-col gap-6">
+      {PREGUNTAS.map((p, pi) => {
+        const respondida = respuestas[p.id] !== undefined;
+        const respSel = respuestas[p.id];
+        return (
           <div key={p.id}>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--texto-primario)" }}>
-              {pi + 1}. {p.texto}
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-2 shrink-0"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                {pi + 1}
+              </span>
+              {p.texto}
             </p>
             <div className="flex flex-col gap-2">
               {p.opciones.map((op, oi) => {
-                const sel = respuestas[p.id] === oi;
+                const sel = respSel === oi;
+                const esCorrecta = oi === p.correcta;
+                let bg = sel ? "var(--azul-egm-light)" : "var(--gris-pagina)";
+                let border = sel ? "var(--azul-egm)" : "var(--gris-borde)";
+                let color = sel ? "var(--azul-egm)" : "var(--texto-primario)";
+                if (enviado) {
+                  if (esCorrecta) { bg = "#f0fdf4"; border = "#16a34a"; color = "#15803d"; }
+                  else if (sel && !esCorrecta) { bg = "#fef2f2"; border = "#dc2626"; color = "#dc2626"; }
+                  else { bg = "var(--gris-pagina)"; border = "var(--gris-borde)"; color = "var(--texto-muted)"; }
+                }
                 return (
                   <button key={oi}
-                    onClick={() => setRespuestas((r) => ({ ...r, [p.id]: oi }))}
-                    className="text-left flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
-                    style={{
-                      border: sel ? "2px solid var(--azul-egm)" : "1px solid var(--gris-borde)",
-                      background: sel ? "var(--azul-egm-light)" : "var(--blanco)",
-                      color: sel ? "var(--azul-egm)" : "var(--texto-primario)",
-                      fontWeight: sel ? 600 : 400,
-                    }}>
-                    {/* Letter label */}
-                    <span
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
-                      style={{
-                        background: sel ? "var(--azul-egm)" : "var(--gris-superficie)",
-                        color: sel ? "var(--blanco)" : "var(--texto-muted)",
-                      }}
-                    >
-                      {LETRAS[oi]}
+                    onClick={() => !enviado && setRespuestas((r) => ({ ...r, [p.id]: oi }))}
+                    disabled={enviado}
+                    className="text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
+                    style={{ border: `1.5px solid ${border}`, background: bg, color, cursor: enviado ? "default" : "pointer" }}>
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                      style={{ background: sel && !enviado ? "var(--azul-egm)" : enviado && esCorrecta ? "#16a34a" : enviado && sel ? "#dc2626" : "var(--gris-superficie)", color: (sel || (enviado && esCorrecta)) ? "var(--blanco)" : "var(--texto-muted)" }}>
+                      {enviado && esCorrecta ? "✓" : enviado && sel && !esCorrecta ? "✗" : LETRAS[oi]}
                     </span>
                     {op}
                   </button>
@@ -1179,17 +1126,47 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
               })}
             </div>
           </div>
-        ))}
-      </div>
-      <button
-        onClick={() => setEnviado(true)}
-        disabled={Object.keys(respuestas).length < PREGUNTAS.length}
-        className="mt-8 w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
-        style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-        onMouseEnter={(e) => { if (Object.keys(respuestas).length >= PREGUNTAS.length) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
-        Enviar respuestas
-      </button>
+        );
+      })}
+
+      {/* Resultado tras enviar */}
+      {enviado && (
+        <div className="rounded-xl px-5 py-4 flex items-center justify-between"
+          style={{ background: aprobado ? "#f0fdf4" : "#fef2f2", border: `1.5px solid ${aprobado ? "#86efac" : "#fca5a5"}` }}>
+          <div>
+            <p className="text-sm font-bold" style={{ color: aprobado ? "#15803d" : "#dc2626" }}>
+              {aprobado ? "Test superado" : "No superado — inténtalo de nuevo"}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: aprobado ? "#16a34a" : "#ef4444" }}>
+              {correctas} de {PREGUNTAS.length} respuestas correctas
+            </p>
+          </div>
+          {aprobado ? (
+            <button onClick={onCompletar}
+              className="px-4 py-2 rounded-xl text-sm font-bold shrink-0"
+              style={{ background: "#16a34a", color: "#fff" }}>
+              Completar módulo
+            </button>
+          ) : (
+            <button onClick={() => { setEnviado(false); setRespuestas({}); }}
+              className="px-4 py-2 rounded-xl text-sm font-bold shrink-0"
+              style={{ background: "var(--azul-egm)", color: "#fff" }}>
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Botón enviar */}
+      {!enviado && (
+        <button onClick={() => setEnviado(true)} disabled={!todasRespondidas}
+          className="w-full py-3 rounded-xl text-sm font-bold transition-all"
+          style={{ background: todasRespondidas ? "var(--azul-egm)" : "var(--gris-borde)", color: todasRespondidas ? "#fff" : "var(--texto-muted)", cursor: todasRespondidas ? "pointer" : "not-allowed" }}
+          onMouseEnter={(e) => { if (todasRespondidas) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+          onMouseLeave={(e) => { if (todasRespondidas) e.currentTarget.style.background = "var(--azul-egm)"; }}>
+          Enviar respuestas
+        </button>
+      )}
     </div>
   );
 }
