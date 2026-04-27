@@ -1425,7 +1425,7 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
           </svg>
         </button>
         <div className="flex flex-col rounded-2xl overflow-hidden w-full h-full"
-          style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
+          style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)", transform: "translateZ(0)", willChange: "transform" }}>
           {children}
         </div>
       </div>
