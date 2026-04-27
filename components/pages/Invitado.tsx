@@ -82,7 +82,7 @@ const comunidadItems = [
     imagen: "/trabajo-bici.jpg",
     bg: null,
     icono: null,
-    url: "https://tu-url.com/bici",
+    url: "https://atalayas.com/semana-de-la-movilidad/",
   },
   {
     label: "Atalayas circular",
@@ -90,7 +90,7 @@ const comunidadItems = [
     imagen: "/atalayas-circular.jpg",
     bg: null,
     icono: null,
-    url: "https://tu-url.com/circular",
+    url: "https://atalayas.com/atalayas-circular/",
   },
 ];
 
