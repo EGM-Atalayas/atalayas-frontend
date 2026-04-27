@@ -1410,8 +1410,8 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
     <div className="fixed inset-0 flex items-center justify-center p-4"
       style={{ zIndex, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", animation: "modalBgIn 0.2s ease" }}
       onClick={onClose}>
-      <div className="relative w-full flex flex-col rounded-2xl overflow-hidden"
-        style={{ maxWidth, maxHeight: "90vh", background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
+      <div className="relative w-full flex flex-col"
+        style={{ maxWidth, maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
           className="modal-close-btn absolute top-3 right-3 z-20 flex items-center justify-center"
@@ -1419,7 +1419,10 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
           title="Cerrar (Esc)">
           <IconX size={15} />
         </button>
-        {children}
+        <div className="flex flex-col rounded-2xl overflow-hidden w-full h-full"
+          style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
+          {children}
+        </div>
       </div>
       <style>{`
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
