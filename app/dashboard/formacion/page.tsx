@@ -175,6 +175,106 @@ export default function FormacionPage() {
 
       {!loading && (
         <>
+          {/* ── SECCIÓN ONBOARDING ───────────────────────────────────── */}
+          {(() => {
+            const modulosOnboarding = modules.filter((m) => m.tipoModulo === "ONBOARDING");
+            return (
+              <section id="onboarding" className="mb-14 scroll-mt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                      Onboarding
+                    </h2>
+                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                      Tu programa de incorporación a la empresa
+                    </p>
+                  </div>
+                  {modulosOnboarding.length > 0 && (
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                      {modulosOnboarding.filter((m) => m.status === "completado").length} / {modulosOnboarding.length} completados
+                    </span>
+                  )}
+                </div>
+
+                {modulosOnboarding.length === 0 ? (
+                  /* Placeholder cuando no hay módulos de onboarding */
+                  <div className="rounded-2xl flex flex-col items-center justify-center gap-4 py-16 px-8 text-center"
+                    style={{ background: "var(--blanco)", border: "2px dashed var(--gris-borde)" }}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-base font-bold mb-1" style={{ color: "var(--texto-primario)" }}>
+                        Módulo de onboarding pendiente de asignación
+                      </p>
+                      <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                        Tu empresa configurará próximamente el programa de incorporación
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {modulosOnboarding.map((m) => {
+                      const img = getFormacionImg(m.moduloId, m.nombre, m.imagenPortadaUrl);
+                      const pct = m.porcentaje;
+                      const statusColor = m.status === "completado" ? "var(--exito)" : m.status === "en progreso" ? "var(--azul-egm)" : "var(--texto-muted)";
+                      const statusLabel = m.status === "completado" ? "Completado" : m.status === "en progreso" ? "En progreso" : "Pendiente";
+                      return (
+                        <div key={m.moduloId}
+                          className="rounded-2xl overflow-hidden cursor-pointer group transition-all"
+                          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+                          onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                          {/* Imagen */}
+                          <div className="relative overflow-hidden" style={{ height: "140px" }}>
+                            {img ? (
+                              <img src={img} alt={m.nombre}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                                style={{ objectPosition: "center 30%" }} />
+                            ) : (
+                              <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #1B3F7E 0%, #2A5298 100%)" }} />
+                            )}
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
+                            <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
+                              style={{ background: "rgba(163,181,53,0.85)", color: "#fff" }}>
+                              Onboarding
+                            </span>
+                          </div>
+                          {/* Info */}
+                          <div className="p-5">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h3 className="text-sm font-bold leading-snug flex-1" style={{ color: "var(--texto-primario)" }}>{m.nombre}</h3>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+                                style={{ background: m.status === "completado" ? "var(--exito-light)" : m.status === "en progreso" ? "var(--azul-egm-light)" : "var(--gris-superficie)", color: statusColor }}>
+                                {statusLabel}
+                              </span>
+                            </div>
+                            {m.descripcion && (
+                              <p className="text-xs mb-4 line-clamp-2" style={{ color: "var(--texto-muted)" }}>{m.descripcion}</p>
+                            )}
+                            {/* Progreso */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+                                <div className="h-full rounded-full transition-all duration-700"
+                                  style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--azul-egm), var(--verde-oliva))" }} />
+                              </div>
+                              <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>{pct}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })()}
+
           {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
           <div className="flex items-center justify-between gap-2 mb-10">
             <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
