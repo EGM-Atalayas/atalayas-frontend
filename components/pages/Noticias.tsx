@@ -863,13 +863,14 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
         )}
 
         {/* Imagen cabecera — no scrollea */}
-        <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
+        <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
+          style={item.imagenUrl ? { aspectRatio: "16/9", maxHeight: "260px" } : { height: "120px" }}>
           {item.imagenUrl ? (
             <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center"
               style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
-              <MegaphoneIcon size={72} />
+              <MegaphoneIcon size={40} />
             </div>
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
