@@ -558,7 +558,8 @@ export default function CrearModuloPage() {
 
       {/* ══ HEADER ══ */}
       <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
-        <div className="px-8 lg:px-12 py-4 flex items-center justify-between">
+        <div className="px-8 lg:px-12 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
               <Link href="/dashboard" className="hover:underline">Dashboard</Link>
@@ -587,10 +588,12 @@ export default function CrearModuloPage() {
             </button>
           )}
         </div>
+        </div>
       </div>
 
       {/* ══ CUERPO ══ */}
       <div className="px-8 lg:px-12 py-8">
+        <div className="max-w-6xl mx-auto">
 
         {/* ── SELECCIÓN MODO ── */}
         {modo === null && (
@@ -1153,6 +1156,7 @@ export default function CrearModuloPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
