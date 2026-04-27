@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import {
@@ -9,6 +9,7 @@ import {
   crearNoticia,
   editarNoticia,
   desactivarNoticia,
+  registrarVistaNoticia,
 } from "../../lib/api/noticias";
 import type { Comunicado, Noticia, NoticiaInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
@@ -145,11 +146,14 @@ function parsInline(text: string): React.ReactNode {
 }
 
 function ordenarFeed(items: FeedItem[], orden: Orden): FeedItem[] {
-  return [...items].sort((a, b) =>
-    orden === "antiguo"
+  return [...items].sort((a, b) => {
+    // Fijados siempre primero
+    if ((b.fijado ? 1 : 0) !== (a.fijado ? 1 : 0)) return (b.fijado ? 1 : 0) - (a.fijado ? 1 : 0);
+    // Luego por fecha
+    return orden === "antiguo"
       ? new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-      : new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-  );
+      : new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+  });
 }
 
 // ── SUBCOMPONENTES REUTILIZABLES ───────────────────────────────────────────────
@@ -244,25 +248,15 @@ export default function ComunicacionPage() {
   const [visibles, setVisibles]         = useState(6);
 
   // Formulario
-  const [showForm, setShowForm]         = useState(false);
+  const [showForm, setShowForm]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [editando, setEditando]     = useState<Noticia | null>(null);
-  const [form, setForm]             = useState<NoticiaInput>(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError]   = useState<string | null>(null);
-
-  // Image upload & IA
-  const [imagenModo, setImagenModo]       = useState<"url" | "upload">("url");
-  const [uploadingImg, setUploadingImg]   = useState(false);
-  const [aiLoading, setAiLoading]         = useState<"titulo" | "contenido" | null>(null);
-  const fileInputRef                      = useRef<HTMLInputElement>(null);
-
-  // Adjunto (PDF)
-  const [uploadingAdj, setUploadingAdj]  = useState(false);
-  const adjuntoRef                       = useRef<HTMLInputElement>(null);
+  const [editando, setEditando]               = useState<Noticia | null>(null);
+  const [initialForm, setInitialForm]         = useState<NoticiaInput>(EMPTY_FORM);
+  const [submitting, setSubmitting]           = useState(false);
+  const [formError, setFormError]             = useState<string | null>(null);
 
   // Preview antes de publicar
-  const [previewItem, setPreviewItem]    = useState<FeedItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<FeedItem | null>(null);
 
   useEffect(() => {
     const check = () => setEsMobil(window.innerWidth < 768);
@@ -313,14 +307,22 @@ export default function ComunicacionPage() {
     finally { setLoadingAnuncios(false); }
   }
 
+  // ── ABRIR DETALLE ──────────────────────────────────────────────────────────
+  function abrirDetalle(item: FeedItem) {
+    setModalItem(item);
+    if (item.fuente === "empresa" && item.id) {
+      registrarVistaNoticia(item.id);
+    }
+  }
+
   // ── HANDLERS FORMULARIO ────────────────────────────────────────────────────
   function abrirCrear() {
-    setForm({ ...EMPTY_FORM, empresaId: usuario?.empresaId ?? null });
+    setInitialForm({ ...EMPTY_FORM, empresaId: usuario?.empresaId ?? null });
     setEditando(null); setShowForm(true); setFormError(null);
   }
 
   function abrirEditar(n: Noticia) {
-    setForm({
+    setInitialForm({
       titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
       empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
       enlaceUrl: n.enlaceUrl ?? null, enlaceTexto: n.enlaceTexto ?? null,
@@ -329,101 +331,19 @@ export default function ComunicacionPage() {
       estado: n.estado ?? "publicado", fijado: n.fijado ?? false,
       categoria: n.categoria ?? null,
     });
-    setEditando(n); setShowForm(true); setFormError(null); setImagenModo("url");
+    setEditando(n); setShowForm(true); setFormError(null);
   }
 
   function cerrarForm() {
-    setShowForm(false); setEditando(null); setForm(EMPTY_FORM); setFormError(null);
-    setImagenModo("url"); setPreviewItem(null);
+    setShowForm(false); setEditando(null); setInitialForm(EMPTY_FORM); setFormError(null);
+    setPreviewItem(null);
   }
 
-  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingAdj(true);
-    try {
-      const { url, nombre } = await subirAdjunto(file);
-      setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre }));
-    } catch {
-      setFormError("Error al subir el documento. Inténtalo de nuevo.");
-    } finally {
-      setUploadingAdj(false);
-      if (adjuntoRef.current) adjuntoRef.current.value = "";
-    }
-  }
-
-  function abrirPreview() {
-    const item: FeedItem = {
-      id: "preview",
-      titulo: form.titulo || "(Sin título)",
-      descripcion: form.contenido,
-      imagenUrl: form.imagenUrl,
-      fecha: new Date().toISOString(),
-      fuente: "empresa",
-      categoria: null,
-      destacado: form.fijado ?? false,
-      esNuevoItem: true,
-      videoUrl: form.videoUrl,
-      adjuntoUrl: form.adjuntoUrl,
-      adjuntoNombre: form.adjuntoNombre,
-      enlaceUrl: form.enlaceUrl,
-      enlaceTexto: form.enlaceTexto,
-      estado: form.estado,
-      _raw: {} as Noticia,
-    };
-    setPreviewItem(item);
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingImg(true);
-    try {
-      const url = await subirImagenModulo(file);
-      setForm((f) => ({ ...f, imagenUrl: url }));
-      setImagenModo("url");
-    } catch {
-      setFormError("Error al subir la imagen. Inténtalo de nuevo.");
-    } finally {
-      setUploadingImg(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
-
-  async function sugerirConIA(campo: "titulo" | "contenido") {
-    const base = campo === "titulo" ? (form.contenido.trim() || form.titulo.trim()) : form.contenido.trim();
-    if (!base) { setFormError("Escribe algo antes de usar la IA."); return; }
-    setAiLoading(campo); setFormError(null);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: campo === "titulo"
-            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un anuncio de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
-            : `Mejora la redacción de este anuncio de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
-          }],
-          context: {},
-        }),
-      });
-      if (!res.ok || !res.body) throw new Error();
-      const reader = res.body.getReader(); const dec = new TextDecoder(); let out = "";
-      while (true) { const { done, value } = await reader.read(); if (done) break; out += dec.decode(value); }
-      if (campo === "titulo") setForm((f) => ({ ...f, titulo: out.trim() }));
-      else setForm((f) => ({ ...f, contenido: out.trim() }));
-    } catch { setFormError("La IA no está disponible en este momento."); }
-    finally { setAiLoading(null); }
-  }
-
-  async function handleSubmit() {
-    if (!form.titulo.trim() || !form.contenido.trim()) {
-      setFormError("El título y el contenido son obligatorios");
-      return;
-    }
+  async function handleSubmit(data: NoticiaInput) {
     setSubmitting(true); setFormError(null);
     try {
-      if (editando) await editarNoticia(editando.anuncioId, form);
-      else await crearNoticia(form);
+      if (editando) await editarNoticia(editando.anuncioId, data);
+      else await crearNoticia(data);
       await cargarAnuncios();
       cerrarForm();
     } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
@@ -590,24 +510,13 @@ export default function ComunicacionPage() {
         {/* ── FORMULARIO INLINE (admin) ────────────────────────────────────── */}
         {showForm && esAdmin && (
           <FormAnuncio
-            form={form}
-            setForm={setForm}
+            initialValues={initialForm}
             editando={editando}
             submitting={submitting}
             formError={formError}
-            imagenModo={imagenModo}
-            setImagenModo={setImagenModo}
-            uploadingImg={uploadingImg}
-            uploadingAdj={uploadingAdj}
-            aiLoading={aiLoading}
-            fileInputRef={fileInputRef}
-            adjuntoRef={adjuntoRef}
             onClose={cerrarForm}
             onSubmit={handleSubmit}
-            onPreview={abrirPreview}
-            onImageUpload={handleImageUpload}
-            onAdjuntoUpload={handleAdjuntoUpload}
-            onSugerirIA={sugerirConIA}
+            onPreview={(item) => setPreviewItem(item)}
           />
         )}
 
@@ -629,7 +538,7 @@ export default function ComunicacionPage() {
                 <div className="flex flex-col md:flex-row gap-4" style={{ height: esMobil ? undefined : "380px" }}>
                   {/* Tarjeta grande */}
                   <div className="todos-card-large">
-                    <FeaturedCard item={todosTop[0]} size="large" onOpen={() => setModalItem(todosTop[0])} fill prominent
+                    <FeaturedCard item={todosTop[0]} size="large" onOpen={() => abrirDetalle(todosTop[0])} fill prominent
                       puedeEditar={(todosTop[0].fuente === "empresa" && esAdmin) || (todosTop[0].fuente === "egm" && esAdminGeneral)}
                       onEdit={() => abrirEditar(todosTop[0]._raw as Noticia)}
                       onDelete={() => setConfirmDeleteId((todosTop[0]._raw as Noticia).anuncioId)}
@@ -640,7 +549,7 @@ export default function ComunicacionPage() {
                     <div className="hidden md:flex flex-col gap-4 flex-1">
                       {todosTop.slice(1, 3).map((item) => (
                         <div key={item.id} style={{ flex: 1 }}>
-                          <FeaturedCard item={item} size="large" onOpen={() => setModalItem(item)} fill compact
+                          <FeaturedCard item={item} size="large" onOpen={() => abrirDetalle(item)} fill compact
                             puedeEditar={(item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral)}
                             onEdit={() => abrirEditar(item._raw as Noticia)}
                             onDelete={() => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
@@ -668,7 +577,7 @@ export default function ComunicacionPage() {
                   getPuedeEditar={(item) => (item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral)}
                   esMobil={esMobil}
                   nombreEmpresa={usuario?.nombreEmpresa}
-                  onOpen={setModalItem}
+                  onOpen={abrirDetalle}
                   onEdit={(item) => abrirEditar(item._raw as Noticia)}
                   onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
                 />
@@ -704,7 +613,7 @@ export default function ComunicacionPage() {
               gradColor={GRAD_EGM}
               seccionLabel="Más comunicados"
               verMasLabel="Ver más comunicados"
-              onOpen={setModalItem}
+              onOpen={abrirDetalle}
               onEdit={(item) => abrirEditar(item._raw as Noticia)}
               onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
               abrirEditar={abrirEditar}
@@ -733,7 +642,7 @@ export default function ComunicacionPage() {
               gradColor={GRAD_EMP}
               seccionLabel="Más anuncios"
               verMasLabel="Ver más anuncios"
-              onOpen={setModalItem}
+              onOpen={abrirDetalle}
               onEdit={(item) => abrirEditar(item._raw as Noticia)}
               onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
               abrirEditar={abrirEditar}
@@ -1013,7 +922,7 @@ function FeedList({ items, esAdmin, getPuedeEditar, esMobil, nombreEmpresa, onOp
 }
 
 // ── FEATURED CARD ─────────────────────────────────────────────────────────────
-function FeaturedCard({ item, size, onOpen, fill = false, puedeEditar, onEdit, onDelete, prominent = false, compact = false }: {
+const FeaturedCard = memo(function FeaturedCard({ item, size, onOpen, fill = false, puedeEditar, onEdit, onDelete, prominent = false, compact = false }: {
   item: FeedItem; size: "large" | "small"; onOpen: () => void; fill?: boolean;
   puedeEditar?: boolean; onEdit?: () => void; onDelete?: () => void; prominent?: boolean; compact?: boolean;
 }) {
@@ -1098,6 +1007,33 @@ function FeaturedCard({ item, size, onOpen, fill = false, puedeEditar, onEdit, o
               </p>
             )}
 
+            {/* Indicadores multimedia */}
+            {(item.videoUrl || item.adjuntoUrl || item.enlaceUrl) && (
+              <div className="flex items-center gap-1.5 mb-2">
+                {item.videoUrl && (
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21"/></svg>
+                    Vídeo
+                  </span>
+                )}
+                {item.adjuntoUrl && (
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    PDF
+                  </span>
+                )}
+                {item.enlaceUrl && (
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1"/></svg>
+                    Enlace
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Leer más + botones admin en la misma fila */}
             <div className="flex items-center justify-between gap-2 transition-opacity opacity-55 group-hover:opacity-100">
               <div className="flex items-center gap-1.5">
@@ -1160,10 +1096,10 @@ function FeaturedCard({ item, size, onOpen, fill = false, puedeEditar, onEdit, o
       )}
     </div>
   );
-}
+});
 
 // ── FEED ROW ──────────────────────────────────────────────────────────────────
-function FeedRow({ item, isLast, puedeEditar, esMobil, nombreEmpresa, onOpen, onEdit, onDelete }: {
+const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nombreEmpresa, onOpen, onEdit, onDelete }: {
   item: FeedItem; isLast: boolean; puedeEditar: boolean; esMobil: boolean;
   nombreEmpresa?: string | null;
   onOpen: () => void; onEdit: () => void; onDelete: () => void;
@@ -1229,6 +1165,33 @@ function FeedRow({ item, isLast, puedeEditar, esMobil, nombreEmpresa, onOpen, on
             {item.descripcion}
           </p>
         )}
+
+        {/* Indicadores multimedia */}
+        {(item.videoUrl || item.adjuntoUrl || item.enlaceUrl) && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {item.videoUrl && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21"/></svg>
+                Vídeo
+              </span>
+            )}
+            {item.adjuntoUrl && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #86efac" }}>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                PDF
+              </span>
+            )}
+            {item.enlaceUrl && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ background: "#faf5ff", color: "#7c3aed", border: "1px solid #c4b5fd" }}>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1"/></svg>
+                Enlace
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Acciones admin */}
@@ -1261,7 +1224,7 @@ function FeedRow({ item, isLast, puedeEditar, esMobil, nombreEmpresa, onOpen, on
       )}
     </div>
   );
-}
+});
 
 // ── SUBCOMPONENTES ─────────────────────────────────────────────────────────────
 function Modal({ children, onClose, zIndex = 50 }: { children: React.ReactNode; onClose: () => void; zIndex?: number }) {
@@ -1273,11 +1236,12 @@ function Modal({ children, onClose, zIndex = 50 }: { children: React.ReactNode; 
         style={{ background: "var(--blanco)", maxHeight: "88vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-base transition-colors"
-          style={{ background: "rgba(0,0,0,0.1)", color: "var(--texto-primario)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.18)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.1)")}>
-          ×
+          className="absolute top-4 right-4 z-10 flex items-center justify-center transition-all"
+          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--texto-primario)", cursor: "pointer" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.12)"; e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.borderColor = "rgba(220,38,38,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
+          title="Cerrar">
+          <IconX size={14} />
         </button>
         {children}
       </div>
@@ -1387,9 +1351,22 @@ function Toggle({ checked, onChange, color = "#2563eb" }: { checked: boolean; on
 // ── CAMPO LABEL WRAPPER ───────────────────────────────────────────────────────
 function FieldLabel({ label, required, right }: { label: string; required?: boolean; right?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between mb-2.5">
+    <div className="flex items-center justify-between mb-2.5" style={{ minHeight: 32 }}>
       <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
-        {label}{required && <span className="ml-0.5" style={{ color: "var(--error)" }}>*</span>}
+        {label}
+        {required && (
+          <span className="relative inline-block ml-1 group" style={{ verticalAlign: "middle" }}>
+            <span style={{ color: "var(--error)", fontWeight: 700, cursor: "default" }}>*</span>
+            <span className="pointer-events-none absolute left-1/2 bottom-full mb-1.5 -translate-x-1/2
+              opacity-0 group-hover:opacity-100 transition-opacity duration-150
+              whitespace-nowrap text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-lg"
+              style={{ background: "rgba(15,23,42,0.92)", letterSpacing: "0.01em", zIndex: 200 }}>
+              Campo obligatorio
+              <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent"
+                style={{ borderTopColor: "rgba(15,23,42,0.92)" }} />
+            </span>
+          </span>
+        )}
       </label>
       {right}
     </div>
@@ -1419,12 +1396,12 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
   return (
     <button type="button" onClick={onClick} disabled={loading || disabled}
       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all disabled:opacity-40"
-      style={{ background: "linear-gradient(135deg, #eff6ff, #e0f2fe)", color: "#1d4ed8", border: "1px solid #bfdbfe", boxShadow: "0 1px 4px rgba(37,99,235,0.12)" }}
-      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe, #bae6fd)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)"; }}}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff, #e0f2fe)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(37,99,235,0.12)"; }}>
+      style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", color: "#1d4ed8", border: "1px solid #bfdbfe", boxShadow: "0 1px 6px rgba(37,99,235,0.15)" }}
+      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(37,99,235,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)"; e.currentTarget.style.boxShadow = "0 1px 6px rgba(37,99,235,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}>
       {loading
         ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        : <IconSparkle />}
+        : <IconSparkle size={15} />}
       {loading ? loadingLabel : label}
     </button>
   );
@@ -1432,40 +1409,113 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
 
 // ── FORMULARIO ANUNCIO (modal + secciones colapsables) ───────────────────────
 function FormAnuncio({
-  form, setForm, editando, submitting, formError,
-  imagenModo, setImagenModo, uploadingImg, uploadingAdj, aiLoading,
-  fileInputRef, adjuntoRef,
-  onClose, onSubmit, onPreview, onImageUpload, onAdjuntoUpload, onSugerirIA,
+  initialValues, editando, submitting, formError,
+  onClose, onSubmit, onPreview,
 }: {
-  form: NoticiaInput;
-  setForm: React.Dispatch<React.SetStateAction<NoticiaInput>>;
+  initialValues: NoticiaInput;
   editando: Noticia | null;
   submitting: boolean;
   formError: string | null;
-  imagenModo: "url" | "upload";
-  setImagenModo: (m: "url" | "upload") => void;
-  uploadingImg: boolean;
-  uploadingAdj: boolean;
-  aiLoading: "titulo" | "contenido" | null;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  adjuntoRef: React.RefObject<HTMLInputElement | null>;
   onClose: () => void;
-  onSubmit: () => void;
-  onPreview: () => void;
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onAdjuntoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSugerirIA: (campo: "titulo" | "contenido") => void;
+  onSubmit: (data: NoticiaInput) => void;
+  onPreview: (item: FeedItem) => void;
 }) {
   type Tab = "contenido" | "multimedia" | "publicacion";
-  const [tab, setTab] = useState<Tab>("contenido");
+  const [tab, setTab]         = useState<Tab>("contenido");
+  const [touched, setTouched] = useState(false);
+  const [form, setForm]       = useState<NoticiaInput>(initialValues);
+  const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [uploadingAdj, setUploadingAdj] = useState(false);
+  const [aiLoading, setAiLoading]       = useState<"titulo" | "contenido" | null>(null);
+  const [localError, setLocalError]     = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const adjuntoRef   = useRef<HTMLInputElement>(null);
+
+  const errorMsg = localError ?? formError;
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true); setLocalError(null);
+    try {
+      const url = await subirImagenModulo(file);
+      setForm((f) => ({ ...f, imagenUrl: url }));
+      setImagenModo("url");
+    } catch { setLocalError("Error al subir la imagen. Inténtalo de nuevo."); }
+    finally { setUploadingImg(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
+
+  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAdj(true); setLocalError(null);
+    try {
+      const { url, nombre } = await subirAdjunto(file);
+      setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre }));
+    } catch { setLocalError("Error al subir el documento. Inténtalo de nuevo."); }
+    finally { setUploadingAdj(false); if (adjuntoRef.current) adjuntoRef.current.value = ""; }
+  }
+
+  async function sugerirConIA(campo: "titulo" | "contenido") {
+    const base = campo === "titulo" ? (form.contenido.trim() || form.titulo.trim()) : form.contenido.trim();
+    if (!base) { setLocalError("Escribe algo antes de usar la IA."); return; }
+    setAiLoading(campo); setLocalError(null);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: campo === "titulo"
+            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un anuncio de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
+            : `Mejora la redacción de este anuncio de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
+          }],
+          context: {},
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error();
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let out = "";
+      while (true) { const { done, value } = await reader.read(); if (done) break; out += dec.decode(value); }
+      if (campo === "titulo") setForm((f) => ({ ...f, titulo: out.trim() }));
+      else setForm((f) => ({ ...f, contenido: out.trim() }));
+    } catch { setLocalError("La IA no está disponible en este momento."); }
+    finally { setAiLoading(null); }
+  }
+
+  function handlePreview() {
+    const item: FeedItem = {
+      id: "preview",
+      titulo: form.titulo || "(Sin título)",
+      descripcion: form.contenido,
+      imagenUrl: form.imagenUrl,
+      fecha: new Date().toISOString(),
+      fuente: "empresa",
+      categoria: null,
+      destacado: form.fijado ?? false,
+      esNuevoItem: true,
+      videoUrl: form.videoUrl,
+      adjuntoUrl: form.adjuntoUrl,
+      adjuntoNombre: form.adjuntoNombre,
+      enlaceUrl: form.enlaceUrl,
+      enlaceTexto: form.enlaceTexto,
+      estado: form.estado,
+      _raw: {} as Noticia,
+    };
+    onPreview(item);
+  }
+
+  const tituloError    = touched && !form.titulo.trim();
+  const contenidoError = touched && !form.contenido.trim();
 
   const badgeMult = [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length;
   const badgePub  = [form.enlaceUrl, form.fijado, form.estado === "borrador"].filter(Boolean).length;
 
   const embedUrl = form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null;
 
-  const TABS: { id: Tab; label: string; badge?: number }[] = [
-    { id: "contenido",   label: "Contenido" },
+  const badgeCont = touched ? [!form.titulo.trim(), !form.contenido.trim()].filter(Boolean).length : 0;
+
+  const TABS: { id: Tab; label: string; badge?: number; error?: boolean }[] = [
+    { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
     { id: "multimedia",  label: "Multimedia",  badge: badgeMult },
     { id: "publicacion", label: "Publicación", badge: badgePub  },
   ];
@@ -1487,16 +1537,18 @@ function FormAnuncio({
   const CATEGORIAS = ["General", "Aviso", "Novedad", "Evento"];
 
   return (
-    // Overlay
+    <>
+    {/* Overlay */}
     <div className="fixed inset-0 flex items-start justify-center"
       style={{ zIndex: 110, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(5px)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
       onClick={onClose}>
 
-      {/* Card — altura explícita para que el scroll interno funcione */}
+      {/* Card — altura automática con límite máximo */}
       <div className="relative w-full flex flex-col"
         style={{
           maxWidth: 660,
-          height: "calc(100vh - 112px)",
+          height: "auto",
+          maxHeight: "calc(100vh - 112px)",
           background: "var(--blanco)",
           borderRadius: 20,
           boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
@@ -1505,26 +1557,27 @@ function FormAnuncio({
         onClick={(e) => e.stopPropagation()}>
 
         {/* ── Cabecera ── */}
-        <div className="relative shrink-0 overflow-hidden" style={{ background: "linear-gradient(135deg, #1240a8 0%, #1d55c9 50%, #1565a8 100%)" }}>
-          {/* Destello esmeralda arriba a la derecha */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 92% 0%, rgba(52,211,153,0.65) 0%, rgba(16,185,129,0.3) 40%, transparent 65%)" }} />
-          {/* Destello azul claro abajo a la izquierda para profundidad */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 130%, rgba(99,179,237,0.25) 0%, transparent 50%)" }} />
+        <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
+          {/* Textura de profundidad — destello sutil arriba a la derecha */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+          {/* Viñeta inferior izquierda */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
 
           <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1 min-w-0">
               <h3 style={{
                 fontFamily: "var(--font-raleway), sans-serif",
                 fontWeight: 800,
-                fontSize: "clamp(1.35rem, 3vw, 1.65rem)",
-                lineHeight: 1.15,
-                letterSpacing: "-0.025em",
+                fontSize: "clamp(1.65rem, 4vw, 2.1rem)",
+                lineHeight: 1.1,
+                letterSpacing: "-0.03em",
                 color: "#ffffff",
                 margin: 0,
+                textShadow: "0 1px 12px rgba(0,0,0,0.18)",
               }}>
                 {editando ? "Editar anuncio" : "Nuevo anuncio"}
               </h3>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
                 {editando ? "Modifica los datos y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
               </p>
             </div>
@@ -1547,17 +1600,21 @@ function FormAnuncio({
         {/* ── Tabs ── */}
         <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
           <div className="flex">
-            {TABS.map(({ id, label, badge }) => (
+            {TABS.map(({ id, label, badge, error }) => (
               <button key={id} type="button" onClick={() => setTab(id)}
                 className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
                 style={{
-                  color: tab === id ? "var(--azul-accion)" : "var(--texto-muted)",
+                  color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)",
                   background: "none",
                 }}>
                 {label}
                 {badge ? (
                   <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
-                    style={{ background: tab === id ? "var(--azul-accion)" : "#d1d5db", color: tab === id ? "#fff" : "var(--texto-muted)", minWidth: 18, textAlign: "center" }}>
+                    style={{
+                      background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db",
+                      color: error || tab === id ? "#fff" : "var(--texto-muted)",
+                      minWidth: 18, textAlign: "center",
+                    }}>
                     {badge}
                   </span>
                 ) : null}
@@ -1572,36 +1629,39 @@ function FormAnuncio({
             width: `${100 / TABS.length}%`,
             height: 2,
             borderRadius: "2px 2px 0 0",
-            background: "var(--azul-accion)",
+            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
             transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
-            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
           }} />
         </div>
 
         {/* ── Cuerpo con scroll ── */}
-        <div className="overflow-y-auto flex flex-col gap-6" style={{ flex: 1, minHeight: 0, background: "var(--gris-superficie)", padding: "28px 32px" }}>
+        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
 
-          {/* ── TAB: Contenido ── */}
-          {tab === "contenido" && <>
+          {/* ── TAB: Contenido — siempre en DOM, fade con opacity ── */}
+          <div style={{ maxHeight: tab === "contenido" ? "none" : 0, overflow: "hidden", opacity: tab === "contenido" ? 1 : 0, pointerEvents: tab === "contenido" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Título" required
-                right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => onSugerirIA("titulo")} />}
+                right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />}
               />
               <input type="text" value={form.titulo}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                 placeholder="Ej: Recordatorio reunión de equipo"
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
               />
+              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
             </div>
 
-            <div className="flex flex-col" style={{ flex: 1, minHeight: 0 }}>
+            <div>
               <FieldLabel label="Descripción" required
                 right={
                   <div className="flex items-center gap-2.5">
                     <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
                     <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
-                      label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => onSugerirIA("contenido")} />
+                      label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("contenido")} />
                   </div>
                 }
               />
@@ -1609,8 +1669,10 @@ function FormAnuncio({
                 onChange={(e) => setForm({ ...form, contenido: e.target.value })}
                 placeholder="Escribe la descripción. Puedes usar **negrita** y - listas."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
-                style={{ ...inputStyle, flex: 1, minHeight: 120 }} onFocus={onFocus} onBlur={onBlur}
+                style={{ ...inputStyle, minHeight: 180, ...(contenidoError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
               />
+              {contenidoError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>La descripción es obligatoria</p>}
             </div>
 
             <div>
@@ -1635,10 +1697,11 @@ function FormAnuncio({
                 })}
               </div>
             </div>
-          </>}
+          </div></div>
 
-          {/* ── TAB: Multimedia ── */}
-          {tab === "multimedia" && <>
+          {/* ── TAB: Multimedia — siempre en DOM, fade con opacity ── */}
+          <div style={{ maxHeight: tab === "multimedia" ? "none" : 0, overflow: "hidden", opacity: tab === "multimedia" ? 1 : 0, pointerEvents: tab === "multimedia" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Imagen"
                 right={
@@ -1666,18 +1729,19 @@ function FormAnuncio({
                       <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
                         style={{ height: "160px" }} onError={(e) => (e.currentTarget.style.display = "none")} />
                       <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                        style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.5)")}>
-                        <IconX size={13} />
+                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                        title="Quitar imagen">
+                        <IconX size={12} />
                       </button>
                     </div>
                   )}
                 </>
               ) : (
                 <>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={onImageUpload} className="hidden" />
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
                     className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-colors disabled:opacity-60"
                     style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
@@ -1693,9 +1757,12 @@ function FormAnuncio({
                       <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold"
                         style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
                       <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}>
-                        <IconX size={13} />
+                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                        title="Quitar imagen">
+                        <IconX size={12} />
                       </button>
                     </div>
                   )}
@@ -1711,6 +1778,12 @@ function FormAnuncio({
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
                 style={inputStyle} onFocus={onFocus} onBlur={onBlur}
               />
+              {form.videoUrl && !embedUrl && (
+                <p className="flex items-center gap-1.5 text-xs mt-1.5 font-medium" style={{ color: "#b45309" }}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                  Solo se puede incrustar vídeos de YouTube o Vimeo
+                </p>
+              )}
               {embedUrl && (
                 <div className="mt-3 rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 220 }}>
                   <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
@@ -1720,7 +1793,7 @@ function FormAnuncio({
 
             <div>
               <FieldLabel label="Documento adjunto" />
-              <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={onAdjuntoUpload} className="hidden" />
+              <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
               {form.adjuntoUrl ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
                   style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
@@ -1748,10 +1821,11 @@ function FormAnuncio({
                 </button>
               )}
             </div>
-          </>}
+          </div></div>
 
-          {/* ── TAB: Publicación ── */}
-          {tab === "publicacion" && <>
+          {/* ── TAB: Publicación — siempre en DOM, fade con opacity ── */}
+          <div style={{ maxHeight: tab === "publicacion" ? "none" : 0, overflow: "hidden", opacity: tab === "publicacion" ? 1 : 0, pointerEvents: tab === "publicacion" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div style={{ width: "100%" }}>
               <FieldLabel label="Enlace externo" />
               <input type="url" value={form.enlaceUrl ?? ""}
@@ -1770,48 +1844,56 @@ function FormAnuncio({
               )}
             </div>
 
-            <div style={{ width: "100%" }}>
-              <FieldLabel label="Visibilidad" />
+            {/* ── Visibilidad ── */}
+            <div>
+              <FieldLabel label="Estado" />
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1.5px solid var(--gris-borde)" }}>
 
-              {/* Toggle: Fijar */}
-              <div className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl cursor-pointer"
-                style={{ background: form.fijado ? "#eff6ff" : "var(--blanco)", border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "all 0.18s" }}
-                onClick={() => setForm({ ...form, fijado: !form.fijado })}>
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: form.fijado ? "#dbeafe" : "var(--gris-superficie)" }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#2563eb" : "var(--texto-muted)"} strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
+                {/* Fila: Fijar */}
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                  style={{ background: form.fijado ? "#eff6ff" : "var(--blanco)", transition: "background 0.18s" }}
+                  onClick={() => setForm({ ...form, fijado: !form.fijado })}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: form.fijado ? "#dbeafe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#2563eb" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.fijado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
+                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-semibold block" style={{ color: "var(--texto-primario)" }}>Fijar en la parte superior</span>
-                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Aparecerá siempre en primer lugar</span>
-                  </div>
+                  <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
                 </div>
-                <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
-              </div>
 
-              {/* Toggle: Borrador */}
-              <div className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl cursor-pointer mt-3"
-                style={{ background: form.estado === "borrador" ? "#fefce8" : "var(--blanco)", border: `1.5px solid ${form.estado === "borrador" ? "#fde047" : "var(--gris-borde)"}`, transition: "all 0.18s" }}
-                onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: form.estado === "borrador" ? "#fef9c3" : "var(--gris-superficie)" }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#ca8a04" : "var(--texto-muted)"} strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                    </svg>
+                {/* Separador */}
+                <div style={{ height: 1, background: "var(--gris-borde)" }} />
+
+                {/* Fila: Borrador */}
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                  style={{ background: form.estado === "borrador" ? "#fefce8" : "var(--blanco)", transition: "background 0.18s" }}
+                  onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: form.estado === "borrador" ? "#fef9c3" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#ca8a04" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#a16207" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-semibold block" style={{ color: "var(--texto-primario)" }}>Guardar como borrador</span>
-                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>No visible para empleados hasta que lo publiques</span>
-                  </div>
+                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#ca8a04" />
                 </div>
-                <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#ca8a04" />
+
               </div>
             </div>
-          </>}
+          </div>
+          </div>
 
         </div>
 
@@ -1819,7 +1901,7 @@ function FormAnuncio({
         <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
           style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
           <div className="flex-1 min-w-0">
-            {formError && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{formError}</p>}
+            {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={onClose}
@@ -1829,16 +1911,24 @@ function FormAnuncio({
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               Cancelar
             </button>
-            <button type="button" onClick={onPreview}
+            <button type="button" onClick={handlePreview}
               className="text-sm px-4 py-2 rounded-xl font-medium transition-colors"
               style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
               Previsualizar
             </button>
-            <button onClick={onSubmit} disabled={submitting}
-              className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-opacity"
-              style={{ background: GRAD_BTN, color: "#fff" }}
+            <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
+              className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
+              style={{
+                background: form.estado === "borrador"
+                  ? "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"
+                  : GRAD_BTN,
+                color: "#fff",
+                boxShadow: form.estado === "borrador"
+                  ? "0 2px 8px rgba(107,114,128,0.3)"
+                  : "0 2px 8px rgba(37,99,235,0.3)",
+              }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
               {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
@@ -1848,6 +1938,7 @@ function FormAnuncio({
 
       </div>
     </div>
+    </>
   );
 }
 
@@ -1864,9 +1955,29 @@ function FormField({ label, required, children }: { label: string; required?: bo
 
 function Spinner() {
   return (
-    <div className="flex items-center justify-center py-24">
-      <div className="w-6 h-6 border-2 rounded-full animate-spin"
-        style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+    <div className="flex flex-col gap-4">
+      {/* Fila de 3 tarjetas grandes */}
+      <div className="flex gap-4" style={{ height: 380 }}>
+        <div className="flex-1 rounded-2xl animate-pulse" style={{ background: "var(--gris-superficie)" }} />
+        <div className="hidden md:flex flex-col gap-4 flex-1">
+          <div className="flex-1 rounded-2xl animate-pulse" style={{ background: "var(--gris-superficie)" }} />
+          <div className="flex-1 rounded-2xl animate-pulse" style={{ background: "var(--gris-superficie)" }} />
+        </div>
+      </div>
+      {/* Filas de lista */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-5 px-5 py-4"
+            style={{ borderBottom: i < 3 ? "1px solid var(--gris-borde)" : "none" }}>
+            <div className="rounded-xl animate-pulse shrink-0" style={{ width: 140, height: 96, background: "var(--gris-superficie)" }} />
+            <div className="flex-1 flex flex-col gap-2.5">
+              <div className="rounded animate-pulse" style={{ height: 12, width: "30%", background: "var(--gris-superficie)" }} />
+              <div className="rounded animate-pulse" style={{ height: 16, width: "70%", background: "var(--gris-superficie)" }} />
+              <div className="rounded animate-pulse" style={{ height: 13, width: "90%", background: "var(--gris-superficie)" }} />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
