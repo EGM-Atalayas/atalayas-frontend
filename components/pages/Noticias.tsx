@@ -259,6 +259,7 @@ export default function ComunicacionPage() {
   const [modalItem, setModalItem]       = useState<FeedItem | null>(null);
   const [esMobil, setEsMobil]           = useState(false);
   const [visibles, setVisibles]         = useState(6);
+  const [busqueda, setBusqueda]         = useState("");
 
   // Formulario
   const [showForm, setShowForm]               = useState(false);
@@ -406,9 +407,17 @@ export default function ComunicacionPage() {
 
   const feedCompleto = ordenarFeed([...feedEGM, ...feedEmpresa], "reciente");
 
+  // Búsqueda
+  const q = busqueda.trim().toLowerCase();
+  const filtrarBusqueda = (items: FeedItem[]) =>
+    q ? items.filter((i) => i.titulo.toLowerCase().includes(q) || i.descripcion.toLowerCase().includes(q)) : items;
+
+  const feedCompletoBuscado   = filtrarBusqueda(feedCompleto);
+  const feedEmpresaBuscado    = filtrarBusqueda(feedEmpresa);
+
   // "Todos": 1 grande + 2 pequeñas + resto en lista
-  const todosTop   = feedCompleto.slice(0, 3);
-  const todosResto = feedCompleto.slice(3);
+  const todosTop   = feedCompletoBuscado.slice(0, 3);
+  const todosResto = feedCompletoBuscado.slice(3);
 
   // ── EGM: categorías únicas presentes ──────────────────────────────────────
   const categoriasEGM = ["Todos", ...Array.from(new Set(
@@ -416,13 +425,13 @@ export default function ComunicacionPage() {
   )) as string[]];
 
   const feedEGMFiltrado = ordenarFeed(
-    filtroCategoria === "Todos"
-      ? feedEGM
-      : feedEGM.filter((i) => i.categoria === filtroCategoria),
+    filtrarBusqueda(
+      filtroCategoria === "Todos" ? feedEGM : feedEGM.filter((i) => i.categoria === filtroCategoria)
+    ),
     orden
   );
 
-  const feedEmpresaOrdenado = ordenarFeed(feedEmpresa, orden);
+  const feedEmpresaOrdenado = ordenarFeed(feedEmpresaBuscado, orden);
 
   const cargando = loadingComunicados || loadingAnuncios;
 
@@ -434,6 +443,11 @@ export default function ComunicacionPage() {
         @media (min-width: 768px) { .todos-card-large { height: 380px; flex: 1; width: auto; } }
         .group:hover .card-img { transform: scale(1.04); }
         .card-img { transition: transform 0.4s ease; }
+        @keyframes staggerIn {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .stagger-item { animation: staggerIn 0.35s ease both; }
       `}</style>
 
       <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.jpg" />
@@ -469,6 +483,35 @@ export default function ComunicacionPage() {
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto self-end md:self-auto">
+              {/* Búsqueda */}
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} style={{ color: "var(--texto-muted)" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => { setBusqueda(e.target.value); setVisibles(6); }}
+                  placeholder="Buscar..."
+                  className="pl-8 pr-3 py-1.5 rounded-full text-sm transition-all focus:outline-none"
+                  style={{
+                    width: busqueda ? "180px" : "120px",
+                    background: busqueda ? "var(--blanco)" : "var(--blanco)",
+                    border: `1.5px solid ${busqueda ? "#2563eb" : "var(--gris-borde)"}`,
+                    color: "var(--texto-primario)",
+                    transition: "width 0.25s ease, border-color 0.15s",
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.width = "180px"; e.currentTarget.style.borderColor = "#93c5fd"; }}
+                  onBlur={(e) => { if (!busqueda) e.currentTarget.style.width = "120px"; e.currentTarget.style.borderColor = busqueda ? "#2563eb" : "var(--gris-borde)"; }}
+                />
+                {busqueda && (
+                  <button onClick={() => setBusqueda("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
+                    style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--texto-muted)", color: "#fff" }}>
+                    <IconX size={9} />
+                  </button>
+                )}
+              </div>
               {/* Ordenar */}
               <div className="relative orden-dropdown">
                 <button
@@ -554,6 +597,11 @@ export default function ComunicacionPage() {
             descripcion="Cuando EGM Atalayas o tu empresa publiquen comunicados aparecerán aquí."
             accion={esAdmin ? "Crear primer anuncio" : undefined}
             onAccion={esAdmin ? abrirCrear : undefined}
+          />
+        ) : feedCompletoBuscado.length === 0 ? (
+          <EstadoVacio
+            titulo={`Sin resultados para "${busqueda}"`}
+            descripcion="Prueba con otras palabras."
           />
         ) : filtroFuente === "todos" ? (
           <>
@@ -1023,17 +1071,18 @@ function FeedList({ items, esAdmin, getPuedeEditar, esMobil, nombreEmpresa, onOp
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
       {items.map((item, i) => (
-        <FeedRow
-          key={item.id}
-          item={item}
-          isLast={i === items.length - 1}
-          puedeEditar={getPuedeEditar ? getPuedeEditar(item) : esAdmin}
-          esMobil={esMobil}
-          nombreEmpresa={nombreEmpresa}
-          onOpen={() => onOpen(item)}
-          onEdit={() => onEdit(item)}
-          onDelete={() => onDelete(item)}
-        />
+        <div key={item.id} className="stagger-item" style={{ animationDelay: `${i * 55}ms` }}>
+          <FeedRow
+            item={item}
+            isLast={i === items.length - 1}
+            puedeEditar={getPuedeEditar ? getPuedeEditar(item) : esAdmin}
+            esMobil={esMobil}
+            nombreEmpresa={nombreEmpresa}
+            onOpen={() => onOpen(item)}
+            onEdit={() => onEdit(item)}
+            onDelete={() => onDelete(item)}
+          />
+        </div>
       ))}
     </div>
   );
@@ -1273,10 +1322,17 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
           <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} esNuevoItem={item.esNuevoItem} size="sm" dark={false} />
         </div>
 
-        <h3 className="font-bold leading-snug line-clamp-2 transition-colors"
-          style={{ fontSize: esMobil ? "0.875rem" : "1rem", color: hovered ? "var(--azul-accion)" : "var(--texto-primario)" }}>
-          {item.titulo}
-        </h3>
+        <div className="flex items-center gap-1.5">
+          {item.fijado && (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth={2.5} className="shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+          )}
+          <h3 className="font-bold leading-snug line-clamp-2 transition-colors"
+            style={{ fontSize: esMobil ? "0.875rem" : "1rem", color: hovered ? "var(--azul-accion)" : "var(--texto-primario)" }}>
+            {item.titulo}
+          </h3>
+        </div>
 
         {!esMobil && (
           <p className="text-sm line-clamp-2 leading-relaxed" style={{ color: "var(--texto-muted)" }}>
@@ -1771,7 +1827,12 @@ function FormAnuncio({
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Título" required
-                right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />}
+                right={
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                  </div>
+                }
               />
               <input type="text" value={form.titulo}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
@@ -1871,13 +1932,24 @@ function FormAnuncio({
                 <>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-colors disabled:opacity-60"
+                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
                     style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => { if (!uploadingImg) e.currentTarget.style.borderColor = "#93c5fd"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                    onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = "var(--gris-borde)";
+                      e.currentTarget.style.background = "var(--blanco)";
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith("image/")) {
+                        handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                      }
+                    }}>
                     {uploadingImg
                       ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                      : <><IconUpload /><span className="font-medium">Seleccionar imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                      : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
                   </button>
                   {form.imagenUrl && (
                     <div className="relative mt-3">
