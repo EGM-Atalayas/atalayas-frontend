@@ -344,13 +344,13 @@ export default function Empleado() {
           {/* Fondo animado de puntos */}
           <div className="absolute inset-0">
             <DotField
-              dotRadius={1.5}
-              dotSpacing={18}
+              dotRadius={3}
+              dotSpacing={16}
               bulgeOnly
               bulgeStrength={60}
               glowRadius={180}
-              gradientFrom="rgba(59,130,246,0.30)"
-              gradientTo="rgba(99,179,237,0.18)"
+              gradientFrom="rgba(255,255,255,0.45)"
+              gradientTo="rgba(255,255,255,0.30)"
               glowColor="#0a1628"
             />
           </div>
