@@ -21,6 +21,36 @@ interface Contenido {
   duracion?: string;
   completado: boolean;
   bloqueado: boolean;
+  seccionIdx?: number; // índice en el array de secciones del markdown
+}
+
+interface SeccionMarkdown {
+  titulo: string;
+  contenido: string;
+}
+
+function parsearSecciones(markdown: string): SeccionMarkdown[] {
+  const lineas = markdown.split("\n");
+  const secciones: SeccionMarkdown[] = [];
+  let actual: SeccionMarkdown | null = null;
+  for (const linea of lineas) {
+    if (linea.startsWith("## ")) {
+      if (actual) secciones.push(actual);
+      actual = { titulo: linea.slice(3).trim(), contenido: "" };
+    } else if (linea.startsWith("# ")) {
+      // título raíz, ignorar
+    } else if (actual) {
+      actual.contenido += linea + "\n";
+    }
+  }
+  if (actual) secciones.push(actual);
+  return secciones;
+}
+
+function estimarDuracion(texto: string): string {
+  const palabras = texto.trim().split(/\s+/).length;
+  const mins = Math.max(1, Math.round(palabras / 180));
+  return `~${mins} min`;
 }
 
 interface ModuloMock {
@@ -105,11 +135,31 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   const tipos = moduloApi.tiposSalida ? moduloApi.tiposSalida.split(",") : ["documentacion"];
   const items: Contenido[] = [];
   let idx = 1;
-  const durLabel = moduloApi.duracion === "corto" ? "−15 min" : moduloApi.duracion === "largo" ? "+45 min" : "15–45 min";
 
+  // Documentación: si hay markdown, un ítem por sección ##
   if (tipos.includes("documentacion")) {
-    items.push({ id: `c${idx++}`, titulo: "Documentación del módulo", tipo: "texto", duracion: durLabel, completado: false, bloqueado: false });
+    if (moduloApi.contenidoMarkdown) {
+      const secciones = parsearSecciones(moduloApi.contenidoMarkdown);
+      if (secciones.length > 0) {
+        secciones.forEach((s, i) => {
+          items.push({
+            id: `c${idx++}`,
+            titulo: s.titulo,
+            tipo: "texto",
+            duracion: estimarDuracion(s.contenido),
+            completado: false,
+            bloqueado: false,
+            seccionIdx: i,
+          });
+        });
+      } else {
+        items.push({ id: `c${idx++}`, titulo: "Documentación del módulo", tipo: "texto", duracion: "15–45 min", completado: false, bloqueado: false, seccionIdx: -1 });
+      }
+    } else {
+      items.push({ id: `c${idx++}`, titulo: "Documentación del módulo", tipo: "texto", duracion: "15–45 min", completado: false, bloqueado: false });
+    }
   }
+
   if (tipos.includes("podcast") && moduloApi.scriptPodcast) {
     items.push({ id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
   }
@@ -117,7 +167,7 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
     items.push({ id: `c${idx++}`, titulo: "Video — Presentación de slides", tipo: "video", subtipo: "slides", duracion: "8–12 min", completado: false, bloqueado: items.length > 0 });
   }
   if (items.length === 0) {
-    items.push({ id: `c${idx++}`, titulo: "Descripción y contenido", tipo: "texto", duracion: durLabel, completado: false, bloqueado: false });
+    items.push({ id: `c${idx++}`, titulo: "Descripción y contenido", tipo: "texto", duracion: "15–45 min", completado: false, bloqueado: false });
   }
   if (moduloApi.testPreguntas) {
     items.push({ id: `c${idx++}`, titulo: "Test de evaluación", tipo: "quiz", duracion: "10–15 min", completado: false, bloqueado: true });
@@ -203,6 +253,12 @@ export default function Page() {
   const [completando, setCompletando] = useState(false);
   const [moduloCompletado, setModuloCompletado] = useState(false);
   const [verificado, setVerificado] = useState(false);
+
+  // Secciones del markdown (calculadas una vez al cargar el módulo)
+  const secciones = React.useMemo<SeccionMarkdown[]>(() => {
+    if (!moduloApi?.contenidoMarkdown) return [];
+    return parsearSecciones(moduloApi.contenidoMarkdown);
+  }, [moduloApi]);
 
   // Reset verificado cada vez que el usuario cambia de ítem
   React.useEffect(() => { setVerificado(false); }, [activoId]);
@@ -309,7 +365,7 @@ export default function Page() {
             {/* Body */}
             <div className="px-6 py-6">
               <p className="text-sm mb-5" style={{ color: "var(--texto-secundario)" }}>
-                Enhorabuena 🎉 Has terminado todos los contenidos de este módulo. Tu progreso queda guardado.
+                Enhorabuena. Has terminado todos los contenidos de este módulo. Tu progreso queda guardado.
               </p>
               <div className="flex flex-col gap-2">
                 <button
@@ -536,7 +592,16 @@ export default function Page() {
 
             {/* Cuerpo según tipo */}
             <div className="px-8 py-7">
-              {activo.tipo === "texto" && <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={moduloApi?.contenidoMarkdown ?? null} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "texto" && (() => {
+                // Si el ítem tiene seccionIdx, mostrar solo esa sección; si no, el markdown completo
+                const seccion = activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                  ? secciones[activo.seccionIdx] ?? null
+                  : null;
+                const contenidoFinal = seccion
+                  ? seccion.contenido
+                  : (moduloApi?.contenidoMarkdown ?? null);
+                return <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={contenidoFinal} onVerificado={() => setVerificado(true)} />;
+              })()}
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
