@@ -1414,12 +1414,10 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
         style={{ maxWidth, maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-3 right-3 z-20 flex items-center justify-center"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.25)", transition: "background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease", transformOrigin: "top right" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.75)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(220,38,38,0.2)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.25)"; }}
-          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
-          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
+          className="absolute top-3 right-3 z-20 flex items-center justify-center transition-all"
+          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
           title="Cerrar (Esc)">
           <IconX size={15} />
         </button>
