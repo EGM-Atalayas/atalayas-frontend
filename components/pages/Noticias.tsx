@@ -1414,10 +1414,8 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
         style={{ maxWidth, maxHeight: "90vh", background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-3 right-3 z-20 flex items-center justify-center"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", transition: "background 0.18s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.75)"; e.currentTarget.style.transform = "rotate(90deg)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.32)"; e.currentTarget.style.transform = "rotate(0deg)"; }}
+          className="modal-close-btn absolute top-3 right-3 z-20 flex items-center justify-center"
+          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
           title="Cerrar (Esc)">
           <IconX size={15} />
         </button>
@@ -1426,6 +1424,9 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
       <style>{`
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-close-btn { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+        .modal-close-btn:hover { background: rgba(0,0,0,0.35) !important; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(0,0,0,0.15) !important; }
+        .modal-close-btn:active { transform: scale(0.95); }
       `}</style>
     </div>
   );
