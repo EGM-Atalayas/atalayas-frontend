@@ -54,12 +54,12 @@ function TituloSeccion({ children, noMargin }: { children: React.ReactNode; noMa
     <h2
       className={noMargin ? "" : "mb-6"}
       style={{
-        fontSize: "clamp(1.6rem, 2.4vw, 2.4rem)",
-        fontFamily: "'Instrument Serif', serif",
-        fontWeight: 400,
+        fontSize: "clamp(1.6rem, 2.4vw, 2.2rem)",
+        fontFamily: "var(--font-raleway), sans-serif",
+        fontWeight: 800,
         color: "var(--texto-primario)",
         letterSpacing: "-0.02em",
-        lineHeight: 1.2,
+        lineHeight: 1.1,
       }}
     >
       {children}
