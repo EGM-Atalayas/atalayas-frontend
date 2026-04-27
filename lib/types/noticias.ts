@@ -19,6 +19,7 @@ export interface Noticia {
   estado?:        string | null;   // 'publicado' | 'borrador'
   fijado?:        boolean;
   vistas?:        number;
+  categoria?:     string | null;
 }
 
 export interface NoticiaInput {
@@ -35,6 +36,7 @@ export interface NoticiaInput {
   adjuntoNombre?: string | null;
   estado?:        string;
   fijado?:        boolean;
+  categoria?:     string | null;
 }
 
 // ── COMUNICADOS EGM ───────────────────────────────────────────────────────────
