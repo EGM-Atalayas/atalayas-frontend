@@ -366,7 +366,7 @@ export default function Empleado() {
                 style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }}>
                 Curso
               </span>
-              <h2 className="text-2xl font-bold text-white leading-snug">
+              <h2 className="text-4xl font-bold text-white leading-snug">
                 Onboarding
               </h2>
             </div>
