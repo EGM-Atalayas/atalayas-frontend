@@ -1403,6 +1403,12 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4"
       style={{ zIndex, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", animation: "modalBgIn 0.2s ease" }}
