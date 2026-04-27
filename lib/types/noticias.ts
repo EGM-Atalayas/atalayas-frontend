@@ -1,31 +1,45 @@
 // ── ANUNCIOS DE EMPRESA ───────────────────────────────────────────────────────
-// Respuesta de GET /api/v1/anuncios
 export interface Noticia {
-  anuncioId:     string;
+  anuncioId:      string;
+  titulo:         string;
+  contenido:      string;
+  esGlobal:       boolean;
+  activo:         boolean;
+  creadoPor:      string;
+  empresaId:      string | null;
+  imagenUrl?:     string | null;
+  creadoEn:       string;
+  actualizadoEn:  string;
+  // Campos nuevos
+  enlaceUrl?:     string | null;
+  enlaceTexto?:   string | null;
+  videoUrl?:      string | null;
+  adjuntoUrl?:    string | null;
+  adjuntoNombre?: string | null;
+  estado?:        string | null;   // 'publicado' | 'borrador'
+  fijado?:        boolean;
+  vistas?:        number;
+}
+
+export interface NoticiaInput {
   titulo:        string;
   contenido:     string;
   esGlobal:      boolean;
-  activo:        boolean;
-  creadoPor:     string;
-  empresaId:     string | null;
+  empresaId?:    string | null;
   imagenUrl?:    string | null;
-  creadoEn:      string;
-  actualizadoEn: string;
-}
-
-// Payload de POST/PUT /api/v1/anuncios
-export interface NoticiaInput {
-  titulo:     string;
-  contenido:  string;
-  esGlobal:   boolean;
-  empresaId?: string | null;
-  imagenUrl?: string | null;
+  // Campos nuevos
+  enlaceUrl?:     string | null;
+  enlaceTexto?:   string | null;
+  videoUrl?:      string | null;
+  adjuntoUrl?:    string | null;
+  adjuntoNombre?: string | null;
+  estado?:        string;
+  fijado?:        boolean;
 }
 
 // ── COMUNICADOS EGM ───────────────────────────────────────────────────────────
 export type CategoriaComunicado = "Novedad" | "Aviso" | "Evento" | "General";
 
-// Respuesta de GET /api/v1/comunicados
 export interface Comunicado {
   comunicadoId:      string;
   titulo:            string;
@@ -38,9 +52,16 @@ export interface Comunicado {
   fechaExpiracion?:  string | null;
   creadoPor?:        string | null;
   actualizadoEn?:    string | null;
+  // Campos nuevos
+  enlaceUrl?:     string | null;
+  enlaceTexto?:   string | null;
+  videoUrl?:      string | null;
+  adjuntoUrl?:    string | null;
+  adjuntoNombre?: string | null;
+  estado?:        string | null;   // 'publicado' | 'borrador'
+  vistas?:        number;
 }
 
-// Payload de POST/PUT /api/v1/comunicados
 export interface ComunicadoInput {
   titulo:            string;
   mensaje:           string;
@@ -49,4 +70,11 @@ export interface ComunicadoInput {
   destacado:         boolean;
   fechaPublicacion?: string | null;
   fechaExpiracion?:  string | null;
+  // Campos nuevos
+  enlaceUrl?:     string | null;
+  enlaceTexto?:   string | null;
+  videoUrl?:      string | null;
+  adjuntoUrl?:    string | null;
+  adjuntoNombre?: string | null;
+  estado?:        string;
 }

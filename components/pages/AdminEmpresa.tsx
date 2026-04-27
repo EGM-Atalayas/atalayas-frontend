@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
+import { getActividadReciente } from "@/lib/api/progreso";
+import type { ActividadItem } from "@/lib/types/progreso";
 
 interface ResumenAdmin {
   nombreEmpresa: string;
@@ -31,13 +33,17 @@ const MOCK_MODULOS = [
   { id: "m4", nombre: "Onboarding Corporativo", completados: 25, enProgreso: 2, pendientes: 1, total: 28 },
 ];
 
-const MOCK_ACTIVIDAD = [
-  { hora: "Hace 5 min", texto: "Ana García completó «Prevención de Riesgos»", tipo: "completado" },
-  { hora: "Hace 22 min", texto: "Carlos Ruiz inició «Protección de Datos»", tipo: "inicio" },
-  { hora: "Hace 1 h", texto: "María López obtuvo el 100% en Onboarding", tipo: "logro" },
-  { hora: "Hace 3 h", texto: "5 empleados completaron «Habilidades Comunicación»", tipo: "grupo" },
-  { hora: "Ayer", texto: "Nuevo módulo «Excel Avanzado» publicado", tipo: "nuevo" },
-];
+function tiempoRelativo(timestamp: string): string {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "ahora mismo";
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "Ayer";
+  return `Hace ${d} días`;
+}
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -103,20 +109,23 @@ export default function AdminEmpresa() {
 
   const [resumen, setResumen] = useState<ResumenAdmin | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+  const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [resRes, anunciosRes] = await Promise.all([
+        const [resRes, anunciosRes, actividadData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           apiFetch(`${API_URL}/anuncios`),
+          getActividadReciente(5).catch(() => [] as ActividadItem[]),
         ]);
         if (resRes.ok) setResumen(await resRes.json());
         if (anunciosRes.ok) {
           const data = await anunciosRes.json();
           setAnuncios(data.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
+        setActividad(actividadData);
       } catch { }
       finally { setCargando(false); }
     }
@@ -311,17 +320,24 @@ export default function AdminEmpresa() {
             {/* Actividad reciente */}
             <div className="lg:col-span-2">
               <TituloSeccion>Actividad reciente</TituloSeccion>
-              <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                {MOCK_ACTIVIDAD.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 px-4 py-3.5" style={{ borderBottom: i < MOCK_ACTIVIDAD.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
-                    <ActividadIcon tipo={item.tipo} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs leading-snug" style={{ color: "var(--texto-primario)" }}>{item.texto}</p>
-                      <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{item.hora}</p>
+              {actividad.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
+                  <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin actividad reciente</p>
+                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Aparecerá aquí cuando los empleados interactúen con los módulos</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                  {actividad.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 px-4 py-3.5" style={{ borderBottom: i < actividad.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
+                      <ActividadIcon tipo={item.tipo} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs leading-snug" style={{ color: "var(--texto-primario)" }}>{item.texto}</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{tiempoRelativo(item.timestamp)}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
   getComunicados,
@@ -8,7 +8,29 @@ import {
   editarComunicado,
   desactivarComunicado,
 } from "@/lib/api/noticias";
+import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import type { Comunicado, ComunicadoInput, CategoriaComunicado } from "@/lib/types/noticias";
+
+const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+
+// ── IA helper ─────────────────────────────────────────────────────────────────
+async function llamarIA(prompt: string): Promise<string> {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: prompt }], context: {} }),
+  });
+  if (!res.ok || !res.body) throw new Error("IA no disponible");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let out = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    out += dec.decode(value);
+  }
+  return out.trim();
+}
 
 // ── CONSTANTES ─────────────────────────────────────────────────────────────────
 const CATEGORIAS: CategoriaComunicado[] = ["Novedad", "Aviso", "Evento", "General"];
@@ -28,6 +50,12 @@ const EMPTY_FORM: ComunicadoInput = {
   destacado:        false,
   fechaPublicacion: null,
   fechaExpiracion:  null,
+  enlaceUrl:        null,
+  enlaceTexto:      null,
+  videoUrl:         null,
+  adjuntoUrl:       null,
+  adjuntoNombre:    null,
+  estado:           "publicado",
 };
 
 function formatDate(iso?: string | null) {
@@ -50,6 +78,18 @@ export default function ComunicadosAdminPage() {
   const [submitting, setSubmitting]       = useState(false);
   const [formError, setFormError]         = useState<string | null>(null);
   const [filtroEstado, setFiltroEstado]   = useState<"todos" | "activos" | "expirados">("activos");
+
+  // Image upload
+  const [imagenModo, setImagenModo]       = useState<"url" | "upload">("url");
+  const [uploadingImg, setUploadingImg]   = useState(false);
+  const fileInputRef                      = useRef<HTMLInputElement>(null);
+
+  // Adjunto PDF
+  const [uploadingAdj, setUploadingAdj]  = useState(false);
+  const adjuntoRef                       = useRef<HTMLInputElement>(null);
+
+  // IA
+  const [aiLoading, setAiLoading]         = useState<"titulo" | "mensaje" | null>(null);
 
   useEffect(() => { cargar(); }, []);
 
@@ -82,10 +122,17 @@ export default function ComunicadosAdminPage() {
       destacado:        c.destacado,
       fechaPublicacion: toInputDate(c.fechaPublicacion),
       fechaExpiracion:  toInputDate(c.fechaExpiracion),
+      enlaceUrl:        c.enlaceUrl ?? null,
+      enlaceTexto:      c.enlaceTexto ?? null,
+      videoUrl:         c.videoUrl ?? null,
+      adjuntoUrl:       c.adjuntoUrl ?? null,
+      adjuntoNombre:    c.adjuntoNombre ?? null,
+      estado:           c.estado ?? "publicado",
     });
     setEditando(c);
     setShowForm(true);
     setFormError(null);
+    setImagenModo("url");
   }
 
   function cerrarForm() {
@@ -93,6 +140,77 @@ export default function ComunicadosAdminPage() {
     setEditando(null);
     setForm(EMPTY_FORM);
     setFormError(null);
+    setImagenModo("url");
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true);
+    try {
+      const url = await subirImagenModulo(file);
+      setForm((f) => ({ ...f, imagenUrl: url }));
+      setImagenModo("url"); // show preview via url tab
+    } catch {
+      setFormError("Error al subir la imagen. Inténtalo de nuevo.");
+    } finally {
+      setUploadingImg(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAdj(true);
+    try {
+      const { url, nombre } = await subirAdjunto(file);
+      setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre }));
+    } catch {
+      setFormError("Error al subir el documento. Inténtalo de nuevo.");
+    } finally {
+      setUploadingAdj(false);
+      if (adjuntoRef.current) adjuntoRef.current.value = "";
+    }
+  }
+
+  function getVideoEmbedUrl(url: string): string | null {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vimeo = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+    return null;
+  }
+
+  async function sugerirConIA(campo: "titulo" | "mensaje") {
+    if (campo === "mensaje" && !form.mensaje.trim() && !form.titulo.trim()) {
+      setFormError("Escribe algo en el título o mensaje antes de usar la IA.");
+      return;
+    }
+    if (campo === "titulo" && !form.mensaje.trim() && !form.titulo.trim()) {
+      setFormError("Escribe el mensaje antes de sugerir un título.");
+      return;
+    }
+    setAiLoading(campo);
+    setFormError(null);
+    try {
+      if (campo === "titulo") {
+        const base = form.mensaje.trim() || form.titulo.trim();
+        const sugerencia = await llamarIA(
+          `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado empresarial con el siguiente contenido. Devuelve SOLO el título, sin comillas, sin puntuación final ni explicaciones.\n\nContenido: ${base}`
+        );
+        setForm((f) => ({ ...f, titulo: sugerencia }));
+      } else {
+        const sugerencia = await llamarIA(
+          `Mejora la redacción de este mensaje de comunicado empresarial. Hazlo más claro, profesional y fácil de leer. Devuelve SOLO el texto mejorado, sin explicaciones ni comentarios adicionales.\n\nTexto original: ${form.mensaje}`
+        );
+        setForm((f) => ({ ...f, mensaje: sugerencia }));
+      }
+    } catch {
+      setFormError("La IA no está disponible en este momento.");
+    } finally {
+      setAiLoading(null);
+    }
   }
 
   async function handleSubmit() {
@@ -156,8 +274,7 @@ export default function ComunicadosAdminPage() {
           <button
             onClick={abrirCrear}
             className="text-sm font-semibold px-4 py-2.5 rounded-lg"
-            style={{ background: "var(--azul-egm)", color: "#fff" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+            style={{ background: GRAD_BTN, color: "#fff" }}
             onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
           >
             + Nuevo comunicado
@@ -172,9 +289,10 @@ export default function ComunicadosAdminPage() {
               onClick={() => setFiltroEstado(f)}
               className="px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-all"
               style={{
-                background: filtroEstado === f ? "var(--azul-egm)" : "var(--gris-superficie)",
-                color:      filtroEstado === f ? "#fff"             : "var(--texto-secundario)",
-                border:     `1.5px solid ${filtroEstado === f ? "var(--azul-egm)" : "var(--gris-borde)"}`,
+                background: filtroEstado === f ? GRAD_BTN : "var(--gris-superficie)",
+                color:      filtroEstado === f ? "#fff"   : "var(--texto-secundario)",
+                border:     `1.5px solid ${filtroEstado === f ? "transparent" : "var(--gris-borde)"}`,
+                boxShadow:  filtroEstado === f ? "0 2px 8px rgba(37,99,235,0.22)" : "none",
               }}
             >
               {f === "activos" ? "Activos" : f === "expirados" ? "Expirados / Inactivos" : "Todos"}
@@ -195,49 +313,158 @@ export default function ComunicadosAdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Título */}
               <div className="md:col-span-2">
-                <FormField label="Título" required>
-                  <input
-                    type="text"
-                    value={form.titulo}
-                    onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                    placeholder="Ej: Apertura del nuevo espacio de coworking"
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                </FormField>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
+                    Título <span style={{ color: "var(--error)" }}>*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => sugerirConIA("titulo")}
+                    disabled={aiLoading === "titulo"}
+                    className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-60"
+                    style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                    onMouseEnter={(e) => !aiLoading && (e.currentTarget.style.background = "#dbeafe")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                  >
+                    {aiLoading === "titulo" ? (
+                      <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                    ) : (
+                      <span>✨</span>
+                    )}
+                    {aiLoading === "titulo" ? "Generando..." : "Sugerir título"}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={form.titulo}
+                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                  placeholder="Ej: Apertura del nuevo espacio de coworking"
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
               </div>
 
               {/* Mensaje */}
               <div className="md:col-span-2">
-                <FormField label="Mensaje" required>
-                  <textarea
-                    value={form.mensaje}
-                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                    placeholder="Escribe el contenido completo del comunicado..."
-                    rows={5}
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                </FormField>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>
+                    Mensaje <span style={{ color: "var(--error)" }}>*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      {form.mensaje.length} caracteres
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => sugerirConIA("mensaje")}
+                      disabled={aiLoading === "mensaje" || !form.mensaje.trim()}
+                      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-50"
+                      style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                      onMouseEnter={(e) => !aiLoading && form.mensaje.trim() && (e.currentTarget.style.background = "#dbeafe")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                    >
+                      {aiLoading === "mensaje" ? (
+                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                      ) : (
+                        <span>✨</span>
+                      )}
+                      {aiLoading === "mensaje" ? "Mejorando..." : "Mejorar con IA"}
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={form.mensaje}
+                  onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                  placeholder="Escribe el contenido completo del comunicado..."
+                  rows={5}
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
               </div>
 
-              {/* URL imagen */}
+              {/* Imagen */}
               <div className="md:col-span-2">
-                <FormField label="Imagen (URL, opcional)">
-                  <input
-                    type="url"
-                    value={form.imagenUrl ?? ""}
-                    onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                    placeholder="https://..."
-                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
-                  />
-                  {form.imagenUrl && (
-                    <img src={form.imagenUrl} alt="preview" className="mt-2 rounded-lg object-cover" style={{ height: "120px", width: "100%", objectFit: "cover" }}
-                      onError={(e) => (e.currentTarget.style.display = "none")}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium" style={{ color: "var(--texto-secundario)" }}>Imagen (opcional)</label>
+                  <div className="flex gap-1 rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                    {(["url", "upload"] as const).map((modo) => (
+                      <button key={modo} type="button" onClick={() => setImagenModo(modo)}
+                        className="text-xs px-3 py-1 font-medium transition-all"
+                        style={{
+                          background: imagenModo === modo ? GRAD_BTN : "transparent",
+                          color: imagenModo === modo ? "#fff" : "var(--texto-secundario)",
+                        }}
+                      >
+                        {modo === "url" ? "URL" : "Subir archivo"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {imagenModo === "url" ? (
+                  <>
+                    <input
+                      type="url"
+                      value={form.imagenUrl ?? ""}
+                      onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
+                      placeholder="https://..."
+                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
                     />
-                  )}
-                </FormField>
+                    {form.imagenUrl && (
+                      <div className="relative mt-2">
+                        <img src={form.imagenUrl} alt="preview" className="rounded-lg object-cover w-full"
+                          style={{ height: "140px", objectFit: "cover" }}
+                          onError={(e) => (e.currentTarget.style.display = "none")}
+                        />
+                        <button
+                          type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}
+                        >×</button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImg}
+                      className="w-full flex flex-col items-center justify-center gap-2 rounded-lg py-6 text-sm transition-colors disabled:opacity-60"
+                      style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+                      onMouseEnter={(e) => !uploadingImg && (e.currentTarget.style.borderColor = "#93c5fd")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                    >
+                      {uploadingImg ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <span>Subiendo imagen...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                          </svg>
+                          <span>Haz clic para seleccionar una imagen</span>
+                          <span className="text-xs">JPG, PNG, WebP — máx. 5 MB</span>
+                        </>
+                      )}
+                    </button>
+                    {form.imagenUrl && (
+                      <div className="relative mt-2">
+                        <img src={form.imagenUrl} alt="preview" className="rounded-lg w-full object-cover"
+                          style={{ height: "140px", objectFit: "cover" }} />
+                        <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full"
+                          style={{ background: "rgba(22,163,74,0.85)", color: "#fff" }}>✓ Subida correctamente</span>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>×</button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Categoría */}
@@ -305,6 +532,93 @@ export default function ComunicadosAdminPage() {
                   Tras esta fecha el comunicado deja de mostrarse automáticamente.
                 </p>
               </FormField>
+
+              {/* Video */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Video (YouTube o Vimeo, opcional)
+                </label>
+                <input type="url" value={form.videoUrl ?? ""}
+                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                  placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+                  className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                />
+                {form.videoUrl && getVideoEmbedUrl(form.videoUrl) && (
+                  <div className="mt-2 rounded-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                    <iframe src={getVideoEmbedUrl(form.videoUrl)!} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Adjunto PDF */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Documento adjunto (PDF, opcional)
+                </label>
+                <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
+                {form.adjuntoUrl ? (
+                  <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg"
+                    style={{ border: "1px solid #86efac", background: "#f0fdf4" }}>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="text-sm flex-1 truncate" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                      className="text-xs px-2 py-0.5 rounded-full" style={{ color: "var(--error)", background: "var(--error-light)" }}>
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+                    className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-60"
+                    style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
+                    onMouseEnter={(e) => !uploadingAdj && (e.currentTarget.style.borderColor = "#93c5fd")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}>
+                    {uploadingAdj
+                      ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                      : <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg><span>Adjuntar documento (PDF, Word...)</span></>}
+                  </button>
+                )}
+              </div>
+
+              {/* Enlace externo / CTA */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--texto-secundario)" }}>
+                  Enlace externo (opcional)
+                </label>
+                <div className="flex flex-col gap-2">
+                  <input type="url" value={form.enlaceUrl ?? ""}
+                    onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                    style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                  />
+                  {form.enlaceUrl && (
+                    <input type="text" value={form.enlaceTexto ?? ""}
+                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                      placeholder='Texto del botón (ej: "Más información", "Inscríbete")'
+                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+                      style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-primario)" }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Estado borrador */}
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input type="checkbox" checked={form.estado === "borrador"}
+                    onChange={(e) => setForm({ ...form, estado: e.target.checked ? "borrador" : "publicado" })}
+                    className="w-4 h-4 rounded" style={{ accentColor: "#2563eb" }} />
+                  <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>
+                    Guardar como borrador (no visible para los usuarios)
+                  </span>
+                </label>
+              </div>
+
             </div>
 
             {formError && (
@@ -319,11 +633,10 @@ export default function ComunicadosAdminPage() {
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="text-sm font-semibold px-5 py-2 rounded-lg disabled:opacity-50"
-                style={{ background: "var(--azul-egm)", color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                style={{ background: GRAD_BTN, color: "#fff" }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
               >
-                {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
+                {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar comunicado"}
               </button>
             </div>
           </div>
@@ -343,8 +656,7 @@ export default function ComunicadosAdminPage() {
             </p>
             {filtroEstado === "activos" && (
               <button onClick={abrirCrear} className="mt-4 text-sm font-semibold px-4 py-2 rounded-lg"
-                style={{ background: "var(--azul-egm)", color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                style={{ background: GRAD_BTN, color: "#fff" }}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
               >
                 Crear primer comunicado
@@ -384,6 +696,11 @@ export default function ComunicadosAdminPage() {
                               {c.categoria}
                             </span>
                           )}
+                          {c.estado === "borrador" && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }}>
+                              Borrador
+                            </span>
+                          )}
                           {(!c.activo || expirado) && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
                               {!c.activo ? "Inactivo" : "Expirado"}
@@ -392,7 +709,7 @@ export default function ComunicadosAdminPage() {
                         </div>
                         <h3 className="text-base font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>{c.titulo}</h3>
                         <p className="text-sm line-clamp-2 leading-relaxed" style={{ color: "var(--texto-muted)" }}>{c.mensaje}</p>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-4 mt-2 flex-wrap">
                           <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
                             Publicado: {formatDate(c.fechaPublicacion)}
                           </span>
@@ -401,26 +718,56 @@ export default function ComunicadosAdminPage() {
                               Expira: {formatDate(c.fechaExpiracion)}
                             </span>
                           )}
+                          {(c.vistas ?? 0) > 0 && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {c.vistas} {c.vistas === 1 ? "vista" : "vistas"}
+                            </span>
+                          )}
+                          {c.adjuntoUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              📎 {c.adjuntoNombre ?? "Adjunto"}
+                            </span>
+                          )}
+                          {c.enlaceUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              🔗 Enlace externo
+                            </span>
+                          )}
+                          {c.videoUrl && (
+                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              🎬 Video
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => abrirEditar(c)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                          style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          className="flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                          style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}
                         >
+                          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-3 1 1-3a4 4 0 01.828-1.414z" />
+                          </svg>
                           Editar
                         </button>
                         {c.activo && !expirado && (
                           <button
                             onClick={() => handleDesactivar(c.comunicadoId)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                            style={{ color: "var(--error)", border: "1px solid var(--error-light)" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--error-light)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            className="flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                            style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}
                           >
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                             Desactivar
                           </button>
                         )}
