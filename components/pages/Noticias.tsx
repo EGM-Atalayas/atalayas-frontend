@@ -746,7 +746,41 @@ export default function ComunicacionPage() {
         function goNext() { const next = navItems[navIdx + 1]; abrirDetalle(next, navIdx + 1); }
         function goPrev() { const prev = navItems[navIdx - 1]; abrirDetalle(prev, navIdx - 1); }
 
+        // Teclado ← →
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useEffect(() => {
+          if (isPreview) return;
+          const handler = (e: KeyboardEvent) => {
+            if (e.key === "ArrowRight" && hasNext) goNext();
+            if (e.key === "ArrowLeft"  && hasPrev) goPrev();
+          };
+          document.addEventListener("keydown", handler);
+          return () => document.removeEventListener("keydown", handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [navIdx, hasPrev, hasNext, isPreview]);
+
         return (
+          <>
+          {/* Flechas fuera del card, flotando en el overlay */}
+          {hasPrev && (
+            <button onClick={(e) => { e.stopPropagation(); goPrev(); }}
+              className="fixed flex items-center justify-center transition-all"
+              style={{ left: "max(12px, calc(50% - 21rem - 60px))", top: "50%", transform: "translateY(-50%)", zIndex: (isPreview ? 120 : 50) + 1, width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)", color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+          )}
+          {hasNext && (
+            <button onClick={(e) => { e.stopPropagation(); goNext(); }}
+              className="fixed flex items-center justify-center transition-all"
+              style={{ right: "max(12px, calc(50% - 21rem - 60px))", top: "50%", transform: "translateY(-50%)", zIndex: (isPreview ? 120 : 50) + 1, width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)", color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          )}
+
           <Modal onClose={onClose} zIndex={isPreview ? 120 : 50} maxWidth="42rem">
             {/* Banner preview */}
             {isPreview && (
@@ -786,25 +820,6 @@ export default function ComunicacionPage() {
                 </div>
               </div>
 
-              {/* Flechas de navegación sobre la imagen */}
-              {hasPrev && (
-                <button onClick={(e) => { e.stopPropagation(); goPrev(); }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
-                  style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.7)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.42)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-              )}
-              {hasNext && (
-                <button onClick={(e) => { e.stopPropagation(); goNext(); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
-                  style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.7)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.42)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              )}
             </div>
 
             {/* ── Contenido scrolleable ── */}
@@ -902,6 +917,7 @@ export default function ComunicacionPage() {
               </div>
             </div>
           </Modal>
+          </>
         );
       })()}
     </div>
