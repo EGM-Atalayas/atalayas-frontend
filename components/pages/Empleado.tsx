@@ -334,98 +334,70 @@ export default function Empleado() {
       {/* ════════════════════════════════════════════
           ONBOARDING BANNER (permanente)
       ════════════════════════════════════════════ */}
-      {(() => {
-        // Primer módulo de onboarding; si no hay, el primero disponible
-        const moduloOnboarding = formDisplay.find((m) => m.tipoModulo === "ONBOARDING") ?? formDisplay[0];
-        const pct = moduloOnboarding?.status === "completado" ? 100
-          : moduloOnboarding?.status === "en progreso" ? totalProgress : 0;
+      <div className="px-10 lg:px-16 pt-8">
+        <div
+          className="relative rounded-2xl overflow-hidden cursor-pointer group"
+          style={{ minHeight: "200px", boxShadow: "0 4px 32px rgba(0,0,0,0.22)" }}
+          onClick={() => router.push("/dashboard/formacion#onboarding")}
+        >
+          {/* Fondo con imagen o gradiente oscuro tech */}
+          <div className="absolute inset-0"
+            style={{ background: "linear-gradient(135deg, #0a1628 0%, #0f2447 50%, #0d1e3d 100%)" }} />
+          {/* Patrón decorativo de puntos */}
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: "radial-gradient(circle, rgba(100,160,255,0.4) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }} />
+          {/* Glow lateral derecho */}
+          <div className="absolute pointer-events-none" style={{ top: "-60px", right: "5%", width: "340px", height: "340px", borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)" }} />
 
-        return (
-          <div className="px-10 lg:px-16 pt-8">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "var(--texto-muted)" }}>
-                Onboarding
-              </p>
-              <button
-                onClick={() => router.push("/dashboard/formacion#onboarding")}
-                className="text-xs font-semibold hover:underline"
-                style={{ color: "var(--azul-egm)" }}>
-                Ver todo →
-              </button>
-            </div>
+          {/* Contenido */}
+          <div className="relative z-10 px-8 py-7 flex flex-col justify-between" style={{ minHeight: "200px" }}>
 
-            <div
-              className="relative rounded-2xl overflow-hidden cursor-pointer group"
-              style={{ minHeight: "160px", boxShadow: "0 4px 24px rgba(0,0,0,0.15)" }}
-              onClick={() => router.push("/dashboard/formacion#onboarding")}
-            >
-              {/* Fondo */}
-              {moduloOnboarding?.imagenPortadaUrl ? (
-                <img src={moduloOnboarding.imagenPortadaUrl} alt="" aria-hidden
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                  style={{ objectPosition: "center 40%" }} />
-              ) : (
-                <div className="absolute inset-0"
-                  style={{ background: "linear-gradient(135deg, #0D1B2E 0%, #1B3F7E 60%, #2A5298 100%)" }} />
-              )}
-              {/* Overlays */}
-              <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.55)" }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,20,40,0.92) 0%, rgba(10,20,40,0.45) 55%, transparent 100%)" }} />
-              {/* Glow decorativo */}
-              <div className="absolute pointer-events-none" style={{ top: "-40px", right: "10%", width: "280px", height: "280px", borderRadius: "50%", background: "radial-gradient(circle, rgba(163,181,53,0.15) 0%, transparent 70%)" }} />
+            {/* Fila superior: icono + badge */}
+            <div className="flex items-start gap-4">
+              {/* Icono cuadrado */}
+              <div className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center overflow-hidden"
+                style={{ background: "linear-gradient(135deg, #e84393 0%, #c0395d 100%)", boxShadow: "0 4px 12px rgba(232,67,147,0.4)" }}>
+                <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </div>
 
-              {/* Contenido */}
-              <div className="relative z-10 px-8 py-7 flex flex-col justify-between" style={{ minHeight: "160px" }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
-                      style={{ background: "rgba(163,181,53,0.18)", color: "#A3B535", border: "1px solid rgba(163,181,53,0.3)" }}>
-                      Curso de incorporación
-                    </span>
-                    <h2 className="text-xl font-bold text-white leading-snug mb-1" style={{ maxWidth: "560px" }}>
-                      {moduloOnboarding?.nombre ?? "Onboarding de bienvenida"}
-                    </h2>
-                    {moduloOnboarding?.descripcion && (
-                      <p className="text-sm line-clamp-1" style={{ color: "rgba(255,255,255,0.55)", maxWidth: "500px" }}>
-                        {moduloOnboarding.descripcion}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Botón */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); router.push("/dashboard/formacion#onboarding"); }}
-                    className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: "var(--verde-oliva)", color: "#fff", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--verde-oliva-hover)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--verde-oliva)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                    {moduloOnboarding?.status === "en progreso" ? "Continuar" : "Empezar"}
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Barra de progreso */}
-                <div className="flex items-center gap-4 mt-5">
-                  {moduloOnboarding?.status && (
-                    <span className="text-xs shrink-0" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      {moduloOnboarding.status === "completado" ? "✓ Completado" : moduloOnboarding.status === "en progreso" ? "En progreso" : "Sin empezar"}
-                    </span>
-                  )}
-                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--verde-oliva), #d4ed5a)" }} />
-                  </div>
-                  <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {pct}%
-                  </span>
-                </div>
+              <div>
+                {/* Badge "Curso" */}
+                <span className="inline-block text-xs font-medium px-3 py-1 rounded-full mb-3"
+                  style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }}>
+                  Curso
+                </span>
+                {/* Título */}
+                <h2 className="text-2xl font-bold text-white leading-snug">
+                  Onboarding
+                </h2>
               </div>
             </div>
+
+            {/* Fila inferior: descripción + barra de progreso */}
+            <div className="flex items-center justify-between gap-6 mt-6">
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  Presentación, objetivos y bienvenida a la plataforma
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0" style={{ minWidth: "200px" }}>
+                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+                  <div className="h-full rounded-full" style={{ width: "0%", background: "rgba(255,255,255,0.6)" }} />
+                </div>
+                <span className="text-xs font-semibold tabular-nums" style={{ color: "rgba(255,255,255,0.45)" }}>0%</span>
+              </div>
+            </div>
+
           </div>
-        );
-      })()}
+        </div>
+      </div>
 
       {/* ════════════════════════════════════════════
           CONTENIDO
