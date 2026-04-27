@@ -1412,12 +1412,17 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
         style={{ maxWidth, maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-3 right-3 z-20 flex items-center justify-center transition-all"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+          className="absolute top-3 right-3 z-20 flex items-center justify-center"
+          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
+          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
           title="Cerrar (Esc)">
-          <IconX size={15} />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
         <div className="flex flex-col rounded-2xl overflow-hidden w-full h-full"
           style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
