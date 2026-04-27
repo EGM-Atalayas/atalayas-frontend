@@ -93,43 +93,48 @@ function MegaphoneIcon({ size = 32 }: { size?: number }) {
   );
 }
 
-function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md" }: {
+function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md", topBar = false }: {
   fuente: "egm" | "empresa";
   nombreEmpresa?: string | null;
   categoria?: string | null;
   destacado?: boolean;
   esNuevoItem?: boolean;
   size?: "sm" | "md";
+  topBar?: boolean;
 }) {
   const sm = size === "sm";
-  const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
+  // topBar: mismo estilo pill que la fecha (0.75rem, py-1, backdrop blur)
+  const cls = topBar
+    ? "font-semibold rounded-full shrink-0 px-2.5 py-1"
+    : `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
+  const topBarBase = topBar ? { backdropFilter: "blur(6px)" } : {};
 
   return (
     <>
       {fuente === "egm" ? (
-        <span className={cls} style={{ background: "rgba(27,63,126,0.42)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }}>
+        <span className={cls} style={{ ...topBarBase, background: "rgba(27,63,126,0.55)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }}>
           EGM Atalayas
         </span>
       ) : (
-        <span className={cls} style={{ background: "rgba(45,90,61,0.55)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }}>
+        <span className={cls} style={{ ...topBarBase, background: "rgba(45,90,61,0.65)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
       {fuente === "egm" && categoria && (() => {
         const col = CATEGORIA_COLORS[categoria] ?? CATEGORIA_COLORS.General;
         return (
-          <span className={cls} style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
+          <span className={cls} style={{ ...topBarBase, background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
             {categoria}
           </span>
         );
       })()}
       {destacado && (
-        <span className={cls} style={{ background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }}>
+        <span className={cls} style={{ ...topBarBase, background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }}>
           ★ Destacado
         </span>
       )}
       {esNuevoItem && (
-        <span className={cls} style={{ background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }}>
+        <span className={cls} style={{ ...topBarBase, background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }}>
           Nuevo
         </span>
       )}
@@ -150,8 +155,9 @@ export default function ComunicacionPage() {
   const [loadingAnuncios, setLoadingAnuncios]       = useState(true);
 
   // UI
-  const [filtroFuente, setFiltroFuente] = useState<FiltroFuente>("todos");
-  const [orden, setOrden]               = useState<Orden>("reciente");
+  const [filtroFuente, setFiltroFuente]       = useState<FiltroFuente>("todos");
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("Todos");
+  const [orden, setOrden]                     = useState<Orden>("reciente");
   const [showOrden, setShowOrden]       = useState(false);
   const [modalItem, setModalItem]       = useState<FeedItem | null>(null);
   const [esMobil, setEsMobil]           = useState(false);
@@ -248,6 +254,9 @@ export default function ComunicacionPage() {
     try { await desactivarNoticia(id); await cargarAnuncios(); } catch {}
   }
 
+  // Reset categoría al cambiar fuente
+  useEffect(() => { setFiltroCategoria("Todos"); setVisibles(6); }, [filtroFuente]);
+
   // ── FEED ───────────────────────────────────────────────────────────────────
   const feedEGM: FeedItem[] = comunicados.map((c) => ({
     id: c.comunicadoId, titulo: c.titulo, descripcion: c.mensaje,
@@ -265,21 +274,26 @@ export default function ComunicacionPage() {
 
   const feedCompleto = ordenarFeed([...feedEGM, ...feedEmpresa], "reciente");
 
-  const topItems = [...feedEGM, ...feedEmpresa]
-    .sort((a, b) => {
-      if (a.destacado && !b.destacado) return -1;
-      if (!a.destacado && b.destacado) return 1;
-      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-    })
-    .slice(0, 4);
+  // "Todos": 1 grande + 2 pequeñas + resto en lista
+  const todosTop  = feedCompleto.slice(0, 3);
+  const todosResto = feedCompleto.slice(3);
 
-  const topIds   = new Set(topItems.map((i) => i.id));
-  const feedResto = feedCompleto.filter((i) => !topIds.has(i.id));
+  // ── EGM: categorías únicas presentes ──────────────────────────────────────
+  const categoriasEGM = ["Todos", ...Array.from(new Set(
+    feedEGM.map((i) => i.categoria).filter(Boolean)
+  )) as string[]];
 
-  const feedFiltrado = ordenarFeed(
-    filtroFuente === "todos" ? feedResto : feedCompleto.filter((i) => i.fuente === filtroFuente),
+  const feedEGMFiltrado = ordenarFeed(
+    filtroCategoria === "Todos"
+      ? feedEGM
+      : feedEGM.filter((i) => i.categoria === filtroCategoria),
     orden
   );
+
+  // ── Empresa: primero fijados, resto ordenado ───────────────────────────────
+  const feedEmpresaOrdenado = ordenarFeed(feedEmpresa, orden);
+  const empresaBanner = feedEmpresaOrdenado[0] ?? null;
+  const empresaResto  = feedEmpresaOrdenado.slice(1);
 
   const cargando = loadingComunicados || loadingAnuncios;
 
@@ -287,8 +301,8 @@ export default function ComunicacionPage() {
   return (
     <div className="w-full">
       <style>{`
-        .featured-card-large { height: 280px; width: 100%; }
-        @media (min-width: 768px) { .featured-card-large { height: 420px; flex: 0 0 55%; width: auto; } }
+        .todos-card-large { height: 210px; width: 100%; }
+        @media (min-width: 768px) { .todos-card-large { height: 380px; flex: 1; width: auto; } }
         .group:hover .card-img { transform: scale(1.04); }
         .card-img { transition: transform 0.4s ease; }
       `}</style>
@@ -460,23 +474,24 @@ export default function ComunicacionPage() {
           />
         ) : filtroFuente === "todos" ? (
           <>
-            {/* Grid 1 grande + pequeñas */}
-            {topItems.length > 0 && (
-              <div className="mb-10">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className={topItems.length === 1 ? "w-full" : "featured-card-large"}>
-                    <FeaturedCard item={topItems[0]} size="large" onOpen={() => setModalItem(topItems[0])} fill
+            {/* 1 grande + 2 pequeñas */}
+            {todosTop.length > 0 && (
+              <div className="mb-8">
+                <div className="flex flex-col md:flex-row gap-4" style={{ height: esMobil ? undefined : "380px" }}>
+                  {/* Tarjeta grande */}
+                  <div className="todos-card-large">
+                    <FeaturedCard item={todosTop[0]} size="large" onOpen={() => setModalItem(todosTop[0])} fill prominent
                       esAdmin={esAdmin}
-                      onEdit={() => abrirEditar(topItems[0]._raw as Noticia)}
-                      onDelete={() => handleDesactivar((topItems[0]._raw as Noticia).anuncioId)}
+                      onEdit={() => abrirEditar(todosTop[0]._raw as Noticia)}
+                      onDelete={() => handleDesactivar((todosTop[0]._raw as Noticia).anuncioId)}
                     />
                   </div>
-                  {topItems.length > 1 && (
-                    <div className="hidden md:flex flex-col gap-3"
-                      style={{ flex: 1, justifyContent: topItems.length < 4 ? "flex-start" : "stretch" }}>
-                      {topItems.slice(1, 4).map((item) => (
-                        <div key={item.id} style={{ flex: topItems.length < 4 ? "0 0 auto" : 1, height: topItems.length < 4 ? "120px" : undefined }}>
-                          <FeaturedCard item={item} size="small" onOpen={() => setModalItem(item)} fill
+                  {/* 2 pequeñas apiladas */}
+                  {todosTop.length > 1 && (
+                    <div className="hidden md:flex flex-col gap-4 flex-1">
+                      {todosTop.slice(1, 3).map((item) => (
+                        <div key={item.id} style={{ flex: 1 }}>
+                          <FeaturedCard item={item} size="large" onOpen={() => setModalItem(item)} fill compact
                             esAdmin={esAdmin}
                             onEdit={() => abrirEditar(item._raw as Noticia)}
                             onDelete={() => handleDesactivar((item._raw as Noticia).anuncioId)}
@@ -489,8 +504,8 @@ export default function ComunicacionPage() {
               </div>
             )}
 
-            {/* Feed — items no mostrados en el grid */}
-            {feedResto.length > 0 && (
+            {/* Lista del resto */}
+            {todosResto.length > 0 && (
               <>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-sm font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
@@ -499,7 +514,7 @@ export default function ComunicacionPage() {
                   <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
                 </div>
                 <FeedList
-                  items={feedResto.slice(0, visibles)}
+                  items={todosResto.slice(0, visibles)}
                   esAdmin={esAdmin}
                   esMobil={esMobil}
                   nombreEmpresa={usuario?.nombreEmpresa}
@@ -507,14 +522,14 @@ export default function ComunicacionPage() {
                   onEdit={(item) => abrirEditar(item._raw as Noticia)}
                   onDelete={(item) => handleDesactivar((item._raw as Noticia).anuncioId)}
                 />
-                {feedResto.length > visibles && (
+                {todosResto.length > visibles && (
                   <div className="flex justify-center mt-4">
                     <button
                       onClick={() => setVisibles((v) => v + 6)}
                       className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                      style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-secundario)", background: "var(--blanco)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--azul-accion)", e.currentTarget.style.color = "var(--azul-accion)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)", e.currentTarget.style.color = "var(--texto-secundario)")}
+                      style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.22)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
                       Ver más publicaciones
                     </button>
@@ -523,22 +538,58 @@ export default function ComunicacionPage() {
               </>
             )}
           </>
-        ) : feedFiltrado.length === 0 ? (
-          <EstadoVacio
-            titulo={`Sin publicaciones de ${filtroFuente === "egm" ? "EGM Atalayas" : (usuario?.nombreEmpresa ?? "tu empresa")}`}
-            descripcion="Prueba con el filtro Todos para ver todas las publicaciones."
-          />
-        ) : (
-          <FeedList
-            items={feedFiltrado}
-            esAdmin={esAdmin}
-            esMobil={esMobil}
-            nombreEmpresa={usuario?.nombreEmpresa}
-            onOpen={setModalItem}
-            onEdit={(item) => abrirEditar(item._raw as Noticia)}
-            onDelete={(item) => handleDesactivar((item._raw as Noticia).anuncioId)}
-          />
-        )}
+        ) : filtroFuente === "egm" ? (
+          /* ── VISTA EGM: 2 tarjetas iguales + lista ── */
+          feedEGM.length === 0 ? (
+            <EstadoVacio titulo="Sin comunicados de EGM Atalayas" descripcion="Cuando EGM publique comunicados aparecerán aquí." />
+          ) : (
+            <SourceView
+              items={feedEGMFiltrado}
+              visibles={visibles}
+              setVisibles={setVisibles}
+              esAdmin={false}
+              esMobil={esMobil}
+              nombreEmpresa={usuario?.nombreEmpresa}
+              gradColor={GRAD_EGM}
+              seccionLabel="Más comunicados"
+              verMasLabel="Ver más comunicados"
+              onOpen={setModalItem}
+              onEdit={() => {}}
+              onDelete={() => {}}
+              abrirEditar={abrirEditar}
+              handleDesactivar={handleDesactivar}
+            />
+          )
+
+        ) : filtroFuente === "empresa" ? (
+          /* ── VISTA EMPRESA: 2 tarjetas iguales + lista ── */
+          feedEmpresaOrdenado.length === 0 ? (
+            <EstadoVacio
+              titulo={`Sin publicaciones de ${usuario?.nombreEmpresa ?? "tu empresa"}`}
+              descripcion="Aún no hay anuncios publicados."
+              accion={esAdmin ? "Crear primer anuncio" : undefined}
+              onAccion={esAdmin ? abrirCrear : undefined}
+            />
+          ) : (
+            <SourceView
+              items={feedEmpresaOrdenado}
+              visibles={visibles}
+              setVisibles={setVisibles}
+              esAdmin={esAdmin}
+              esMobil={esMobil}
+              nombreEmpresa={usuario?.nombreEmpresa}
+              gradColor={GRAD_EMP}
+              seccionLabel="Más anuncios"
+              verMasLabel="Ver más anuncios"
+              onOpen={setModalItem}
+              onEdit={(item) => abrirEditar(item._raw as Noticia)}
+              onDelete={(item) => handleDesactivar((item._raw as Noticia).anuncioId)}
+              abrirEditar={abrirEditar}
+              handleDesactivar={handleDesactivar}
+            />
+          )
+        ) : null}
+
       </div>
 
       {/* ── MODAL ─────────────────────────────────────────────────────────── */}
@@ -563,6 +614,87 @@ export default function ComunicacionPage() {
         </Modal>
       )}
     </div>
+  );
+}
+
+// ── SOURCE VIEW (EGM / Empresa): 2 tarjetas iguales + lista ──────────────────
+function SourceView({ items, visibles, setVisibles, esAdmin, esMobil, nombreEmpresa,
+  gradColor, seccionLabel, verMasLabel, onOpen, onEdit, onDelete, abrirEditar, handleDesactivar }: {
+  items: FeedItem[];
+  visibles: number;
+  setVisibles: React.Dispatch<React.SetStateAction<number>>;
+  esAdmin: boolean;
+  esMobil: boolean;
+  nombreEmpresa?: string | null;
+  gradColor: string;
+  seccionLabel: string;
+  verMasLabel: string;
+  onOpen: (item: FeedItem) => void;
+  onEdit: (item: FeedItem) => void;
+  onDelete: (item: FeedItem) => void;
+  abrirEditar: (n: Noticia) => void;
+  handleDesactivar: (id: string) => void;
+}) {
+  const top  = items.slice(0, 2);
+  const rest = items.slice(2);
+
+  return (
+    <>
+      {/* Grid: 2 tarjetas iguales */}
+      {top.length > 0 && (
+        <div className="mb-8">
+          <div className={`grid gap-4 ${top.length === 1 ? "" : "md:grid-cols-2"}`} style={{ height: esMobil ? "210px" : "380px" }}>
+            {top.map((item, idx) => (
+              <div key={item.id} className={idx === 1 ? "hidden md:block" : ""} style={{ height: "100%" }}>
+                <FeaturedCard
+                  item={item}
+                  size="large"
+                  onOpen={() => onOpen(item)}
+                  fill
+                  esAdmin={esAdmin}
+                  onEdit={() => abrirEditar(item._raw as Noticia)}
+                  onDelete={() => handleDesactivar((item._raw as Noticia).anuncioId)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Lista del resto */}
+      {rest.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-sm font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
+              {seccionLabel}
+            </span>
+            <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
+          </div>
+          <FeedList
+            items={rest.slice(0, visibles)}
+            esAdmin={esAdmin}
+            esMobil={esMobil}
+            nombreEmpresa={nombreEmpresa}
+            onOpen={onOpen}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+          {rest.length > visibles && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setVisibles((v) => v + 6)}
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: gradColor, color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.18)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                {verMasLabel}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </>
   );
 }
 
@@ -596,9 +728,9 @@ function FeedList({ items, esAdmin, esMobil, nombreEmpresa, onOpen, onEdit, onDe
 }
 
 // ── FEATURED CARD ─────────────────────────────────────────────────────────────
-function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDelete }: {
+function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDelete, prominent = false, compact = false }: {
   item: FeedItem; size: "large" | "small"; onOpen: () => void; fill?: boolean;
-  esAdmin?: boolean; onEdit?: () => void; onDelete?: () => void;
+  esAdmin?: boolean; onEdit?: () => void; onDelete?: () => void; prominent?: boolean; compact?: boolean;
 }) {
   const isLarge   = size === "large";
   const bgGradient = item.fuente === "egm" ? GRAD_EGM : GRAD_EMP;
@@ -629,18 +761,16 @@ function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDel
       {item.imagenUrl ? (
         <img src={item.imagenUrl} alt={item.titulo} className="card-img absolute inset-0 w-full h-full object-cover" />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ background: bgGradient }}>
-          <MegaphoneIcon size={isLarge ? 72 : 36} />
+        <div className="absolute inset-0 flex items-center justify-center" style={{ background: bgGradient, paddingBottom: isLarge ? "80px" : "40px" }}>
+          <MegaphoneIcon size={isLarge ? 64 : 32} />
         </div>
       )}
 
       {/* Overlays */}
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.38) 100%)" }} />
-      <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0" style={{ background: "rgba(0,0,0,0.15)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(3,10,25,0.52) 0%, transparent 32%)" }} />
-      <div className="absolute inset-0" style={{ background: isLarge
-        ? "linear-gradient(to top, rgba(3,10,25,0.97) 30%, rgba(3,10,25,0.18) 62%, transparent 100%)"
-        : "linear-gradient(to top, rgba(3,10,25,0.97) 42%, rgba(3,10,25,0.12) 72%, transparent 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.28) 100%)" }} />
+      <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0" style={{ background: "rgba(0,0,0,0.08)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(3,10,25,0.38) 0%, transparent 28%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,25,0.96) 0%, rgba(3,10,25,0.78) 35%, rgba(3,10,25,0.08) 62%, transparent 100%)" }} />
 
       {/* ── Botones admin (empresa) ────────────────────────────────────── */}
       {esAdmin && item.fuente === "empresa" && (
@@ -666,26 +796,52 @@ function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDel
       {/* ── Grande ─────────────────────────────────────────────────────── */}
       {isLarge && (
         <>
-          <div className="absolute top-5 right-6">
-            <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)", textShadow: SHADOW_TXT }}>
+          {/* Fila superior: badges izquierda + fecha derecha */}
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-nowrap min-w-0 overflow-hidden"
+              style={{ fontSize: compact ? "0.68rem" : prominent ? "0.82rem" : "0.75rem" }}>
+              <Badge fuente={item.fuente} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} topBar />
+            </div>
+            <span className="shrink-0 font-semibold px-2.5 py-1 rounded-full"
+              style={{ fontSize: compact ? "0.68rem" : prominent ? "0.82rem" : "0.75rem", background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.13)" }}>
               {formatDate(item.fecha)}
             </span>
           </div>
-          <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-10">
-            <div className="flex items-center gap-2 mb-2 md:mb-3 flex-wrap">
-              <Badge fuente={item.fuente} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} />
-            </div>
-            <h2 className="text-white leading-tight mb-2 md:mb-3 max-w-xl"
-              style={{ fontWeight: 800, fontSize: "clamp(1.1rem, 4vw, 2.1rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
+
+          {/* Contenido — anclado al fondo */}
+          <div className="absolute inset-0 flex flex-col justify-end px-5 pb-5 md:px-6 md:pb-6">
+
+            {/* Título */}
+            <h2 className="text-white leading-tight line-clamp-2 overflow-hidden"
+              style={{
+                fontWeight: 800,
+                fontSize: compact ? "clamp(1.05rem, 1.6vw, 1.3rem)" : prominent ? "clamp(1.5rem, 2.6vw, 2.1rem)" : "clamp(1.2rem, 2vw, 1.65rem)",
+                letterSpacing: "-0.025em",
+                textShadow: SHADOW_TXT,
+                marginBottom: compact ? "10px" : "10px",
+              }}>
               {item.titulo}
             </h2>
-            <p className="text-sm md:text-base leading-relaxed line-clamp-2 max-w-lg"
-              style={{ color: "rgba(255,255,255,0.7)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-              {item.descripcion}
-            </p>
-            <div className="mt-3 md:mt-6 flex items-center gap-2 transition-opacity opacity-55 group-hover:opacity-100">
-              <span className="text-sm font-semibold text-white" style={{ textShadow: SHADOW_TXT }}>Leer más</span>
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+
+            {/* Descripción — oculta en tarjetas compactas (poco alto) */}
+            {!compact && (
+              <p className="leading-relaxed line-clamp-2 mb-5"
+                style={{
+                  fontSize: prominent ? "1rem" : "0.875rem",
+                  color: "rgba(255,255,255,0.75)",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                }}>
+                {item.descripcion}
+              </p>
+            )}
+
+            {/* Leer más */}
+            <div className="flex items-center gap-1.5 transition-opacity opacity-55 group-hover:opacity-100">
+              <span className="font-semibold text-white tracking-wide"
+                style={{ fontSize: compact ? "0.75rem" : prominent ? "0.9rem" : "0.8rem", textShadow: SHADOW_TXT }}>
+                Leer más
+              </span>
+              <svg width={compact ? 11 : prominent ? 14 : 12} height={compact ? 11 : prominent ? 14 : 12} fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
               </svg>
             </div>
@@ -695,22 +851,22 @@ function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDel
 
       {/* ── Pequeña ─────────────────────────────────────────────────────── */}
       {!isLarge && (
-        <div className="absolute inset-0 flex flex-col justify-end p-4 gap-1.5" style={{ paddingBottom: "14px" }}>
-          <span className="absolute top-3.5 right-4 text-xs font-semibold"
-            style={{ color: "rgba(255,255,255,0.82)", textShadow: SHADOW_TXT }}>
+        <div className="absolute inset-0 flex flex-col justify-end px-4 pb-4 pt-4 gap-1.5">
+          <span className="absolute top-3 right-3.5 text-[11px] font-semibold"
+            style={{ color: "rgba(255,255,255,0.72)", textShadow: SHADOW_TXT }}>
             {formatDate(item.fecha)}
           </span>
           <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
             <Badge fuente={item.fuente} categoria={item.categoria} esNuevoItem={item.esNuevoItem} size="sm" />
           </div>
           <div className="flex items-end justify-between gap-2">
-            <h2 className="text-white leading-tight line-clamp-2 flex-1 min-w-0"
-              style={{ fontWeight: 800, fontSize: "clamp(0.88rem, 1.2vw, 1.05rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
+            <h2 className="text-white leading-snug line-clamp-2 flex-1 min-w-0"
+              style={{ fontWeight: 700, fontSize: "clamp(0.85rem, 1.8vw, 0.97rem)", letterSpacing: "-0.01em", textShadow: SHADOW_TXT }}>
               {item.titulo}
             </h2>
-            <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-70 group-hover:opacity-100 group-hover:scale-110"
-              style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.32)" }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+            <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all opacity-60 group-hover:opacity-100 group-hover:scale-110"
+              style={{ background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.28)" }}>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
               </svg>
             </div>
