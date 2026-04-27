@@ -943,21 +943,19 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
               </div>
               {/* Acciones admin — estilo chatbot */}
               {puedeEditar && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button onClick={() => { onClose(); onEditar(item._raw as Noticia); }}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{ color: "#2563eb", background: "#eff6ff" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+                    className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
                     Editar
                   </button>
                   <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{ color: "var(--error)", background: "var(--error-light)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fad4cc"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--error-light)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
                     Eliminar
                   </button>
                 </div>
