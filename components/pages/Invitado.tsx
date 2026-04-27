@@ -15,6 +15,7 @@ import {
   Microchip, Cpu, Factory,
   ChevronDown
 } from "lucide-react";
+import Colaboradores from "../ui/Colaboradores";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
@@ -94,125 +95,11 @@ const comunidadItems = [
   },
 ];
 
-const colaboradoresData = [
-  {
-    categoria: "Universidades y Centros de Investigación",
-    icono: GraduationCap,
-    imagen: "/bg-universidad.avif",
-    entidades: [
-      {
-        nombre: "Universidad de Alicante",
-        icon: "/ua-icono.png",
-        color: "#003DA5",
-        descripcion: "Universidad pública con una fuerte vocación de I+D+i, conexión con empresas y proyectos de transferencia tecnológica.",
-        web: "https://www.ua.es",
-      },
-      {
-        nombre: "Universidad Miguel Hernández de Elche",
-        icon: "/umh-icono.jpg",
-        color: "#8B1A1A",
-        descripcion: "Universidad pública con múltiples programas de innovación, transferencia y colaboración con empresas e instituciones.",
-        web: "https://www.umh.es",
-      },
-      {
-        nombre: "Universidad de Alicante — CENID",
-        icon: "/cenid-icono.jpg",
-        color: "#0077B6",
-        descripcion: "Centro de investigación multidisciplinar enfocado en el desarrollo e innovación digital para el tejido empresarial.",
-        web: "https://cenid.es",
-      },
-    ],
-  },
-  {
-    categoria: "Parques Científicos y Tecnológicos",
-    icono: FlaskConical,
-    imagen: "/bg-parque.avif",
-
-    entidades: [
-      {
-        nombre: "Parque Científico de Alicante",
-        icon: "/pca-icono.png",
-        color: "#2E7D32",
-        descripcion: "Espacio de innovación que conecta la investigación universitaria con el mundo empresarial, ofreciendo infraestructuras y servicios de apoyo.",
-        web: "https://pca.ua.es",
-      },
-      {
-        nombre: "Parque Científico UMH",
-        icon: "/pcumh-icono.png",
-        color: "#C62828",
-        descripcion: "Entorno tecnológico que facilita la transferencia de conocimiento y la creación de empresas de base tecnológica.",
-        web: "https://parquecientificoumh.es",
-      },
-    ],
-  },
-  {
-    categoria: "Hubs de Innovación y Aceleración",
-    icono: Rocket,
-    imagen: "/bg-innova.jpg",
-
-    entidades: [
-      {
-        nombre: "Alicante Futura",
-        icon: "/af-icono.png",
-        color: "#6A1B9A",
-        descripcion: "Hub urbano de innovación del Ayuntamiento de Alicante, orientado a impulsar el ecosistema tecnológico y la cultura emprendedora de la ciudad.",
-        web: "https://alicantefutura.org",
-      },
-      {
-        nombre: "CEEI Alcoy — Valencia",
-        icon: "/ceei-icono.png",
-        color: "#E65100",
-        descripcion: "Centro Europeo de Empresas e Innovación que apoya la creación y consolidación de empresas innovadoras mediante asesoramiento y recursos.",
-        web: "https://ceeialcoi.emprenemjunts.es",
-      },
-      {
-        nombre: "Distrito Digital",
-        icon: "/ddcv-icono.png",
-        color: "#0097A7",
-        descripcion: "Ecosistema de innovación de la Generalitat Valenciana que concentra talento, tecnología y empresas digitales en la provincia de Alicante.",
-        web: "https://distritodigitalcv.es",
-      },
-    ],
-  },
-  {
-    categoria: "Institutos Tecnológicos",
-    icono: Microchip,
-    imagen: "/bg-instituto.jpg",
-
-    entidades: [
-      {
-        nombre: "Instituto Tecnológico de Informática (ITI)",
-        icon: "/iti-icono.jpg",
-        color: "#1565C0",
-        descripcion: "Centro de investigación aplicada en tecnologías de la información, inteligencia artificial y transformación digital.",
-        web: "https://www.iti.es",
-      },
-      {
-        nombre: "AITEX — Instituto Tecnológico Textil",
-        icon: "/aitex-icono.jpg",
-        color: "#AD1457",
-        descripcion: "Instituto tecnológico referente en innovación textil, materiales avanzados y sostenibilidad industrial.",
-        web: "https://www.aitex.es",
-      },
-    ],
-  },
-];
 
 export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const [categoriasAbiertas, setCategoriasAbiertas] = useState<Record<string, boolean>>({
-    "Universidades y Centros de Investigación": false,
-    "Parques Científicos y Tecnológicos": false,
-    "Hubs de Innovación y Aceleración": false,
-    "Institutos Tecnológicos": false,
-  });
-  const closeTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-
-  const toggleCategoria = (cat: string) => {
-    setCategoriasAbiertas(prev => ({ ...prev, [cat]: !prev[cat] }));
-  };
 
   useEffect(() => {
     fetch(`${API_URL}/comunicados`)
@@ -431,9 +318,9 @@ export default function Invitado() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {comunidadItems.map((item) => (
               <div
-              key={item.label}
-              onClick={() => item.url && window.open(item.url, "_blank")}
-              className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
+                key={item.label}
+                onClick={() => item.url && window.open(item.url, "_blank")}
+                className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
                 style={{
                   background: 'bg' in item && item.bg ? item.bg as string : "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.14)",
@@ -481,185 +368,7 @@ export default function Invitado() {
       {/* ══════════════════════════════════════════════════════════════════════
           COLABORADORES — Ecosistema de Proximidad
       ══════════════════════════════════════════════════════════════════════ */}
-      <section
-        id="colaboradores"
-        className="relative w-full"
-        style={{ background: "#0a0a0f" }}
-      >
-        {/* Subtle gradient background */}
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(99,102,241,0.06) 0%, transparent 50%)" }} />
-        {/* Top fade from previous dark section */}
-        <div className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #000000, transparent)" }} />
-
-        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-28 sm:py-40">
-          {/* Section header */}
-          <div className="text-center mb-20">
-            <p className="text-2xl font-semibold uppercase tracking-[0.2em] mb-5" style={{ color: "rgba(147,197,253,0.7)" }}>
-              Colaboradores
-            </p>
-            <h2
-              className="text-5xl sm:text-8xl font-bold leading-[0.95] mb-8"
-              style={{ fontFamily: "'Instrument Serif', serif", color: "#ffffff", letterSpacing: "-1px" }}
-            >
-              Ecosistema de Proximidad
-            </h2>
-            <p className="text-base sm:text-lg leading-relaxed max-w-3xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
-              Universidades, parques científicos, institutos tecnológicos y hubs de innovación. Conectamos necesidades reales con capacidades estratégicas del territorio.
-            </p>
-          </div>
-
-          {/* Category pills */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-16">
-            {colaboradoresData.map((grupo) => {
-              const Icon = grupo.icono;
-              const isOpen = categoriasAbiertas[grupo.categoria];
-              return (
-                <button
-                  key={grupo.categoria}
-                  onMouseEnter={() => {
-                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
-                      setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
-                    }, 300); // espera 300ms antes de abrir
-                  }}
-                  onMouseLeave={() => {
-                    clearTimeout(closeTimeoutRef.current[grupo.categoria]);
-                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
-                  }}
-                  className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 flex items-center gap-2 ${isOpen
-                    ? "bg-white/10 text-white border-white/20"
-                    : "bg-white/5 text-white/50 border-white/10 hover:text-white/80"
-                    }`}
-                  style={{
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  <Icon className="w-4 h-4" />
-                  {grupo.categoria}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Category groups */}
-          <div className="flex flex-col gap-10 max-w-[1600px] w-[95%] lg:w-full mx-auto pb-10">
-            {colaboradoresData.map((grupo) => {
-              const isOpen = categoriasAbiertas[grupo.categoria];
-              const SectionIcon = grupo.icono;
-
-              return (
-                <div
-                  key={grupo.categoria}
-                  id={`cat-${grupo.categoria.replace(/\s+/g, "-").toLowerCase()}`}
-                  onMouseEnter={() => {
-                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
-                      setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
-                    }, 300); // espera 300ms antes de abrir
-                  }}
-                  onMouseLeave={() => {
-                    clearTimeout(closeTimeoutRef.current[grupo.categoria]);
-                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
-                  }}
-                  className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative"
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    backgroundImage: `url(${grupo.imagen})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundAttachment: "local",
-                  }}
-                >
-                  {/* UN SOLO overlay para todo el grupo */}
-                  <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.75)" }} />
-
-                  {/* Cabecera */}
-                  <button
-                    className="w-full flex items-center justify-between p-8 sm:p-12 cursor-pointer transition-colors relative z-10"
-                    style={{ minHeight: "140px" }}
-                  >
-                    <div className="flex items-center gap-6">
-                      <h3 className="text-2xl sm:text-4xl font-bold tracking-wide text-white text-left">
-                        {grupo.categoria}
-                      </h3>
-                    </div>
-                    <div className="shrink-0 ml-4 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-colors">
-                      <ChevronDown className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-                    </div>
-                  </button>
-                  {/* Grid de cards original */}
-                  <div
-                    className={`relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-8 sm:px-12 transition-all duration-500 ease-in-out overflow-hidden ${isOpen ? 'pb-12 opacity-100 max-h-[3000px]' : 'max-h-0 opacity-0 pb-0'}`}
-                  >
-                    {grupo.entidades.map((entidad) => {
-                      const EntidadIcon = entidad.icon;
-                      return (
-                        <a
-                          key={entidad.nombre}
-                          href={entidad.web}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative flex flex-col p-8 sm:p-10 rounded-3xl transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-4px] cursor-pointer overflow-hidden"
-                          style={{
-                            background: "rgba(255,255,255,0.04)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            backdropFilter: "blur(12px)",
-                          }}
-                        >
-                          {/* Hover glow */}
-                          <div
-                            className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                            style={{ background: `radial-gradient(ellipse at 50% 0%, ${entidad.color}15, transparent 70%)` }}
-                          />
-
-                          {/* Icon badge */}
-                          <div className="flex items-start justify-between mb-8 relative z-10">
-                            <div
-                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center bg-white transition-transform duration-300 group-hover:scale-110 overflow-hidden relative p-2"
-                              style={{
-                                boxShadow: `0 8px 24px ${entidad.color}44`,
-                              }}
-                            >
-                              <img src={entidad.icon as string} alt={entidad.nombre} className="w-full h-full object-contain" />
-                            </div>
-                            <div
-                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white/30 group-hover:text-white/80 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
-                              style={{ background: "rgba(255,255,255,0.06)" }}
-                            >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M7 17L17 7" />
-                                <path d="M7 7h10v10" />
-                              </svg>
-                            </div>
-                          </div>
-
-                          {/* Name & description */}
-                          <div className="flex-1 relative z-10">
-                            <h4 className="text-xl sm:text-2xl font-bold leading-snug mb-4 group-hover:text-white transition-colors duration-300" style={{ color: "rgba(255,255,255,0.9)" }}>
-                              {entidad.nombre}
-                            </h4>
-                            <p className="text-base sm:text-lg leading-relaxed line-clamp-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-                              {entidad.descripcion}
-                            </p>
-                          </div>
-
-                          {/* Bottom label */}
-                          <div className="mt-8 pt-5 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                            <span className="text-sm font-medium uppercase tracking-widest group-hover:text-blue-400 transition-colors duration-300" style={{ color: "rgba(255,255,255,0.3)" }}>
-                              Visitar web →
-                            </span>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              );
-            })}
-          </div>
-        </div>
-      </section >
+      < Colaboradores />
 
       {/* FOOTER */}
       < FooterCTA />
