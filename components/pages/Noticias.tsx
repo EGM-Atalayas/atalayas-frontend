@@ -811,13 +811,19 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
   onEditar: (n: Noticia) => void;
   onEliminar: (id: string) => void;
 }) {
-  const embedUrl = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
-  const hasPrev  = !isPreview && navIndex > 0;
-  const hasNext  = !isPreview && navIndex < navItems.length - 1;
-  const zIdx     = isPreview ? 120 : 50;
+  const embedUrl  = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
+  const hasPrev   = !isPreview && navIndex > 0;
+  const hasNext   = !isPreview && navIndex < navItems.length - 1;
+  const zIdx      = isPreview ? 120 : 50;
+  const modalRef  = useRef<HTMLDivElement>(null);
+  const [fading, setFading] = useState(false);
 
-  function goNext() { onNavigate(navItems[navIndex + 1], navIndex + 1); }
-  function goPrev() { onNavigate(navItems[navIndex - 1], navIndex - 1); }
+  function navigate(nextItem: FeedItem, nextIdx: number) {
+    setFading(true);
+    setTimeout(() => { onNavigate(nextItem, nextIdx); setFading(false); }, 160);
+  }
+  function goNext() { navigate(navItems[navIndex + 1], navIndex + 1); }
+  function goPrev() { navigate(navItems[navIndex - 1], navIndex - 1); }
 
   // Teclado ← →
   useEffect(() => {
@@ -830,6 +836,25 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
     return () => document.removeEventListener("keydown", handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navIndex, hasPrev, hasNext, isPreview]);
+
+  // Focus trap
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    const focusable = el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    function trap(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last?.focus(); } }
+      else            { if (document.activeElement === last)  { e.preventDefault(); first?.focus(); } }
+    }
+    document.addEventListener("keydown", trap);
+    first?.focus();
+    return () => document.removeEventListener("keydown", trap);
+  }, []);
 
   const BtnFlecha = ({ dir }: { dir: "prev" | "next" }) => (
     <button onClick={(e) => { e.stopPropagation(); dir === "prev" ? goPrev() : goNext(); }}
@@ -854,7 +879,7 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
       {hasPrev && <BtnFlecha dir="prev" />}
       {hasNext  && <BtnFlecha dir="next" />}
 
-      <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem">
+      <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem" modalRef={modalRef}>
         {isPreview && (
           <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
             style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
@@ -893,7 +918,8 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
         </div>
 
         {/* Contenido scrolleable */}
-        <div className="overflow-y-auto flex-1 flex flex-col" style={{ background: "var(--blanco)" }}>
+        <div className="modal-scroll overflow-y-auto flex-1 flex flex-col"
+          style={{ background: "var(--blanco)", opacity: fading ? 0 : 1, transition: "opacity 0.16s ease" }}>
           <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-3">
             <h2 className="leading-tight"
               style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
@@ -1396,7 +1422,7 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
 });
 
 // ── SUBCOMPONENTES ─────────────────────────────────────────────────────────────
-function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { children: React.ReactNode; onClose: () => void; zIndex?: number; maxWidth?: string }) {
+function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }: { children: React.ReactNode; onClose: () => void; zIndex?: number; maxWidth?: string; modalRef?: React.RefObject<HTMLDivElement | null> }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
@@ -1413,7 +1439,7 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
     <div className="fixed inset-0 flex items-center justify-center p-4"
       style={{ zIndex, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", animation: "modalBgIn 0.2s ease" }}
       onClick={onClose}>
-      <div className="relative w-full flex flex-col"
+      <div ref={modalRef} className="relative w-full flex flex-col"
         style={{ maxWidth, maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
@@ -1437,6 +1463,10 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
       <style>{`
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-scroll::-webkit-scrollbar { width: 4px; }
+        .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.25); border-radius: 4px; }
+        .modal-scroll::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.5); }
       `}</style>
     </div>
   );
