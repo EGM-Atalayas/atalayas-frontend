@@ -22,5 +22,5 @@ export const NAV_ITEMS_BY_ROLE: Record<string, string[]> = {
   // El empleado ve Formación y Comunicación — sin Administración
   ROLE_EMPLEADO: ["Inicio", "Formación", "Comunicación", "Colaboradores"],
   // El admin ve todo, Formación incluye gestión de módulos
-  ROLE_ADMIN_EMPRESA: ["Inicio", "Formación", "Comunicación", "Administración"],
+  ROLE_ADMIN_EMPRESA: ["Inicio", "Formación", "Comunicación", "Colaboradores", "Administración"],
 };
