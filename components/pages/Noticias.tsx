@@ -892,67 +892,65 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
         </div>
 
         {/* Contenido scrolleable */}
-        <div className="overflow-y-auto flex-1 px-6 pt-5 pb-6 md:px-8 md:pb-7 flex flex-col gap-4" style={{ background: "var(--blanco)" }}>
-          <h2 className="leading-tight"
-            style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.5rem, 3.5vw, 2rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
-            {item.titulo}
-          </h2>
-          <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8 }}>
-            {renderMarkdown(item.descripcion)}
-          </div>
-          {embedUrl && (
-            <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-              <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+        <div className="overflow-y-auto flex-1 flex flex-col" style={{ background: "var(--blanco)" }}>
+          <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-3">
+            <h2 className="leading-tight"
+              style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
+              {item.titulo}
+            </h2>
+            <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8 }}>
+              {renderMarkdown(item.descripcion)}
             </div>
-          )}
-          {item.adjuntoUrl && (
-            <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors"
-              style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            {embedUrl && (
+              <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
               </div>
-              <span className="text-sm font-semibold flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            </a>
-          )}
-          {item.enlaceUrl && (
-            <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity"
-              style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-              {item.enlaceTexto ?? "Más información"}
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-            </a>
-          )}
+            )}
+            {item.adjuntoUrl && (
+              <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              </a>
+            )}
+            {item.enlaceUrl && (
+              <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity"
+                style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                {item.enlaceTexto ?? "Más información"}
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+              </a>
+            )}
+          </div>
 
           {/* Footer */}
           {(!isPreview || puedeEditar || (item.vistas !== undefined && item.vistas > 0)) && (
-            <div className="flex items-center justify-between gap-3 pt-3 mt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-              {/* Vistas */}
-              <div>
-                {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
-                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
-                  </span>
-                )}
-              </div>
-              {/* Acciones admin — estilo chatbot */}
+            <div className="flex items-center gap-3 px-6 py-3 md:px-8" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+              {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
+                </span>
+              )}
               {puedeEditar && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 ml-auto">
                   <button onClick={() => { onClose(); onEditar(item._raw as Noticia); }}
-                    className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
                     style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
                     Editar
                   </button>
                   <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
-                    className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
                     style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
