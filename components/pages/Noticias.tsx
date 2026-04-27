@@ -731,196 +731,196 @@ export default function ComunicacionPage() {
       )}
 
       {/* ── MODAL (contenido real o preview) ─────────────────────────────── */}
-      {(modalItem || previewItem) && (() => {
-        const item      = previewItem ?? modalItem!;
-        const isPreview = !!previewItem;
-        const onClose   = isPreview ? () => setPreviewItem(null) : () => { setModalItem(null); setModalIndex(null); };
-        const embedUrl  = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
-        const puedeEditarItem = !isPreview && ((item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral));
-
-        // Navegación entre noticias
-        const navItems = feedCompleto;
-        const navIdx   = modalIndex ?? navItems.findIndex((i) => i.id === item.id);
-        const hasPrev  = !isPreview && navIdx > 0;
-        const hasNext  = !isPreview && navIdx < navItems.length - 1;
-        function goNext() { const next = navItems[navIdx + 1]; abrirDetalle(next, navIdx + 1); }
-        function goPrev() { const prev = navItems[navIdx - 1]; abrirDetalle(prev, navIdx - 1); }
-
-        // Teclado ← →
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        useEffect(() => {
-          if (isPreview) return;
-          const handler = (e: KeyboardEvent) => {
-            if (e.key === "ArrowRight" && hasNext) goNext();
-            if (e.key === "ArrowLeft"  && hasPrev) goPrev();
-          };
-          document.addEventListener("keydown", handler);
-          return () => document.removeEventListener("keydown", handler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [navIdx, hasPrev, hasNext, isPreview]);
-
-        return (
-          <>
-          {/* Flechas fuera del card, flotando en el overlay */}
-          {hasPrev && (
-            <button onClick={(e) => { e.stopPropagation(); goPrev(); }}
-              className="fixed flex items-center justify-center transition-all"
-              style={{ left: "max(12px, calc(50% - 21rem - 60px))", top: "50%", transform: "translateY(-50%)", zIndex: (isPreview ? 120 : 50) + 1, width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)", color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-          )}
-          {hasNext && (
-            <button onClick={(e) => { e.stopPropagation(); goNext(); }}
-              className="fixed flex items-center justify-center transition-all"
-              style={{ right: "max(12px, calc(50% - 21rem - 60px))", top: "50%", transform: "translateY(-50%)", zIndex: (isPreview ? 120 : 50) + 1, width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)", color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          )}
-
-          <Modal onClose={onClose} zIndex={isPreview ? 120 : 50} maxWidth="42rem">
-            {/* Banner preview */}
-            {isPreview && (
-              <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
-                style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
-                <span>👁</span> Vista previa — así verán los usuarios este anuncio
-              </div>
-            )}
-
-            {/* ── Imagen cabecera — no scrollea ── */}
-            <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
-              {item.imagenUrl ? (
-                <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center"
-                  style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
-                  <MegaphoneIcon size={72} />
-                </div>
-              )}
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
-
-              {/* Badges + fecha abajo */}
-              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <Badge fuente={item.fuente} nombreEmpresa={usuario?.nombreEmpresa} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} topBar />
-                  {item.fijado && (
-                    <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(37,99,235,0.5)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)", backdropFilter: "blur(6px)" }}>
-                      <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                      Fijado
-                    </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.9)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
-                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)", textShadow: SHADOW_TXT }}>{formatDate(item.fecha)}</p>
-                </div>
-              </div>
-
-            </div>
-
-            {/* ── Contenido scrolleable ── */}
-            <div className="overflow-y-auto flex-1 px-6 py-6 md:px-8 md:py-7 flex flex-col gap-4">
-
-              {/* Título */}
-              <h2 className="font-bold leading-tight"
-                style={{ fontSize: "clamp(1.25rem, 3vw, 1.65rem)", color: "var(--texto-primario)", letterSpacing: "-0.025em", fontFamily: "var(--font-raleway), sans-serif" }}>
-                {item.titulo}
-              </h2>
-
-              {/* Texto con Markdown */}
-              <div style={{ fontSize: "0.95rem", color: "var(--texto-secundario)", lineHeight: 1.75 }}>
-                {renderMarkdown(item.descripcion)}
-              </div>
-
-              {/* Video embed */}
-              {embedUrl && (
-                <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                  <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
-                </div>
-              )}
-
-              {/* Adjunto */}
-              {item.adjuntoUrl && (
-                <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors"
-                  style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  </div>
-                  <span className="text-sm font-semibold flex-1 truncate" style={{ color: "#2563eb" }}>
-                    {item.adjuntoNombre ?? "Ver documento adjunto"}
-                  </span>
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                </a>
-              )}
-
-              {/* CTA externo */}
-              {item.enlaceUrl && (
-                <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity"
-                  style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                  {item.enlaceTexto ?? "Más información"}
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                </a>
-              )}
-
-              {/* Footer: vistas + acciones admin + cerrar */}
-              <div className="flex items-center justify-between gap-3 pt-4 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                <div className="flex items-center gap-1.5">
-                  {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
-                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
-                      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                      {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
-                    </span>
-                  )}
-                  {!isPreview && navItems.length > 1 && (
-                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                      {navIdx + 1} / {navItems.length}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {puedeEditarItem && (
-                    <>
-                      <button onClick={() => { onClose(); abrirEditar(item._raw as Noticia); }}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                        style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
-                        Editar
-                      </button>
-                      <button onClick={() => { onClose(); setConfirmDeleteId((item._raw as Noticia).anuncioId); }}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                        style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
-                        Eliminar
-                      </button>
-                    </>
-                  )}
-                  <button onClick={onClose}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                    style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    {isPreview ? "Cerrar vista previa" : "Cerrar"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
-          </>
-        );
-      })()}
+      {(modalItem || previewItem) && (
+        <DetalleModal
+          item={previewItem ?? modalItem!}
+          isPreview={!!previewItem}
+          navItems={feedCompleto}
+          navIndex={modalIndex ?? feedCompleto.findIndex((i) => i.id === (previewItem ?? modalItem!).id)}
+          nombreEmpresa={usuario?.nombreEmpresa}
+          puedeEditar={!previewItem && ((( previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
+          onClose={() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }}
+          onNavigate={(item, idx) => abrirDetalle(item, idx)}
+          onEditar={(n) => abrirEditar(n)}
+          onEliminar={(id) => setConfirmDeleteId(id)}
+        />
+      )}
     </div>
+  );
+}
+
+// ── DETALLE MODAL ─────────────────────────────────────────────────────────────
+function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, puedeEditar,
+  onClose, onNavigate, onEditar, onEliminar }: {
+  item: FeedItem;
+  isPreview: boolean;
+  navItems: FeedItem[];
+  navIndex: number;
+  nombreEmpresa?: string | null;
+  puedeEditar: boolean;
+  onClose: () => void;
+  onNavigate: (item: FeedItem, idx: number) => void;
+  onEditar: (n: Noticia) => void;
+  onEliminar: (id: string) => void;
+}) {
+  const embedUrl = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
+  const hasPrev  = !isPreview && navIndex > 0;
+  const hasNext  = !isPreview && navIndex < navItems.length - 1;
+  const zIdx     = isPreview ? 120 : 50;
+
+  function goNext() { onNavigate(navItems[navIndex + 1], navIndex + 1); }
+  function goPrev() { onNavigate(navItems[navIndex - 1], navIndex - 1); }
+
+  // Teclado ← →
+  useEffect(() => {
+    if (isPreview) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" && hasNext) goNext();
+      if (e.key === "ArrowLeft"  && hasPrev) goPrev();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navIndex, hasPrev, hasNext, isPreview]);
+
+  const BtnFlecha = ({ dir }: { dir: "prev" | "next" }) => (
+    <button onClick={(e) => { e.stopPropagation(); dir === "prev" ? goPrev() : goNext(); }}
+      className="fixed flex items-center justify-center transition-all"
+      style={{
+        [dir === "prev" ? "left" : "right"]: "max(12px, calc(50% - 21rem - 60px))",
+        top: "50%", transform: "translateY(-50%)",
+        zIndex: zIdx + 1, width: 48, height: 48, borderRadius: "50%",
+        background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)",
+        color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={dir === "prev" ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
+      </svg>
+    </button>
+  );
+
+  return (
+    <>
+      {hasPrev && <BtnFlecha dir="prev" />}
+      {hasNext  && <BtnFlecha dir="next" />}
+
+      <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem">
+        {isPreview && (
+          <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
+            style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
+            <span>👁</span> Vista previa — así verán los usuarios este anuncio
+          </div>
+        )}
+
+        {/* Imagen cabecera — no scrollea */}
+        <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
+          {item.imagenUrl ? (
+            <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center"
+              style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
+              <MegaphoneIcon size={72} />
+            </div>
+          )}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} topBar />
+              {item.fijado && (
+                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: "rgba(37,99,235,0.5)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)", backdropFilter: "blur(6px)" }}>
+                  <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                  Fijado
+                </span>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.9)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)", textShadow: SHADOW_TXT }}>{formatDate(item.fecha)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido scrolleable */}
+        <div className="overflow-y-auto flex-1 px-6 py-6 md:px-8 md:py-7 flex flex-col gap-4">
+          <h2 className="font-bold leading-tight"
+            style={{ fontSize: "clamp(1.25rem, 3vw, 1.65rem)", color: "var(--texto-primario)", letterSpacing: "-0.025em", fontFamily: "var(--font-raleway), sans-serif" }}>
+            {item.titulo}
+          </h2>
+          <div style={{ fontSize: "0.95rem", color: "var(--texto-secundario)", lineHeight: 1.75 }}>
+            {renderMarkdown(item.descripcion)}
+          </div>
+          {embedUrl && (
+            <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+              <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+            </div>
+          )}
+          {item.adjuntoUrl && (
+            <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors"
+              style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+              <span className="text-sm font-semibold flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </a>
+          )}
+          {item.enlaceUrl && (
+            <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity"
+              style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+              {item.enlaceTexto ?? "Más información"}
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+            </a>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 pt-4 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+            <div className="flex items-center gap-2">
+              {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
+                </span>
+              )}
+              {!isPreview && navItems.length > 1 && (
+                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{navIndex + 1} / {navItems.length}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {puedeEditar && (
+                <>
+                  <button onClick={() => { onClose(); onEditar(item._raw as Noticia); }}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>Editar</button>
+                  <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>Eliminar</button>
+                </>
+              )}
+              <button onClick={onClose}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                {isPreview ? "Cerrar vista previa" : "Cerrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }
 
