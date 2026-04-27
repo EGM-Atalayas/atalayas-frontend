@@ -863,7 +863,7 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
         )}
 
         {/* Imagen cabecera — no scrollea */}
-        <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
+        <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
           {item.imagenUrl ? (
             <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
           ) : (
