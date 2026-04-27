@@ -160,53 +160,59 @@ function MegaphoneIcon({ size = 32 }: { size?: number }) {
   );
 }
 
-function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md", dark = true }: {
+function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size = "md", dark = true, topBar = false }: {
   fuente: "egm" | "empresa";
   nombreEmpresa?: string | null;
   categoria?: string | null;
   destacado?: boolean;
   esNuevoItem?: boolean;
   size?: "sm" | "md";
-  dark?: boolean; // true = sobre fondo oscuro, false = sobre fondo claro
+  dark?: boolean;
+  topBar?: boolean;
 }) {
   const sm = size === "sm";
-  const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
+  const pill: React.CSSProperties = topBar
+    ? { backdropFilter: "blur(6px)", borderRadius: "999px" }
+    : {};
+  const cls = topBar
+    ? "font-semibold rounded-full shrink-0 px-2.5 py-1"
+    : `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
   const CATS = dark ? CATEGORIA_COLORS_DARK : CATEGORIA_COLORS_LIGHT;
 
   return (
     <>
       {fuente === "egm" ? (
-        <span className={cls} style={dark
-          ? { background: "rgba(27,63,126,0.42)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }
-          : { background: "#dbeafe", color: "#1e3a8a", border: "1px solid #93c5fd" }}>
+        <span className={cls} style={{ ...pill, ...(dark
+          ? { background: "rgba(27,63,126,0.55)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }
+          : { background: "#dbeafe", color: "#1e3a8a", border: "1px solid #93c5fd" }) }}>
           EGM Atalayas
         </span>
       ) : (
-        <span className={cls} style={dark
-          ? { background: "rgba(45,90,61,0.55)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }
-          : { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid #c8d97a" }}>
+        <span className={cls} style={{ ...pill, ...(dark
+          ? { background: "rgba(45,90,61,0.65)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }
+          : { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid #c8d97a" }) }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
       {fuente === "egm" && categoria && (() => {
         const col = CATS[categoria] ?? CATS.General;
         return (
-          <span className={cls} style={{ ...topBarBase, background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
+          <span className={cls} style={{ ...pill, background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
             {categoria}
           </span>
         );
       })()}
       {destacado && (
-        <span className={cls} style={dark
+        <span className={cls} style={{ ...pill, ...(dark
           ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
-          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }}>
+          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }) }}>
           ★ Destacado
         </span>
       )}
       {esNuevoItem && (
-        <span className={cls} style={dark
+        <span className={cls} style={{ ...pill, ...(dark
           ? { background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }
-          : { background: "#dcfce7", color: "#166534", border: "1px solid #86efac" }}>
+          : { background: "#dcfce7", color: "#166534", border: "1px solid #86efac" }) }}>
           Nuevo
         </span>
       )}
@@ -453,12 +459,15 @@ export default function ComunicacionPage() {
 
   const topItems = [...feedEGM, ...feedEmpresa]
     .sort((a, b) => {
-      // fijado de empresa > destacado EGM > reciente
       if ((a.fijado || a.destacado) && !(b.fijado || b.destacado)) return -1;
       if (!(a.fijado || a.destacado) && (b.fijado || b.destacado)) return 1;
       return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
     })
     .slice(0, 4);
+
+  // "Todos": 1 grande + 2 pequeñas + resto en lista
+  const todosTop   = feedCompleto.slice(0, 3);
+  const todosResto = feedCompleto.slice(3);
 
   // ── EGM: categorías únicas presentes ──────────────────────────────────────
   const categoriasEGM = ["Todos", ...Array.from(new Set(
@@ -483,8 +492,8 @@ export default function ComunicacionPage() {
   return (
     <div className="w-full">
       <style>{`
-        .featured-card-large { height: 300px; width: 100%; }
-        @media (min-width: 768px) { .featured-card-large { height: 460px; flex: 0 0 58%; width: auto; } }
+        .todos-card-large { height: 210px; width: 100%; }
+        @media (min-width: 768px) { .todos-card-large { height: 380px; flex: 1; width: auto; } }
         .group:hover .card-img { transform: scale(1.04); }
         .card-img { transition: transform 0.4s ease; }
       `}</style>
@@ -1004,7 +1013,7 @@ function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDel
       {/* Overlays */}
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.28) 100%)" }} />
       <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0" style={{ background: "rgba(0,0,0,0.08)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(3,10,25,0.38) 0%, transparent 28%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(3,10,25,0.55) 0%, transparent 30%)" }} />
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,25,0.96) 0%, rgba(3,10,25,0.78) 35%, rgba(3,10,25,0.08) 62%, transparent 100%)" }} />
 
       {/* ── Botones admin (empresa) ────────────────────────────────────── */}
@@ -1030,28 +1039,53 @@ function FeaturedCard({ item, size, onOpen, fill = false, esAdmin, onEdit, onDel
 
       {/* ── Grande ─────────────────────────────────────────────────────── */}
       {isLarge && (
-        <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-8">
-          <div className="flex items-center gap-2 mb-2 md:mb-3 flex-wrap">
-            <Badge fuente={item.fuente} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} />
-            <span className="text-sm font-medium ml-auto" style={{ color: "rgba(255,255,255,0.75)", textShadow: SHADOW_TXT }}>
+        <>
+          {/* Top bar: badges izquierda + fecha derecha */}
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-nowrap min-w-0 overflow-hidden"
+              style={{ fontSize: compact ? "0.68rem" : prominent ? "0.82rem" : "0.75rem" }}>
+              <Badge fuente={item.fuente} categoria={item.categoria} destacado={item.destacado} esNuevoItem={item.esNuevoItem} topBar />
+            </div>
+            <span className="shrink-0 font-semibold px-2.5 py-1 rounded-full"
+              style={{ fontSize: compact ? "0.68rem" : prominent ? "0.82rem" : "0.75rem", background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.13)" }}>
               {formatDate(item.fecha)}
             </span>
           </div>
-          <h2 className="text-white leading-tight mb-2 md:mb-3 max-w-xl"
-            style={{ fontWeight: 800, fontSize: "clamp(1.1rem, 4vw, 2.1rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
-            {item.titulo}
-          </h2>
-          <p className="text-sm md:text-base leading-relaxed line-clamp-2 max-w-lg"
-            style={{ color: "rgba(255,255,255,0.7)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-            {item.descripcion}
-          </p>
-          <div className="mt-3 md:mt-5 flex items-center gap-2 transition-opacity opacity-55 group-hover:opacity-100">
-            <span className="text-sm font-semibold text-white" style={{ textShadow: SHADOW_TXT }}>Leer más</span>
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
-            </svg>
+
+          {/* Contenido — anclado al fondo */}
+          <div className="absolute inset-0 flex flex-col justify-end px-5 pb-5 md:px-6 md:pb-6">
+            {/* Título */}
+            <h2 className="text-white leading-tight line-clamp-2 overflow-hidden"
+              style={{
+                fontWeight: 800,
+                fontSize: compact ? "clamp(1.05rem, 1.6vw, 1.3rem)" : prominent ? "clamp(1.5rem, 2.6vw, 2.1rem)" : "clamp(1.2rem, 2vw, 1.65rem)",
+                letterSpacing: "-0.025em",
+                textShadow: SHADOW_TXT,
+                marginBottom: compact ? "10px" : "8px",
+              }}>
+              {item.titulo}
+            </h2>
+
+            {/* Descripción — oculta en compact */}
+            {!compact && (
+              <p className="leading-relaxed line-clamp-2 mb-5"
+                style={{ fontSize: prominent ? "1rem" : "0.875rem", color: "rgba(255,255,255,0.75)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                {item.descripcion}
+              </p>
+            )}
+
+            {/* Leer más */}
+            <div className="flex items-center gap-1.5 transition-opacity opacity-55 group-hover:opacity-100">
+              <span className="font-semibold text-white tracking-wide"
+                style={{ fontSize: compact ? "0.75rem" : prominent ? "0.9rem" : "0.8rem", textShadow: SHADOW_TXT }}>
+                Leer más
+              </span>
+              <svg width={compact ? 11 : prominent ? 14 : 12} height={compact ? 11 : prominent ? 14 : 12} fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ── Pequeña ─────────────────────────────────────────────────────── */}
