@@ -1414,12 +1414,12 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
         style={{ maxWidth, maxHeight: "90vh", background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
-          className="absolute top-3 right-3 z-20 flex items-center justify-center transition-all"
-          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.75)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.32)"; e.currentTarget.style.transform = "scale(1)"; }}
+          className="absolute top-3 right-3 z-20 flex items-center justify-center"
+          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", transition: "background 0.18s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.75)"; e.currentTarget.style.transform = "rotate(90deg)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.32)"; e.currentTarget.style.transform = "rotate(0deg)"; }}
           title="Cerrar (Esc)">
-          <IconX size={13} />
+          <IconX size={15} />
         </button>
         {children}
       </div>
