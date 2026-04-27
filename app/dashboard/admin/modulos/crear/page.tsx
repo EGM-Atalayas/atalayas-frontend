@@ -378,10 +378,28 @@ export default function CrearModuloPage() {
     (c) => c.keys.length === tiposSalidaIA.length && c.keys.every((k) => tiposSalidaIA.includes(k))
   );
 
+  const FORMATOS_SOPORTADOS = ["pdf", "docx", "txt"];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
   const procesarArchivosIA = (files: FileList | null) => {
     if (!files) return;
-    setArchivosIA((p) => [...p, ...Array.from(files).map((f) => ({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }))]);
-    setArchivosIARaw((p) => [...p, ...Array.from(files)]);
+    const validos: File[] = [];
+    const errores: string[] = [];
+    Array.from(files).forEach((f) => {
+      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!FORMATOS_SOPORTADOS.includes(ext)) {
+        errores.push(`"${f.name}" tiene un formato no soportado. Usa PDF, DOCX o TXT.`);
+      } else if (f.size > MAX_FILE_SIZE) {
+        errores.push(`"${f.name}" supera el límite de 10 MB.`);
+      } else {
+        validos.push(f);
+      }
+    });
+    if (errores.length > 0) setErrorIA(errores.join(" "));
+    if (validos.length === 0) return;
+    setErrorIA("");
+    setArchivosIA((p) => [...p, ...validos.map((f) => ({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }))]);
+    setArchivosIARaw((p) => [...p, ...validos]);
   };
 
   const MENSAJES_IA_EXTENDED = [
@@ -420,7 +438,25 @@ export default function CrearModuloPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       clearInterval(interval);
-      if (!resIA.ok) throw new Error(`Error ${resIA.status} al generar contenido con IA`);
+      if (!resIA.ok) {
+        const archivo = archivosIARaw[0];
+        const ext = archivo?.name.split(".").pop()?.toLowerCase() ?? "";
+        if (resIA.status === 400) {
+          if (!FORMATOS_SOPORTADOS.includes(ext)) {
+            throw new Error(`Formato no soportado: ".${ext}". El archivo debe ser PDF, DOCX o TXT.`);
+          } else if (archivo && archivo.size > MAX_FILE_SIZE) {
+            throw new Error(`El archivo supera el límite de 10 MB.`);
+          } else {
+            // Intentar leer mensaje del backend
+            const body = await resIA.json().catch(() => null);
+            throw new Error(body?.message || "El archivo no pudo procesarse. Puede estar vacío, dañado, o ser un PDF escaneado sin texto seleccionable.");
+          }
+        }
+        if (resIA.status === 413) throw new Error("El archivo es demasiado grande para el servidor. Usa un archivo de menos de 10 MB.");
+        if (resIA.status === 403) throw new Error("No tienes permisos para generar contenido con IA.");
+        if (resIA.status === 500) throw new Error("Error interno del servidor al procesar el archivo. Inténtalo de nuevo.");
+        throw new Error(`Error ${resIA.status} al generar contenido con IA.`);
+      }
       const d = await resIA.json();
       setResultadoIA({ titulo: d.titulo || nombre, descripcion: d.descripcion || "", contenido: d.contenido || "" });
       setProgreso(90); setMsgProgreso("Guardando módulo…");
