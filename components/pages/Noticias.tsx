@@ -1428,7 +1428,7 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem" }: { childre
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .modal-close-x { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
-        .modal-close-x:hover { background: rgba(0,0,0,0.35) !important; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(0,0,0,0.15) !important; }
+        .modal-close-x:hover { background: rgba(220,38,38,0.75) !important; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(220,38,38,0.2) !important; }
         .modal-close-x:active { transform: scale(0.95); }
       `}</style>
     </div>
