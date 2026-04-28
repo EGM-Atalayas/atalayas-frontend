@@ -211,13 +211,14 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
           EGM Atalayas
         </span>
       ) : (
+        /* Empresa — cian/teal para diferenciarse de la categoría "Novedad" (verde) */
         <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(45,90,61,0.65)", color: "#bbf7d0", border: "1px solid rgba(134,239,172,0.3)" }
-          : { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)", border: "1px solid #c8d97a" }) }}>
+          ? { background: "rgba(6,182,212,0.28)", color: "#a5f3fc", border: "1px solid rgba(6,182,212,0.35)" }
+          : { background: "#cffafe", color: "#0e7490", border: "1px solid #67e8f9" }) }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
-      {fuente === "egm" && categoria && (() => {
+      {categoria && categoria !== "General" && (() => {
         const col = CATS[categoria] ?? CATS.General;
         return (
           <span className={cls} style={{ ...pill, background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
@@ -226,20 +227,119 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         );
       })()}
       {destacado && (
-        <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
-          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }) }}>
-          ★ Destacado
+        /* Pin fijado — índigo (distinto del violeta de Evento) */
+        <span className={cls} style={{ ...pill, display: "inline-flex", alignItems: "center", gap: "3px", ...(dark
+          ? { background: "rgba(79,70,229,0.32)", color: "#c7d2fe", border: "1px solid rgba(79,70,229,0.42)" }
+          : { background: "#e0e7ff", color: "#3730a3", border: "1px solid #a5b4fc" }) }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+          </svg>
+          Fijado
         </span>
       )}
       {esNuevoItem && (
+        /* "Nuevo" — naranja/ámbar para distinguirlo de las categorías verdes */
         <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(34,197,94,0.22)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.3)" }
-          : { background: "#dcfce7", color: "#166534", border: "1px solid #86efac" }) }}>
+          ? { background: "rgba(251,146,60,0.28)", color: "#fed7aa", border: "1px solid rgba(251,146,60,0.38)" }
+          : { background: "#ffedd5", color: "#9a3412", border: "1px solid #fdba74" }) }}>
           Nuevo
         </span>
       )}
     </>
+  );
+}
+
+// ── PANEL BORRADORES ──────────────────────────────────────────────────────────
+function BorradoresPanel({ borradores, show, onToggle, onEditar, onPublicar, onEliminar }: {
+  borradores: Noticia[];
+  show: boolean;
+  onToggle: () => void;
+  onEditar: (n: Noticia) => void;
+  onPublicar: (n: Noticia) => void;
+  onEliminar: (id: string) => void;
+}) {
+  return (
+    <div className="mb-6 rounded-2xl overflow-hidden"
+      style={{ border: "1.5px solid #bfdbfe", background: "#eff6ff" }}>
+
+      {/* Cabecera colapsable */}
+      <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-4 py-3"
+        style={{ background: "none", border: "none", cursor: "pointer" }}>
+        {/* Pill "Borrador" */}
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
+          style={{ background: "#dbeafe", color: "#1e3a8a", border: "1px solid #bfdbfe" }}>
+          Borrador
+        </span>
+        <span className="text-sm font-semibold flex-1 text-left" style={{ color: "var(--texto-primario)" }}>
+          {borradores.length} {borradores.length === 1 ? "anuncio pendiente" : "anuncios pendientes"}
+        </span>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" strokeWidth={2.5}
+          style={{ transition: "transform 0.2s", transform: show ? "rotate(0deg)" : "rotate(-90deg)" }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Lista */}
+      {show && (
+        <div className="flex flex-col" style={{ borderTop: "1px solid #bfdbfe" }}>
+          {borradores.map((n, i) => (
+            <div key={n.anuncioId}
+              className="flex items-center gap-3 px-4 py-3"
+              style={{ borderTop: i > 0 ? "1px solid #dbeafe" : undefined, background: "var(--blanco)" }}>
+
+              {/* Miniatura */}
+              {n.imagenUrl
+                ? <img src={n.imagenUrl} alt="" className="rounded-xl object-cover shrink-0" style={{ width: 44, height: 44 }} />
+                : <div className="rounded-xl shrink-0 flex items-center justify-center"
+                    style={{ width: 44, height: 44, background: "#eff6ff" }}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+              }
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+                  {n.titulo || "(Sin título)"}
+                </p>
+                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>
+                  {n.contenido ? n.contenido.replace(/[#*_`>]/g, "").slice(0, 90) + (n.contenido.length > 90 ? "…" : "") : "Sin contenido"}
+                </p>
+              </div>
+
+              {/* Acciones */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => onEditar(n)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold transition-colors"
+                  style={{ background: "var(--blanco)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#93c5fd")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}>
+                  Editar
+                </button>
+                <button onClick={() => onPublicar(n)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold transition-colors"
+                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", border: "none", boxShadow: "0 2px 6px rgba(22,163,74,0.25)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                  Publicar
+                </button>
+                <button onClick={() => onEliminar(n.anuncioId)}
+                  className="flex items-center justify-center rounded-lg transition-colors"
+                  style={{ width: 28, height: 28, background: "transparent", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#fca5a5"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--gris-borde)"; }}
+                  title="Eliminar borrador">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="var(--texto-muted)" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -253,6 +353,7 @@ export default function ComunicacionPage() {
   // Datos
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [anuncios, setAnuncios]       = useState<Noticia[]>([]);
+  const [borradores, setBorradores]   = useState<Noticia[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [loadingAnuncios, setLoadingAnuncios]       = useState(true);
 
@@ -276,6 +377,7 @@ export default function ComunicacionPage() {
 
   // Preview antes de publicar
   const [previewItem, setPreviewItem] = useState<FeedItem | null>(null);
+  const [showBorradores, setShowBorradores] = useState(true);
 
   // Toast de confirmación
   const [toast, setToast] = useState<string | null>(null);
@@ -332,7 +434,8 @@ export default function ComunicacionPage() {
     try {
       const data = await getNoticias(usuario?.empresaId);
       setAnuncios(data.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado"));
-    } catch { setAnuncios([]); }
+      setBorradores(data.filter((n) => n.activo && n.estado === "borrador"));
+    } catch { setAnuncios([]); setBorradores([]); }
     finally { setLoadingAnuncios(false); }
   }
 
@@ -389,6 +492,21 @@ export default function ComunicacionPage() {
     finally { setConfirmDeleteId(null); }
   }
 
+  async function publicarBorrador(n: Noticia) {
+    try {
+      await editarNoticia(n.anuncioId, {
+        titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
+        empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
+        enlaceUrl: n.enlaceUrl ?? null, enlaceTexto: n.enlaceTexto ?? null,
+        videoUrl: n.videoUrl ?? null, adjuntoUrl: n.adjuntoUrl ?? null,
+        adjuntoNombre: n.adjuntoNombre ?? null, fijado: n.fijado ?? false,
+        categoria: n.categoria ?? null, estado: "publicado",
+      });
+      await cargarAnuncios();
+      mostrarToast("Anuncio publicado correctamente");
+    } catch { mostrarToast("Error al publicar el anuncio"); }
+  }
+
   // Reset categoría al cambiar fuente
   useEffect(() => { setFiltroCategoria("Todos"); setVisibles(6); }, [filtroFuente]);
 
@@ -406,7 +524,7 @@ export default function ComunicacionPage() {
   const feedEmpresa: FeedItem[] = anuncios.map((n) => ({
     id: n.anuncioId, titulo: n.titulo, descripcion: n.contenido,
     imagenUrl: n.imagenUrl, fecha: n.creadoEn,
-    fuente: "empresa" as const, categoria: null, destacado: n.fijado ?? false,
+    fuente: "empresa" as const, categoria: n.categoria ?? null, destacado: n.fijado ?? false,
     esNuevoItem: esNuevo(n.creadoEn), _raw: n,
     videoUrl: n.videoUrl, adjuntoUrl: n.adjuntoUrl, adjuntoNombre: n.adjuntoNombre,
     enlaceUrl: n.enlaceUrl, enlaceTexto: n.enlaceTexto,
@@ -456,6 +574,20 @@ export default function ComunicacionPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .stagger-item { animation: staggerIn 0.35s ease both; }
+        .nav-btn {
+          background: rgba(255,255,255,0.12);
+          border: 1.5px solid rgba(255,255,255,0.25);
+          transform: translateY(-50%) scale(1);
+          transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .nav-btn:hover {
+          background: rgba(37,99,235,0.75) !important;
+          border-color: rgba(147,197,253,0.5) !important;
+          transform: translateY(-50%) scale(1.1) !important;
+        }
+        .nav-btn:active {
+          transform: translateY(-50%) scale(0.95) !important;
+        }
       `}</style>
 
       <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.jpg" />
@@ -705,14 +837,30 @@ export default function ComunicacionPage() {
           )
 
         ) : filtroFuente === "empresa" ? (
-          /* ── VISTA EMPRESA: 2 tarjetas iguales + lista ── */
-          feedEmpresaOrdenado.length === 0 ? (
+          feedEmpresaOrdenado.length === 0 && borradores.length === 0 ? (
             <EstadoVacio
               titulo={`Sin publicaciones de ${usuario?.nombreEmpresa ?? "tu empresa"}`}
               descripcion="Aún no hay anuncios publicados."
               accion={esAdmin ? "Crear primer anuncio" : undefined}
               onAccion={esAdmin ? abrirCrear : undefined}
             />
+          ) : feedEmpresaOrdenado.length === 0 ? (
+            /* Solo hay borradores, no hay publicados */
+            (esAdmin || esAdminGeneral) ? (
+              <BorradoresPanel
+                borradores={borradores}
+                show={showBorradores}
+                onToggle={() => setShowBorradores((v) => !v)}
+                onEditar={abrirEditar}
+                onPublicar={publicarBorrador}
+                onEliminar={(id) => setConfirmDeleteId(id)}
+              />
+            ) : (
+              <EstadoVacio
+                titulo={`Sin publicaciones de ${usuario?.nombreEmpresa ?? "tu empresa"}`}
+                descripcion="Aún no hay anuncios publicados."
+              />
+            )
           ) : (
             <SourceView
               items={feedEmpresaOrdenado}
@@ -730,6 +878,16 @@ export default function ComunicacionPage() {
               onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
               abrirEditar={abrirEditar}
               handleDesactivar={(id) => setConfirmDeleteId(id)}
+              borradoresSlot={(esAdmin || esAdminGeneral) && borradores.length > 0 ? (
+                <BorradoresPanel
+                  borradores={borradores}
+                  show={showBorradores}
+                  onToggle={() => setShowBorradores((v) => !v)}
+                  onEditar={abrirEditar}
+                  onPublicar={publicarBorrador}
+                  onEliminar={(id) => setConfirmDeleteId(id)}
+                />
+              ) : undefined}
             />
           )
         ) : null}
@@ -865,16 +1023,12 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
 
   const BtnFlecha = ({ dir }: { dir: "prev" | "next" }) => (
     <button onClick={(e) => { e.stopPropagation(); dir === "prev" ? goPrev() : goNext(); }}
-      className="fixed flex items-center justify-center transition-all"
+      className="nav-btn fixed flex items-center justify-center"
       style={{
         [dir === "prev" ? "left" : "right"]: "max(12px, calc(50% - 21rem - 60px))",
-        top: "50%", transform: "translateY(-50%)",
-        zIndex: zIdx + 1, width: 48, height: 48, borderRadius: "50%",
-        background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.25)",
-        color: "#fff", backdropFilter: "blur(8px)", cursor: "pointer",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.75)"; e.currentTarget.style.transform = "translateY(-50%) scale(1.1)"; e.currentTarget.style.borderColor = "rgba(147,197,253,0.5)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-50%) scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}>
+        top: "50%", zIndex: zIdx + 1, width: 48, height: 48, borderRadius: "50%",
+        color: "#fff", cursor: "pointer",
+      }}>
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d={dir === "prev" ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
       </svg>
@@ -932,7 +1086,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
               style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
               {item.titulo}
             </h2>
-            <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8 }}>
+            <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8, overflowWrap: "break-word", wordBreak: "break-word" }}>
               {contenidoMd}
             </div>
             {embedUrl && (
@@ -1002,7 +1156,8 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
 
 // ── SOURCE VIEW (EGM / Empresa): 2 tarjetas iguales + lista ──────────────────
 function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nombreEmpresa,
-  gradColor, seccionLabel, verMasLabel, onOpen, onEdit, onDelete, abrirEditar, handleDesactivar }: {
+  gradColor, seccionLabel, verMasLabel, onOpen, onEdit, onDelete, abrirEditar, handleDesactivar,
+  borradoresSlot }: {
   items: FeedItem[];
   orden: Orden;
   visibles: number;
@@ -1018,6 +1173,7 @@ function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nom
   onDelete: (item: FeedItem) => void;
   abrirEditar: (n: Noticia) => void;
   handleDesactivar: (id: string) => void;
+  borradoresSlot?: React.ReactNode;
 }) {
   // Las tarjetas destacadas SIEMPRE muestran las más recientes
   const itemsByReciente = ordenarFeed(items, "reciente");
@@ -1047,6 +1203,9 @@ function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nom
           </div>
         </div>
       )}
+
+      {/* Panel borradores (entre tarjetas y lista) */}
+      {borradoresSlot}
 
       {/* Lista del resto */}
       {rest.length > 0 && (
@@ -1463,7 +1622,7 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
           </svg>
         </button>
         <div className="flex flex-col rounded-2xl overflow-hidden w-full h-full"
-          style={{ background: "#0d1b2e", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)", transform: "translateZ(0)" }}>
+          style={{ background: "#0d1b2e", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)", transform: "translateZ(0)", isolation: "isolate" }}>
           {children}
         </div>
       </div>
@@ -1659,7 +1818,6 @@ function FormAnuncio({
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
   const [form, setForm]       = useState<NoticiaInput>({
-    titulo: "", contenido: "", esGlobal: false, empresaId: null,
     imagenUrl: null, enlaceUrl: null, enlaceTexto: null, videoUrl: null,
     adjuntoUrl: null, adjuntoNombre: null, estado: "publicado", fijado: false, categoria: null,
     ...initialValues,
@@ -1730,7 +1888,7 @@ function FormAnuncio({
       imagenUrl: form.imagenUrl,
       fecha: new Date().toISOString(),
       fuente: "empresa",
-      categoria: null,
+      categoria: form.categoria ?? null,
       destacado: form.fijado ?? false,
       esNuevoItem: true,
       videoUrl: form.videoUrl,
@@ -1772,7 +1930,7 @@ function FormAnuncio({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const CATEGORIAS = ["General", "Aviso", "Novedad", "Evento"];
+  const CATEGORIAS = ["General", "Aviso", "Evento"];
 
   return (
     <>
@@ -1791,6 +1949,7 @@ function FormAnuncio({
           borderRadius: 20,
           boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
           overflow: "hidden",
+          isolation: "isolate",
         }}
         onClick={(e) => e.stopPropagation()}>
 
@@ -2104,16 +2263,19 @@ function FormAnuncio({
             {/* ── Visibilidad ── */}
             <div>
               <FieldLabel label="Estado" />
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1.5px solid var(--gris-borde)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{
+                border: `1.5px solid ${form.fijado || form.estado === "borrador" ? "#bfdbfe" : "var(--gris-borde)"}`,
+                transition: "border-color 0.18s",
+              }}>
 
                 {/* Fila: Fijar */}
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.fijado ? "#eff6ff" : "var(--blanco)", transition: "background 0.18s" }}
+                  style={{ background: form.fijado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
                   onClick={() => setForm({ ...form, fijado: !form.fijado })}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.fijado ? "#dbeafe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#2563eb" : "var(--texto-muted)"} strokeWidth={2}>
+                      style={{ background: form.fijado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                       </svg>
                     </div>
@@ -2125,27 +2287,31 @@ function FormAnuncio({
                   <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
                 </div>
 
-                {/* Separador */}
-                <div style={{ height: 1, background: "var(--gris-borde)" }} />
+                {/* Separador — desaparece si alguno está activo o si la fila borrador está oculta */}
+                {!form.fijado && form.estado !== "borrador" && !(editando && editando.estado !== "borrador") && (
+                  <div style={{ height: 1, background: "var(--gris-borde)" }} />
+                )}
 
-                {/* Fila: Borrador */}
+                {/* Fila: Borrador — oculta cuando ya se editando un anuncio publicado */}
+                {!(editando && editando.estado !== "borrador") && (
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.estado === "borrador" ? "#fefce8" : "var(--blanco)", transition: "background 0.18s" }}
+                  style={{ background: form.estado === "borrador" ? "#eff6ff" : "var(--blanco)", transition: "background 0.18s" }}
                   onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.estado === "borrador" ? "#fef9c3" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#ca8a04" : "var(--texto-muted)"} strokeWidth={2}>
+                      style={{ background: form.estado === "borrador" ? "#dbeafe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#2563eb" : "var(--texto-muted)"} strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#a16207" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#1d4ed8" : "var(--texto-primario)" }}>Guardar como borrador</p>
                       <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
                     </div>
                   </div>
-                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#ca8a04" />
+                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#2563eb" />
                 </div>
+                )}
 
               </div>
             </div>
@@ -2176,21 +2342,44 @@ function FormAnuncio({
               onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
               Previsualizar
             </button>
-            <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
-              className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
-              style={{
-                background: form.estado === "borrador"
-                  ? "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"
-                  : GRAD_BTN,
-                color: "#fff",
-                boxShadow: form.estado === "borrador"
-                  ? "0 2px 8px rgba(107,114,128,0.3)"
-                  : "0 2px 8px rgba(37,99,235,0.3)",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-              {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
-            </button>
+            {/* Guardar cambios — izquierda gris, solo al editar borrador */}
+            {editando && editando.estado === "borrador" && (
+              <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
+                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
+                style={{ background: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(107,114,128,0.25)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                {submitting ? "Guardando..." : "Guardar cambios"}
+              </button>
+            )}
+            {/* Botón derecho principal */}
+            {!(editando && editando.estado === "borrador") && (
+              <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
+                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
+                style={{
+                  background: editando || form.estado !== "borrador"
+                    ? GRAD_BTN
+                    : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+                  color: "#fff",
+                  boxShadow: editando || form.estado !== "borrador"
+                    ? "0 2px 8px rgba(37,99,235,0.3)"
+                    : "0 2px 8px rgba(107,114,128,0.3)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
+              </button>
+            )}
+            {/* Publicar ahora — derecha, solo al editar borrador */}
+            {editando && editando.estado === "borrador" && (
+              <button onClick={() => { setTouched(true); onSubmit({ ...form, estado: "publicado" }); }} disabled={submitting}
+                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
+                style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(22,163,74,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                {submitting ? "Publicando..." : "Publicar ahora"}
+              </button>
+            )}
           </div>
         </div>
 
