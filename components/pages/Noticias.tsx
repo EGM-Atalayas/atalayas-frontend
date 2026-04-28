@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import {
@@ -336,13 +336,13 @@ export default function ComunicacionPage() {
   }
 
   // ── ABRIR DETALLE ──────────────────────────────────────────────────────────
-  function abrirDetalle(item: FeedItem, index?: number) {
+  const abrirDetalle = useCallback((item: FeedItem, index?: number) => {
     setModalItem(item);
     setModalIndex(index ?? null);
     if (item.fuente === "empresa" && item.id) {
       registrarVistaNoticia(item.id);
     }
-  }
+  }, []);
 
   // ── HANDLERS FORMULARIO ────────────────────────────────────────────────────
   function abrirCrear() {
@@ -350,7 +350,7 @@ export default function ComunicacionPage() {
     setEditando(null); setShowForm(true); setFormError(null);
   }
 
-  function abrirEditar(n: Noticia) {
+  const abrirEditar = useCallback((n: Noticia) => {
     setInitialForm({
       titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
       empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
@@ -361,12 +361,15 @@ export default function ComunicacionPage() {
       categoria: n.categoria ?? null,
     });
     setEditando(n); setShowForm(true); setFormError(null);
-  }
+  }, []);
 
-  function cerrarForm() {
+  const cerrarForm = useCallback(() => {
     setShowForm(false); setEditando(null); setInitialForm(EMPTY_FORM); setFormError(null);
     setPreviewItem(null);
-  }
+  }, []);
+
+  const cerrarModal   = useCallback(() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }, []);
+  const confirmarEliminar = useCallback((id: string) => setConfirmDeleteId(id), []);
 
   async function handleSubmit(data: NoticiaInput) {
     setSubmitting(true); setFormError(null);
@@ -419,9 +422,9 @@ export default function ComunicacionPage() {
   const feedCompletoBuscado   = filtrarBusqueda(feedCompleto);
   const feedEmpresaBuscado    = filtrarBusqueda(feedEmpresa);
 
-  // "Todos": 1 grande + 2 pequeñas + resto en lista
+  // "Todos": 3 tarjetas grandes siempre las más recientes, lista respeta orden
   const todosTop   = feedCompletoBuscado.slice(0, 3);
-  const todosResto = feedCompletoBuscado.slice(3);
+  const todosResto = ordenarFeed(feedCompletoBuscado.slice(3), orden);
 
   // ── EGM: categorías únicas presentes ──────────────────────────────────────
   const categoriasEGM = ["Todos", ...Array.from(new Set(
@@ -487,6 +490,17 @@ export default function ComunicacionPage() {
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto self-end md:self-auto">
+              {/* Nuevo anuncio */}
+              {esAdmin && (
+                <button
+                  onClick={abrirCrear}
+                  className="text-sm font-semibold px-4 py-2 rounded-xl transition-all shrink-0"
+                  style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)" }}
+                >
+                  + Nuevo anuncio
+                </button>
+              )}
+
               {/* Búsqueda */}
               <div className="relative">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} style={{ color: "var(--texto-muted)" }}>
@@ -497,10 +511,10 @@ export default function ComunicacionPage() {
                   value={busqueda}
                   onChange={(e) => { setBusqueda(e.target.value); setVisibles(6); }}
                   placeholder="Buscar..."
-                  className="pl-8 pr-3 py-1.5 rounded-full text-sm transition-all focus:outline-none"
+                  className="pl-8 pr-3 py-1.5 rounded-full text-sm focus:outline-none"
                   style={{
                     width: busqueda ? "180px" : "120px",
-                    background: busqueda ? "var(--blanco)" : "var(--blanco)",
+                    background: "var(--blanco)",
                     border: `1.5px solid ${busqueda ? "#2563eb" : "var(--gris-borde)"}`,
                     color: "var(--texto-primario)",
                     transition: "width 0.25s ease, border-color 0.15s",
@@ -511,11 +525,14 @@ export default function ComunicacionPage() {
                 {busqueda && (
                   <button onClick={() => setBusqueda("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all"
-                    style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--texto-muted)", color: "#fff" }}>
-                    <IconX size={9} />
+                    style={{ width: 18, height: 18, borderRadius: "50%", background: "var(--texto-muted)", color: "#fff" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--error)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--texto-muted)"; }}>
+                    <IconX size={10} />
                   </button>
                 )}
               </div>
+
               {/* Ordenar */}
               <div className="relative orden-dropdown">
                 <button
@@ -537,13 +554,11 @@ export default function ComunicacionPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-
                 {showOrden && (
                   <div className="absolute right-0 top-full mt-2 z-20 rounded-xl py-1 overflow-hidden"
                     style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", minWidth: "190px" }}>
                     {(Object.entries(ORDEN_LABELS) as [Orden, string][]).map(([key, label]) => (
-                      <button
-                        key={key}
+                      <button key={key}
                         onClick={() => { setOrden(key); setShowOrden(false); setVisibles(6); }}
                         className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors"
                         style={{
@@ -565,16 +580,6 @@ export default function ComunicacionPage() {
                   </div>
                 )}
               </div>
-
-              {esAdmin && (
-                <button
-                  onClick={abrirCrear}
-                  className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-                  style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)" }}
-                >
-                  + Nuevo anuncio
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -791,10 +796,10 @@ export default function ComunicacionPage() {
           navIndex={modalIndex ?? feedCompleto.findIndex((i) => i.id === (previewItem ?? modalItem!).id)}
           nombreEmpresa={usuario?.nombreEmpresa}
           puedeEditar={!previewItem && ((( previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
-          onClose={() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }}
-          onNavigate={(item, idx) => abrirDetalle(item, idx)}
-          onEditar={(n) => abrirEditar(n)}
-          onEliminar={(id) => setConfirmDeleteId(id)}
+          onClose={cerrarModal}
+          onNavigate={abrirDetalle}
+          onEditar={abrirEditar}
+          onEliminar={confirmarEliminar}
         />
       )}
     </div>
@@ -802,7 +807,7 @@ export default function ComunicacionPage() {
 }
 
 // ── DETALLE MODAL ─────────────────────────────────────────────────────────────
-function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, puedeEditar,
+const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, puedeEditar,
   onClose, onNavigate, onEditar, onEliminar }: {
   item: FeedItem;
   isPreview: boolean;
@@ -815,19 +820,16 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
   onEditar: (n: Noticia) => void;
   onEliminar: (id: string) => void;
 }) {
-  const embedUrl  = item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null;
+  const embedUrl     = useMemo(() => item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null, [item.videoUrl]);
+  const contenidoMd  = useMemo(() => renderMarkdown(item.descripcion), [item.descripcion]);
   const hasPrev   = !isPreview && navIndex > 0;
   const hasNext   = !isPreview && navIndex < navItems.length - 1;
   const zIdx      = isPreview ? 120 : 50;
   const modalRef  = useRef<HTMLDivElement>(null);
-  const [fading, setFading] = useState(false);
+  const [dir, setDir] = useState<"next" | "prev">("next");
 
-  function navigate(nextItem: FeedItem, nextIdx: number) {
-    setFading(true);
-    setTimeout(() => { onNavigate(nextItem, nextIdx); setFading(false); }, 160);
-  }
-  function goNext() { navigate(navItems[navIndex + 1], navIndex + 1); }
-  function goPrev() { navigate(navItems[navIndex - 1], navIndex - 1); }
+  function goNext() { setDir("next"); onNavigate(navItems[navIndex + 1], navIndex + 1); }
+  function goPrev() { setDir("prev"); onNavigate(navItems[navIndex - 1], navIndex - 1); }
 
   // Teclado ← →
   useEffect(() => {
@@ -922,15 +924,15 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
         </div>
 
         {/* Contenido scrolleable */}
-        <div className="modal-scroll overflow-y-auto flex-1 flex flex-col"
-          style={{ background: "var(--blanco)", opacity: fading ? 0 : 1, transition: "opacity 0.16s ease" }}>
+        <div className={`modal-scroll modal-slide-${dir} overflow-y-auto flex-1 flex flex-col`}
+          style={{ background: "var(--blanco)" }}>
           <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-3">
             <h2 className="leading-tight"
               style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
               {item.titulo}
             </h2>
             <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8 }}>
-              {renderMarkdown(item.descripcion)}
+              {contenidoMd}
             </div>
             {embedUrl && (
               <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
@@ -995,7 +997,7 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
       </Modal>
     </>
   );
-}
+});
 
 // ── SOURCE VIEW (EGM / Empresa): 2 tarjetas iguales + lista ──────────────────
 function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nombreEmpresa,
@@ -1441,7 +1443,7 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", animation: "modalBgIn 0.2s ease" }}
+      style={{ zIndex, background: "rgba(0,0,0,0.58)", animation: "modalBgIn 0.2s ease" }}
       onClick={onClose}>
       <div ref={modalRef} className="relative w-full flex flex-col"
         style={{ maxWidth, maxHeight: "90vh" }}
@@ -1467,6 +1469,10 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
       <style>{`
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-slide-next { animation: slideInRight 0.28s cubic-bezier(0.34,1.2,0.64,1) both; }
+        .modal-slide-prev { animation: slideInLeft  0.28s cubic-bezier(0.34,1.2,0.64,1) both; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInLeft  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
         .modal-scroll::-webkit-scrollbar { width: 4px; }
         .modal-scroll::-webkit-scrollbar-track { background: transparent; }
         .modal-scroll::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.25); border-radius: 4px; }
@@ -1649,6 +1655,7 @@ function FormAnuncio({
 }) {
   type Tab = "contenido" | "multimedia" | "publicacion";
   const [tab, setTab]         = useState<Tab>("contenido");
+  const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
   const [form, setForm]       = useState<NoticiaInput>(initialValues);
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
@@ -1734,18 +1741,16 @@ function FormAnuncio({
   const tituloError    = touched && !form.titulo.trim();
   const contenidoError = touched && !form.contenido.trim();
 
-  const badgeMult = [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length;
-  const badgePub  = [form.enlaceUrl, form.fijado, form.estado === "borrador"].filter(Boolean).length;
+  const badgeMult = useMemo(() => [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length, [form.imagenUrl, form.videoUrl, form.adjuntoUrl]);
+  const badgePub  = useMemo(() => [form.enlaceUrl, form.fijado, form.estado === "borrador"].filter(Boolean).length, [form.enlaceUrl, form.fijado, form.estado]);
+  const embedUrl  = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
+  const badgeCont = useMemo(() => touched ? [!form.titulo.trim(), !form.contenido.trim()].filter(Boolean).length : 0, [touched, form.titulo, form.contenido]);
 
-  const embedUrl = form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null;
-
-  const badgeCont = touched ? [!form.titulo.trim(), !form.contenido.trim()].filter(Boolean).length : 0;
-
-  const TABS: { id: Tab; label: string; badge?: number; error?: boolean }[] = [
+  const TABS = useMemo<{ id: Tab; label: string; badge?: number; error?: boolean }[]>(() => [
     { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
     { id: "multimedia",  label: "Multimedia",  badge: badgeMult },
     { id: "publicacion", label: "Publicación", badge: badgePub  },
-  ];
+  ], [badgeCont, badgeMult, badgePub]);
 
 
   // Bloquear scroll del body (solo la página de fondo, el modal scrollea internamente)
@@ -1767,7 +1772,7 @@ function FormAnuncio({
     <>
     {/* Overlay */}
     <div className="fixed inset-0 flex items-start justify-center"
-      style={{ zIndex: 110, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(5px)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
+      style={{ zIndex: 110, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
       onClick={onClose}>
 
       {/* Card — altura automática con límite máximo */}
@@ -1828,7 +1833,7 @@ function FormAnuncio({
         <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
           <div className="flex">
             {TABS.map(({ id, label, badge, error }) => (
-              <button key={id} type="button" onClick={() => setTab(id)}
+              <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
                 className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
                 style={{
                   color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)",
@@ -1865,8 +1870,8 @@ function FormAnuncio({
         {/* ── Cuerpo con scroll ── */}
         <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
 
-          {/* ── TAB: Contenido — siempre en DOM, fade con opacity ── */}
-          <div style={{ maxHeight: tab === "contenido" ? "none" : 0, overflow: "hidden", opacity: tab === "contenido" ? 1 : 0, pointerEvents: tab === "contenido" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          {/* ── TAB: Contenido — siempre visible, es el default ── */}
+          <div style={{ display: tab === "contenido" ? "block" : "none" }}>
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Título" required
@@ -1931,8 +1936,9 @@ function FormAnuncio({
             </div>
           </div></div>
 
-          {/* ── TAB: Multimedia — siempre en DOM, fade con opacity ── */}
-          <div style={{ maxHeight: tab === "multimedia" ? "none" : 0, overflow: "hidden", opacity: tab === "multimedia" ? 1 : 0, pointerEvents: tab === "multimedia" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          {/* ── TAB: Multimedia — montaje lazy ── */}
+          {visitedTabs.current.has("multimedia") && (
+          <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Imagen"
@@ -2065,9 +2071,11 @@ function FormAnuncio({
               )}
             </div>
           </div></div>
+          )}
 
-          {/* ── TAB: Publicación — siempre en DOM, fade con opacity ── */}
-          <div style={{ maxHeight: tab === "publicacion" ? "none" : 0, overflow: "hidden", opacity: tab === "publicacion" ? 1 : 0, pointerEvents: tab === "publicacion" ? "auto" : "none", transition: "opacity 0.12s ease" }}>
+          {/* ── TAB: Publicación — montaje lazy ── */}
+          {visitedTabs.current.has("publicacion") && (
+          <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div style={{ width: "100%" }}>
               <FieldLabel label="Enlace externo" />
@@ -2137,6 +2145,7 @@ function FormAnuncio({
             </div>
           </div>
           </div>
+          )}
 
         </div>
 
