@@ -81,6 +81,8 @@ interface ModuloAPI {
   podcastAudioUrl: string | null;
   tiposSalida: string | null;
   activo: boolean;
+  adjuntoUrl?: string | null;
+  adjuntoNombre?: string | null;
 }
 
 const TIPO_LABEL: Record<string, string> = {
@@ -168,6 +170,10 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   }
   if (items.length === 0) {
     items.push({ id: `c${idx++}`, titulo: "Descripción y contenido", tipo: "texto", duracion: "15–45 min", completado: false, bloqueado: false });
+  }
+  if (moduloApi.adjuntoUrl) {
+    const nombre = moduloApi.adjuntoNombre ?? "Documento adjunto";
+    items.push({ id: `c${idx++}`, titulo: nombre, tipo: "pdf", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
   }
   if (moduloApi.testPreguntas) {
     items.push({ id: `c${idx++}`, titulo: "Test de evaluación", tipo: "quiz", duracion: "10–15 min", completado: false, bloqueado: true });
@@ -605,7 +611,7 @@ export default function Page() {
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "pdf" && <ContenidoPDF onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
             </div>
 
@@ -1002,8 +1008,10 @@ function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: s
   );
 }
 
-function ContenidoPDF({ onVerificado }: { onVerificado?: () => void }) {
+function ContenidoPDF({ url, nombre, onVerificado }: { url?: string; nombre?: string; onVerificado?: () => void }) {
   const [leido, setLeido] = React.useState(false);
+  const ext = nombre?.split(".").pop()?.toLowerCase() ?? "pdf";
+  const displayNombre = nombre ?? "Documento adjunto";
   return (
     <div>
       <div className="rounded-2xl flex items-center gap-5 px-6 py-5 mb-6"
@@ -1015,21 +1023,30 @@ function ContenidoPDF({ onVerificado }: { onVerificado?: () => void }) {
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-            Protocolo_PRL_Alturas_v2.pdf
+          <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+            {displayNombre}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PDF · 2.4 MB · 18 páginas</p>
+          <p className="text-xs mt-0.5 uppercase" style={{ color: "var(--texto-muted)" }}>{ext}</p>
         </div>
-        <button className="text-xs font-semibold px-4 py-2 rounded-lg shrink-0 transition-colors"
-          style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
-          Descargar
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer"
+              className="text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
+              Ver
+            </a>
+          )}
+          {url && (
+            <a href={url} download={nombre ?? true}
+              className="text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+              style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
+              Descargar
+            </a>
+          )}
+        </div>
       </div>
       <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--texto-secundario)" }}>
-        Descarga y lee el documento antes de marcar este contenido como completado. Contiene los
-        formularios de registro obligatorios que deberás cumplimentar en cada intervención.
+        Descarga y lee el documento antes de marcar este contenido como completado.
       </p>
       {!leido ? (
         <button
