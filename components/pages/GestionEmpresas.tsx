@@ -95,7 +95,7 @@ const GestionEmpresas: React.FC = () => {
   };
 
   return (
-    <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto animate-fadeIn mt-6">
+    <div className="w-full animate-fadeIn mt-6 px-6 md:px-10">
       
       {/* CABECERA */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">

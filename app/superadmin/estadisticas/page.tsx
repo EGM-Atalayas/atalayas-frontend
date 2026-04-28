@@ -121,8 +121,8 @@ const EstadisticasPage: React.FC = () => {
   }
 
   return (
-    <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto animate-fadeIn mt-6">
-
+    <div className="px-6 md:px-10 w-full animate-fadeIn mt-6">
+      
       {/* CABECERA */}
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -138,7 +138,7 @@ const EstadisticasPage: React.FC = () => {
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as "xml" | "csv" | "pdf")}
-            className="border border-slate-300 bg-white text-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-300 bg-white text-slate-700 rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Formato de exportación"
           >
             <option value="pdf">Exportar en PDF</option>
@@ -148,7 +148,7 @@ const EstadisticasPage: React.FC = () => {
           <button
             type="button"
             onClick={handleExport}
-            className="rounded-xl bg-blue-600 text-white text-sm font-semibold px-4 py-2 hover:bg-blue-700 transition-colors"
+            className="rounded-xl bg-blue-600 text-white text-base font-semibold px-5 py-2.5 hover:bg-blue-700 transition-colors"
           >
             Descargar
           </button>

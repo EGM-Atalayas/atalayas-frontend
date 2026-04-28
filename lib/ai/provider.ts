@@ -18,6 +18,11 @@ async function geminiChatStream(
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     systemInstruction: systemPrompt,
+    generationConfig: {
+      maxOutputTokens: 8192,
+      temperature: 0.7,
+      topP: 0.95,
+    },
   })
 
   const history = messages.slice(0, -1).map((m) => ({
@@ -50,7 +55,8 @@ async function groqChatStream(
       { role: "system", content: systemPrompt },
       ...messages.map((m) => ({ role: m.role, content: m.content })),
     ],
-    max_tokens: 1024,
+    max_tokens: 8000,
+    temperature: 0.7,
     stream: true,
   })
 
