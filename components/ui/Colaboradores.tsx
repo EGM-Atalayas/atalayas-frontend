@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FaUniversity } from "react-icons/fa";
 import { AiFillEye } from "react-icons/ai";
 import {
     FlaskConical, Cpu, ChevronDown, University
@@ -35,7 +34,7 @@ const colaboradoresData = [
     },
     {
         categoria: "Parques Científicos y Tecnológicos",
-        iconos: FlaskConical,
+        icono: FlaskConical,
         imagen: "/bg-parque.avif",
         entidades: [
             {
@@ -56,7 +55,7 @@ const colaboradoresData = [
     },
     {
         categoria: "Institutos Tecnológicos",
-        iconos: Cpu,
+        icono: Cpu,
         imagen: "/bg-instituto.jpg",
         entidades: [
             {
@@ -102,11 +101,6 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
     const colorLabel = d ? "var(--azul-egm)" : "rgba(147,197,253,0.7)";
     const colorTitulo = d ? "var(--texto-primario)" : "#ffffff";
     const colorSubtitulo = d ? "var(--texto-muted)" : "rgba(255,255,255,0.5)";
-    const pillActivo = d ? "bg-[var(--azul-egm-light)] text-[var(--azul-egm)] border-[var(--azul-egm)]"
-        : "bg-white/10 text-white border-white/20";
-    const pillInactivo = d ? "bg-white text-[var(--texto-muted)] border-[var(--gris-borde)] hover:text-[var(--azul-egm)] hover:border-[var(--azul-egm)]"
-        : "bg-white/5 text-white/50 border-white/10 hover:text-white/80";
-    const bordeGrupo = d ? "1px solid var(--gris-borde)" : "1px solid rgba(255,255,255,0.05)";
     const overlayGrupo = d ? "rgba(255,255,255,0.82)" : "rgba(0,0,0,0.75)";
     const colorCabecera = d ? "var(--texto-primario)" : "#ffffff";
     const bgChevron = d ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.05)";
@@ -193,15 +187,20 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                             <div
                                 key={grupo.categoria}
                                 onMouseEnter={() => {
-                                    if (closeTimeoutRef.current[grupo.categoria]) {
-                                        clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                                    // Solo activar hover en pantallas grandes
+                                    if (window.innerWidth >= 768) {
+                                        if (closeTimeoutRef.current[grupo.categoria]) {
+                                            clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                                        }
+                                        setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
                                     }
-                                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
                                 }}
                                 onMouseLeave={() => {
-                                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
-                                        setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
-                                    }, 250);
+                                    if (window.innerWidth >= 768) {
+                                        closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
+                                            setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
+                                        }, 250);
+                                    }
                                 }}
                                 className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative"
                                 style={{
@@ -214,19 +213,42 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                             >
                                 {/* Overlay */}
                                 <div className="absolute inset-0 z-0" style={{ background: overlayGrupo, borderRadius: "inherit" }} />
-                                {/* Cabecera */}
+                                {/* Cabecera - Soporte Hover + Click (mejor para móvil) */}
                                 <button
-                                    className="w-full flex items-center justify-between p-6 sm:p-10 cursor-pointer transition-colors relative z-10"
+                                    onClick={() => {
+                                        setCategoriasAbiertas(prev => ({
+                                            ...prev,
+                                            [grupo.categoria]: !prev[grupo.categoria]
+                                        }));
+                                    }}
+                                    className="w-full flex items-center justify-between p-6 sm:p-10 cursor-pointer transition-all relative z-10 group active:scale-[0.985]"
                                     style={{ minHeight: "100px" }}
                                 >
-                                    <h3 className="text-xl sm:text-3xl font-bold tracking-wide text-left" style={{ color: colorCabecera }}>
-                                        {grupo.categoria}
-                                    </h3>
+                                    <div className="flex items-center gap-4">
+                                        {/* Icono con animación */}
+                                        <div
+                                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-active:scale-95"
+                                            style={{
+                                                background: d ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
+                                                color: d ? "var(--azul-egm)" : "#ffffff",
+                                            }}
+                                        >
+                                            <grupo.icono className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-300" />
+                                        </div>
+
+                                        <h3 className="text-xl sm:text-3xl font-bold tracking-wide text-left transition-colors" style={{ color: colorCabecera }}>
+                                            {grupo.categoria}
+                                        </h3>
+                                    </div>
+
+                                    {/* Chevron */}
                                     <div
-                                        className="shrink-0 ml-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors"
+                                        className="shrink-0 ml-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300"
                                         style={{ background: bgChevron, color: colorChevron }}
                                     >
-                                        <ChevronDown className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                                        <ChevronDown
+                                            className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                                        />
                                     </div>
                                 </button>
 
