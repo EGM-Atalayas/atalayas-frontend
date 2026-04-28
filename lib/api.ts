@@ -31,12 +31,15 @@ export const apiFetch = async (url: string, options: RequestInit = {}): Promise<
     ? { Authorization: `Bearer ${token}` }
     : {};
 
+  // Si el body es FormData dejamos que el browser ponga el Content-Type (multipart/form-data con boundary)
+  const isFormData = options?.body instanceof FormData;
+
   // Opciones de la petición original
   const fetchOptions: RequestInit = {
     ...options,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...authHeader,
       ...options.headers,
     },
