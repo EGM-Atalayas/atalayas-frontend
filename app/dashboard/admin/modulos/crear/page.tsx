@@ -383,26 +383,34 @@ export default function CrearModuloPage() {
     } finally { setGenTest(false); }
   };
 
-  const generarDescripcionDesdeArchivo = async () => {
+  const generarConIA = async () => {
     if (!archivoMRaw) return;
     setGenDesc(true);
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
       const formData = new FormData();
       formData.append("archivo", archivoMRaw);
-      formData.append("tiposSalida", "documentacion");
       const res = await fetch(`${API_URL}/ai/generar-desde-archivo?tiposSalida=documentacion`, {
-        method: "POST", credentials: "include",
+        method: "POST",
+        credentials: "include",
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: formData,
       });
-      if (res.ok) {
-        const data = await res.json();
-        const descGenerada: string = data?.descripcion ?? "";
-        if (descGenerada.trim()) setDescripcion(descGenerada.trim());
+      if (!res.ok) {
+        const err = await res.text();
+        console.error("Error IA:", res.status, err);
+        return;
       }
-    } catch { /* silencioso */ }
-    finally { setGenDesc(false); }
+      const data = await res.json();
+      const desc: string = data?.descripcion ?? "";
+      const cont: string = data?.contenido ?? "";
+      if (desc.trim()) setDescripcion(desc.trim());
+      if (cont.trim()) setIntroduccion(cont.trim());
+    } catch (e) {
+      console.error("Error generando con IA:", e);
+    } finally {
+      setGenDesc(false);
+    }
   };
 
   const guardarManual = async () => {
@@ -752,12 +760,12 @@ export default function CrearModuloPage() {
                               Descripción corta <span className="normal-case font-normal">(portada)</span>
                             </label>
                             {archivoM && (
-                              <button onClick={generarDescripcionDesdeArchivo} disabled={genDesc}
+                              <button onClick={generarConIA} disabled={genDesc}
                                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                                 style={{ background: genDesc ? "var(--gris-superficie)" : "#f3e8ff", color: genDesc ? "var(--texto-muted)" : "#7c3aed", border: "1px solid #e9d5ff" }}>
                                 {genDesc
                                   ? <><span className="w-3 h-3 border-2 rounded-full animate-spin inline-block" style={{ borderColor: "#e9d5ff", borderTopColor: "#7c3aed" }} />Generando…</>
-                                  : <><IconSpark sz={3} />Generar con IA</>}
+                                  : <><IconSpark sz={3} />Sugerir con IA</>}
                               </button>
                             )}
                           </div>
