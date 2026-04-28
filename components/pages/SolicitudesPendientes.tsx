@@ -21,6 +21,8 @@ const SolicitudesPendientes: React.FC = () => {
   const [solicitudes, setSolicitudes] = useState<SolicitudDB[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [procesando, setProcesando] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<{ tipo: "exito" | "error"; mensaje: string } | null>(null);
 
   useEffect(() => {
     fetchSolicitudes();
@@ -47,8 +49,9 @@ const SolicitudesPendientes: React.FC = () => {
   };
 
   const procesarSolicitud = async (id: string, accion: "APROBADA" | "RECHAZADA") => {
-    // Escondemos la tarjeta al instante
-    setSolicitudes((prev) => prev.filter((sol) => sol.empresaId !== id));
+    const nombreEmpresa = solicitudes.find((s) => s.empresaId === id)?.nombreEmpresa || "empresa";
+    setProcesando(id);
+    setAviso(null);
 
     try {
       if (accion === "RECHAZADA") {
@@ -56,11 +59,28 @@ const SolicitudesPendientes: React.FC = () => {
       } else {
         await actualizarEstadoEmpresa(id, accion);
       }
+
+      // Escondemos la tarjeta después de exitoso
+      setSolicitudes((prev) => prev.filter((sol) => sol.empresaId !== id));
+
+      const mensaje =
+        accion === "APROBADA"
+          ? `✅ ${nombreEmpresa} ha sido aprobada correctamente`
+          : `❌ ${nombreEmpresa} ha sido rechazada`;
+
+      setAviso({ tipo: "exito", mensaje });
+      setProcesando(null);
+
+      // Quitar aviso después de 4 segundos
+      setTimeout(() => setAviso(null), 4000);
     } catch (error) {
       console.error(`Error al ${accion}:`, error);
-      alert(`El servidor devolvió un error al intentar ${accion === 'APROBADA' ? 'aprobar' : 'rechazar'}. César debe revisar los logs del backend.`);
-      // Si falla, volvemos a mostrar la tarjeta
-      fetchSolicitudes();
+      setProcesando(null);
+      setAviso({
+        tipo: "error",
+        mensaje: `Error al ${accion === "APROBADA" ? "aprobar" : "rechazar"}. Intenta de nuevo.`,
+      });
+      setTimeout(() => setAviso(null), 4000);
     }
   };
 
@@ -89,6 +109,19 @@ const SolicitudesPendientes: React.FC = () => {
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 text-sm">
           {error}
+        </div>
+      )}
+
+      {/* AVISO FLOTANTE */}
+      {aviso && (
+        <div
+          className={`fixed bottom-6 right-6 max-w-sm px-6 py-4 rounded-xl shadow-lg border text-sm font-medium animate-fadeIn ${
+            aviso.tipo === "exito"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-red-50 text-red-700 border-red-200"
+          }`}
+        >
+          {aviso.mensaje}
         </div>
       )}
 
@@ -172,15 +205,35 @@ const SolicitudesPendientes: React.FC = () => {
               <div className="grid grid-cols-2 gap-3 p-5 bg-slate-50 border-t border-slate-100">
                 <button
                   onClick={() => procesarSolicitud(solicitud.empresaId, "RECHAZADA")}
-                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                  disabled={procesando === solicitud.empresaId}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <FaTimes /> Rechazar
+                  {procesando === solicitud.empresaId ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-rose-300 border-t-rose-600 rounded-full animate-spin"></div>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <FaTimes /> Rechazar
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => procesarSolicitud(solicitud.empresaId, "APROBADA")}
-                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-200 transition-colors"
+                  disabled={procesando === solicitud.empresaId}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-emerald-200 transition-colors"
                 >
-                  <FaCheck /> Aprobar
+                  {procesando === solicitud.empresaId ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-emerald-300 border-t-white rounded-full animate-spin"></div>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck /> Aprobar
+                    </>
+                  )}
                 </button>
               </div>
 
