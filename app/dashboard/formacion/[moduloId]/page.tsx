@@ -2,8 +2,8 @@
 
 /**
  * Página de detalle de módulo formativo
- * Ruta: /dashboard/formacion/[id]
- * Archivo: app/dashboard/formacion/[id]/page.tsx
+ * Ruta: /dashboard/formacion/[moduloId]
+ * Archivo: app/dashboard/formacion/[moduloId]/page.tsx
  */
 
 import React, { useState, useEffect } from "react";
@@ -81,6 +81,8 @@ interface ModuloAPI {
   podcastAudioUrl: string | null;
   tiposSalida: string | null;
   activo: boolean;
+  adjuntoUrl?: string | null;
+  adjuntoNombre?: string | null;
 }
 
 const TIPO_LABEL: Record<string, string> = {
@@ -169,6 +171,10 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   if (items.length === 0) {
     items.push({ id: `c${idx++}`, titulo: "Descripción y contenido", tipo: "texto", duracion: "15–45 min", completado: false, bloqueado: false });
   }
+  if (moduloApi.adjuntoUrl) {
+    const nombre = moduloApi.adjuntoNombre ?? "Documento adjunto";
+    items.push({ id: `c${idx++}`, titulo: nombre, tipo: "pdf", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
+  }
   if (moduloApi.testPreguntas) {
     items.push({ id: `c${idx++}`, titulo: "Test de evaluación", tipo: "quiz", duracion: "10–15 min", completado: false, bloqueado: true });
   }
@@ -245,7 +251,7 @@ function aplicarEstado(base: ModuloMock, completados: string[]): ModuloMock {
 export default function Page() {
   const router = useRouter();
   const rawParams = useParams();
-  const id = Array.isArray(rawParams.id) ? rawParams.id[0] : (rawParams.id ?? "");
+  const id = Array.isArray(rawParams.moduloId) ? rawParams.moduloId[0] : (rawParams.moduloId ?? "");
 
   const [modulo, setModulo] = useState<ModuloMock | null>(null);
   const [moduloApi, setModuloApi] = useState<ModuloAPI | null>(null);
@@ -591,7 +597,7 @@ export default function Page() {
             </div>
 
             {/* Cuerpo según tipo */}
-            <div className="px-8 py-7">
+            <div className={activo.tipo === "pdf" ? "px-6 py-5" : "px-8 py-7"}>
               {activo.tipo === "texto" && (() => {
                 // Si el ítem tiene seccionIdx, mostrar solo esa sección; si no, el markdown completo
                 const seccion = activo.seccionIdx !== undefined && activo.seccionIdx >= 0
@@ -605,7 +611,7 @@ export default function Page() {
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "pdf" && <ContenidoPDF onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
             </div>
 
@@ -1002,39 +1008,60 @@ function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: s
   );
 }
 
-function ContenidoPDF({ onVerificado }: { onVerificado?: () => void }) {
+function ContenidoPDF({ url, nombre, onVerificado }: { url?: string; nombre?: string; onVerificado?: () => void }) {
   const [leido, setLeido] = React.useState(false);
-  return (
-    <div>
-      <div className="rounded-2xl flex items-center gap-5 px-6 py-5 mb-6"
-        style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: "var(--error-light)", color: "var(--error)" }}>
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-            Protocolo_PRL_Alturas_v2.pdf
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PDF · 2.4 MB · 18 páginas</p>
-        </div>
-        <button className="text-xs font-semibold px-4 py-2 rounded-lg shrink-0 transition-colors"
-          style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
-          Descargar
-        </button>
+  const displayNombre = nombre ?? "Documento adjunto";
+
+  if (!url) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>
+          No hay documento adjunto en este módulo.
+        </p>
       </div>
-      <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--texto-secundario)" }}>
-        Descarga y lee el documento antes de marcar este contenido como completado. Contiene los
-        formularios de registro obligatorios que deberás cumplimentar en cada intervención.
-      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Barra superior: nombre + botón descargar */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "var(--error-light)", color: "var(--error)" }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+            {displayNombre}
+          </p>
+        </div>
+        <a href={url} download={nombre ?? true}
+          className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg shrink-0"
+          style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.18)" }}>
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Descargar
+        </a>
+      </div>
+
+      {/* Visor PDF incrustado */}
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", height: "68vh", minHeight: "480px" }}>
+        <iframe
+          src={`${url}#toolbar=1&navpanes=0`}
+          className="w-full h-full"
+          title={displayNombre}
+          style={{ display: "block", border: "none" }}
+        />
+      </div>
+
+      {/* Confirmar lectura */}
       {!leido ? (
         <button
           onClick={() => { setLeido(true); onVerificado?.(); }}
-          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          className="w-full py-2.5 rounded-xl text-sm font-semibold"
           style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid var(--azul-egm)" }}>
           He leído el documento completo
         </button>

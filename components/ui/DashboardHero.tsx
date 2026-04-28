@@ -3,12 +3,19 @@
 import { useAuth } from "@/context/AuthContext";
 
 interface DashboardHeroProps {
-  prefijo?:     string;    // texto en Poppins bold, ej: "Centro de "
-  titulo:       string;    // texto en Instrument Serif italic, ej: "Formación."
-  imagenFondo?: string;    // ruta relativa a /public, por defecto background-dashboard.jpg
+  prefijo?: string;
+  titulo: string;
+  imagenFondo?: string;
+  objectPosition?: string;     // ← Nueva prop (opcional)
 }
 
-export default function DashboardHero({ prefijo, titulo, imagenFondo = "/background-dashboard.jpg" }: DashboardHeroProps) {
+export default function DashboardHero({
+  prefijo,
+  titulo,
+  imagenFondo = "/background-dashboard.jpg",
+  objectPosition = "center 40%"   // valor por defecto (el que tenías antes)
+}: DashboardHeroProps) {
+
   const { usuario } = useAuth();
 
   return (
@@ -21,7 +28,9 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
         alt=""
         aria-hidden
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ objectPosition: "center 40%" }}
+        style={{
+          objectPosition: objectPosition   // ← Ahora usa la prop
+        }}
       />
       <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.60)" }} />
       <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
@@ -44,11 +53,11 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
             <span
               className="text-white"
               style={{
-                fontSize:      "clamp(3rem, 6vw, 4rem)",
-                fontFamily:    "var(--font-poppins), sans-serif",
-                fontWeight:    300,
+                fontSize: "clamp(3rem, 6vw, 4rem)",
+                fontFamily: "var(--font-poppins), sans-serif",
+                fontWeight: 300,
                 letterSpacing: "-0.03em",
-                animation:     "heroFadeUp 0.7s ease both",
+                animation: "heroFadeUp 0.7s ease both",
               }}
             >
               {prefijo}
@@ -56,18 +65,18 @@ export default function DashboardHero({ prefijo, titulo, imagenFondo = "/backgro
           )}
           <span
             style={{
-              fontSize:             "clamp(3rem, 6vw, 5rem)",
-              fontFamily:           "'Instrument Serif', serif",
-              fontStyle:            "italic",
-              fontWeight:           400,
-              letterSpacing:        "-0.01em",
-              lineHeight:           1,
-              background:           "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-              backgroundSize:       "300% 100%",
+              fontSize: "clamp(3rem, 6vw, 5rem)",
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              letterSpacing: "-0.01em",
+              lineHeight: 1,
+              background: "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
+              backgroundSize: "300% 100%",
               WebkitBackgroundClip: "text",
-              WebkitTextFillColor:  "transparent",
-              backgroundClip:       "text",
-              animation:            "heroFadeUp 0.7s ease 0.12s both, gradientShift 8s ease infinite",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "heroFadeUp 0.7s ease 0.12s both, gradientShift 8s ease infinite",
             }}
           >
             {titulo}

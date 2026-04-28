@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AiFillEye } from "react-icons/ai";
 import {
-    GraduationCap, FlaskConical, Rocket, Microchip, ChevronDown
+    FlaskConical, Cpu, ChevronDown, University
 } from "lucide-react";
 
 interface ColaboradoresProps {
@@ -13,7 +13,7 @@ interface ColaboradoresProps {
 const colaboradoresData = [
     {
         categoria: "Universidades y Centros de Investigación",
-        icono: GraduationCap,
+        icono: University,
         imagen: "/bg-universidad.avif",
         entidades: [
             {
@@ -29,13 +29,6 @@ const colaboradoresData = [
                 color: "#8B1A1A",
                 descripcion: "Universidad pública con múltiples programas de innovación, transferencia y colaboración con empresas e instituciones.",
                 web: "https://www.umh.es",
-            },
-            {
-                nombre: "Universidad de Alicante — CENID",
-                icon: "/cenid-icono.jpg",
-                color: "#0077B6",
-                descripcion: "Centro de investigación multidisciplinar enfocado en el desarrollo e innovación digital para el tejido empresarial.",
-                web: "https://cenid.es",
             },
         ],
     },
@@ -61,43 +54,22 @@ const colaboradoresData = [
         ],
     },
     {
-        categoria: "Hubs de Innovación y Aceleración",
-        icono: Rocket,
-        imagen: "/bg-innova.jpg",
-        entidades: [
-            {
-                nombre: "Alicante Futura",
-                icon: "/af-icono.png",
-                color: "#6A1B9A",
-                descripcion: "Hub urbano de innovación del Ayuntamiento de Alicante, orientado a impulsar el ecosistema tecnológico y la cultura emprendedora de la ciudad.",
-                web: "https://alicantefutura.org",
-            },
-            {
-                nombre: "CEEI Alcoy — Valencia",
-                icon: "/ceei-icono.png",
-                color: "#E65100",
-                descripcion: "Centro Europeo de Empresas e Innovación que apoya la creación y consolidación de empresas innovadoras mediante asesoramiento y recursos.",
-                web: "https://ceeialcoi.emprenemjunts.es",
-            },
-            {
-                nombre: "Distrito Digital",
-                icon: "/ddcv-icono.png",
-                color: "#0097A7",
-                descripcion: "Ecosistema de innovación de la Generalitat Valenciana que concentra talento, tecnología y empresas digitales en la provincia de Alicante.",
-                web: "https://distritodigitalcv.es",
-            },
-        ],
-    },
-    {
         categoria: "Institutos Tecnológicos",
-        icono: Microchip,
+        icono: Cpu,
         imagen: "/bg-instituto.jpg",
         entidades: [
             {
-                nombre: "Instituto Tecnológico de Informática (ITI)",
-                icon: "/iti-icono.jpg",
+                nombre: "AIJU — Instituto Tecnológico de producto infantil y recreativo",
+                icon: "/aiju-icono.png",
                 color: "#1565C0",
-                descripcion: "Centro de investigación aplicada en tecnologías de la información, inteligencia artificial y transformación digital.",
+                descripcion: "Centro tecnológico especializado en el sector del producto infantil y recreativo, ofreciendo servicios de investigación, desarrollo e innovación.",
+                web: "https://www.aiju.es",
+            },
+            {
+                nombre: "INESCOP Instituto Tecnológico del Calzado",
+                icon: "/inescop-icono.png",
+                color: "#1565C0",
+                descripcion: "Centro de investigación aplicada en el calzado, servicios de investigacion y diferentes competitividades.",
                 web: "https://www.iti.es",
             },
             {
@@ -129,11 +101,6 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
     const colorLabel = d ? "var(--azul-egm)" : "rgba(147,197,253,0.7)";
     const colorTitulo = d ? "var(--texto-primario)" : "#ffffff";
     const colorSubtitulo = d ? "var(--texto-muted)" : "rgba(255,255,255,0.5)";
-    const pillActivo = d ? "bg-[var(--azul-egm-light)] text-[var(--azul-egm)] border-[var(--azul-egm)]"
-        : "bg-white/10 text-white border-white/20";
-    const pillInactivo = d ? "bg-white text-[var(--texto-muted)] border-[var(--gris-borde)] hover:text-[var(--azul-egm)] hover:border-[var(--azul-egm)]"
-        : "bg-white/5 text-white/50 border-white/10 hover:text-white/80";
-    const bordeGrupo = d ? "1px solid var(--gris-borde)" : "1px solid rgba(255,255,255,0.05)";
     const overlayGrupo = d ? "rgba(255,255,255,0.82)" : "rgba(0,0,0,0.75)";
     const colorCabecera = d ? "var(--texto-primario)" : "#ffffff";
     const bgChevron = d ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.05)";
@@ -172,47 +139,47 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
             <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-16 sm:py-24">
 
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: colorLabel }}>
-                        Colaboradores
-                    </p>
-                    <h2
-                        className="text-4xl sm:text-6xl font-bold leading-[0.95] mb-6"
-                        style={{ fontFamily: "'Instrument Serif', serif", color: colorTitulo, letterSpacing: "-1px" }}
-                    >
-                        Ecosistema de Proximidad
-                    </h2>
-                    <p className="text-base leading-relaxed max-w-2xl mx-auto" style={{ color: colorSubtitulo }}>
-                        Universidades, parques científicos, institutos tecnológicos y hubs de innovación. Conectamos necesidades reales con capacidades estratégicas del territorio.
-                    </p>
-                </div>
+                {!d && (
+                    <div className="text-center mb-16">
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: colorLabel }}>
+                            Colaboradores
+                        </p>
+                        <h2
+                            className="text-4xl sm:text-6xl font-bold leading-[0.95] mb-6"
+                            style={{ fontFamily: "'Instrument Serif', serif", color: colorTitulo, letterSpacing: "-1px" }}
+                        >
+                            Ecosistema de Proximidad
+                        </h2>
+                        <p className="text-base leading-relaxed max-w-2xl mx-auto" style={{ color: colorSubtitulo }}>
+                            Universidades, centros de investigación, parques científicos e institutos tecnológicos. Conectamos necesidades reales con capacidades estratégicas del territorio.
+                        </p>
+                    </div>
+                )}
 
-                {/* Pills */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-                    {colaboradoresData.map((grupo, index) => {
-                        const Icon = grupo.icono;
-                        const isOpen = categoriasAbiertas[grupo.categoria];
+                {/* Descripción del Ecosistema - Solo en Dashboard */}
+                {d && (
+                    <div className="max-w-3xl mx-auto text-center mb-16 px-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-(--azul-egm-light)/20 border border-(--azul-egm)/30 mb-6">
+                            <AiFillEye className="text-xl text-(--azul-egm)" />
+                            <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--azul-egm)" }}>
+                                NUESTRO ENFOQUE
+                            </span>
+                        </div>
 
-                        return (
-                            <button
-                                key={grupo.categoria}
-                                className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 hover:scale-105 flex items-center gap-2 ${isOpen ? pillActivo : pillInactivo}`}
-                                style={{
-                                    borderWidth: "1px",
-                                    borderStyle: "solid",
-                                    backdropFilter: "blur(8px)",
-                                    transitionDelay: `${80 + index * 50}ms`
-                                }}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {grupo.categoria}
-                            </button>
-                        );
-                    })}
-                </div>
+                        <h3 className="text-2xl sm:text-3xl font-semibold" style={{ color: "var(--texto-primario)" }}>
+                            Conectando talento, conocimiento y empresa
+                        </h3>
 
-                {/* Grupos - Versión corregida (solo hover) */}
-                <div className="flex flex-col gap-8 max-w-[1600px] w-[95%] lg:w-full mx-auto pb-8">
+                        <p className="text-base sm:text-lg leading-relaxed mt-4" style={{ color: "var(--texto-muted)" }}>
+                            Facilitamos la colaboración estratégica entre universidades, parques científicos,
+                            institutos tecnológicos y empresas del territorio.
+                            Aceleramos proyectos de innovación con impacto real y cercano.
+                        </p>
+                    </div>
+                )}
+
+                {/* Grupos*/}
+                <div className="flex flex-col gap-8 max-w-[1600px] w-[95%] lg:w-full mx-auto pt-8 pb-8">
                     {colaboradoresData.map((grupo) => {
                         const isOpen = categoriasAbiertas[grupo.categoria];
 
@@ -220,19 +187,24 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                             <div
                                 key={grupo.categoria}
                                 onMouseEnter={() => {
-                                    if (closeTimeoutRef.current[grupo.categoria]) {
-                                        clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                                    // Solo activar hover en pantallas grandes
+                                    if (window.innerWidth >= 768) {
+                                        if (closeTimeoutRef.current[grupo.categoria]) {
+                                            clearTimeout(closeTimeoutRef.current[grupo.categoria]);
+                                        }
+                                        setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
                                     }
-                                    setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
                                 }}
                                 onMouseLeave={() => {
-                                    closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
-                                        setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
-                                    }, 250);
+                                    if (window.innerWidth >= 768) {
+                                        closeTimeoutRef.current[grupo.categoria] = setTimeout(() => {
+                                            setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: false }));
+                                        }, 250);
+                                    }
                                 }}
                                 className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative"
                                 style={{
-                                    border: "none",                    // ← Eliminamos el borde
+                                    border: "none",
                                     backgroundImage: `url(${grupo.imagen})`,
                                     backgroundSize: "cover",
                                     backgroundPosition: "center",
@@ -241,19 +213,42 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                             >
                                 {/* Overlay */}
                                 <div className="absolute inset-0 z-0" style={{ background: overlayGrupo, borderRadius: "inherit" }} />
-                                {/* Cabecera */}
+                                {/* Cabecera - Soporte Hover + Click (mejor para móvil) */}
                                 <button
-                                    className="w-full flex items-center justify-between p-6 sm:p-10 cursor-pointer transition-colors relative z-10"
+                                    onClick={() => {
+                                        setCategoriasAbiertas(prev => ({
+                                            ...prev,
+                                            [grupo.categoria]: !prev[grupo.categoria]
+                                        }));
+                                    }}
+                                    className="w-full flex items-center justify-between p-6 sm:p-10 cursor-pointer transition-all relative z-10 group active:scale-[0.985]"
                                     style={{ minHeight: "100px" }}
                                 >
-                                    <h3 className="text-xl sm:text-3xl font-bold tracking-wide text-left" style={{ color: colorCabecera }}>
-                                        {grupo.categoria}
-                                    </h3>
+                                    <div className="flex items-center gap-4">
+                                        {/* Icono con animación */}
+                                        <div
+                                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-active:scale-95"
+                                            style={{
+                                                background: d ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
+                                                color: d ? "var(--azul-egm)" : "#ffffff",
+                                            }}
+                                        >
+                                            <grupo.icono className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-300" />
+                                        </div>
+
+                                        <h3 className="text-xl sm:text-3xl font-bold tracking-wide text-left transition-colors" style={{ color: colorCabecera }}>
+                                            {grupo.categoria}
+                                        </h3>
+                                    </div>
+
+                                    {/* Chevron */}
                                     <div
-                                        className="shrink-0 ml-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors"
+                                        className="shrink-0 ml-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300"
                                         style={{ background: bgChevron, color: colorChevron }}
                                     >
-                                        <ChevronDown className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                                        <ChevronDown
+                                            className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                                        />
                                     </div>
                                 </button>
 
