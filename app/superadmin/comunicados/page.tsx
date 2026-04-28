@@ -51,9 +51,12 @@ export default function SuperadminComunicadosPage() {
   const [descripcion, setDescripcion] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
+  const [imagenPreviewUrl, setImagenPreviewUrl] = useState("");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isDraggingImagen, setIsDraggingImagen] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [okMsg, setOkMsg] = useState("");
@@ -98,6 +101,13 @@ export default function SuperadminComunicadosPage() {
     return () => URL.revokeObjectURL(url);
   }, [tipoContenido, videoFile]);
 
+  useEffect(() => {
+    if (!imagenFile) { setImagenPreviewUrl(""); return; }
+    const url = URL.createObjectURL(imagenFile);
+    setImagenPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imagenFile]);
+
   // ── ACCIONES DE INTERFAZ ──
   const abrirCrear = () => {
     limpiarFormulario();
@@ -119,8 +129,10 @@ export default function SuperadminComunicadosPage() {
     setDescripcion("");
     setPdfFile(null);
     setVideoFile(null);
+    setImagenFile(null);
     setPdfPreviewUrl("");
     setVideoPreviewUrl("");
+    setImagenPreviewUrl("");
     setIaResumen("");
     setIaEtiquetas([]);
     setError("");
@@ -251,6 +263,8 @@ Instrucciones para los campos del JSON:
       if (tipoContenido === "video" && videoFile) formData.append("archivo", videoFile);
       else if (pdfFile) formData.append("archivo", pdfFile);
       
+      if (imagenFile) formData.append("imagen", imagenFile);
+      
       if (iaResumen) formData.append("iaResumen", iaResumen);
       if (iaEtiquetas.length > 0) formData.append("iaEtiquetas", JSON.stringify(iaEtiquetas));
 
@@ -298,6 +312,18 @@ Instrucciones para los campos del JSON:
     setPdfFile(file); setVideoFile(null);
   };
 
+  const handleDragOverImagen = (e: DragEvent<HTMLLabelElement>) => { e.preventDefault(); setIsDraggingImagen(true); };
+  const handleDragLeaveImagen = (e: DragEvent<HTMLLabelElement>) => { e.preventDefault(); setIsDraggingImagen(false); };
+  const handleDropImagen = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDraggingImagen(false);
+    setError("");
+    const file = e.dataTransfer.files?.[0] ?? null;
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("Debes soltar una imagen válida."); return; }
+    setImagenFile(file);
+  };
+
   const ahora = Date.now();
   const listaFiltrada = comunicados.filter((c) => {
     if (filtroEstado === "activos")   return c.activo && (!c.fechaExpiracion || new Date(c.fechaExpiracion).getTime() > ahora);
@@ -307,7 +333,7 @@ Instrucciones para los campos del JSON:
 
   return (
     <div className="w-full">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 pt-10 pb-16 relative">
+      <div className="px-6 md:px-8 lg:px-10 w-full pt-10 pb-16 relative">
         
         {/* Cabecera con acciones */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
@@ -371,6 +397,40 @@ Instrucciones para los campos del JSON:
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* ── SECCIÓN IMAGEN ── */}
+                  <div className="rounded-2xl p-4 border border-slate-200 bg-slate-50">
+                    <p className="text-xs font-semibold mb-2 text-slate-600">Imagen destacada <span className="text-slate-400">(Opcional)</span></p>
+                    <label
+                      onDragOver={handleDragOverImagen}
+                      onDragLeave={handleDragLeaveImagen}
+                      onDrop={handleDropImagen}
+                      className="block rounded-2xl border-2 border-dashed p-5 cursor-pointer transition-all bg-white"
+                      style={{ borderColor: isDraggingImagen ? "#2563eb" : imagenFile ? "#10b981" : "#cbd5e1" }}
+                    >
+                      <div className="flex justify-center mb-2">
+                        {imagenFile ? (
+                          <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-emerald-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        ) : (
+                          <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold mt-2 text-center text-slate-800">
+                        {imagenFile ? "¡Imagen lista!" : "Arrastra o selecciona una imagen"}
+                      </p>
+                      <p className="text-xs mt-1 text-center break-all text-slate-500">{imagenFile?.name || "PNG, JPG, WebP"}</p>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file && file.type.startsWith("image/")) { setImagenFile(file); }
+                      }} />
+                    </label>
+                    {imagenPreviewUrl && (
+                      <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-white relative">
+                        <img src={imagenPreviewUrl} alt="preview" className="w-full h-auto max-h-48 object-cover" />
+                        <button type="button" onClick={() => { setImagenFile(null); setImagenPreviewUrl(""); }} className="absolute top-2 right-2 p-2 rounded-lg bg-red-500 text-white hover:bg-red-600">×</button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">

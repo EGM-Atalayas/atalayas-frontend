@@ -18,7 +18,12 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     titulo: nombreParaMostrar
   };
 
-  if (pathname.includes("/superadmin/empresas")) {
+  if (pathname.includes("/superadmin/administracion")) {
+    heroConfig = {
+      prefijo: "Panel de ",
+      titulo: "Administración"
+    };
+  } else if (pathname.includes("/superadmin/empresas")) {
     heroConfig = {
       prefijo: "Gestiona las ",
       titulo: "Empresas"

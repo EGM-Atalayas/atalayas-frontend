@@ -24,9 +24,7 @@ function getInitials(nombre: string): string {
 // Enlaces exclusivos para el SuperAdmin
 const SUPERADMIN_LINKS = [
   { label: "Inicio", path: "/superadmin" },
-  { label: "Empresas", path: "/superadmin/empresas" },
-  { label: "Solicitudes", path: "/superadmin/solicitudes" },
-  { label: "Estadísticas", path: "/superadmin/estadisticas" },
+  { label: "Administración", path: "/superadmin/administracion" },
   { label: "Comunicados", path: "/superadmin/comunicados" },
 ];
 

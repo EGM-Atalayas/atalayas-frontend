@@ -98,7 +98,7 @@ const SolicitudesPendientes: React.FC = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-fadeIn min-h-screen">
+    <div className="w-full animate-fadeIn min-h-screen p-6 md:p-10">
       
       {/* CABECERA */}
       <div className="mb-8">
@@ -139,7 +139,7 @@ const SolicitudesPendientes: React.FC = () => {
           <p className="text-slate-500">No hay ninguna solicitud de empresa pendiente de revisión en este momento.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[3000px]">
           {solicitudes.map((solicitud) => (
             <div key={solicitud.empresaId} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
               
