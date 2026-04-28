@@ -1658,12 +1658,7 @@ function FormAnuncio({
   const [tab, setTab]         = useState<Tab>("contenido");
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<NoticiaInput>({
-    titulo: "", contenido: "", esGlobal: false, empresaId: null,
-    imagenUrl: null, enlaceUrl: null, enlaceTexto: null, videoUrl: null,
-    adjuntoUrl: null, adjuntoNombre: null, estado: "publicado", fijado: false, categoria: null,
-    ...initialValues,
-  });
+  const [form, setForm]       = useState<NoticiaInput>({ ...initialValues });
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
