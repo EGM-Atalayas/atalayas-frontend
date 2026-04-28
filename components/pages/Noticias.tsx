@@ -826,10 +826,10 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
   const hasNext   = !isPreview && navIndex < navItems.length - 1;
   const zIdx      = isPreview ? 120 : 50;
   const modalRef  = useRef<HTMLDivElement>(null);
-  const [dir, setDir] = useState<"next" | "prev">("next");
+  const [dir, setDir] = useState<"next" | "prev" | null>(null);
 
-  function goNext() { setDir("next"); onNavigate(navItems[navIndex + 1], navIndex + 1); }
-  function goPrev() { setDir("prev"); onNavigate(navItems[navIndex - 1], navIndex - 1); }
+  function goNext() { setDir(null); requestAnimationFrame(() => { setDir("next"); onNavigate(navItems[navIndex + 1], navIndex + 1); }); }
+  function goPrev() { setDir(null); requestAnimationFrame(() => { setDir("prev"); onNavigate(navItems[navIndex - 1], navIndex - 1); }); }
 
   // Teclado ← →
   useEffect(() => {
@@ -924,7 +924,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
         </div>
 
         {/* Contenido scrolleable */}
-        <div className={`modal-scroll modal-slide-${dir} overflow-y-auto flex-1 flex flex-col`}
+        <div className={`modal-scroll${dir ? ` modal-slide-${dir}` : ""} overflow-y-auto flex-1 flex flex-col`}
           style={{ background: "var(--blanco)" }}>
           <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-3">
             <h2 className="leading-tight"
@@ -1956,7 +1956,7 @@ function FormAnuncio({
               />
               {imagenModo === "url" ? (
                 <>
-                  <input type="url" value={form.imagenUrl ?? ""}
+                  <input type="url" value={form.imagenUrl || ""}
                     onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
                     placeholder="https://..."
                     className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
