@@ -91,14 +91,18 @@ function formatDate(iso?: string | null) {
 
 function formatRelative(iso?: string | null): string {
   if (!iso) return "";
-  const diff = Date.now() - new Date(iso).getTime();
-  const min  = Math.floor(diff / 60000);
-  const hrs  = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (min < 1)   return "Ahora mismo";
-  if (min < 60)  return `Hace ${min} min`;
-  if (hrs < 24)  return `Hace ${hrs} h`;
-  if (days < 7)  return `Hace ${days} día${days > 1 ? "s" : ""}`;
+  const diff   = Date.now() - new Date(iso).getTime();
+  const min    = Math.floor(diff / 60000);
+  const hrs    = Math.floor(diff / 3600000);
+  const days   = Math.floor(diff / 86400000);
+  const weeks  = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  if (min < 1)      return "Ahora mismo";
+  if (min < 60)     return `Hace ${min} min`;
+  if (hrs < 24)     return `Hace ${hrs} h`;
+  if (days < 7)     return `Hace ${days} día${days > 1 ? "s" : ""}`;
+  if (weeks < 5)    return `Hace ${weeks} semana${weeks > 1 ? "s" : ""}`;
+  if (months < 12)  return `Hace ${months} mes${months > 1 ? "es" : ""}`;
   return formatDate(iso);
 }
 
@@ -912,7 +916,7 @@ function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, pued
             </div>
             <div className="text-right shrink-0">
               <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.88)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
-              <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)", textShadow: SHADOW_TXT }}>{formatDate(item.fecha)}</p>
+              {(() => { const rel = formatRelative(item.fecha); const abs = formatDate(item.fecha); return rel !== abs ? <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)", textShadow: SHADOW_TXT }}>{abs}</p> : null; })()}
             </div>
           </div>
         </div>
