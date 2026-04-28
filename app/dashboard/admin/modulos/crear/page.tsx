@@ -343,6 +343,7 @@ export default function CrearModuloPage() {
   const [portadaPreview, setPortadaPreview] = useState<string>("");
   const [introduccion,   setIntroduccion]   = useState("");
   const [genDesc,        setGenDesc]        = useState(false);
+  const [genDescError,   setGenDescError]   = useState("");
   const [guardando,      setGuardando]      = useState(false);
   const [guardado,       setGuardado]       = useState(false);
   const [errorMsg,       setErrorMsg]       = useState("");
@@ -386,6 +387,7 @@ export default function CrearModuloPage() {
   const generarConIA = async () => {
     if (!archivoMRaw) return;
     setGenDesc(true);
+    setGenDescError("");
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
       const formData = new FormData();
@@ -397,8 +399,8 @@ export default function CrearModuloPage() {
         body: formData,
       });
       if (!res.ok) {
-        const err = await res.text();
-        console.error("Error IA:", res.status, err);
+        const errTxt = await res.text().catch(() => "");
+        setGenDescError(`Error ${res.status}${errTxt ? `: ${errTxt.slice(0, 120)}` : ""}`);
         return;
       }
       const data = await res.json();
@@ -406,8 +408,9 @@ export default function CrearModuloPage() {
       const cont: string = data?.contenido ?? "";
       if (desc.trim()) setDescripcion(desc.trim());
       if (cont.trim()) setIntroduccion(cont.trim());
+      if (!desc.trim() && !cont.trim()) setGenDescError("La IA no devolvió contenido. Inténtalo de nuevo.");
     } catch (e) {
-      console.error("Error generando con IA:", e);
+      setGenDescError(e instanceof Error ? e.message : "Error de red al contactar con la IA.");
     } finally {
       setGenDesc(false);
     }
@@ -775,6 +778,7 @@ export default function CrearModuloPage() {
                             style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
                             onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
                             onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
+                          {genDescError && <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>⚠ {genDescError}</p>}
                         </div>
                         {/* Introducción del módulo */}
                         <div>
