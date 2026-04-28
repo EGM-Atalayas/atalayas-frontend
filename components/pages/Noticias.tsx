@@ -260,20 +260,20 @@ function BorradoresPanel({ borradores, show, onToggle, onEditar, onPublicar, onE
 }) {
   return (
     <div className="mb-6 rounded-2xl overflow-hidden"
-      style={{ border: "1.5px solid #bfdbfe", background: "#eff6ff" }}>
+      style={{ border: "1.5px solid #fcd34d", background: "#fffbeb" }}>
 
       {/* Cabecera colapsable */}
       <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-4 py-3"
         style={{ background: "none", border: "none", cursor: "pointer" }}>
         {/* Pill "Borrador" */}
         <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-          style={{ background: "#dbeafe", color: "#1e3a8a", border: "1px solid #bfdbfe" }}>
+          style={{ background: "#fde68a", color: "#92400e", border: "1px solid #fcd34d" }}>
           Borrador
         </span>
         <span className="text-sm font-semibold flex-1 text-left" style={{ color: "var(--texto-primario)" }}>
           {borradores.length} {borradores.length === 1 ? "anuncio pendiente" : "anuncios pendientes"}
         </span>
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" strokeWidth={2.5}
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#d97706" strokeWidth={2.5}
           style={{ transition: "transform 0.2s", transform: show ? "rotate(0deg)" : "rotate(-90deg)" }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
@@ -311,24 +311,30 @@ function BorradoresPanel({ borradores, show, onToggle, onEditar, onPublicar, onE
               {/* Acciones */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button onClick={() => onEditar(n)}
-                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold transition-colors"
-                  style={{ background: "var(--blanco)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#93c5fd")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}>
+                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
+                  style={{ background: "var(--blanco)", color: "#2563eb", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                   Editar
                 </button>
                 <button onClick={() => onPublicar(n)}
-                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold transition-colors"
-                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", border: "none", boxShadow: "0 2px 6px rgba(22,163,74,0.25)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
+                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", border: "none", boxShadow: "0 2px 6px rgba(22,163,74,0.25)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                   Publicar
                 </button>
                 <button onClick={() => onEliminar(n.anuncioId)}
-                  className="flex items-center justify-center rounded-lg transition-colors"
-                  style={{ width: 28, height: 28, background: "transparent", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#fca5a5"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--gris-borde)"; }}
+                  className="flex items-center justify-center rounded-lg"
+                  style={{ width: 28, height: 28, background: "transparent", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.9)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
                   title="Eliminar borrador">
                   <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="var(--texto-muted)" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -559,6 +565,14 @@ export default function ComunicacionPage() {
 
   const feedEmpresaOrdenado = ordenarFeed(feedEmpresaBuscado, orden);
 
+  // Feed navegable en el modal — respeta el filtro activo para que las flechas
+  // no salten entre EGM y empresa cuando estás en una vista filtrada
+  const feedNavegable = filtroFuente === "egm"
+    ? feedEGMFiltrado
+    : filtroFuente === "empresa"
+      ? feedEmpresaOrdenado
+      : feedCompletoBuscado;
+
   const cargando = loadingComunicados || loadingAnuncios;
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
@@ -577,16 +591,16 @@ export default function ComunicacionPage() {
         .nav-btn {
           background: rgba(255,255,255,0.12);
           border: 1.5px solid rgba(255,255,255,0.25);
-          transform: translateY(-50%) scale(1);
+          transform: scale(1);
           transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
         .nav-btn:hover {
           background: rgba(37,99,235,0.75) !important;
           border-color: rgba(147,197,253,0.5) !important;
-          transform: translateY(-50%) scale(1.1) !important;
+          transform: scale(1.1) !important;
         }
         .nav-btn:active {
-          transform: translateY(-50%) scale(0.95) !important;
+          transform: scale(0.95) !important;
         }
       `}</style>
 
@@ -896,37 +910,59 @@ export default function ComunicacionPage() {
 
       {/* ── CONFIRMACIÓN ELIMINAR ────────────────────────────────────────── */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.62)", backdropFilter: "blur(6px)", animation: "modalBgIn 0.2s ease" }}
           onClick={() => setConfirmDeleteId(null)}>
-          <div className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
-            style={{ background: "var(--blanco)", boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}
+          <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+            style={{
+              background: "var(--blanco)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
+              border: "1px solid var(--gris-borde)",
+              animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+            }}
             onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: "#fee2e2" }}>
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth={2}>
+
+            {/* Icono + texto */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
               <div>
                 <p className="font-semibold text-sm" style={{ color: "var(--texto-primario)" }}>¿Eliminar este anuncio?</p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Esta acción no se puede deshacer.</p>
+                <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>Esta acción no se puede deshacer.</p>
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
+
+            {/* Botones */}
+            <div className="flex gap-2">
               <button onClick={() => setConfirmDeleteId(null)}
-                className="text-sm px-4 py-2 rounded-xl transition-colors"
-                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                className="flex-1 text-sm font-medium py-2 rounded-xl"
+                style={{
+                  background: "transparent", color: "var(--texto-secundario)",
+                  border: "1px solid var(--gris-borde)",
+                  transition: "background 0.18s ease, transform 0.18s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
                 Cancelar
               </button>
               <button onClick={() => handleDesactivar(confirmDeleteId)}
-                className="text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-                style={{ background: "#dc2626", color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}>
+                className="flex-1 text-sm font-semibold py-2 rounded-xl"
+                style={{
+                  background: "#dc2626", color: "#fff",
+                  border: "1px solid #dc2626",
+                  transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+                  boxShadow: "0 2px 12px rgba(220,38,38,0.25)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; e.currentTarget.style.transform = "scale(1.06)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(220,38,38,0.4)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(220,38,38,0.25)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                 Eliminar
               </button>
             </div>
@@ -936,7 +972,7 @@ export default function ComunicacionPage() {
 
       {/* ── TOAST ────────────────────────────────────────────────────────── */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[200] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
+        <div className="fixed bottom-6 left-1/2 z-[300] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg, #1b3f7e 0%, #2563eb 100%)", color: "#fff", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -951,8 +987,8 @@ export default function ComunicacionPage() {
         <DetalleModal
           item={previewItem ?? modalItem!}
           isPreview={!!previewItem}
-          navItems={feedCompleto}
-          navIndex={modalIndex ?? feedCompleto.findIndex((i) => i.id === (previewItem ?? modalItem!).id)}
+          navItems={feedNavegable}
+          navIndex={modalIndex ?? feedNavegable.findIndex((i) => i.id === (previewItem ?? modalItem!).id)}
           nombreEmpresa={usuario?.nombreEmpresa}
           puedeEditar={!previewItem && ((( previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
           onClose={cerrarModal}
@@ -983,7 +1019,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
   const contenidoMd  = useMemo(() => renderMarkdown(item.descripcion), [item.descripcion]);
   const hasPrev   = !isPreview && navIndex > 0;
   const hasNext   = !isPreview && navIndex < navItems.length - 1;
-  const zIdx      = isPreview ? 120 : 50;
+  const zIdx      = isPreview ? 220 : 150;
   const modalRef  = useRef<HTMLDivElement>(null);
   const [dir, setDir] = useState<"next" | "prev" | null>(null);
 
@@ -1021,26 +1057,11 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
     return () => document.removeEventListener("keydown", trap);
   }, []);
 
-  const BtnFlecha = ({ dir }: { dir: "prev" | "next" }) => (
-    <button onClick={(e) => { e.stopPropagation(); dir === "prev" ? goPrev() : goNext(); }}
-      className="nav-btn fixed flex items-center justify-center"
-      style={{
-        [dir === "prev" ? "left" : "right"]: "max(12px, calc(50% - 21rem - 60px))",
-        top: "50%", zIndex: zIdx + 1, width: 48, height: 48, borderRadius: "50%",
-        color: "#fff", cursor: "pointer",
-      }}>
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d={dir === "prev" ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
-      </svg>
-    </button>
-  );
-
   return (
     <>
-      {hasPrev && <BtnFlecha dir="prev" />}
-      {hasNext  && <BtnFlecha dir="next" />}
-
-      <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem" modalRef={modalRef}>
+      <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem" modalRef={modalRef}
+        navPrev={hasPrev ? goPrev : undefined}
+        navNext={hasNext  ? goNext : undefined}>
         {isPreview && (
           <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
             style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
@@ -1081,41 +1102,50 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
         {/* Contenido scrolleable */}
         <div className={`modal-scroll${dir ? ` modal-slide-${dir}` : ""} overflow-y-auto flex-1 flex flex-col`}
           style={{ background: "var(--blanco)" }}>
-          <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-3">
+          <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-4">
             <h2 className="leading-tight"
               style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
               {item.titulo}
             </h2>
-            <div style={{ fontSize: "0.94rem", color: "var(--texto-secundario)", lineHeight: 1.8, overflowWrap: "break-word", wordBreak: "break-word" }}>
+            <div style={{ fontSize: "0.94rem", color: "#4b5563", lineHeight: 1.8, overflowWrap: "break-word", wordBreak: "break-word" }}>
               {contenidoMd}
             </div>
+
+            {/* ── Vídeo embed ── */}
             {embedUrl && (
               <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
                 <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
               </div>
             )}
-            {item.adjuntoUrl && (
-              <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
-                style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </div>
-                <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              </a>
-            )}
-            {item.enlaceUrl && (
-              <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity"
-                style={{ background: GRAD_BTN, color: "#fff", textDecoration: "none", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                {item.enlaceTexto ?? "Más información"}
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-              </a>
+
+            {/* ── Adjunto PDF/doc + enlace externo en la misma fila si ambos existen ── */}
+            {(item.adjuntoUrl || item.enlaceUrl) && (
+              <div className="flex flex-col gap-2">
+                {item.adjuntoUrl && (
+                  <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                    style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  </a>
+                )}
+                {item.enlaceUrl && (
+                  /* Enlace externo — compacto, no invasivo */
+                  <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold self-start transition-colors"
+                    style={{ color: "#2563eb", textDecoration: "none", padding: "6px 0" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}>
+                    {item.enlaceTexto ?? "Más información"}
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                  </a>
+                )}
+              </div>
             )}
           </div>
 
@@ -1130,18 +1160,23 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
               )}
               {puedeEditar && (
                 <div className="flex items-center gap-2 ml-auto">
+                  {/* Editar — pill azul con scale */}
                   <button onClick={() => { onClose(); onEditar(item._raw as Noticia); }}
-                    className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
-                    style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
+                    className="text-sm font-semibold px-4 py-1.5 rounded-xl"
+                    style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
                     Editar
                   </button>
                   <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
-                    className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
-                    style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
+                    className="text-sm font-semibold px-4 py-1.5 rounded-xl"
+                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.border = "1px solid #fca5a5"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(220,38,38,0.18)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.border = "1px solid var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
                     Eliminar
                   </button>
                 </div>
@@ -1402,17 +1437,21 @@ const FeaturedCard = memo(function FeaturedCard({ item, size, onOpen, fill = fal
               {puedeEditar && (
                 <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <button onClick={onEdit}
-                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                    style={{ color: "#fff", background: "rgba(37,99,235,0.35)", border: "1px solid rgba(147,197,253,0.45)", backdropFilter: "blur(8px)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(37,99,235,0.6)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(37,99,235,0.35)")}>
+                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                    style={{ color: "rgba(255,255,255,0.82)", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(8px)", transition: "background 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.55)"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                     Editar
                   </button>
                   <button onClick={onDelete}
-                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                    style={{ color: "#fff", background: "rgba(220,38,38,0.35)", border: "1px solid rgba(252,165,165,0.45)", backdropFilter: "blur(8px)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.6)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.35)")}>
+                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                    style={{ color: "rgba(255,255,255,0.82)", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(8px)", transition: "background 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.6)"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                     Eliminar
                   </button>
                 </div>
@@ -1559,17 +1598,21 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
       {puedeEditar && (
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           <button onClick={onEdit}
-            className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-            style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
+            className="text-sm font-semibold px-4 py-2 rounded-lg"
+            style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.05)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
             Editar
           </button>
           <button onClick={onDelete}
-            className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-            style={{ color: "var(--error)", background: "var(--error-light)", border: "1px solid #f5c6bb" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
+            className="text-sm font-semibold px-4 py-2 rounded-lg"
+            style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.05)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
             Eliminar
           </button>
         </div>
@@ -1588,7 +1631,11 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
 });
 
 // ── SUBCOMPONENTES ─────────────────────────────────────────────────────────────
-function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }: { children: React.ReactNode; onClose: () => void; zIndex?: number; maxWidth?: string; modalRef?: React.RefObject<HTMLDivElement | null> }) {
+function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef, navPrev, navNext }: {
+  children: React.ReactNode; onClose: () => void; zIndex?: number; maxWidth?: string;
+  modalRef?: React.RefObject<HTMLDivElement | null>;
+  navPrev?: () => void; navNext?: () => void;
+}) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
@@ -1601,12 +1648,27 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  const NavBtn = ({ dir, onClick }: { dir: "prev" | "next"; onClick: () => void }) => (
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="nav-btn flex items-center justify-center shrink-0"
+      style={{ width: 44, height: 44, borderRadius: "50%", color: "#fff", cursor: "pointer", alignSelf: "center" }}>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={dir === "prev" ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
+      </svg>
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex, background: "rgba(0,0,0,0.58)", animation: "modalBgIn 0.2s ease" }}
+    /* Overlay: flex row — [prevBtn] [card] [nextBtn] siempre dentro del viewport */
+    <div className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex, background: "rgba(0,0,0,0.58)", animation: "modalBgIn 0.2s ease", gap: 12, padding: "16px 12px" }}
       onClick={onClose}>
+      {/* Botón prev — ocupa espacio fijo a la izquierda */}
+      <div style={{ width: 44, flexShrink: 0 }}>
+        {navPrev && <NavBtn dir="prev" onClick={navPrev} />}
+      </div>
       <div ref={modalRef} className="relative w-full flex flex-col"
-        style={{ maxWidth, maxHeight: "90vh" }}
+        style={{ maxWidth, maxHeight: "calc(100vh - 32px)", flex: 1, minWidth: 0 }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose}
           className="absolute top-3 right-3 z-20 flex items-center justify-center"
@@ -1625,6 +1687,10 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
           style={{ background: "#0d1b2e", boxShadow: "0 32px 80px rgba(0,0,0,0.28)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)", transform: "translateZ(0)", isolation: "isolate" }}>
           {children}
         </div>
+      </div>
+      {/* Botón next — ocupa espacio fijo a la derecha */}
+      <div style={{ width: 44, flexShrink: 0 }}>
+        {navNext && <NavBtn dir="next" onClick={navNext} />}
       </div>
       <style>{`
         @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
@@ -1818,6 +1884,11 @@ function FormAnuncio({
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
   const [form, setForm]       = useState<NoticiaInput>({ ...initialValues });
+  // Snapshot inmutable para detectar si el usuario cambió algo
+  const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
+  const isDirty   = JSON.stringify(form) !== initialSnapshot.current;
+  const canSubmit = form.titulo.trim().length > 0 && form.contenido.trim().length > 0;
+
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
@@ -1932,7 +2003,7 @@ function FormAnuncio({
     <>
     {/* Overlay */}
     <div className="fixed inset-0 flex items-start justify-center"
-      style={{ zIndex: 110, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
+      style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
       onClick={onClose}>
 
       {/* Card — altura automática con límite máximo */}
@@ -2117,7 +2188,7 @@ function FormAnuncio({
               />
               {imagenModo === "url" ? (
                 <>
-                  <input type="url" value={form.imagenUrl || ""}
+                  <input type="url" value={form.imagenUrl ?? ""}
                     onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
                     placeholder="https://..."
                     className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
@@ -2182,7 +2253,7 @@ function FormAnuncio({
 
             <div>
               <FieldLabel label="Vídeo (YouTube o Vimeo)" />
-              <input type="url" value={form.videoUrl || ""}
+              <input type="url" value={form.videoUrl ?? ""}
                 onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
                 placeholder="https://youtube.com/watch?v=..."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
@@ -2212,10 +2283,12 @@ function FormAnuncio({
                     {form.adjuntoNombre ?? "Documento"}
                   </span>
                   <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
-                    className="text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors"
-                    style={{ color: "var(--error)", background: "var(--error-light)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fad4cc")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--error-light)")}>
+                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                     Quitar
                   </button>
                 </div>
@@ -2240,14 +2313,14 @@ function FormAnuncio({
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div style={{ width: "100%" }}>
               <FieldLabel label="Enlace externo" />
-              <input type="url" value={form.enlaceUrl || ""}
+              <input type="url" value={form.enlaceUrl ?? ""}
                 onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
                 placeholder="https://..."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
                 style={inputStyle} onFocus={onFocus} onBlur={onBlur}
               />
               {form.enlaceUrl && (
-                <input type="text" value={form.enlaceTexto || ""}
+                <input type="text" value={form.enlaceTexto ?? ""}
                   onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
                   placeholder='Texto del botón — ej: "Más información"'
                   className="w-full rounded-xl px-4 py-3 text-base focus:outline-none mt-2"
@@ -2260,7 +2333,7 @@ function FormAnuncio({
             <div>
               <FieldLabel label="Estado" />
               <div className="rounded-2xl overflow-hidden" style={{
-                border: `1.5px solid ${form.fijado || form.estado === "borrador" ? "#bfdbfe" : "var(--gris-borde)"}`,
+                border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`,
                 transition: "border-color 0.18s",
               }}>
 
@@ -2291,21 +2364,21 @@ function FormAnuncio({
                 {/* Fila: Borrador — oculta cuando ya se editando un anuncio publicado */}
                 {!(editando && editando.estado !== "borrador") && (
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.estado === "borrador" ? "#eff6ff" : "var(--blanco)", transition: "background 0.18s" }}
+                  style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
                   onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.estado === "borrador" ? "#dbeafe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#2563eb" : "var(--texto-muted)"} strokeWidth={2}>
+                      style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#1d4ed8" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
                       <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
                     </div>
                   </div>
-                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#2563eb" />
+                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
                 </div>
                 )}
 
@@ -2325,57 +2398,95 @@ function FormAnuncio({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={onClose}
-              className="text-sm px-4 py-2 rounded-xl font-medium transition-colors"
-              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--blanco)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+              className="text-sm px-4 py-2 rounded-xl font-medium"
+              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
               Cancelar
             </button>
             <button type="button" onClick={handlePreview}
-              className="text-sm px-4 py-2 rounded-xl font-medium transition-colors"
-              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#dbeafe")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#eff6ff")}>
+              className="text-sm px-4 py-2 rounded-xl font-medium"
+              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
               Previsualizar
             </button>
-            {/* Guardar cambios — izquierda gris, solo al editar borrador */}
-            {editando && editando.estado === "borrador" && (
-              <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
-                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
-                style={{ background: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(107,114,128,0.25)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                {submitting ? "Guardando..." : "Guardar cambios"}
-              </button>
-            )}
-            {/* Botón derecho principal */}
-            {!(editando && editando.estado === "borrador") && (
-              <button onClick={() => { setTouched(true); onSubmit(form); }} disabled={submitting}
-                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
-                style={{
-                  background: editando || form.estado !== "borrador"
-                    ? GRAD_BTN
-                    : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
-                  color: "#fff",
-                  boxShadow: editando || form.estado !== "borrador"
-                    ? "0 2px 8px rgba(37,99,235,0.3)"
-                    : "0 2px 8px rgba(107,114,128,0.3)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                {submitting ? "Guardando..." : editando ? "Guardar cambios" : form.estado === "borrador" ? "Guardar borrador" : "Publicar anuncio"}
-              </button>
-            )}
+            {/* Guardar cambios — izquierda, editar borrador */}
+            {editando && editando.estado === "borrador" && (() => {
+              const active = isDirty && canSubmit;
+              return (
+                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
+                  disabled={submitting}
+                  title={!canSubmit ? "Título y contenido son obligatorios" : !isDirty ? "No has cambiado nada aún" : undefined}
+                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                  style={{
+                    background: active ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
+                    color: "#fff",
+                    boxShadow: active ? "0 2px 8px rgba(217,119,6,0.35)" : "none",
+                    cursor: active ? "pointer" : "not-allowed",
+                    opacity: submitting ? 0.5 : 1,
+                    transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease",
+                  }}
+                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  {submitting ? "Guardando..." : "Guardar cambios"}
+                </button>
+              );
+            })()}
+
+            {/* Botón principal — crear o editar publicado */}
+            {!(editando && editando.estado === "borrador") && (() => {
+              const esBorrador = form.estado === "borrador" && !editando;
+              const active = canSubmit && (!editando || isDirty);
+              const bg = active
+                ? esBorrador ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : GRAD_BTN
+                : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
+              const shadow = active
+                ? esBorrador ? "0 2px 8px rgba(217,119,6,0.35)" : "0 2px 8px rgba(37,99,235,0.3)"
+                : "none";
+              const tip = !canSubmit
+                ? "Título y contenido son obligatorios"
+                : editando && !isDirty
+                  ? "No has cambiado nada aún"
+                  : undefined;
+              return (
+                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
+                  disabled={submitting}
+                  title={tip}
+                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                  style={{ background: bg, color: "#fff", boxShadow: shadow, cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  {submitting ? "Guardando..." : editando ? "Guardar cambios" : esBorrador ? "Guardar borrador" : "Publicar anuncio"}
+                </button>
+              );
+            })()}
+
             {/* Publicar ahora — derecha, solo al editar borrador */}
-            {editando && editando.estado === "borrador" && (
-              <button onClick={() => { setTouched(true); onSubmit({ ...form, estado: "publicado" }); }} disabled={submitting}
-                className="text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-all"
-                style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(22,163,74,0.3)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-                {submitting ? "Publicando..." : "Publicar ahora"}
-              </button>
-            )}
+            {editando && editando.estado === "borrador" && (() => {
+              const active = canSubmit;
+              return (
+                <button onClick={() => { if (!active) return; setTouched(true); onSubmit({ ...form, estado: "publicado" }); }}
+                  disabled={submitting}
+                  title={!canSubmit ? "Título y contenido son obligatorios" : undefined}
+                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: active ? "0 2px 8px rgba(22,163,74,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : !active ? 0.5 : 1, transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting || !active ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  {submitting ? "Publicando..." : "Publicar ahora"}
+                </button>
+              );
+            })()}
           </div>
         </div>
 
