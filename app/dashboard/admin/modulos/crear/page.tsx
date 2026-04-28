@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { subirImagenModulo } from "@/lib/supabase";
+import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Modo  = null | "manual" | "ia";
@@ -384,13 +384,20 @@ export default function CrearModuloPage() {
         : null;
       let imagenPortadaUrl: string | null = null;
       if (portadaFile) imagenPortadaUrl = await subirImagenModulo(portadaFile);
+      let adjuntoUrl: string | null = null;
+      let adjuntoNombre: string | null = null;
+      if (archivoMRaw) {
+        const adjunto = await subirAdjunto(archivoMRaw);
+        adjuntoUrl = adjunto.url;
+        adjuntoNombre = adjunto.nombre;
+      }
       const res = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
         body: JSON.stringify({
           nombre: nombre.trim(), descripcion: descripcion.trim(), tipoModulo: categoria,
           activo: true, empresaId: usuario?.empresaId ?? null, idioma, duracion, audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
-          testPreguntas: testJson, imagenPortadaUrl,
+          testPreguntas: testJson, imagenPortadaUrl, adjuntoUrl, adjuntoNombre,
         }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Error al guardar"); }

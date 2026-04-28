@@ -47,6 +47,8 @@ export interface Modulo {
   scriptPodcast?: string | null;
   scriptVideo?: string | null;
   podcastAudioUrl?: string | null;
+  adjuntoUrl?: string | null;
+  adjuntoNombre?: string | null;
   creadoEn: string;
   actualizadoEn: string;
 }
