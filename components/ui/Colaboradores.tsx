@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import gsap from "gsap";
 import { AiFillEye } from "react-icons/ai";
 import {
     FlaskConical, Cpu, ChevronDown, University
@@ -12,7 +13,8 @@ interface ColaboradoresProps {
 
 const colaboradoresData = [
     {
-        categoria: "Universidades y Centros de Investigación",
+        categoria: "Universidades",
+        descripcion: "Investigación y transferencia de conocimiento",
         icono: University,
         imagen: "/bg-universidad.avif",
         entidades: [
@@ -33,7 +35,8 @@ const colaboradoresData = [
         ],
     },
     {
-        categoria: "Parques Científicos y Tecnológicos",
+        categoria: "Parques Científicos",
+        descripcion: "Innovación y conexión empresarial",
         icono: FlaskConical,
         imagen: "/bg-parque.avif",
         entidades: [
@@ -55,6 +58,7 @@ const colaboradoresData = [
     },
     {
         categoria: "Institutos Tecnológicos",
+        descripcion: "Desarrollo tecnológico especializado",
         icono: Cpu,
         imagen: "/bg-instituto.jpg",
         entidades: [
@@ -93,6 +97,39 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
 
     const closeTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
     const sectionRef = useRef<HTMLElement>(null);
+    const gruposRef = useRef<Record<string, HTMLDivElement | null>>({});
+    const animateGrupo = (categoria: string, open: boolean) => {
+        const el = gruposRef.current[categoria];
+        if (!el) return;
+
+        const cards = el.querySelectorAll(".card-item");
+
+        if (open) {
+            gsap.fromTo(
+                cards,
+                {
+                    opacity: 0,
+                    y: 40,
+                    scale: 0.98,
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.6,
+                    ease: "power3.out",
+                    stagger: 0.08,
+                }
+            );
+        } else {
+            gsap.to(cards, {
+                opacity: 0,
+                y: 20,
+                duration: 0.3,
+                ease: "power2.in",
+            });
+        }
+    };
 
     const d = variant === "dashboard";
 
@@ -101,7 +138,9 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
     const colorLabel = d ? "var(--azul-egm)" : "rgba(147,197,253,0.7)";
     const colorTitulo = d ? "var(--texto-primario)" : "#ffffff";
     const colorSubtitulo = d ? "var(--texto-muted)" : "rgba(255,255,255,0.5)";
-    const overlayGrupo = d ? "rgba(255,255,255,0.82)" : "rgba(0,0,0,0.75)";
+    const overlayGrupo = d
+        ? "rgba(255,255,255,0.82)"
+        : "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7))";
     const colorCabecera = d ? "var(--texto-primario)" : "#ffffff";
     const bgChevron = d ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.05)";
     const colorChevron = d ? "var(--texto-muted)" : "rgba(255,255,255,0.5)";
@@ -145,7 +184,7 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                             Colaboradores
                         </p>
                         <h2
-                            className="text-4xl sm:text-6xl font-bold leading-[0.95] mb-6"
+                            className="text-5xl sm:text-7xl tracking-tight font-bold leading-[0.95] mb-6"
                             style={{ fontFamily: "'Instrument Serif', serif", color: colorTitulo, letterSpacing: "-1px" }}
                         >
                             Ecosistema de Proximidad
@@ -182,17 +221,26 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                 <div className="flex flex-col gap-8 max-w-[1600px] w-[95%] lg:w-full mx-auto pt-8 pb-8">
                     {colaboradoresData.map((grupo) => {
                         const isOpen = categoriasAbiertas[grupo.categoria];
+                        const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
 
                         return (
                             <div
                                 key={grupo.categoria}
                                 onMouseEnter={() => {
                                     // Solo activar hover en pantallas grandes
-                                    if (window.innerWidth >= 768) {
+                                    if (isDesktop) {
                                         if (closeTimeoutRef.current[grupo.categoria]) {
                                             clearTimeout(closeTimeoutRef.current[grupo.categoria]);
                                         }
-                                        setCategoriasAbiertas(prev => ({ ...prev, [grupo.categoria]: true }));
+                                        setCategoriasAbiertas(prev => {
+                                            const newState = !prev[grupo.categoria];
+                                            animateGrupo(grupo.categoria, newState);
+
+                                            return {
+                                                ...prev,
+                                                [grupo.categoria]: newState
+                                            };
+                                        });
                                     }
                                 }}
                                 onMouseLeave={() => {
@@ -202,13 +250,12 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                         }, 250);
                                     }
                                 }}
-                                className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative"
+                                className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]"
                                 style={{
-                                    border: "none",
                                     backgroundImage: `url(${grupo.imagen})`,
                                     backgroundSize: "cover",
                                     backgroundPosition: "center",
-                                    boxShadow: d ? "0 4px 20px rgba(0, 0, 0, 0.08)" : "0 4px 30px rgba(0, 0, 0, 0.4)",
+                                    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.6)",
                                 }}
                             >
                                 {/* Overlay */}
@@ -224,10 +271,10 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                     className="w-full flex items-center justify-between p-6 sm:p-10 cursor-pointer transition-all relative z-10 group active:scale-[0.985]"
                                     style={{ minHeight: "100px" }}
                                 >
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-4 flex-wrap">
                                         {/* Icono con animación */}
                                         <div
-                                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-active:scale-95"
+                                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:rotate-6 group-active:scale-95"
                                             style={{
                                                 background: d ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
                                                 color: d ? "var(--azul-egm)" : "#ffffff",
@@ -236,9 +283,21 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                             <grupo.icono className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-300" />
                                         </div>
 
-                                        <h3 className="text-xl sm:text-3xl font-bold tracking-wide text-left transition-colors" style={{ color: colorCabecera }}>
+                                        <h3
+                                            className="text-xl sm:text-3xl font-bold tracking-wide"
+                                            style={{ color: colorCabecera }}
+                                        >
                                             {grupo.categoria}
                                         </h3>
+
+                                        <span
+                                            className="text-sm sm:text-base flex items-center gap-2"
+                                            style={{ color: colorCabecera }}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                                            {grupo.descripcion}
+                                        </span>
+
                                     </div>
 
                                     {/* Chevron */}
@@ -253,15 +312,15 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                 </button>
 
                                 {/* Cards - Animación optimizada */}
-                                {/* Cards - Más cerrado por defecto */}
                                 <div
-                                    className={`relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-6 sm:px-10 overflow-hidden transition-all duration-500 ease-out ${isOpen ? "pb-12" : "pb-2"}`}
+                                    className={`relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-6 sm:px-10 overflow-hidden transition-all duration-500 ease-out ${isOpen ? "pb-12 opacity-100" : "pb-0 opacity-0 pointer-events-none"}`}
                                     style={{
-                                        opacity: isOpen ? 1 : 0,
-                                        transform: isOpen ? "translateY(0px)" : "translateY(40px)",
                                         transition: "all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)",
                                         willChange: isOpen ? "transform, opacity" : "auto",
-                                        maxHeight: isOpen ? "1200px" : "0px"
+                                        maxHeight: isOpen ? "1200px" : "10px"
+                                    }}
+                                    ref={(el) => {
+                                        gruposRef.current[grupo.categoria] = el;
                                     }}
                                 >
                                     {grupo.entidades.map((entidad, cardIndex) => (
@@ -270,18 +329,20 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                             href={entidad.web}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="group relative flex flex-col p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 cursor-pointer overflow-hidden"
+                                            className="card-item group relative flex flex-col p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-[1.03] hover:-translate-y-2 hover:shadow-xl cursor-pointer overflow-hidden"
                                             style={{
                                                 background: bgCard,
                                                 border: bordeCard,
                                                 backdropFilter: "blur(12px)",
-                                                transitionDelay: `${cardIndex * 30}ms`
+                                                transitionDelay: `${cardIndex * 30}ms`,
+                                                boxShadow: `0 10px 30px ${entidad.color}22`
                                             }}
                                         >
                                             {/* Contenido de la card (exactamente como lo tenías) */}
-                                            <div
-                                                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                                                style={{ background: `radial-gradient(ellipse at 50% 0%, ${entidad.color}20, transparent 70%)` }}
+                                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500"
+                                                style={{
+                                                    background: `linear-gradient(120deg, transparent, ${entidad.color}15, transparent)`
+                                                }}
                                             />
 
                                             <div className="flex items-start justify-between mb-6 relative z-10">
