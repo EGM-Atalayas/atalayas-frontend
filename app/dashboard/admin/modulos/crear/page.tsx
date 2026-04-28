@@ -86,7 +86,7 @@ const PASOS_MANUAL = [
 const PASOS_IA = [
   { num: 1, label: "Información",  icon: <IconPencil /> },
   { num: 2, label: "Documento",    icon: <IconUpload sz={4} /> },
-  { num: 3, label: "Contenido",    icon: <IconDoc /> },
+  { num: 3, label: "Visibilidad",  icon: <IconUsers /> },
   { num: 4, label: "Test",         icon: <IconTest /> },
   { num: 5, label: "Generar",      icon: <IconSpark sz={4} /> },
 ];
@@ -258,7 +258,7 @@ function NavBtns({ paso, setPaso, setModo, onNext, disabledNext, labelNext = "Co
 
 // ── SECCIÓN HEADER ────────────────────────────────────────────────────────────
 function SeccionHeader({ icono, titulo, subtitulo, iconoBg, iconoColor, right }: {
-  icono: React.ReactNode; titulo: string; subtitulo: string;
+  icono: React.ReactNode; titulo: string; subtitulo: React.ReactNode;
   iconoBg: string; iconoColor: string; right?: React.ReactNode;
 }) {
   return (
@@ -677,7 +677,7 @@ export default function CrearModuloPage() {
                   )}
                   {pasoManual === 2 && (
                     <>
-                      <SeccionHeader icono={<IconUpload sz={4} />} titulo="Archivo del módulo" subtitulo="Sube el material formativo (opcional)" iconoBg="#e0f2fe" iconoColor="#0284c7"
+                      <SeccionHeader icono={<IconUpload sz={4} />} titulo="Archivo del módulo" subtitulo={<>Sube el material formativo <span style={{ color: "#dc2626" }}>*</span></>} iconoBg="#e0f2fe" iconoColor="#0284c7"
                         right={archivoM ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>1 archivo</span> : undefined} />
                       {!archivoM ? (
                         <div onDragOver={(e) => { e.preventDefault(); setDraggingM(true); }} onDragLeave={() => setDraggingM(false)}
@@ -704,7 +704,7 @@ export default function CrearModuloPage() {
                             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
                         </div>
                       )}
-                      <p className="text-xs mt-3 text-center" style={{ color: "var(--texto-muted)" }}>El archivo es opcional, puedes continuar sin subir ninguno.</p>
+                      {!archivoM && <p className="text-xs mt-3 text-center" style={{ color: "#dc2626" }}>⚠ Debes subir un archivo para continuar.</p>}
                     </>
                   )}
                   {pasoManual === 3 && (
@@ -840,13 +840,14 @@ export default function CrearModuloPage() {
                   )}
                   {pasoIA === 2 && (
                     <>
+                      {/* ── Documento ── */}
                       <SeccionHeader icono={<IconUpload sz={4} />} titulo="Documento base" subtitulo="La IA transformará este contenido en un módulo formativo" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT}
                         right={archivosIA.length > 0 ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}>{archivosIA.length} archivo{archivosIA.length !== 1 ? "s" : ""}</span> : undefined} />
                       <div onDragOver={(e) => { e.preventDefault(); setDraggingIA(true); }} onDragLeave={() => setDraggingIA(false)}
                         onDrop={(e) => { e.preventDefault(); setDraggingIA(false); procesarArchivosIA(e.dataTransfer.files); }}
                         onClick={() => inputIARef.current?.click()}
                         className="rounded-xl flex flex-col items-center gap-4 cursor-pointer transition-all mb-4"
-                        style={{ border: `2px dashed ${draggingIA ? IA_ACCENT : "var(--gris-borde)"}`, background: draggingIA ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)", minHeight: "190px", justifyContent: "center" }}>
+                        style={{ border: `2px dashed ${draggingIA ? IA_ACCENT : "var(--gris-borde)"}`, background: draggingIA ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)", minHeight: "160px", justifyContent: "center" }}>
                         <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all" style={{ background: draggingIA ? IA_ACCENT : "var(--gris-superficie)", color: draggingIA ? "#fff" : "var(--texto-muted)" }}><IconUpload sz={6} /></div>
                         <div className="text-center">
                           <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: IA_ACCENT, textDecoration: "underline" }}>selecciona</span></p>
@@ -855,7 +856,7 @@ export default function CrearModuloPage() {
                         <input ref={inputIARef} type="file" multiple accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => procesarArchivosIA(e.target.files)} />
                       </div>
                       {archivosIA.length > 0 && (
-                        <div className="flex flex-col gap-2 mb-4">
+                        <div className="flex flex-col gap-2 mb-6">
                           {archivosIA.map((a, idx) => (
                             <div key={idx} className="flex items-center gap-3 rounded-xl px-5 py-3.5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
                               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}><IconFile /></div>
@@ -875,35 +876,83 @@ export default function CrearModuloPage() {
                           <p className="text-xs">{errorIA}</p>
                         </div>
                       )}
+
+                      {/* ── Tipo de contenido (fusionado) ── */}
+                      <div className="pt-6 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                        <SeccionHeader icono={<IconDoc />} titulo="Tipo de contenido a generar" subtitulo="Elige los formatos que creará la IA a partir de tu documento" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          {COMBOS.map((combo, idx) => {
+                            const sel = comboActivo === idx;
+                            return (
+                              <button key={idx} onClick={() => setTiposSalidaIA(combo.keys)}
+                                className="flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all w-full"
+                                style={{ border: `1.5px solid ${sel ? IA_ACCENT : "var(--gris-borde)"}`, background: sel ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)" }}>
+                                <div className="flex gap-1.5 shrink-0">
+                                  {combo.keys.map((k) => {
+                                    const t = TIPOS_SALIDA.find((x) => x.key === k)!;
+                                    return (<span key={k} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: sel ? t.color : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{t.icon}</span>);
+                                  })}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>{combo.label}</p>
+                                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{combo.desc}</p>
+                                </div>
+                                <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center" style={{ border: `2px solid ${sel ? IA_ACCENT : "var(--gris-borde)"}`, background: sel ? IA_ACCENT : "transparent" }}>
+                                  {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </>
                   )}
                   {pasoIA === 3 && (
                     <>
-                      <SeccionHeader icono={<IconDoc />} titulo="Tipo de contenido a generar" subtitulo="Elige los formatos que creará la IA a partir de tu documento" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        {COMBOS.map((combo, idx) => {
-                          const sel = comboActivo === idx;
+                      <SeccionHeader icono={<IconUsers />} titulo="Visibilidad del módulo" subtitulo="Define quién puede acceder a este módulo" iconoBg="#f3e8ff" iconoColor="#7c3aed" />
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                        {([
+                          { key: "todos"           as AudienciaTipo, label: "Todos los empleados",   desc: "Visible para cualquier empleado",      icon: <IconUsers />,     accent: "var(--azul-egm)", bg: "var(--azul-egm-light)" },
+                          { key: "administradores" as AudienciaTipo, label: "Solo administradores", desc: "Solo admins de empresa",               icon: <IconShield />,    accent: "#7c3aed",         bg: "#f3e8ff"               },
+                          { key: "departamento"    as AudienciaTipo, label: "Por departamento",     desc: "Departamentos específicos",            icon: <IconBriefcase />, accent: "#d97706",         bg: "#fffbeb"               },
+                        ] as const).map((op) => {
+                          const sel = audiencia === op.key;
                           return (
-                            <button key={idx} onClick={() => setTiposSalidaIA(combo.keys)}
-                              className="flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all w-full"
-                              style={{ border: `1.5px solid ${sel ? IA_ACCENT : "var(--gris-borde)"}`, background: sel ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)" }}>
-                              <div className="flex gap-1.5 shrink-0">
-                                {combo.keys.map((k) => {
-                                  const t = TIPOS_SALIDA.find((x) => x.key === k)!;
-                                  return (<span key={k} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: sel ? t.color : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{t.icon}</span>);
-                                })}
+                            <button key={op.key} onClick={() => setAudiencia(op.key)}
+                              className="flex flex-col gap-3 px-5 py-5 rounded-xl text-left transition-all w-full"
+                              style={{ border: `1.5px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.bg : "var(--gris-pagina)" }}>
+                              <div className="flex items-center justify-between">
+                                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: sel ? op.accent : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{op.icon}</div>
+                                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border: `2px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.accent : "transparent" }}>
+                                  {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>{combo.label}</p>
-                                <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{combo.desc}</p>
-                              </div>
-                              <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center" style={{ border: `2px solid ${sel ? IA_ACCENT : "var(--gris-borde)"}`, background: sel ? IA_ACCENT : "transparent" }}>
-                                {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                              <div>
+                                <p className="text-sm font-bold mb-0.5" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
+                                <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
                               </div>
                             </button>
                           );
                         })}
                       </div>
+                      {audiencia === "departamento" && (
+                        <div className="fade-up rounded-xl p-5 mb-2" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                          <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Selecciona los departamentos</p>
+                          <div className="flex flex-wrap gap-2">
+                            {DEPARTAMENTOS.map((d) => {
+                              const sel = deptos.includes(d.id);
+                              return (
+                                <button key={d.id} onClick={() => toggleDepto(d.id)}
+                                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                                  style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
+                                  {sel && "✓ "}{d.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
+                        </div>
+                      )}
                     </>
                   )}
                   {pasoIA === 4 && (
@@ -1033,23 +1082,29 @@ export default function CrearModuloPage() {
                     onClick={() => { if (modo === "manual") setPasoManual((pasoManual + 1) as PasoManual); else setPasoIA((pasoIA + 1) as PasoIA); }}
                     disabled={
                       (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                      (modo === "manual" && pasoManual === 2 && !archivoM) ||
                       (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
                       (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
-                      (modo === "ia" && pasoIA === 2 && archivosIA.length === 0)
+                      (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                      (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
                     }
                     className="px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all"
                     style={{
                       background: (
                         (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                        (modo === "manual" && pasoManual === 2 && !archivoM) ||
                         (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
                         (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
-                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0)
+                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                        (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
                       ) ? "var(--gris-superficie)" : modo === "ia" ? IA_ACCENT : "var(--azul-egm)",
                       color: (
                         (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                        (modo === "manual" && pasoManual === 2 && !archivoM) ||
                         (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
                         (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
-                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0)
+                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                        (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
                       ) ? "var(--texto-muted)" : "#fff",
                       boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
                     }}>
