@@ -1658,7 +1658,12 @@ function FormAnuncio({
   const [tab, setTab]         = useState<Tab>("contenido");
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<NoticiaInput>(initialValues);
+  const [form, setForm]       = useState<NoticiaInput>({
+    titulo: "", contenido: "", esGlobal: false, empresaId: null,
+    imagenUrl: null, enlaceUrl: null, enlaceTexto: null, videoUrl: null,
+    adjuntoUrl: null, adjuntoNombre: null, estado: "publicado", fijado: false, categoria: null,
+    ...initialValues,
+  });
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
@@ -2022,7 +2027,7 @@ function FormAnuncio({
 
             <div>
               <FieldLabel label="Vídeo (YouTube o Vimeo)" />
-              <input type="url" value={form.videoUrl ?? ""}
+              <input type="url" value={form.videoUrl || ""}
                 onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
                 placeholder="https://youtube.com/watch?v=..."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
@@ -2080,14 +2085,14 @@ function FormAnuncio({
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div style={{ width: "100%" }}>
               <FieldLabel label="Enlace externo" />
-              <input type="url" value={form.enlaceUrl ?? ""}
+              <input type="url" value={form.enlaceUrl || ""}
                 onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
                 placeholder="https://..."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
                 style={inputStyle} onFocus={onFocus} onBlur={onBlur}
               />
               {form.enlaceUrl && (
-                <input type="text" value={form.enlaceTexto ?? ""}
+                <input type="text" value={form.enlaceTexto || ""}
                   onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
                   placeholder='Texto del botón — ej: "Más información"'
                   className="w-full rounded-xl px-4 py-3 text-base focus:outline-none mt-2"
