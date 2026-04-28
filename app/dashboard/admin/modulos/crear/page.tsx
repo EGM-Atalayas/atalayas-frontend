@@ -121,12 +121,13 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 // ── CAMPOS BASE ───────────────────────────────────────────────────────────────
-function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria, setCategoria, idioma, setIdioma, duracion, setDuracion }: {
+function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria, setCategoria, idioma, setIdioma, duracion, setDuracion, ocultarDescripcion = false }: {
   nombre: string; setNombre: (v: string) => void;
   descripcion: string; setDescripcion: (v: string) => void;
   categoria: string; setCategoria: (v: string) => void;
   idioma: string; setIdioma: (v: string) => void;
   duracion: string; setDuracion: (v: string) => void;
+  ocultarDescripcion?: boolean;
 }) {
   const inputBase = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" };
   const onF = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; };
@@ -142,15 +143,19 @@ function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria,
           className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all"
           style={inputBase} onFocus={onF} onBlur={onB} />
       </div>
-      <div>
-        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Descripción</label>
-        <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Breve descripción del módulo…" rows={3}
-          className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
-          style={inputBase as React.CSSProperties}
-          onFocus={onF as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
-          onBlur={onB as unknown as React.FocusEventHandler<HTMLTextAreaElement>} />
-      </div>
+      {!ocultarDescripcion && (
+        <div>
+          <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+            Descripción corta <span className="normal-case font-normal" style={{ color: "var(--texto-muted)" }}>(portada del módulo)</span>
+          </label>
+          <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Frase corta que aparecerá en la tarjeta del módulo…" rows={2}
+            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+            style={inputBase as React.CSSProperties}
+            onFocus={onF as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
+            onBlur={onB as unknown as React.FocusEventHandler<HTMLTextAreaElement>} />
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Categoría</label>
@@ -336,6 +341,8 @@ export default function CrearModuloPage() {
   const [genTest,        setGenTest]        = useState(false);
   const [portadaFile,    setPortadaFile]    = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState<string>("");
+  const [introduccion,   setIntroduccion]   = useState("");
+  const [genDesc,        setGenDesc]        = useState(false);
   const [guardando,      setGuardando]      = useState(false);
   const [guardado,       setGuardado]       = useState(false);
   const [errorMsg,       setErrorMsg]       = useState("");
@@ -376,6 +383,28 @@ export default function CrearModuloPage() {
     } finally { setGenTest(false); }
   };
 
+  const generarDescripcionDesdeArchivo = async () => {
+    if (!archivoMRaw) return;
+    setGenDesc(true);
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      const formData = new FormData();
+      formData.append("archivo", archivoMRaw);
+      formData.append("tiposSalida", "documentacion");
+      const res = await fetch(`${API_URL}/ai/generar-desde-archivo?tiposSalida=documentacion`, {
+        method: "POST", credentials: "include",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const descGenerada: string = data?.descripcion ?? "";
+        if (descGenerada.trim()) setDescripcion(descGenerada.trim());
+      }
+    } catch { /* silencioso */ }
+    finally { setGenDesc(false); }
+  };
+
   const guardarManual = async () => {
     setGuardando(true); setErrorMsg("");
     try {
@@ -398,6 +427,7 @@ export default function CrearModuloPage() {
           activo: true, empresaId: usuario?.empresaId ?? null, idioma, duracion, audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
           testPreguntas: testJson, imagenPortadaUrl, adjuntoUrl, adjuntoNombre,
+          contenidoMarkdown: introduccion.trim() || null,
         }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Error al guardar"); }
@@ -677,7 +707,7 @@ export default function CrearModuloPage() {
                     <>
                       <SeccionHeader icono={<IconPencil />} titulo="Información del módulo" subtitulo="Datos generales y configuración básica" iconoBg="var(--azul-egm-light)" iconoColor="var(--azul-egm)" />
                       <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-7">
-                        <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+                        <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} ocultarDescripcion />
                         <PortadaUpload preview={portadaPreview} onFile={(f) => { setPortadaFile(f); setPortadaPreview(URL.createObjectURL(f)); }} onRemove={() => { setPortadaFile(null); setPortadaPreview(""); }} />
                       </div>
                     </>
@@ -712,6 +742,45 @@ export default function CrearModuloPage() {
                         </div>
                       )}
                       {!archivoM && <p className="text-xs mt-3 text-center" style={{ color: "#dc2626" }}>⚠ Debes subir un archivo para continuar.</p>}
+
+                      {/* ── CONTENIDO DEL MÓDULO ── */}
+                      <div className="mt-6 flex flex-col gap-5" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "24px" }}>
+                        {/* Descripción corta con botón IA */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                              Descripción corta <span className="normal-case font-normal">(portada)</span>
+                            </label>
+                            {archivoM && (
+                              <button onClick={generarDescripcionDesdeArchivo} disabled={genDesc}
+                                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                                style={{ background: genDesc ? "var(--gris-superficie)" : "#f3e8ff", color: genDesc ? "var(--texto-muted)" : "#7c3aed", border: "1px solid #e9d5ff" }}>
+                                {genDesc
+                                  ? <><span className="w-3 h-3 border-2 rounded-full animate-spin inline-block" style={{ borderColor: "#e9d5ff", borderTopColor: "#7c3aed" }} />Generando…</>
+                                  : <><IconSpark sz={3} />Generar con IA</>}
+                              </button>
+                            )}
+                          </div>
+                          <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                            placeholder="Frase corta que aparecerá en la tarjeta del módulo…" rows={2}
+                            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+                            style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
+                            onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
+                            onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
+                        </div>
+                        {/* Introducción del módulo */}
+                        <div>
+                          <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                            Introducción del módulo <span className="normal-case font-normal">(contenido visible para el empleado)</span>
+                          </label>
+                          <textarea value={introduccion} onChange={(e) => setIntroduccion(e.target.value)}
+                            placeholder="Escribe aquí la introducción o el contenido formativo del módulo…" rows={6}
+                            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+                            style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
+                            onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
+                            onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
+                        </div>
+                      </div>
                     </>
                   )}
                   {pasoManual === 3 && (
