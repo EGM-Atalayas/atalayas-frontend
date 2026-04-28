@@ -113,7 +113,7 @@ const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
 ];
 
 function getHeroImg(id: string, nombre: string): string {
-  if (FORMACION_IMG_BY_ID[moduloId]) return FORMACION_IMG_BY_ID[moduloId];
+  if (FORMACION_IMG_BY_ID[id]) return FORMACION_IMG_BY_ID[id];
   const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen
     ?? "/background-formacion-empleado.jpg";
@@ -192,7 +192,7 @@ function apiToMock(moduloApi: ModuloAPI): ModuloMock {
 
 // Fallback para módulos legacy (IDs numéricos del mock original)
 function getMockBase(id: string): ModuloMock {
-  const meta = MOCKS[moduloId] ?? {
+  const meta = MOCKS[id] ?? {
     nombre: "Módulo de Formación",
     descripcion: "Completa todos los pasos para obtener tu certificado.",
     tipo: "Formación",
@@ -290,7 +290,7 @@ export default function Page() {
       setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
     };
     cargar();
-  }, [moduloId]);
+  }, [id]);
 
   // Persistir en localStorage cuando cambia el estado
   useEffect(() => {
