@@ -765,7 +765,7 @@ export default function CrearModuloPage() {
                                 style={{ background: genDesc ? "var(--gris-superficie)" : "#f3e8ff", color: genDesc ? "var(--texto-muted)" : "#7c3aed", border: "1px solid #e9d5ff" }}>
                                 {genDesc
                                   ? <><span className="w-3 h-3 border-2 rounded-full animate-spin inline-block" style={{ borderColor: "#e9d5ff", borderTopColor: "#7c3aed" }} />Generando…</>
-                                  : <><IconSpark sz={3} />Sugerir descripción e introducción con IA</>}
+                                  : <><IconSpark sz={3} />Sugerir con IA</>}
                               </button>
                             )}
                           </div>
