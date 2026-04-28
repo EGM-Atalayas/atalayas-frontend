@@ -35,6 +35,12 @@ export async function desactivarNoticia(id: string): Promise<void> {
   if (!res.ok) throw new Error("Error al desactivar anuncio");
 }
 
+export async function registrarVistaNoticia(id: string): Promise<void> {
+  try {
+    await apiFetch(`${API_URL}/anuncios/${id}/vistas`, { method: "PATCH" });
+  } catch { /* silencioso — no crítico */ }
+}
+
 // ── COMUNICADOS EGM ───────────────────────────────────────────────────────────
 
 export async function getComunicados(): Promise<Comunicado[]> {
