@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import {
   getComunicados,
   getNoticias,
@@ -10,6 +9,8 @@ import {
   editarNoticia,
   desactivarNoticia,
   registrarVistaNoticia,
+  subirImagenBackend,
+  subirAdjuntoBackend,
 } from "../../lib/api/noticias";
 import type { Comunicado, Noticia, NoticiaInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
@@ -1673,10 +1674,10 @@ function FormAnuncio({
     if (!file) return;
     setUploadingImg(true); setLocalError(null);
     try {
-      const url = await subirImagenModulo(file);
+      const url = await subirImagenBackend(file);
       setForm((f) => ({ ...f, imagenUrl: url }));
       setImagenModo("url");
-    } catch { setLocalError("Error al subir la imagen. Inténtalo de nuevo."); }
+    } catch (err) { setLocalError(`Error al subir la imagen: ${err instanceof Error ? err.message : String(err)}`); }
     finally { setUploadingImg(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
   }
 
@@ -1685,7 +1686,7 @@ function FormAnuncio({
     if (!file) return;
     setUploadingAdj(true); setLocalError(null);
     try {
-      const { url, nombre } = await subirAdjunto(file);
+      const { url, nombre } = await subirAdjuntoBackend(file);
       setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre }));
     } catch { setLocalError("Error al subir el documento. Inténtalo de nuevo."); }
     finally { setUploadingAdj(false); if (adjuntoRef.current) adjuntoRef.current.value = ""; }
