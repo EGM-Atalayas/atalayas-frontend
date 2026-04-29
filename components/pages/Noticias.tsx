@@ -8,11 +8,14 @@ import {
   crearNoticia,
   editarNoticia,
   desactivarNoticia,
+  crearComunicado,
+  editarComunicado,
+  desactivarComunicado,
   registrarVistaNoticia,
   subirImagenBackend,
   subirAdjuntoBackend,
 } from "../../lib/api/noticias";
-import type { Comunicado, Noticia, NoticiaInput } from "../../lib/types/noticias";
+import type { Comunicado, Noticia, NoticiaInput, ComunicadoInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 // ── TIPOS ──────────────────────────────────────────────────────────────────────
@@ -47,6 +50,12 @@ const ORDEN_LABELS: Record<Orden, string> = {
   antiguo:  "Más antiguo",
 };
 
+const EMPTY_FORM_COMUNICADO: ComunicadoInput = {
+  titulo: "", mensaje: "", imagenUrl: null, categoria: "General", destacado: false,
+  enlaceUrl: null, enlaceTexto: null, videoUrl: null,
+  adjuntoUrl: null, adjuntoNombre: null, estado: "publicado",
+};
+
 const EMPTY_FORM: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
   enlaceUrl: null, enlaceTexto: null, videoUrl: null,
@@ -70,16 +79,14 @@ const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 
 
 // Colores para fondos OSCUROS (cards con overlay)
 const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: string }> = {
-  Novedad: { bg: "rgba(34,197,94,0.22)",  text: "#bbf7d0", border: "rgba(34,197,94,0.3)"   },
-  Aviso:   { bg: "rgba(251,191,36,0.22)", text: "#fde68a", border: "rgba(251,191,36,0.32)" },
+  Aviso:   { bg: "rgba(220,38,38,0.22)",  text: "#fca5a5", border: "rgba(220,38,38,0.32)"  },
   Evento:  { bg: "rgba(167,139,250,0.2)", text: "#ddd6fe", border: "rgba(167,139,250,0.3)" },
   General: { bg: "rgba(255,255,255,0.1)", text: "rgba(255,255,255,0.78)", border: "rgba(255,255,255,0.16)" },
 };
 
 // Colores para fondos CLAROS (feed list sobre blanco)
 const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
-  Novedad: { bg: "#dcfce7", text: "#166534", border: "#86efac" },
-  Aviso:   { bg: "#fef9c3", text: "#854d0e", border: "#fde047" },
+  Aviso:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
   Evento:  { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
   General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
 };
@@ -211,10 +218,10 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
           EGM Atalayas
         </span>
       ) : (
-        /* Empresa — cian/teal para diferenciarse de la categoría "Novedad" (verde) */
+        /* Empresa — verde esmeralda, corporativo */
         <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(6,182,212,0.28)", color: "#a5f3fc", border: "1px solid rgba(6,182,212,0.35)" }
-          : { background: "#cffafe", color: "#0e7490", border: "1px solid #67e8f9" }) }}>
+          ? { background: "rgba(16,185,129,0.22)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.32)" }
+          : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" }) }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
@@ -238,10 +245,10 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         </span>
       )}
       {esNuevoItem && (
-        /* "Nuevo" — naranja/ámbar para distinguirlo de las categorías verdes */
+        /* "Nuevo" — verde menta, fresco y positivo */
         <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(251,146,60,0.28)", color: "#fed7aa", border: "1px solid rgba(251,146,60,0.38)" }
-          : { background: "#ffedd5", color: "#9a3412", border: "1px solid #fdba74" }) }}>
+          ? { background: "rgba(52,211,153,0.22)", color: "#a7f3d0", border: "1px solid rgba(52,211,153,0.32)" }
+          : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" }) }}>
           Nuevo
         </span>
       )}
@@ -375,9 +382,12 @@ export default function ComunicacionPage() {
 
   // Formulario
   const [showForm, setShowForm]               = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showFormComunicado, setShowFormComunicado] = useState(false);
+  const [confirmDelete, setConfirmDelete]     = useState<{ id: string; tipo: "anuncio" | "comunicado" } | null>(null);
   const [editando, setEditando]               = useState<Noticia | null>(null);
+  const [editandoComunicado, setEditandoComunicado] = useState<Comunicado | null>(null);
   const [initialForm, setInitialForm]         = useState<NoticiaInput>(EMPTY_FORM);
+  const [initialFormComunicado, setInitialFormComunicado] = useState<ComunicadoInput>(EMPTY_FORM_COMUNICADO);
   const [submitting, setSubmitting]           = useState(false);
   const [formError, setFormError]             = useState<string | null>(null);
 
@@ -479,7 +489,7 @@ export default function ComunicacionPage() {
   }, []);
 
   const cerrarModal   = useCallback(() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }, []);
-  const confirmarEliminar = useCallback((id: string) => setConfirmDeleteId(id), []);
+  const confirmarEliminar = useCallback((id: string, tipo: "anuncio" | "comunicado" = "anuncio") => setConfirmDelete({ id, tipo }), []);
 
   async function handleSubmit(data: NoticiaInput) {
     setSubmitting(true); setFormError(null);
@@ -493,9 +503,44 @@ export default function ComunicacionPage() {
     finally { setSubmitting(false); }
   }
 
-  async function handleDesactivar(id: string) {
-    try { await desactivarNoticia(id); await cargarAnuncios(); } catch {}
-    finally { setConfirmDeleteId(null); }
+  async function handleDesactivar(id: string, tipo: "anuncio" | "comunicado" = "anuncio") {
+    try {
+      if (tipo === "comunicado") { await desactivarComunicado(id); await cargarComunicados(); }
+      else { await desactivarNoticia(id); await cargarAnuncios(); }
+    } catch {}
+    finally { setConfirmDelete(null); }
+  }
+
+  const abrirEditarComunicado = useCallback((c: Comunicado) => {
+    setInitialFormComunicado({
+      titulo: c.titulo, mensaje: c.mensaje ?? "", imagenUrl: c.imagenUrl ?? null,
+      categoria: (c.categoria as ComunicadoInput["categoria"]) ?? "General",
+      destacado: c.destacado ?? false,
+      fechaPublicacion: c.fechaPublicacion ?? null, fechaExpiracion: c.fechaExpiracion ?? null,
+      enlaceUrl: c.enlaceUrl ?? null, enlaceTexto: c.enlaceTexto ?? null,
+      videoUrl: c.videoUrl ?? null, adjuntoUrl: c.adjuntoUrl ?? null,
+      adjuntoNombre: c.adjuntoNombre ?? null, estado: c.estado ?? "publicado",
+    });
+    setEditandoComunicado(c);
+    setShowFormComunicado(true);
+    setShowForm(false);
+  }, []);
+
+  const cerrarFormComunicado = useCallback(() => {
+    setShowFormComunicado(false); setEditandoComunicado(null);
+    setInitialFormComunicado(EMPTY_FORM_COMUNICADO); setFormError(null);
+  }, []);
+
+  async function handleSubmitComunicado(data: ComunicadoInput) {
+    setSubmitting(true); setFormError(null);
+    try {
+      if (editandoComunicado) await editarComunicado(editandoComunicado.comunicadoId, data);
+      else await crearComunicado(data);
+      await cargarComunicados();
+      cerrarFormComunicado();
+      mostrarToast(editandoComunicado ? "Comunicado actualizado" : data.estado === "borrador" ? "Borrador guardado" : "Comunicado publicado");
+    } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
+    finally { setSubmitting(false); }
   }
 
   async function publicarBorrador(n: Noticia) {
@@ -637,13 +682,29 @@ export default function ComunicacionPage() {
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto self-end md:self-auto">
-              {/* Nuevo anuncio */}
+              {/* Nuevo comunicado — solo superadmin */}
+              {esAdminGeneral && (
+                <button
+                  onClick={() => { setShowFormComunicado(true); setShowForm(false); }}
+                  className="text-sm font-semibold px-4 py-2 rounded-xl shrink-0"
+                  style={{ background: GRAD_EGM, color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  + Nuevo comunicado
+                </button>
+              )}
+              {/* Nuevo anuncio — solo admin empresa */}
               {esAdmin && (
                 <button
                   onClick={abrirCrear}
-                  className="text-sm font-semibold px-4 py-2 rounded-xl transition-all shrink-0"
-                  style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)" }}
-                >
+                  className="text-sm font-semibold px-4 py-2 rounded-xl shrink-0"
+                  style={{ background: GRAD_BTN, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
                   + Nuevo anuncio
                 </button>
               )}
@@ -744,6 +805,18 @@ export default function ComunicacionPage() {
           />
         )}
 
+        {showFormComunicado && esAdminGeneral && (
+          <FormComunicado
+            initialValues={initialFormComunicado}
+            editando={editandoComunicado}
+            submitting={submitting}
+            formError={formError}
+            onClose={cerrarFormComunicado}
+            onSubmit={handleSubmitComunicado}
+            onPreview={(item) => setPreviewItem(item)}
+          />
+        )}
+
         {/* ── CONTENIDO PRINCIPAL ─────────────────────────────────────────── */}
         {cargando ? (
           <Spinner />
@@ -769,8 +842,8 @@ export default function ComunicacionPage() {
                   <div className="todos-card-large">
                     <FeaturedCard item={todosTop[0]} size="large" onOpen={() => abrirDetalle(todosTop[0], 0)} fill prominent
                       puedeEditar={(todosTop[0].fuente === "empresa" && esAdmin) || (todosTop[0].fuente === "egm" && esAdminGeneral)}
-                      onEdit={() => abrirEditar(todosTop[0]._raw as Noticia)}
-                      onDelete={() => setConfirmDeleteId((todosTop[0]._raw as Noticia).anuncioId)}
+                      onEdit={() => todosTop[0].fuente === "egm" ? abrirEditarComunicado(todosTop[0]._raw as Comunicado) : abrirEditar(todosTop[0]._raw as Noticia)}
+                      onDelete={() => confirmarEliminar(todosTop[0].fuente === "egm" ? (todosTop[0]._raw as Comunicado).comunicadoId : (todosTop[0]._raw as Noticia).anuncioId, todosTop[0].fuente === "egm" ? "comunicado" : "anuncio")}
                     />
                   </div>
                   {/* 2 pequeñas apiladas */}
@@ -780,8 +853,8 @@ export default function ComunicacionPage() {
                         <div key={item.id} style={{ flex: 1 }}>
                           <FeaturedCard item={item} size="large" onOpen={() => abrirDetalle(item, idx + 1)} fill compact
                             puedeEditar={(item.fuente === "empresa" && esAdmin) || (item.fuente === "egm" && esAdminGeneral)}
-                            onEdit={() => abrirEditar(item._raw as Noticia)}
-                            onDelete={() => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
+                            onEdit={() => item.fuente === "egm" ? abrirEditarComunicado(item._raw as Comunicado) : abrirEditar(item._raw as Noticia)}
+                            onDelete={() => confirmarEliminar(item.fuente === "egm" ? (item._raw as Comunicado).comunicadoId : (item._raw as Noticia).anuncioId, item.fuente === "egm" ? "comunicado" : "anuncio")}
                           />
                         </div>
                       ))}
@@ -808,7 +881,7 @@ export default function ComunicacionPage() {
                   nombreEmpresa={usuario?.nombreEmpresa}
                   onOpen={abrirDetalle}
                   onEdit={(item) => abrirEditar(item._raw as Noticia)}
-                  onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
+                  onDelete={(item) => confirmarEliminar(item.fuente === "egm" ? (item._raw as Comunicado).comunicadoId : (item._raw as Noticia).anuncioId, item.fuente === "egm" ? "comunicado" : "anuncio")}
                 />
                 {todosResto.length > visibles && (
                   <div className="flex justify-center mt-4">
@@ -843,8 +916,8 @@ export default function ComunicacionPage() {
               seccionLabel="Más comunicados"
               verMasLabel="Ver más comunicados"
               onOpen={abrirDetalle}
-              onEdit={(item) => abrirEditar(item._raw as Noticia)}
-              onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
+              onEdit={(item) => item.fuente === "egm" ? abrirEditarComunicado(item._raw as Comunicado) : abrirEditar(item._raw as Noticia)}
+              onDelete={(item) => confirmarEliminar(item.fuente === "egm" ? (item._raw as Comunicado).comunicadoId : (item._raw as Noticia).anuncioId, item.fuente === "egm" ? "comunicado" : "anuncio")}
               abrirEditar={abrirEditar}
               handleDesactivar={handleDesactivar}
             />
@@ -867,7 +940,7 @@ export default function ComunicacionPage() {
                 onToggle={() => setShowBorradores((v) => !v)}
                 onEditar={abrirEditar}
                 onPublicar={publicarBorrador}
-                onEliminar={(id) => setConfirmDeleteId(id)}
+                onEliminar={(id) => confirmarEliminar(id, "anuncio")}
               />
             ) : (
               <EstadoVacio
@@ -888,10 +961,10 @@ export default function ComunicacionPage() {
               seccionLabel="Más anuncios"
               verMasLabel="Ver más anuncios"
               onOpen={abrirDetalle}
-              onEdit={(item) => abrirEditar(item._raw as Noticia)}
-              onDelete={(item) => setConfirmDeleteId((item._raw as Noticia).anuncioId)}
+              onEdit={(item) => item.fuente === "egm" ? abrirEditarComunicado(item._raw as Comunicado) : abrirEditar(item._raw as Noticia)}
+              onDelete={(item) => confirmarEliminar(item.fuente === "egm" ? (item._raw as Comunicado).comunicadoId : (item._raw as Noticia).anuncioId, item.fuente === "egm" ? "comunicado" : "anuncio")}
               abrirEditar={abrirEditar}
-              handleDesactivar={(id) => setConfirmDeleteId(id)}
+              handleDesactivar={(id) => confirmarEliminar(id, "anuncio")}
               borradoresSlot={(esAdmin || esAdminGeneral) && borradores.length > 0 ? (
                 <BorradoresPanel
                   borradores={borradores}
@@ -899,7 +972,7 @@ export default function ComunicacionPage() {
                   onToggle={() => setShowBorradores((v) => !v)}
                   onEditar={abrirEditar}
                   onPublicar={publicarBorrador}
-                  onEliminar={(id) => setConfirmDeleteId(id)}
+                  onEliminar={(id) => confirmarEliminar(id, "anuncio")}
                 />
               ) : undefined}
             />
@@ -909,10 +982,10 @@ export default function ComunicacionPage() {
       </div>
 
       {/* ── CONFIRMACIÓN ELIMINAR ────────────────────────────────────────── */}
-      {confirmDeleteId && (
+      {confirmDelete && (
         <div className="fixed inset-0 z-[160] flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.62)", backdropFilter: "blur(6px)", animation: "modalBgIn 0.2s ease" }}
-          onClick={() => setConfirmDeleteId(null)}>
+          onClick={() => setConfirmDelete(null)}>
           <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
             style={{
               background: "var(--blanco)",
@@ -931,14 +1004,16 @@ export default function ComunicacionPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-sm" style={{ color: "var(--texto-primario)" }}>¿Eliminar este anuncio?</p>
+                <p className="font-semibold text-sm" style={{ color: "var(--texto-primario)" }}>
+                  {confirmDelete?.tipo === "comunicado" ? "¿Eliminar este comunicado?" : "¿Eliminar este anuncio?"}
+                </p>
                 <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>Esta acción no se puede deshacer.</p>
               </div>
             </div>
 
             {/* Botones */}
             <div className="flex gap-2">
-              <button onClick={() => setConfirmDeleteId(null)}
+              <button onClick={() => setConfirmDelete(null)}
                 className="flex-1 text-sm font-medium py-2 rounded-xl"
                 style={{
                   background: "transparent", color: "var(--texto-secundario)",
@@ -951,7 +1026,7 @@ export default function ComunicacionPage() {
                 onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
                 Cancelar
               </button>
-              <button onClick={() => handleDesactivar(confirmDeleteId)}
+              <button onClick={() => confirmDelete && handleDesactivar(confirmDelete.id, confirmDelete.tipo)}
                 className="flex-1 text-sm font-semibold py-2 rounded-xl"
                 style={{
                   background: "#dc2626", color: "#fff",
@@ -993,8 +1068,16 @@ export default function ComunicacionPage() {
           puedeEditar={!previewItem && ((( previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
           onClose={cerrarModal}
           onNavigate={abrirDetalle}
-          onEditar={abrirEditar}
-          onEliminar={confirmarEliminar}
+          onEditar={(item) => {
+            cerrarModal();
+            if (item.fuente === "egm") abrirEditarComunicado(item._raw as Comunicado);
+            else abrirEditar(item._raw as Noticia);
+          }}
+          onEliminar={(id) => {
+            const item = previewItem ?? modalItem!;
+            cerrarModal();
+            confirmarEliminar(id, item.fuente === "egm" ? "comunicado" : "anuncio");
+          }}
         />
       )}
     </div>
@@ -1012,7 +1095,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
   puedeEditar: boolean;
   onClose: () => void;
   onNavigate: (item: FeedItem, idx: number) => void;
-  onEditar: (n: Noticia) => void;
+  onEditar: (item: FeedItem) => void;
   onEliminar: (id: string) => void;
 }) {
   const embedUrl     = useMemo(() => item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null, [item.videoUrl]);
@@ -1062,97 +1145,176 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
       <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem" modalRef={modalRef}
         navPrev={hasPrev ? goPrev : undefined}
         navNext={hasNext  ? goNext : undefined}>
-        {isPreview && (
-          <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold shrink-0"
-            style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
-            <span>👁</span> Vista previa — así verán los usuarios este anuncio
+        {/* Imagen / cabecera — no scrollea */}
+        {item.imagenUrl ? (
+          /* ── Con imagen: aspect ratio normal ── */
+          <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
+            style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
+            {isPreview && (
+              <div className="absolute top-3 left-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{ transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", color: "#fde68a", backdropFilter: "blur(8px)", border: "1px solid rgba(253,230,138,0.35)", whiteSpace: "nowrap" }}>
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Vista previa
+              </div>
+            )}
+            <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} size="sm" />
+                {item.fijado && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                    style={{ background: "rgba(79,70,229,0.45)", color: "#c7d2fe", backdropFilter: "blur(6px)" }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                    Fijado
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-semibold shrink-0" style={{ color: "rgba(255,255,255,0.88)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
+            </div>
+          </div>
+        ) : (
+          /* ── Sin imagen: cabecera compacta con título superpuesto ── */
+          <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
+            style={{ height: 150, background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
+            {isPreview && (
+              <div className="absolute top-3 left-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{ transform: "translateX(-50%)", background: "rgba(0,0,0,0.45)", color: "#fde68a", backdropFilter: "blur(8px)", border: "1px solid rgba(253,230,138,0.35)", whiteSpace: "nowrap" }}>
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Vista previa
+              </div>
+            )}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 85% 15%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-3">
+              <div className="flex flex-col gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} size="sm" />
+                  {item.fijado && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: "rgba(79,70,229,0.45)", color: "#c7d2fe", backdropFilter: "blur(6px)" }}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                      Fijado
+                    </span>
+                  )}
+                </div>
+                <h2 className="leading-tight line-clamp-2"
+                  style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.15rem, 2.5vw, 1.45rem)", letterSpacing: "-0.02em", color: "#fff", textShadow: SHADOW_TXT, margin: 0 }}>
+                  {item.titulo}
+                </h2>
+              </div>
+              <p className="text-xs font-semibold shrink-0 self-end" style={{ color: "rgba(255,255,255,0.75)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
+            </div>
           </div>
         )}
-
-        {/* Imagen cabecera — no scrollea */}
-        <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
-          style={item.imagenUrl ? { aspectRatio: "16/9", maxHeight: "260px" } : { height: "120px" }}>
-          {item.imagenUrl ? (
-            <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center"
-              style={{ background: item.fuente === "egm" ? GRAD_EGM : GRAD_EMP }}>
-              <MegaphoneIcon size={40} />
-            </div>
-          )}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.95) 0%, rgba(3,10,28,0.25) 55%, transparent 100%)" }} />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end justify-between gap-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Badge fuente={item.fuente} nombreEmpresa={nombreEmpresa} categoria={item.categoria} size="sm" />
-              {item.fijado && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{ background: "rgba(37,99,235,0.45)", color: "#bfdbfe", backdropFilter: "blur(6px)" }}>
-                  <svg width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                  Fijado
-                </span>
-              )}
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.88)", textShadow: SHADOW_TXT }}>{formatRelative(item.fecha)}</p>
-              {(() => { const rel = formatRelative(item.fecha); const abs = formatDate(item.fecha); return rel !== abs ? <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)", textShadow: SHADOW_TXT }}>{abs}</p> : null; })()}
-            </div>
-          </div>
-        </div>
 
         {/* Contenido scrolleable */}
         <div className={`modal-scroll${dir ? ` modal-slide-${dir}` : ""} overflow-y-auto flex-1 flex flex-col`}
           style={{ background: "var(--blanco)" }}>
-          <div className="flex-1 px-6 pt-5 pb-4 md:px-8 flex flex-col gap-4">
-            <h2 className="leading-tight"
-              style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
-              {item.titulo}
-            </h2>
-            <div style={{ fontSize: "0.94rem", color: "#4b5563", lineHeight: 1.8, overflowWrap: "break-word", wordBreak: "break-word" }}>
+          <div className="flex-1 px-6 pb-5 md:px-8 flex flex-col gap-4"
+            style={{ paddingTop: item.imagenUrl ? "1.5rem" : "1.25rem" }}>
+
+            {/* Título — solo si hay imagen (sin imagen ya está en la cabecera) */}
+            {item.imagenUrl && (
+              <h2 className="leading-tight"
+                style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario)" }}>
+                {item.titulo}
+              </h2>
+            )}
+
+            {/* Contenido */}
+            <div style={{ fontSize: "0.94rem", color: "#4b5563", lineHeight: 1.85, overflowWrap: "break-word", wordBreak: "break-word" }}>
               {contenidoMd}
             </div>
 
-            {/* ── Vídeo embed ── */}
-            {embedUrl && (
-              <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+            {/* ── Recursos adjuntos ── */}
+            {(embedUrl || item.adjuntoUrl || item.enlaceUrl) && (
+              <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "1.25rem" }}>
+
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                  <p className="text-xs font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.08em" }}>Recursos adjuntos</p>
+                </div>
+
+                {/* Vídeo embed */}
+                {embedUrl && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Vídeo</span>
+                    <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                      <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Adjunto PDF/doc */}
+                {item.adjuntoUrl && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Documento adjunto</span>
+                    <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                      style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none", transition: "background 0.18s ease" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      </div>
+                      <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </a>
+                  </div>
+                )}
+
+                {/* Enlace externo */}
+                {item.enlaceUrl && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Enlace externo</span>
+                    <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                      style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none", transition: "background 0.18s ease" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                      </div>
+                      <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.enlaceTexto ?? "Ver enlace"}</span>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </a>
+                  </div>
+                )}
+
               </div>
             )}
 
-            {/* ── Adjunto PDF/doc + enlace externo en la misma fila si ambos existen ── */}
-            {(item.adjuntoUrl || item.enlaceUrl) && (
-              <div className="flex flex-col gap-2">
-                {item.adjuntoUrl && (
-                  <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
-                    style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", textDecoration: "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  </a>
-                )}
-                {item.enlaceUrl && (
-                  /* Enlace externo — compacto, no invasivo */
-                  <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold self-start transition-colors"
-                    style={{ color: "#2563eb", textDecoration: "none", padding: "6px 0" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}>
-                    {item.enlaceTexto ?? "Más información"}
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                  </a>
-                )}
-              </div>
-            )}
+            {/* Fecha al pie del contenido — sutil */}
+            <p className="text-xs mt-auto pt-1 text-right" style={{ color: "var(--texto-muted)" }}>
+              Publicado el {formatDate(item.fecha)}
+            </p>
+
           </div>
 
           {/* Footer */}
-          {(!isPreview || puedeEditar || (item.vistas !== undefined && item.vistas > 0)) && (
-            <div className="flex items-center gap-3 px-6 py-3 md:px-8" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-              {!isPreview && item.vistas !== undefined && item.vistas > 0 && (
+          <div className="flex items-center gap-3 px-6 py-4 md:px-8" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+              {isPreview && (
+                <button onClick={onClose}
+                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-xl"
+                  style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                  </svg>
+                  Volver a editar
+                </button>
+              )}
+              {!isPreview && puedeEditar && item.vistas !== undefined && item.vistas > 0 && (
                 <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
                   <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                   {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
@@ -1161,7 +1323,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
               {puedeEditar && (
                 <div className="flex items-center gap-2 ml-auto">
                   {/* Editar — pill azul con scale */}
-                  <button onClick={() => { onClose(); onEditar(item._raw as Noticia); }}
+                  <button onClick={() => { onClose(); onEditar(item); }}
                     className="text-sm font-semibold px-4 py-1.5 rounded-xl"
                     style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)"; }}
@@ -1182,8 +1344,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
       </Modal>
     </>
   );
@@ -1230,8 +1391,8 @@ function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nom
                   onOpen={() => onOpen(item)}
                   fill
                   puedeEditar={esAdmin}
-                  onEdit={() => abrirEditar(item._raw as Noticia)}
-                  onDelete={() => handleDesactivar((item._raw as Noticia).anuncioId)}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => onDelete(item)}
                 />
               </div>
             ))}
@@ -1866,6 +2027,564 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
   );
 }
 
+// ── FORMULARIO COMUNICADO ─────────────────────────────────────────────────────
+function FormComunicado({
+  initialValues, editando, submitting, formError,
+  onClose, onSubmit, onPreview,
+}: {
+  initialValues: ComunicadoInput;
+  editando: Comunicado | null;
+  submitting: boolean;
+  formError: string | null;
+  onClose: () => void;
+  onSubmit: (data: ComunicadoInput) => void;
+  onPreview: (item: FeedItem) => void;
+}) {
+  type Tab = "contenido" | "multimedia" | "publicacion";
+  const [tab, setTab]         = useState<Tab>("contenido");
+  const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
+  const [touched, setTouched] = useState(false);
+  const [form, setForm]       = useState<ComunicadoInput>({ ...EMPTY_FORM_COMUNICADO, ...initialValues });
+  const initialSnapshot       = useRef<string>(JSON.stringify(initialValues));
+  const isDirty               = JSON.stringify(form) !== initialSnapshot.current;
+  const canSubmit             = form.titulo.trim().length > 0 && form.mensaje.trim().length > 0;
+
+  const [confirmClose, setConfirmClose] = useState(false);
+  const handleRequestClose = () => { if (isDirty) setConfirmClose(true); else onClose(); };
+
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [uploadingAdj, setUploadingAdj] = useState(false);
+  const [aiLoading, setAiLoading]       = useState<"titulo" | "mensaje" | null>(null);
+  const [localError, setLocalError]     = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const adjuntoRef   = useRef<HTMLInputElement>(null);
+  const errorMsg     = localError ?? formError;
+
+  const tituloError  = touched && !form.titulo.trim();
+  const mensajeError = touched && !form.mensaje.trim();
+
+  const badgeMult = useMemo(() => [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length, [form.imagenUrl, form.videoUrl, form.adjuntoUrl]);
+  const badgePub  = useMemo(() => [form.enlaceUrl, form.destacado].filter(Boolean).length, [form.enlaceUrl, form.destacado]);
+  const badgeCont = useMemo(() => touched ? [!form.titulo.trim(), !form.mensaje.trim()].filter(Boolean).length : 0, [touched, form.titulo, form.mensaje]);
+  const embedUrl  = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
+
+  const TABS = useMemo<{ id: Tab; label: string; badge?: number; error?: boolean }[]>(() => [
+    { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
+    { id: "multimedia",  label: "Multimedia",  badge: badgeMult || undefined },
+    { id: "publicacion", label: "Publicación", badge: badgePub  || undefined },
+  ], [badgeCont, badgeMult, badgePub]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") handleRequestClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isDirty]);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingImg(true); setLocalError(null);
+    try { const url = await subirImagenBackend(file); setForm((f) => ({ ...f, imagenUrl: url })); }
+    catch { setLocalError("Error al subir la imagen."); }
+    finally { setUploadingImg(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
+
+  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingAdj(true); setLocalError(null);
+    try { const { url, nombre } = await subirAdjuntoBackend(file); setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre })); }
+    catch { setLocalError("Error al subir el adjunto."); }
+    finally { setUploadingAdj(false); if (adjuntoRef.current) adjuntoRef.current.value = ""; }
+  }
+
+  async function sugerirConIA(campo: "titulo" | "mensaje") {
+    const base = campo === "titulo" ? (form.mensaje.trim() || form.titulo.trim()) : form.mensaje.trim();
+    if (!base) { setLocalError("Escribe algo antes de usar la IA."); return; }
+    setAiLoading(campo); setLocalError(null);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: campo === "titulo"
+            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
+            : `Mejora la redacción de este comunicado de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
+          }],
+          context: {},
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error();
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let out = "";
+      while (true) { const { done, value } = await reader.read(); if (done) break; out += dec.decode(value); }
+      if (campo === "titulo") setForm((f) => ({ ...f, titulo: out.trim() }));
+      else setForm((f) => ({ ...f, mensaje: out.trim() }));
+    } catch { setLocalError("La IA no está disponible en este momento."); }
+    finally { setAiLoading(null); }
+  }
+
+  function handlePreview() {
+    const item: FeedItem = {
+      id: "preview", titulo: form.titulo || "(Sin título)", descripcion: form.mensaje,
+      imagenUrl: form.imagenUrl ?? null, fecha: new Date().toISOString(),
+      fuente: "egm", categoria: form.categoria, destacado: form.destacado,
+      esNuevoItem: true, _raw: {} as Comunicado,
+      videoUrl: form.videoUrl ?? null, adjuntoUrl: form.adjuntoUrl ?? null,
+      adjuntoNombre: form.adjuntoNombre ?? null,
+      enlaceUrl: form.enlaceUrl ?? null, enlaceTexto: form.enlaceTexto ?? null,
+      estado: "publicado",
+    };
+    onPreview(item);
+  }
+
+  const CATS_COM = ["General", "Novedad", "Aviso", "Evento"];
+
+  return (
+    <>
+    {/* Overlay */}
+    <div className="fixed inset-0 flex items-start justify-center"
+      style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
+      onClick={handleRequestClose}>
+
+      <div className="relative w-full flex flex-col"
+        style={{
+          maxWidth: 660,
+          height: "auto",
+          maxHeight: "calc(100vh - 112px)",
+          background: "var(--blanco)",
+          borderRadius: 20,
+          boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
+          overflow: "hidden",
+          isolation: "isolate",
+          animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* ── Cabecera ── */}
+        <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
+          <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-1 min-w-0">
+              <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.65rem, 4vw, 2.1rem)", lineHeight: 1.1, letterSpacing: "-0.03em", color: "#ffffff", margin: 0, textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}>
+                {editando ? "Editar comunicado" : "Nuevo comunicado"}
+              </h3>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
+                {editando ? "Modifica el comunicado y guarda los cambios." : "Visible para todos los empleados de la plataforma."}
+              </p>
+            </div>
+            <button onClick={handleRequestClose}
+              className="shrink-0 flex items-center justify-center"
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
+              title="Cerrar (Esc)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Tabs ── */}
+        <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
+          <div className="flex">
+            {TABS.map(({ id, label, badge, error }) => (
+              <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
+                className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
+                style={{ color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)", background: "none" }}>
+                {label}
+                {badge ? (
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
+                    style={{ background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db", color: error || tab === id ? "#fff" : "var(--texto-muted)", minWidth: 18, textAlign: "center" }}>
+                    {badge}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <div style={{
+            position: "absolute", bottom: 0, left: 0,
+            width: `${100 / TABS.length}%`, height: 2,
+            borderRadius: "2px 2px 0 0",
+            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
+            transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
+            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
+          }} />
+        </div>
+
+        {/* ── Cuerpo con scroll ── */}
+        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
+
+          {/* ── TAB: Contenido ── */}
+          <div style={{ display: tab === "contenido" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+            <div>
+              <FieldLabel label="Título" required
+                right={
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                  </div>
+                }
+              />
+              <input type="text" value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ej: Networking Day — Viernes 25 de abril"
+                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
+              />
+              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
+            </div>
+
+            <div>
+              <FieldLabel label="Contenido" required
+                right={
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.mensaje.length} car.</span>
+                    <AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />
+                  </div>
+                }
+              />
+              <textarea value={form.mensaje}
+                onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                placeholder="Escribe el contenido. Puedes usar **negrita** y - listas."
+                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
+                style={{ ...inputStyle, minHeight: 180, lineHeight: 1.7, ...(mensajeError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
+              />
+              {mensajeError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El contenido es obligatorio</p>}
+            </div>
+
+            <div>
+              <FieldLabel label="Categoría" />
+              <div className="flex gap-2 flex-wrap">
+                {CATS_COM.map((cat) => {
+                  const active = (form.categoria ?? "General") === cat;
+                  const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
+                  return (
+                    <button key={cat} type="button"
+                      onClick={() => setForm({ ...form, categoria: cat as ComunicadoInput["categoria"] })}
+                      className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
+                      style={{
+                        background: active ? col.bg : "var(--blanco)",
+                        color: active ? col.text : "var(--texto-muted)",
+                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
+                        boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
+                      }}>
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div></div>
+
+          {/* ── TAB: Multimedia ── */}
+          {visitedTabs.current.has("multimedia") && (
+          <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+            {/* Imagen */}
+            <div>
+              <FieldLabel label="Imagen de portada" />
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              {form.imagenUrl ? (
+                <div className="relative mt-1">
+                  <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
+                  <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                    className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                    style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    title="Quitar imagen"><IconX size={12} /></button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
+                  className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
+                  style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                  onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                  onDrop={(e) => {
+                    e.preventDefault(); e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)";
+                    const file = e.dataTransfer.files?.[0];
+                    if (file?.type.startsWith("image/")) handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                  }}>
+                  {uploadingImg
+                    ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                    : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                </button>
+              )}
+            </div>
+
+            {/* Vídeo */}
+            <div>
+              <FieldLabel label="Vídeo (YouTube o Vimeo)" />
+              {embedUrl ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
+                    </div>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
+                      className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                      onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                      onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
+                  </div>
+                  <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
+                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <input type="url" value={form.videoUrl || ""}
+                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {form.videoUrl && (
+                    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                      Solo se pueden incrustar vídeos de YouTube o Vimeo
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Adjunto */}
+            <div>
+              <FieldLabel label="Documento adjunto" />
+              <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
+              {form.adjuntoUrl ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
+                  <span style={{ color: "#16a34a" }}><IconDoc /></span>
+                  <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
+                  style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                  onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                  {uploadingAdj
+                    ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                    : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+                </button>
+              )}
+            </div>
+          </div></div>
+          )}
+
+          {/* ── TAB: Publicación ── */}
+          {visitedTabs.current.has("publicacion") && (
+          <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+            {/* Enlace externo */}
+            <div>
+              <FieldLabel label="Enlace externo" />
+              <div className="flex flex-col gap-2">
+                <input type="url" value={form.enlaceUrl || ""}
+                  onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                  placeholder="https://..."
+                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                  style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                />
+                {form.enlaceUrl && (
+                  <>
+                    <input type="text" value={form.enlaceTexto || ""}
+                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                      placeholder='Texto del enlace — ej: "Más información"'
+                      className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                    />
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el comunicado</p>
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                          </div>
+                          <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>{form.enlaceTexto?.trim() || "Ver enlace"}</span>
+                        </div>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
+                          className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Estado: fijar + borrador */}
+            <div>
+              <FieldLabel label="Estado" />
+              <div className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${form.destacado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "border-color 0.18s" }}>
+                {/* Fila: Fijar */}
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                  style={{ background: form.destacado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
+                  onClick={() => setForm({ ...form, destacado: !form.destacado })}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: form.destacado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.destacado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.destacado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
+                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+                    </div>
+                  </div>
+                  <Toggle checked={form.destacado} onChange={(v) => setForm({ ...form, destacado: v })} color="#2563eb" />
+                </div>
+
+                {/* Separador */}
+                {!form.destacado && form.estado !== "borrador" && (
+                  <div style={{ height: 1, background: "var(--gris-borde)" }} />
+                )}
+
+                {/* Fila: Borrador — solo al crear, no al editar un publicado */}
+                {!(editando && editando.estado !== "borrador") && (
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                  style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
+                  onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                    </div>
+                  </div>
+                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
+                </div>
+                )}
+              </div>
+            </div>
+          </div></div>
+          )}
+
+        </div>{/* fin scroll */}
+
+        {/* ── Footer ── */}
+        <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
+          style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+          <div className="flex-1 min-w-0">
+            {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={handleRequestClose}
+              className="text-sm px-4 py-2 rounded-xl font-medium"
+              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+              Cancelar
+            </button>
+            <button type="button" onClick={handlePreview}
+              className="text-sm px-4 py-2 rounded-xl font-medium"
+              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+              Previsualizar
+            </button>
+            {(() => {
+              const active = canSubmit && (!editando || isDirty);
+              const bg = active ? GRAD_EGM : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
+              return (
+                <button
+                  onClick={() => { if (!active) { setTouched(true); return; } onSubmit(form); }}
+                  disabled={submitting}
+                  title={!canSubmit ? "Título y contenido son obligatorios" : editando && !isDirty ? "No has cambiado nada aún" : undefined}
+                  className="text-sm font-semibold px-5 py-2 rounded-xl"
+                  style={{ background: bg, color: "#fff", boxShadow: active ? "0 2px 8px rgba(27,63,126,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; }}}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                  {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
+                </button>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Diálogo confirmar cierre */}
+    {confirmClose && (
+      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
+        <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+          style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.22)", border: "1px solid var(--gris-borde)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
+          <div className="flex justify-center">
+            <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+            </div>
+          </div>
+          <div className="text-center flex flex-col gap-1">
+            <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
+            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button onClick={() => setConfirmClose(false)}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: GRAD_EGM, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(27,63,126,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+              Seguir editando
+            </button>
+            <button onClick={onClose}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+              Descartar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
+  );
+}
+
 // ── FORMULARIO ANUNCIO (modal + secciones colapsables) ───────────────────────
 function FormAnuncio({
   initialValues, editando, submitting, formError,
@@ -1883,11 +2602,14 @@ function FormAnuncio({
   const [tab, setTab]         = useState<Tab>("contenido");
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<NoticiaInput>({ ...initialValues });
+  const [form, setForm]       = useState<NoticiaInput>({ ...EMPTY_FORM, ...initialValues });
   // Snapshot inmutable para detectar si el usuario cambió algo
   const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
   const isDirty   = JSON.stringify(form) !== initialSnapshot.current;
   const canSubmit = form.titulo.trim().length > 0 && form.contenido.trim().length > 0;
+
+  const [confirmClose, setConfirmClose] = useState(false);
+  const handleRequestClose = () => { if (isDirty) setConfirmClose(true); else onClose(); };
 
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
@@ -2004,7 +2726,7 @@ function FormAnuncio({
     {/* Overlay */}
     <div className="fixed inset-0 flex items-start justify-center"
       style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
-      onClick={onClose}>
+      onClick={handleRequestClose}>
 
       {/* Card — altura automática con límite máximo */}
       <div className="relative w-full flex flex-col"
@@ -2045,7 +2767,7 @@ function FormAnuncio({
                 {editando ? "Modifica los datos y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
               </p>
             </div>
-            <button onClick={onClose}
+            <button onClick={handleRequestClose}
               className="shrink-0 flex items-center justify-center"
               style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
@@ -2188,7 +2910,7 @@ function FormAnuncio({
               />
               {imagenModo === "url" ? (
                 <>
-                  <input type="url" value={form.imagenUrl ?? ""}
+                  <input type="url" value={form.imagenUrl || ""}
                     onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
                     placeholder="https://..."
                     className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
@@ -2253,21 +2975,44 @@ function FormAnuncio({
 
             <div>
               <FieldLabel label="Vídeo (YouTube o Vimeo)" />
-              <input type="url" value={form.videoUrl ?? ""}
-                onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
-                placeholder="https://youtube.com/watch?v=..."
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-              />
-              {form.videoUrl && !embedUrl && (
-                <p className="flex items-center gap-1.5 text-xs mt-1.5 font-medium" style={{ color: "#b45309" }}>
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                  Solo se puede incrustar vídeos de YouTube o Vimeo
-                </p>
-              )}
-              {embedUrl && (
-                <div className="mt-3 rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 220 }}>
-                  <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+              {embedUrl ? (
+                /* Vídeo válido — previsualización con chip y botón quitar */
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+                    style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
+                    </div>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
+                      className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                      onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                      onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
+                      Quitar
+                    </button>
+                  </div>
+                  <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
+                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                  </div>
+                </div>
+              ) : (
+                /* Sin vídeo o URL inválida */
+                <div className="flex flex-col gap-1.5">
+                  <input type="url" value={form.videoUrl || ""}
+                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {form.videoUrl && (
+                    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                      Solo se pueden incrustar vídeos de YouTube o Vimeo
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -2313,20 +3058,48 @@ function FormAnuncio({
           <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div style={{ width: "100%" }}>
               <FieldLabel label="Enlace externo" />
-              <input type="url" value={form.enlaceUrl ?? ""}
-                onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
-                placeholder="https://..."
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-              />
-              {form.enlaceUrl && (
-                <input type="text" value={form.enlaceTexto ?? ""}
-                  onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
-                  placeholder='Texto del botón — ej: "Más información"'
-                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none mt-2"
+              <div className="flex flex-col gap-2">
+                <input type="url" value={form.enlaceUrl || ""}
+                  onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                  placeholder="https://..."
+                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
                   style={inputStyle} onFocus={onFocus} onBlur={onBlur}
                 />
-              )}
+                {form.enlaceUrl && (
+                  <>
+                    <input type="text" value={form.enlaceTexto || ""}
+                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                      placeholder='Texto del enlace — ej: "Más información"'
+                      className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                    />
+                    {/* Previsualización de cómo quedará */}
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el anuncio</p>
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
+                        style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                          </div>
+                          <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>
+                            {form.enlaceTexto?.trim() || "Ver enlace"}
+                          </span>
+                        </div>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
+                          className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* ── Visibilidad ── */}
@@ -2397,7 +3170,7 @@ function FormAnuncio({
             {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onClose}
+            <button onClick={handleRequestClose}
               className="text-sm px-4 py-2 rounded-xl font-medium"
               style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
@@ -2492,6 +3265,54 @@ function FormAnuncio({
 
       </div>
     </div>
+
+    {/* ── Diálogo confirmar cierre con cambios ── */}
+    {confirmClose && (
+      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
+        <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+          style={{
+            background: "var(--blanco)",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
+            border: "1px solid var(--gris-borde)",
+            animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+          {/* Icono */}
+          <div className="flex justify-center">
+            <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+              </svg>
+            </div>
+          </div>
+          {/* Texto */}
+          <div className="text-center flex flex-col gap-1">
+            <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
+            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
+          </div>
+          {/* Botones */}
+          <div className="flex flex-col gap-2">
+            <button onClick={() => setConfirmClose(false)}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: GRAD_BTN, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+              Seguir editando
+            </button>
+            <button onClick={onClose}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+              Descartar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 }

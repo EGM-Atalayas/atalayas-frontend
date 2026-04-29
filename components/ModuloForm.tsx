@@ -22,12 +22,16 @@ interface ModuloFormProps {
 }
 
 const TIPOS: { value: ModuloTipo; label: string }[] = [
-  { value: "IDENTIDAD",   label: MODULO_TIPO_LABEL["IDENTIDAD"] },
-  { value: "BASICA",      label: MODULO_TIPO_LABEL["BASICA"] },
-  { value: "ESPECIFICA",  label: MODULO_TIPO_LABEL["ESPECIFICA"] },
-  { value: "DESARROLLO",  label: MODULO_TIPO_LABEL["DESARROLLO"] },
-  { value: "RECOMPENSAS", label: MODULO_TIPO_LABEL["RECOMPENSAS"] },
-  { value: "COMUNIDAD",   label: MODULO_TIPO_LABEL["COMUNIDAD"] },
+  { value: "IDENTIDAD",    label: MODULO_TIPO_LABEL["IDENTIDAD"] },
+  { value: "BASICA",       label: MODULO_TIPO_LABEL["BASICA"] },
+  { value: "ESPECIFICA",   label: MODULO_TIPO_LABEL["ESPECIFICA"] },
+  { value: "DESARROLLO",   label: MODULO_TIPO_LABEL["DESARROLLO"] },
+  { value: "RECOMPENSAS",  label: MODULO_TIPO_LABEL["RECOMPENSAS"] },
+  { value: "COMUNIDAD",    label: MODULO_TIPO_LABEL["COMUNIDAD"] },
+  { value: "CUMPLIMIENTO", label: MODULO_TIPO_LABEL["CUMPLIMIENTO"] },
+  { value: "LIDERAZGO",    label: MODULO_TIPO_LABEL["LIDERAZGO"] },
+  { value: "TECNICO",      label: MODULO_TIPO_LABEL["TECNICO"] },
+  { value: "SOFT_SKILLS",  label: MODULO_TIPO_LABEL["SOFT_SKILLS"] },
 ];
 
 const CS = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" };

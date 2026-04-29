@@ -71,13 +71,20 @@ function leerPorcentajeLS(moduloId: string): number | null {
 }
 
 const DURACION_POR_TIPO: Record<string, string> = {
-  IDENTIDAD:  "20 min",
-  BASICA:     "35 min",
-  ESPECIFICA: "50 min",
-  DESARROLLO: "45 min",
-  COMUNIDAD:  "25 min",
-  RECOMPENSAS:"15 min",
+  IDENTIDAD:    "20 min",
+  BASICA:       "35 min",
+  ESPECIFICA:   "50 min",
+  DESARROLLO:   "45 min",
+  COMUNIDAD:    "25 min",
+  RECOMPENSAS:  "15 min",
+  CUMPLIMIENTO: "30 min",
+  LIDERAZGO:    "45 min",
+  TECNICO:      "40 min",
+  SOFT_SKILLS:  "35 min",
 };
+
+// Tipos que pertenecen al bloque "Onboarding" — el resto va a "Formación continua"
+const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
 
 function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   const pctLS = leerPorcentajeLS(m.moduloId);
@@ -152,8 +159,9 @@ export default function FormacionPage() {
   const hayFiltrosActivos =
     busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos" || soloIA;
 
-  // ── Aplicar filtros ───────────────────────────────────────────────────────
+  // ── Aplicar filtros (solo sobre módulos de Formación continua) ───────────
   const modulosFiltrados = modules.filter((m) => {
+    if (TIPOS_ONBOARDING.has(m.tipoModulo)) return false;           // excluir onboarding
     if (busqueda && !m.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
     if (filtroEstado !== "todos" && m.status !== filtroEstado) return false;
     if (filtroTipo !== "todos" && m.tipoModulo !== filtroTipo) return false;
@@ -177,7 +185,7 @@ export default function FormacionPage() {
         <>
           {/* ── SECCIÓN ONBOARDING ───────────────────────────────────── */}
           {(() => {
-            const modulosOnboarding = modules.filter((m) => m.tipoModulo === "ONBOARDING");
+            const modulosOnboarding = modules.filter((m) => TIPOS_ONBOARDING.has(m.tipoModulo));
             return (
               <section id="onboarding" className="mb-14 scroll-mt-8">
                 <div className="flex items-center justify-between mb-6">
@@ -232,15 +240,41 @@ export default function FormacionPage() {
                     )}
                   </div>
 
+                  {/* Pills de estado inline */}
+                  <div className="flex items-center gap-1.5">
+                    {ESTADO_LABELS.map(({ value, label }) => {
+                      const active = filtroEstado === value;
+                      const count = value === "todos" ? modules.length : modules.filter((m) => m.status === value).length;
+                      const colors: Record<string, { bg: string; color: string; border: string }> = {
+                        todos:        { bg: active ? "var(--azul-egm)"        : "var(--blanco)",          color: active ? "#fff"                  : "var(--texto-muted)",   border: active ? "var(--azul-egm)"        : "var(--gris-borde)" },
+                        pendiente:    { bg: active ? "var(--gris-superficie)" : "var(--blanco)",          color: active ? "var(--texto-primario)"  : "var(--texto-muted)",   border: active ? "var(--texto-primario)"  : "var(--gris-borde)" },
+                        "en progreso":{ bg: active ? "var(--azul-egm-light)"  : "var(--blanco)",          color: active ? "var(--azul-egm)"        : "var(--texto-muted)",   border: active ? "var(--azul-egm)"        : "var(--gris-borde)" },
+                        completado:   { bg: active ? "var(--exito-light)"     : "var(--blanco)",          color: active ? "var(--exito)"           : "var(--texto-muted)",   border: active ? "var(--exito)"           : "var(--gris-borde)" },
+                      };
+                      const c = colors[value] ?? colors.todos;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => setFiltroEstado(value)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+                          style={{ background: c.bg, color: c.color, borderColor: c.border, height: "32px", whiteSpace: "nowrap" }}
+                        >
+                          {label}
+                          <span className="tabular-nums opacity-60 text-[10px]">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   {/* Botón Filtros con desplegable */}
                   <div className="relative" ref={filtroRef}>
                     <button
                       onClick={() => setFiltroOpen((v) => !v)}
                       className="flex items-center gap-2 px-3.5 rounded-xl text-sm font-semibold border transition-colors"
                       style={{
-                        background:  filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--blanco)",
-                        borderColor: filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--gris-borde)",
-                        color:       filtroOpen || hayFiltrosActivos ? "#ffffff" : "var(--texto-primario)",
+                        background:  filtroOpen || (filtroTipo !== "todos" || soloIA) ? "var(--azul-egm)" : "var(--blanco)",
+                        borderColor: filtroOpen || (filtroTipo !== "todos" || soloIA) ? "var(--azul-egm)" : "var(--gris-borde)",
+                        color:       filtroOpen || (filtroTipo !== "todos" || soloIA) ? "#ffffff" : "var(--texto-primario)",
                         height:      "38px",
                       }}
                     >
@@ -248,12 +282,12 @@ export default function FormacionPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                       </svg>
                       Filtros
-                      {hayFiltrosActivos && (
+                      {(filtroTipo !== "todos" || soloIA) && (
                         <span
                           className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.3)" }}
                         >
-                          {(filtroEstado !== "todos" ? 1 : 0) + (filtroTipo !== "todos" ? 1 : 0) + (soloIA ? 1 : 0)}
+                          {(filtroTipo !== "todos" ? 1 : 0) + (soloIA ? 1 : 0)}
                         </span>
                       )}
                       <svg
@@ -274,24 +308,6 @@ export default function FormacionPage() {
                           width:      "320px",
                         }}
                       >
-                        {/* Estado */}
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
-                            Estado
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {ESTADO_LABELS.map(({ value, label }) => (
-                              <PillFiltro
-                                key={value}
-                                label={label}
-                                active={filtroEstado === value}
-                                onClick={() => setFiltroEstado(value)}
-                                count={value === "todos" ? modules.length : modules.filter((m) => m.status === value).length}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
                         {/* Tipo */}
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
@@ -333,9 +349,9 @@ export default function FormacionPage() {
                         </div>
 
                         {/* Limpiar */}
-                        {hayFiltrosActivos && (
+                        {(filtroTipo !== "todos" || soloIA) && (
                           <button
-                            onClick={() => { setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                            onClick={() => { setFiltroTipo("todos"); setSoloIA(false); }}
                             className="text-xs font-medium text-left flex items-center gap-1 pt-1"
                             style={{ color: "var(--azul-egm)" }}
                           >
@@ -499,10 +515,10 @@ export default function FormacionPage() {
             );
           })()}
 
-          {/* ── Módulos heading ──────────────────────────────────────── */}
+          {/* ── Formación continua heading ───────────────────────────── */}
           <div className="mb-10">
             <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              Módulos
+              Formación continua
             </h2>
           </div>
 
