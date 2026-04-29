@@ -258,9 +258,13 @@ export default function Invitado() {
             <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
             <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
-          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
+          <h2 className="text-4xl sm:text-5xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
             Mantente al día<br />con Atalayas
           </h2>
+          <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
+            Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
+            Mantente informado de todo lo que ocurre en el parque.
+          </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
@@ -291,25 +295,15 @@ export default function Invitado() {
           {/* Right column */}
           <div className="flex-1 flex flex-col">
 
-            {/* Tabs interactivos */}
-            <div className="flex items-center gap-8 mb-8 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-              {["Noticias", "Eventos", "Comunicados", "Convocatorias"].map((tab, i) => (
-                <div
-                  key={tab}
-                  onClick={() => setTabActivo(i)}
-                  className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer transition-colors"
-                  style={{
-                    borderBottom: tabActivo === i ? "2px solid var(--azul-egm)" : "2px solid transparent",
-                    marginBottom: "-1px",
-                  }}
-                >
-                  <span className="text-base font-medium whitespace-nowrap transition-colors"
-                    style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>
-                    {tab}
-                  </span>
-                  <span style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
-                </div>
-              ))}
+            {/* Ver todas */}
+            <div className="flex items-center justify-between mb-8 pb-4" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+              <Link
+                href="/noticias"
+                className="inline-flex items-center gap-2 text-base font-semibold transition-colors hover:opacity-80"
+                style={{ color: "var(--azul-egm)" }}
+              >
+                Ver todas las publicaciones ↗
+              </Link>
             </div>
 
             {/* Article list */}
@@ -352,16 +346,6 @@ export default function Invitado() {
               ))}
             </div>
 
-            {/* Botón ver todas */}
-            <div className="mt-8 flex justify-end">
-              <Link
-                href="/noticias"
-                className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
-                style={{ color: "var(--azul-egm)" }}
-              >
-                Ver todas las publicaciones ↗
-              </Link>
-            </div>
           </div>
         </div>
       </section>
