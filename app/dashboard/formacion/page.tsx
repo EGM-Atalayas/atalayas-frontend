@@ -598,7 +598,7 @@ export default function FormacionPage() {
               <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
                 Prueba con otros filtros o{" "}
                 <button
-                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); }}
                   className="underline font-medium"
                   style={{ color: "var(--azul-egm)" }}
                 >
