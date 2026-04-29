@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
       console.error("[/api/chat] Backend respondió con error:", status)
       const errorMsg =
         status >= 500
-          ? "⚠️ El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
-          : "⚠️ No se pudo procesar la consulta. Inténtalo de nuevo."
+          ? "El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
+          : "No se pudo procesar la consulta. Inténtalo de nuevo."
       return new Response(errorMsg, { status: 502 })
     }
 

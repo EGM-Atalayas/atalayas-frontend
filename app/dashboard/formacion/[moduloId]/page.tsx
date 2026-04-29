@@ -1145,7 +1145,7 @@ function ContenidoQuiz({ onCompletar, testPreguntasJson }: { onCompletar: () => 
                     style={{ border: `1.5px solid ${border}`, background: bg, color, cursor: enviado ? "default" : "pointer" }}>
                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
                       style={{ background: sel && !enviado ? "var(--azul-egm)" : enviado && esCorrecta ? "#16a34a" : enviado && sel ? "#dc2626" : "var(--gris-superficie)", color: (sel || (enviado && esCorrecta)) ? "var(--blanco)" : "var(--texto-muted)" }}>
-                      {enviado && esCorrecta ? "✓" : enviado && sel && !esCorrecta ? "✗" : LETRAS[oi]}
+                      {enviado && esCorrecta ? <i className="bi bi-check-lg" style={{ fontSize: "14px" }} /> : enviado && sel && !esCorrecta ? <i className="bi bi-x-lg" style={{ fontSize: "12px" }} /> : LETRAS[oi]}
                     </span>
                     {op}
                   </button>

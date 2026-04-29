@@ -329,7 +329,7 @@ export default function ComunicadosAdminPage() {
                     {aiLoading === "titulo" ? (
                       <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
                     ) : (
-                      <span>✨</span>
+                      <i className="bi bi-stars" style={{ fontSize: "14px" }} />
                     )}
                     {aiLoading === "titulo" ? "Generando..." : "Sugerir título"}
                   </button>
@@ -366,7 +366,7 @@ export default function ComunicadosAdminPage() {
                       {aiLoading === "mensaje" ? (
                         <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
                       ) : (
-                        <span>✨</span>
+                      <i className="bi bi-stars" style={{ fontSize: "14px" }} />
                       )}
                       {aiLoading === "mensaje" ? "Mejorando..." : "Mejorar con IA"}
                     </button>
@@ -457,7 +457,7 @@ export default function ComunicadosAdminPage() {
                         <img src={form.imagenUrl} alt="preview" className="rounded-lg w-full object-cover"
                           style={{ height: "140px", objectFit: "cover" }} />
                         <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: "rgba(22,163,74,0.85)", color: "#fff" }}>✓ Subida correctamente</span>
+                          style={{ background: "rgba(22,163,74,0.85)", color: "#fff" }}><i className="bi bi-check-lg" style={{ fontSize: "12px", marginRight: "2px" }} /> Subida correctamente</span>
                         <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
                           className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
                           style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>×</button>
@@ -503,7 +503,7 @@ export default function ComunicadosAdminPage() {
                     style={{ accentColor: "var(--azul-egm)" }}
                   />
                   <span className="text-sm" style={{ color: "var(--texto-secundario)" }}>
-                    ★ Marcar como destacado (aparece siempre arriba)
+                    <i className="bi bi-star-fill" style={{ fontSize: "14px", marginRight: "3px" }} /> Marcar como destacado (aparece siempre arriba)
                   </span>
                 </label>
               </FormField>
@@ -689,7 +689,7 @@ export default function ComunicadosAdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {c.destacado && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" }}>★ Destacado</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" }}><i className="bi bi-star-fill" style={{ fontSize: "10px", marginRight: "2px" }} /> Destacado</span>
                           )}
                           {c.categoria && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
@@ -729,17 +729,17 @@ export default function ComunicadosAdminPage() {
                           )}
                           {c.adjuntoUrl && (
                             <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                              📎 {c.adjuntoNombre ?? "Adjunto"}
+                              <i className="bi bi-paperclip" style={{ fontSize: "12px" }} /> {c.adjuntoNombre ?? "Adjunto"}
                             </span>
                           )}
                           {c.enlaceUrl && (
                             <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                              🔗 Enlace externo
+                              <i className="bi bi-link-45deg" style={{ fontSize: "12px" }} /> Enlace externo
                             </span>
                           )}
                           {c.videoUrl && (
                             <span className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                              🎬 Video
+                              <i className="bi bi-film" style={{ fontSize: "12px" }} /> Video
                             </span>
                           )}
                         </div>

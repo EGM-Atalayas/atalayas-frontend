@@ -291,7 +291,7 @@ function PortadaUpload({ preview, onFile, onRemove, accent = "var(--azul-egm)", 
         <div className="relative rounded-xl overflow-hidden" style={{ height: "190px", border: "1.5px solid var(--gris-borde)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Portada" className="w-full h-full object-cover" />
-          <button onClick={onRemove} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs hover:opacity-80" style={{ background: "rgba(0,0,0,0.55)" }}>✕</button>
+          <button onClick={onRemove} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs hover:opacity-80" style={{ background: "rgba(0,0,0,0.55)" }}><i className="bi bi-x-lg" style={{ fontSize: "12px" }} /></button>
         </div>
       ) : (
         <div onClick={() => ref.current?.click()} className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
@@ -796,120 +796,126 @@ export default function CrearModuloPage() {
                     </>
                   )}
                   {pasoManual === 3 && (
-                    <>
-                      <SeccionHeader icono={<IconUsers />} titulo="Visibilidad del módulo" subtitulo="Define quién puede acceder a este módulo" iconoBg="#f3e8ff" iconoColor="#7c3aed" />
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
-                        {([
-                          { key: "todos"           as AudienciaTipo, label: "Todos los empleados",   desc: "Visible para cualquier empleado",      icon: <IconUsers />,     accent: "var(--azul-egm)", bg: "var(--azul-egm-light)" },
-                          { key: "administradores" as AudienciaTipo, label: "Solo administradores", desc: "Solo admins de empresa",               icon: <IconShield />,    accent: "#7c3aed",         bg: "#f3e8ff"               },
-                          { key: "departamento"    as AudienciaTipo, label: "Por departamento",     desc: "Departamentos específicos",            icon: <IconBriefcase />, accent: "#d97706",         bg: "#fffbeb"               },
-                        ] as const).map((op) => {
-                          const sel = audiencia === op.key;
-                          return (
-                            <button key={op.key} onClick={() => setAudiencia(op.key)}
-                              className="flex flex-col gap-3 px-5 py-5 rounded-xl text-left transition-all w-full"
-                              style={{ border: `1.5px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.bg : "var(--gris-pagina)" }}>
-                              <div className="flex items-center justify-between">
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: sel ? op.accent : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{op.icon}</div>
-                                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border: `2px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.accent : "transparent" }}>
-                                  {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      <div className="px-8 py-7">
+                        <SeccionHeader icono={<IconUsers />} titulo="Visibilidad del módulo" subtitulo="Define quién puede acceder a este módulo" iconoBg="#f3e8ff" iconoColor="#7c3aed" />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                          {([
+                            { key: "todos"           as AudienciaTipo, label: "Todos los empleados",   desc: "Visible para cualquier empleado",      icon: <IconUsers />,     accent: "var(--azul-egm)", bg: "var(--azul-egm-light)" },
+                            { key: "administradores" as AudienciaTipo, label: "Solo administradores", desc: "Solo admins de empresa",               icon: <IconShield />,    accent: "#7c3aed",         bg: "#f3e8ff"               },
+                            { key: "departamento"    as AudienciaTipo, label: "Por departamento",     desc: "Departamentos específicos",            icon: <IconBriefcase />, accent: "#d97706",         bg: "#fffbeb"               },
+                          ] as const).map((op) => {
+                            const sel = audiencia === op.key;
+                            return (
+                              <button key={op.key} onClick={() => setAudiencia(op.key)}
+                                className="flex flex-col gap-3 px-5 py-5 rounded-xl text-left transition-all w-full"
+                                style={{ border: `1.5px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.bg : "var(--gris-pagina)" }}>
+                                <div className="flex items-center justify-between">
+                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: sel ? op.accent : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{op.icon}</div>
+                                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border: `2px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.accent : "transparent" }}>
+                                    {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                                  </div>
                                 </div>
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold mb-0.5" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
-                                <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {audiencia === "departamento" && (
-                        <div className="fade-up rounded-xl p-5 mb-2" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                          <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Selecciona los departamentos</p>
-                          <div className="flex flex-wrap gap-2">
-                            {DEPARTAMENTOS.map((d) => {
-                              const sel = deptos.includes(d.id);
-                              return (
-                                <button key={d.id} onClick={() => toggleDepto(d.id)}
-                                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
-                                  style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
-                                  {sel && "✓ "}{d.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
+                                <div>
+                                  <p className="text-sm font-bold mb-0.5" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
+                                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
-                      )}
-                    </>
+                        {audiencia === "departamento" && (
+                          <div className="fade-up rounded-xl p-5 mb-2" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                            <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Selecciona los departamentos</p>
+                            <div className="flex flex-wrap gap-2">
+                              {DEPARTAMENTOS.map((d) => {
+                                const sel = deptos.includes(d.id);
+                                return (
+                                  <button key={d.id} onClick={() => toggleDepto(d.id)}
+                                    className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                                    style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
+                                    {sel && "✓ "}{d.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
+                          </div>
+                        )}
+                        <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(4)} disabledNext={audiencia === "departamento" && deptos.length === 0} />
+                      </div>
+                    </div>
                   )}
                   {pasoManual === 4 && (
-                    <>
-                      <SeccionHeader icono={<IconTest />} titulo="Test de evaluación" subtitulo="Cuestionario al final del módulo (opcional)" iconoBg="#dcfce7" iconoColor="#15803d" right={<Toggle value={tieneTest} onChange={setTieneTest} />} />
-                      {!tieneTest ? (
-                        <div className="rounded-xl flex flex-col items-center justify-center gap-3 py-14" style={{ background: "var(--gris-pagina)", border: "1.5px dashed var(--gris-borde)" }}>
-                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}><IconTest /></div>
-                          <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Sin test de evaluación</p>
-                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Activa el toggle para añadir preguntas.</p>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-5">
-                          <div className="flex gap-3">
-                            {([["manual","Escribir manualmente"],["ia","Generar con IA"]] as const).map(([key, label]) => (
-                              <button key={key} onClick={() => setModoTest(key as "manual" | "ia")}
-                                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
-                                style={{ border: `1.5px solid ${modoTest === key ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: modoTest === key ? "var(--azul-egm-light)" : "var(--gris-pagina)", color: modoTest === key ? "var(--azul-egm)" : "var(--texto-muted)" }}>
-                                {key === "ia" && <IconSpark sz={3} />}{label}
-                              </button>
-                            ))}
+                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      <div className="px-8 py-7">
+                        <SeccionHeader icono={<IconTest />} titulo="Test de evaluación" subtitulo="Cuestionario al final del módulo (opcional)" iconoBg="#dcfce7" iconoColor="#15803d" right={<Toggle value={tieneTest} onChange={setTieneTest} />} />
+                        {!tieneTest ? (
+                          <div className="rounded-xl flex flex-col items-center justify-center gap-3 py-14" style={{ background: "var(--gris-pagina)", border: "1.5px dashed var(--gris-borde)" }}>
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}><IconTest /></div>
+                            <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Sin test de evaluación</p>
+                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Activa el toggle para añadir preguntas.</p>
                           </div>
-                          {modoTest === "ia" && (
-                            <button onClick={generarPreguntasIA} disabled={genTest}
-                              className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
-                              style={{ background: "linear-gradient(135deg, var(--azul-egm), #A3B535)", color: "#fff", opacity: genTest ? 0.7 : 1, boxShadow: "0 4px 14px rgba(163,181,53,0.25)" }}>
-                              {genTest ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando preguntas…</> : <><IconSpark sz={3} />{preguntas.length > 0 ? "Regenerar" : "Generar preguntas con IA"}</>}
-                            </button>
-                          )}
-                          {preguntas.length > 0 && (
-                            <div className="flex flex-col gap-3">
-                              {preguntas.map((q, qi) => (
-                                <div key={q.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                                  <div className="px-4 py-3 flex items-center gap-3" style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-md shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>P{qi+1}</span>
-                                    <input type="text" value={q.texto} onChange={(e) => updPregunta(q.id,"texto",e.target.value)} placeholder="Escribe la pregunta…" className="flex-1 text-sm bg-transparent outline-none font-medium" style={{ color: "var(--texto-primario)" }} />
-                                    <button onClick={() => delPregunta(q.id)} className="p-1 rounded-lg transition-colors shrink-0" style={{ color: "var(--texto-muted)" }}
-                                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
-                                  </div>
-                                  <div className="p-4 grid grid-cols-2 gap-2">
-                                    {q.opciones.map((op, oi) => (
-                                      <div key={oi} className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all"
-                                        style={{ border: `1.5px solid ${q.correcta===oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta===oi ? "#f0fdf4" : "var(--gris-pagina)" }}>
-                                        <button onClick={() => updPregunta(q.id,"correcta",oi)} className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition-colors" style={{ border: `2px solid ${q.correcta===oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta===oi ? "#16a34a" : "transparent", color: "#fff" }}>
-                                          {q.correcta===oi && <IconCheck sz={3} />}
-                                        </button>
-                                        <input type="text" value={op} onChange={(e) => updOpcion(q.id,oi,e.target.value)} placeholder={`Opción ${oi+1}`} className="flex-1 text-xs bg-transparent outline-none" style={{ color: "var(--texto-primario)" }} />
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <p className="px-4 pb-3 text-[11px]" style={{ color: "var(--texto-muted)" }}>Haz clic en el círculo para marcar la respuesta correcta</p>
-                                </div>
+                        ) : (
+                          <div className="flex flex-col gap-5">
+                            <div className="flex gap-3">
+                              {([["manual","Escribir manualmente"],["ia","Generar con IA"]] as const).map(([key, label]) => (
+                                <button key={key} onClick={() => setModoTest(key as "manual" | "ia")}
+                                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
+                                  style={{ border: `1.5px solid ${modoTest === key ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: modoTest === key ? "var(--azul-egm-light)" : "var(--gris-pagina)", color: modoTest === key ? "var(--azul-egm)" : "var(--texto-muted)" }}>
+                                  {key === "ia" && <IconSpark sz={3} />}{label}
+                                </button>
                               ))}
                             </div>
-                          )}
-                          <button onClick={agregarPregunta}
-                            className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
-                            style={{ border: "1.5px dashed var(--gris-borde)", color: "var(--texto-muted)", background: "var(--gris-pagina)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-muted)"; }}>
-                            <IconPlus /> Añadir pregunta
-                          </button>
-                        </div>
-                      )}
-                      {errorMsg && (
-                        <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
-                      )}
-                    </>
+                            {modoTest === "ia" && (
+                              <button onClick={generarPreguntasIA} disabled={genTest}
+                                className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                                style={{ background: "linear-gradient(135deg, var(--azul-egm), #A3B535)", color: "#fff", opacity: genTest ? 0.7 : 1, boxShadow: "0 4px 14px rgba(163,181,53,0.25)" }}>
+                                {genTest ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando preguntas…</> : <><IconSpark sz={3} />{preguntas.length > 0 ? "Regenerar" : "Generar preguntas con IA"}</>}
+                              </button>
+                            )}
+                            {preguntas.length > 0 && (
+                              <div className="flex flex-col gap-3">
+                                {preguntas.map((q, qi) => (
+                                  <div key={q.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                                    <div className="px-4 py-3 flex items-center gap-3" style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                                      <span className="text-xs font-bold px-2 py-0.5 rounded-md shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>P{qi+1}</span>
+                                      <input type="text" value={q.texto} onChange={(e) => updPregunta(q.id,"texto",e.target.value)} placeholder="Escribe la pregunta…" className="flex-1 text-sm bg-transparent outline-none font-medium" style={{ color: "var(--texto-primario)" }} />
+                                      <button onClick={() => delPregunta(q.id)} className="p-1 rounded-lg transition-colors shrink-0" style={{ color: "var(--texto-muted)" }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
+                                    </div>
+                                    <div className="p-4 grid grid-cols-2 gap-2">
+                                      {q.opciones.map((op, oi) => (
+                                        <div key={oi} className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all"
+                                          style={{ border: `1.5px solid ${q.correcta===oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta===oi ? "#f0fdf4" : "var(--gris-pagina)" }}>
+                                          <button onClick={() => updPregunta(q.id,"correcta",oi)} className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition-colors" style={{ border: `2px solid ${q.correcta===oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta===oi ? "#16a34a" : "transparent", color: "#fff" }}>
+                                            {q.correcta===oi && <IconCheck sz={3} />}
+                                          </button>
+                                          <input type="text" value={op} onChange={(e) => updOpcion(q.id,oi,e.target.value)} placeholder={`Opción ${oi+1}`} className="flex-1 text-xs bg-transparent outline-none" style={{ color: "var(--texto-primario)" }} />
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <p className="px-4 pb-3 text-[11px]" style={{ color: "var(--texto-muted)" }}>Haz clic en el círculo para marcar la respuesta correcta</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <button onClick={agregarPregunta}
+                              className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                              style={{ border: "1.5px dashed var(--gris-borde)", color: "var(--texto-muted)", background: "var(--gris-pagina)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-muted)"; }}>
+                              <IconPlus /> Añadir pregunta
+                            </button>
+                          </div>
+                        )}
+                        {errorMsg && (
+                          <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
+                        )}
+                        <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} />
+                      </div>
+                    </div>
                   )}
                 </>
               )}

@@ -10,6 +10,7 @@ import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 import DotField from "@/components/ui/DotField";
+import BiIcon from "@/components/ui/BiIcon";
 import { API_URL } from "@/lib/api";
 
 function formatFecha(iso: string) {
@@ -550,7 +551,7 @@ export default function Empleado() {
                   {completados === 0
                     ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
                     : completados === formDisplay.length
-                      ? "🎉 ¡Has completado toda tu formación!"
+                      ? <span><BiIcon name="balloon-fill" size={14} /> ¡Has completado toda tu formación!</span>
                       : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
                 </p>
               )}
@@ -745,12 +746,12 @@ export default function Empleado() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 divide-x" style={{ borderColor: "var(--gris-borde)" }}>
               {[
-                { emoji: "💬", titulo: "Foro del parque", desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
-                { emoji: "📌", titulo: "Anuncios de comunidad", desc: "Comunicados transversales del parque empresarial EGM." },
-                { emoji: "🤝", titulo: "Directorio de empresas", desc: "Conoce las empresas y equipos que comparten espacio contigo." },
+                { icon: "chat-dots-fill", titulo: "Foro del parque", desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
+                { icon: "pin-angle-fill", titulo: "Anuncios de comunidad", desc: "Comunicados transversales del parque empresarial EGM." },
+                { icon: "hand-thumbs-up-fill", titulo: "Directorio de empresas", desc: "Conoce las empresas y equipos que comparten espacio contigo." },
               ].map((item, i) => (
                 <div key={i} className="px-5 py-4 flex flex-col gap-2">
-                  <span className="text-2xl leading-none">{item.emoji}</span>
+                  <BiIcon name={item.icon} size={24} className="text-[var(--verde-oliva)]" />
                   <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{item.titulo}</p>
                   <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>{item.desc}</p>
                 </div>

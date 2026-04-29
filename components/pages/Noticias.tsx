@@ -17,6 +17,7 @@ import {
 } from "../../lib/api/noticias";
 import type { Comunicado, Noticia, NoticiaInput, ComunicadoInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
+import BiIcon from "@/components/ui/BiIcon";
 
 // ── TIPOS ──────────────────────────────────────────────────────────────────────
 interface FeedItem {
@@ -234,14 +235,10 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         );
       })()}
       {destacado && (
-        /* Pin fijado — índigo (distinto del violeta de Evento) */
-        <span className={cls} style={{ ...pill, display: "inline-flex", alignItems: "center", gap: "3px", ...(dark
-          ? { background: "rgba(79,70,229,0.32)", color: "#c7d2fe", border: "1px solid rgba(79,70,229,0.42)" }
-          : { background: "#e0e7ff", color: "#3730a3", border: "1px solid #a5b4fc" }) }}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-          </svg>
-          Fijado
+        <span className={cls} style={{ ...pill, ...(dark
+          ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
+          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }) }}>
+          ★ Destacado
         </span>
       )}
       {esNuevoItem && (
@@ -1151,13 +1148,9 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
           <div className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
             style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
             {isPreview && (
-              <div className="absolute top-3 left-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
-                style={{ transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", color: "#fde68a", backdropFilter: "blur(8px)", border: "1px solid rgba(253,230,138,0.35)", whiteSpace: "nowrap" }}>
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                Vista previa
+              <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
+                style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
+                <span>👁</span> Vista previa — así verán los usuarios este anuncio
               </div>
             )}
             <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />

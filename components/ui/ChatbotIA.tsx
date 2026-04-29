@@ -76,7 +76,7 @@ interface Message {
 
 function buildWelcomeMessage(nombre?: string): Message {
   const now = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
-  const saludo = nombre ? `¡Hola, ${nombre}! 👋` : "¡Hola! 👋"
+  const saludo = nombre ? `¡Hola, ${nombre}! Soy tu asistente.` : "¡Hola! Soy tu asistente."
   return {
     id: "1",
     role: "assistant",
@@ -618,7 +618,7 @@ export default function ChatbotIA() {
 
       if (!res.ok || !res.body) {
         const errorText = res.status >= 500
-          ? "⚠️ El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
+          ? "El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
           : "No he podido procesar tu consulta. Inténtalo de nuevo."
         setIsTyping(false)
         apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
@@ -657,8 +657,8 @@ export default function ChatbotIA() {
       setStreamingId(null)
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine
       const errorText = isOffline
-        ? "📡 Parece que no tienes conexión a internet. Comprueba tu red e inténtalo de nuevo."
-        : "⚠️ No he podido conectar con el servidor. Inténtalo en unos segundos."
+        ? "Parece que no tienes conexión a internet. Comprueba tu red e inténtalo de nuevo."
+        : "No he podido conectar con el servidor. Inténtalo en unos segundos."
       apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(), role: "assistant", text: errorText,

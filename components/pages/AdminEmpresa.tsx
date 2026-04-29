@@ -174,7 +174,7 @@ export default function AdminEmpresa() {
           HERO
       ══════════════════════════════════════════ */}
       <div
-        className="-mx-8 -mt-8 mb-0 relative overflow-hidden"
+        className="-mx-8 mb-0 relative overflow-hidden"
         style={{ minHeight: "300px" }}
       >
         <div

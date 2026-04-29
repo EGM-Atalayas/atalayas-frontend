@@ -47,7 +47,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
           setContadorNotifs(cantidad);
         }
       } catch (error) {
-        console.error("❌ Error revisando contador:", error);
+        console.error("Error revisando contador:", error);
       }
     };
 
@@ -119,7 +119,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
       setVisible(true);
       setOpen(true);
     } catch (error) {
-      console.error("❌ [NotifMenu] Error cargando notificaciones completas:", error);
+      console.error("[NotifMenu] Error cargando notificaciones completas:", error);
     }
   }
 

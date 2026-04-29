@@ -51,7 +51,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-10">
+    <div className="min-h-screen bg-slate-50/50 pb-10 pt-20">
       <Header />
       <DashboardHero 
         prefijo={heroConfig.prefijo} 

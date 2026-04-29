@@ -18,23 +18,15 @@ import {
   ChevronDown
 } from "lucide-react";
 import Colaboradores from "../ui/Colaboradores";
+import type { Comunicado, Noticia } from "@/lib/types/noticias";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
-
-interface Comunicado {
-  comunicadoId: string;
-  titulo: string;
-  mensaje: string;
-  imagenUrl?: string | null;
-  fechaPublicacion: string;
-  activo: boolean;
-}
 
 const comunidadItems = [
   {
     label: "En Femenino",
     sub: "Liderazgo e igualdad en el entorno empresarial",
-    imagen: "/logo-en-femenino.webp",
+    imagen: "/logo-en-femenino.png",
     bg: "#8878c8",
     icono: null,
     url: "https://atalayas.com/en-femenino/",
@@ -42,7 +34,7 @@ const comunidadItems = [
   {
     label: "Autobús lanzadera",
     sub: "Servicio de transporte directo al área empresarial",
-    imagen: "/autobus.webp",
+    imagen: "/autobus.jpg",
     bg: null,
     icono: null,
     url: "https://atalayas.com/autobus-lanzadera/",
@@ -50,7 +42,7 @@ const comunidadItems = [
   {
     label: "Coche compartido",
     sub: "Coordina rutas con compañeros del área",
-    imagen: "/coche-compartido.webp",
+    imagen: "/coche-compartido.jpg",
     bg: null,
     icono: null,
     url: "https://atalayas.com/journify-coche-compartido/",
@@ -58,7 +50,7 @@ const comunidadItems = [
   {
     label: "Aparcamiento VAO",
     sub: "Plazas exclusivas para vehículos de alta ocupación",
-    imagen: "/aparcamiento-vao.webp",
+    imagen: "/aparcamiento-vao.png",
     bg: null,
     icono: null,
     url: "https://atalayas.com/aparcamientovao/",
@@ -66,7 +58,7 @@ const comunidadItems = [
   {
     label: "Empresarios de hoy y de mañana",
     sub: "Networking y actividades entre empresas del área",
-    imagen: "/empresas-hoy.webp",
+    imagen: "/empresas-hoy.jpg",
     bg: null,
     icono: null,
     url: "https://atalayas.com/100-estudiantes-20-empresarios/",
@@ -74,7 +66,7 @@ const comunidadItems = [
   {
     label: "Proyecto empresas solidarias",
     sub: "Más de 44.000 personas ya han sido beneficiadas.",
-    imagen: "/empresas-solidarias.webp",
+    imagen: "/empresas-solidarias.png",
     bg: "#ffffff",
     icono: null,
     url: "https://atalayas.com/empresas-solidarias/",
@@ -82,7 +74,7 @@ const comunidadItems = [
   {
     label: "Voy en bici al trabajo",
     sub: "Semana de la movilidad",
-    imagen: "/trabajo-bici.webp",
+    imagen: "/trabajo-bici.jpg",
     bg: null,
     icono: null,
     url: "https://atalayas.com/semana-de-la-movilidad/",
@@ -90,7 +82,7 @@ const comunidadItems = [
   {
     label: "Atalayas circular",
     sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
-    imagen: "/atalayas-circular.webp",
+    imagen: "/atalayas-circular.jpg",
     bg: null,
     icono: null,
     url: "https://atalayas.com/atalayas-circular/",
@@ -101,33 +93,65 @@ const comunidadItems = [
 export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/comunicados`)
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
+    Promise.all([
+      fetch(`${API_URL}/comunicados`).then((res) => { if (!res.ok) throw new Error(); return res.json(); }),
+      fetch(`${API_URL}/anuncios`).then((res) => { if (!res.ok) throw new Error(); return res.json(); }),
+    ])
+      .then(([comunicadosData, anunciosData]) => {
+        const comunicadosActivos = (comunicadosData as Comunicado[]).filter(c => c.activo && c.estado !== "borrador");
+        comunicadosActivos.sort((a, b) => new Date(b.fechaPublicacion ?? "").getTime() - new Date(a.fechaPublicacion ?? "").getTime());
+        setTodosLosComunicados(comunicadosActivos);
+
+        const anunciosActivos = (anunciosData as Noticia[]).filter(n => n.activo && n.estado !== "borrador");
+        anunciosActivos.sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
+        setTodosLosAnuncios(anunciosActivos);
       })
-      .then((data: Comunicado[]) =>
-        setComunicados(data.filter((c) => c.activo).slice(0, 3))
-      )
-      .catch(() => { })
-      .finally(() => setLoadingComunicados(false));
+      .catch(() => {})
+      .finally(() => setLoadingNoticias(false));
   }, []);
+
+  // Filtrar por tab — combina comunicados EGM + anuncios de empresas
+  const itemsComunicados = todosLosComunicados.map(comunicadoToItem);
+  const itemsAnuncios = todosLosAnuncios.map(anuncioToItem);
+
+  const itemsPorTab: ItemLista[][] = [
+    // Tab 0: Noticias → comunicados (Novedad/General) + anuncios de empresas
+    [
+      ...todosLosComunicados
+        .filter(c => !c.categoria || c.categoria === "Novedad" || c.categoria === "General")
+        .map(comunicadoToItem),
+      ...itemsAnuncios,
+    ].sort((a, b) => {
+      const dateA = new Date(`${a.year}-${MESES.indexOf(a.month)}-${a.day}`).getTime();
+      const dateB = new Date(`${b.year}-${MESES.indexOf(b.month)}-${b.day}`).getTime();
+      return dateB - dateA;
+    }),
+    // Tab 1: Eventos
+    todosLosComunicados
+      .filter(c => c.categoria === "Evento")
+      .map(comunicadoToItem),
+    // Tab 2: Comunicados → todos los comunicados EGM
+    itemsComunicados,
+    // Tab 3: Convocatorias → Aviso
+    todosLosComunicados
+      .filter(c => c.categoria === "Aviso")
+      .map(comunicadoToItem),
+  ];
+
+  const itemsActivos = itemsPorTab[tabActivo];
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          HERO — fullscreen background image with cinematic typography
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* HERO */}
       <section className="relative w-full min-h-screen flex flex-col overflow-hidden">
 
         {/* Background image */}
         <img
-          src="/background-invitado.webp"
+          src="/background-invitado.jpg"
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover z-0"
@@ -136,11 +160,9 @@ export default function Invitado() {
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
         {/* ── Navigation ─────────────────────────────────────────────── */}
-        <nav className="relative z-60 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
           {/* Logo */}
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
-
-          {/* Nav links — desktop only */}
           <div className="hidden md:flex items-center justify-center gap-8">
             <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
             <a href="#noticias" className="text-2xl text-white/50 hover:text-white transition-colors">Noticias</a>
@@ -148,52 +170,38 @@ export default function Invitado() {
             <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
-          {/* Botón hamburguesa — solo móvil */}
+          {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
-            onClick={() => {
-              staggeredMenuRef.current?.toggle();
-              setMobileMenuOpen((v) => !v);
-            }}
-            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={mobileMenuOpen}
+            className="md:hidden text-white p-2 flex flex-col gap-1.5"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+            aria-label="Menu"
           >
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-[7px] bg-black' : 'bg-white'}`} />
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 bg-black' : 'bg-white'}`} />
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px] bg-black' : 'bg-white'}`} />
+            <div className="w-6 h-0.5 bg-white" />
+            <div className="w-6 h-0.5 bg-white" />
+            <div className="w-6 h-0.5 bg-white" />
           </button>
         </nav>
 
-        {/* Mobile StaggeredMenu overlay */}
-        <StaggeredMenu
-          ref={staggeredMenuRef}
-          position="right"
-          colors={['#1B3F7E', '#0d1b2e']}
-          accentColor="#A3B535"
-          displayItemNumbering={true}
-          closeOnClickAway={true}
-          onMenuClose={() => setMobileMenuOpen(false)}
-          items={[
-            { label: 'Noticias', ariaLabel: 'Ir a Noticias', link: '#noticias' },
-            { label: 'Comunidad', ariaLabel: 'Ir a Comunidad', link: '#comunidad' },
-            { label: 'Colaboradores', ariaLabel: 'Ir a Colaboradores', link: '#colaboradores' },
-            { label: 'Entrar', ariaLabel: 'Iniciar sesión', link: '/login' },
-          ]}
-        />
+        {/* Mobile menu */}
+        {menuAbierto && (
+          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
+            <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
+            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
+            <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
+            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
+          </div>
+        )}
 
-        {/* ── Hero content ───────────────────────────────────────────── */}
-        <div className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
           <h1
             className="text-7xl sm:text-[9rem] md:text-[12rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
           >
             Atalayas Área Empresarial.
           </h1>
-
           <p className={`${playfair.className} text-white/60 text-xl sm:text-2xl max-w-3xl mt-8 leading-relaxed animate-fade-rise-delay`}>
             La plataforma digital de incorporación y formación empresarial para las empresas del área industrial de Atalayas, Alicante.
           </p>
-
           <Link
             href="/login"
             className="liquid-glass rounded-full px-14 py-5 text-xl text-white mt-12 hover:scale-[1.03] transition-transform animate-fade-rise-delay-2 inline-flex items-center justify-center"
@@ -206,22 +214,26 @@ export default function Invitado() {
 
       {/* NOTICIAS */}
       <section id="noticias" className="w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
-        {/* Header */}
         <div className="mb-14">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
             <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
-          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
-            Mantente al día<br />con Atalayas
+          <h2 className="text-3xl sm:text-4xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
+            Noticias y actualidad<br />del área empresarial
           </h2>
+          <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
+            Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
+            Mantente informado de todo lo que ocurre en el parque.
+          </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          {/* Featured card */}
+
+          {/* Featured card — usa datos reales si hay destacado */}
           <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
             <Image
-              src="/background-invitado.webp"
+              src="/background-invitado.jpg"
               alt="Noticia destacada"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -233,7 +245,7 @@ export default function Invitado() {
                 <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
               </div>
               <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
-                EGM Atalayas lanza su nueva plataforma digital para empresas del área
+                {destacado?.title ?? "EGM Atalayas lanza su nueva plataforma digital para empresas del área"}
               </h3>
             </div>
             <div className="absolute top-5 right-5">
@@ -243,12 +255,24 @@ export default function Invitado() {
 
           {/* Right column */}
           <div className="flex-1 flex flex-col">
-            {/* Category tabs */}
+
+            {/* Tabs interactivos */}
             <div className="flex items-center gap-8 mb-8 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
               {["Noticias", "Eventos", "Comunicados", "Convocatorias"].map((tab, i) => (
-                <div key={tab} className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer" style={{ borderBottom: i === 0 ? "2px solid var(--azul-egm)" : "2px solid transparent", marginBottom: "-1px" }}>
-                  <span className="text-base font-medium whitespace-nowrap" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>{tab}</span>
-                  <span className="text-sm" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
+                <div
+                  key={tab}
+                  onClick={() => setTabActivo(i)}
+                  className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer transition-colors"
+                  style={{
+                    borderBottom: tabActivo === i ? "2px solid var(--azul-egm)" : "2px solid transparent",
+                    marginBottom: "-1px",
+                  }}
+                >
+                  <span className="text-base font-medium whitespace-nowrap transition-colors"
+                    style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>
+                    {tab}
+                  </span>
+                  <span style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
                 </div>
               ))}
             </div>
@@ -257,19 +281,19 @@ export default function Invitado() {
             <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
               {[
                 {
-                  img: "/background-comunidad.webp",
+                  img: "/background-comunidad.jpg",
                   title: "Jornada de networking: conecta con +150 empresas del área",
                   tag: "Evento",
                   day: "18", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-invitado.webp",
+                  img: "/background-invitado.jpg",
                   title: "Nuevos servicios de transporte lanzadera desde Alicante",
                   tag: "Noticia",
                   day: "10", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-comunidad.webp",
+                  img: "/background-comunidad.jpg",
                   title: "Convocatoria: Programa de formación para pymes del área empresarial",
                   tag: "Convocatoria",
                   day: "03", month: "Abr", year: "2026",
@@ -292,18 +316,6 @@ export default function Invitado() {
                 </Link>
               ))}
             </div>
-
-            {/* Ver todas */}
-            <div className="mt-8 flex justify-center">
-              <Link
-                href="/noticias"
-                className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold border transition-all hover:scale-[1.03]"
-                style={{ borderColor: "var(--azul-egm)", color: "var(--azul-egm)", background: "transparent" }}
-              >
-                Ver todas las publicaciones
-                <span>↗</span>
-              </Link>
-            </div>
           </div>
         </div>
       </section>
@@ -311,9 +323,7 @@ export default function Invitado() {
       {/* LOGO LOOP */}
       <section className="relative w-full pt-10 pb-20 sm:pt-14 sm:pb-28" style={{ background: "#F5F6F8" }}>
         <LogoLoop
-          speed={35}
-          size={70}
-          gap={90}
+          speed={35} size={70} gap={90}
           logos={[
             { src: "/logo.webp", alt: "EGM Atalayas", href: "https://www.atalayas.com" },
             { src: "/logo-famosa.webp", alt: "Famosa", href: "https://www.famosa.es" },
@@ -353,35 +363,29 @@ export default function Invitado() {
                   backdropFilter: 'bg' in item ? undefined : "blur(8px)",
                 }}
               >
-                {/* Imagen (En Femenino) */}
                 {(item.label === "Autobús lanzadera" || item.label === "Coche compartido" || item.label === "Aparcamiento VAO" || item.label === "Empresarios de hoy y de mañana" || item.label === "Voy en bici al trabajo" || item.label === "Atalayas circular") && 'imagen' in item && item.imagen ? (
                   <>
-                    <img src={item.imagen as string} alt={item.label}
-                      className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                    <img src={item.imagen as string} alt={item.label} className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
                     <div className="absolute inset-0 rounded-2xl bg-black/40" />
                     <div className="flex-1" />
                   </>
                 ) : item.label !== "Autobús lanzadera" && item.label !== "Coche compartido" && item.label !== "Aparcamiento VAO" && item.label !== "Empresarios de hoy y de mañana" && item.label !== "Voy en bici al trabajo" && item.label !== "Atalayas circular" && 'imagen' in item && item.imagen ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <img src={item.imagen as string} alt={item.label}
-                      className="w-full h-full object-contain p-3" />
+                    <img src={item.imagen as string} alt={item.label} className="w-full h-full object-contain p-3" />
                   </div>
                 ) : (
-                  /* Icono */
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}
-                  >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}>
                     {item.icono}
                   </div>
                 )}
-
-                {/* Texto */}
                 <div className="flex flex-col gap-1 relative z-10">
-                  <p className="text-sm font-semibold leading-snug" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
+                  <p className="text-sm font-semibold leading-snug"
+                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
                     {item.label}
                   </p>
-                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
+                  <p className="text-xs leading-relaxed line-clamp-2"
+                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
                     {item.sub}
                   </p>
                 </div>
@@ -391,14 +395,9 @@ export default function Invitado() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          COLABORADORES — Ecosistema de Proximidad
-      ══════════════════════════════════════════════════════════════════════ */}
-      < Colaboradores />
+      <Colaboradores />
+      <FooterCTA />
 
-      {/* FOOTER */}
-      < FooterCTA />
-
-    </div >
+    </div>
   );
 }
