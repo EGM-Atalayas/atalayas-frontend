@@ -158,9 +158,9 @@ export default function Invitado() {
             aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={mobileMenuOpen}
           >
-            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
-            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-[7px] bg-black' : 'bg-white'}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 bg-black' : 'bg-white'}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px] bg-black' : 'bg-white'}`} />
           </button>
         </nav>
 
