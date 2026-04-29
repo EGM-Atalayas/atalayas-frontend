@@ -95,30 +95,30 @@ const TIPO_LABEL: Record<string, string> = {
 
 // ── IMÁGENES POR MÓDULO ───────────────────────────────────────────────────────
 const FORMACION_IMG_BY_ID: Record<string, string> = {
-  "1": "/background-formacion-empleado.jpg",
-  "2": "/comunicacion-trabajo.jpg",
-  "3": "/herramientas-digitales.jpg",
-  "4": "/negociacion-habilidades.jpg",
-  "5": "/ciberseguridad-datos.jpg",
-  "6": "/metodologias-agiles.jpg",
-  "7": "/diversidad.jpg",
+  "1": "/background-formacion-empleado.webp",
+  "2": "/comunicacion-trabajo.webp",
+  "3": "/herramientas-digitales.webp",
+  "4": "/negociacion-habilidades.webp",
+  "5": "/ciberseguridad-datos.webp",
+  "6": "/metodologias-agiles.webp",
+  "7": "/diversidad.webp",
 };
 
 const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid"], imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva"], imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["herramienta", "digital", "colaborat"], imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad", "directiv"], imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["cibersegur", "datos", "rgpd"], imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid"], imagen: "/background-formacion-empleado.webp" },
+  { keywords: ["comunicac", "efectiva"], imagen: "/comunicacion-trabajo.webp" },
+  { keywords: ["herramienta", "digital", "colaborat"], imagen: "/herramientas-digitales.webp" },
+  { keywords: ["negociaci", "habilidad", "directiv"], imagen: "/negociacion-habilidades.webp" },
+  { keywords: ["cibersegur", "datos", "rgpd"], imagen: "/ciberseguridad-datos.webp" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.webp" },
+  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.webp" },
 ];
 
 function getHeroImg(id: string, nombre: string): string {
   if (FORMACION_IMG_BY_ID[id]) return FORMACION_IMG_BY_ID[id];
   const lower = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return FORMACION_IMG_BY_NAME.find((e) => e.keywords.some((kw) => lower.includes(kw)))?.imagen
-    ?? "/background-formacion-empleado.jpg";
+    ?? "/background-formacion-empleado.webp";
 }
 
 // ── MOCK ─────────────────────────────────────────────────────────────────────

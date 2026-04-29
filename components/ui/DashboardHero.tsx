@@ -12,7 +12,7 @@ interface DashboardHeroProps {
 export default function DashboardHero({
   prefijo,
   titulo,
-  imagenFondo = "/background-dashboard.jpg",
+  imagenFondo = "/background-dashboard.webp",
   objectPosition = "center 40%"   // valor por defecto (el que tenías antes)
 }: DashboardHeroProps) {
 

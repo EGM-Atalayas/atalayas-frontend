@@ -181,7 +181,7 @@ export default function AdminEmpresa() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url('/background-dashboard.jpg')",
+            backgroundImage: "url('/background-dashboard.webp')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

@@ -34,7 +34,7 @@ const comunidadItems = [
   {
     label: "En Femenino",
     sub: "Liderazgo e igualdad en el entorno empresarial",
-    imagen: "/logo-en-femenino.png",
+    imagen: "/logo-en-femenino.webp",
     bg: "#8878c8",
     icono: null,
     url: "https://atalayas.com/en-femenino/",
@@ -42,7 +42,7 @@ const comunidadItems = [
   {
     label: "Autobús lanzadera",
     sub: "Servicio de transporte directo al área empresarial",
-    imagen: "/autobus.jpg",
+    imagen: "/autobus.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/autobus-lanzadera/",
@@ -50,7 +50,7 @@ const comunidadItems = [
   {
     label: "Coche compartido",
     sub: "Coordina rutas con compañeros del área",
-    imagen: "/coche-compartido.jpg",
+    imagen: "/coche-compartido.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/journify-coche-compartido/",
@@ -58,7 +58,7 @@ const comunidadItems = [
   {
     label: "Aparcamiento VAO",
     sub: "Plazas exclusivas para vehículos de alta ocupación",
-    imagen: "/aparcamiento-vao.png",
+    imagen: "/aparcamiento-vao.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/aparcamientovao/",
@@ -66,7 +66,7 @@ const comunidadItems = [
   {
     label: "Empresarios de hoy y de mañana",
     sub: "Networking y actividades entre empresas del área",
-    imagen: "/empresas-hoy.jpg",
+    imagen: "/empresas-hoy.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/100-estudiantes-20-empresarios/",
@@ -74,7 +74,7 @@ const comunidadItems = [
   {
     label: "Proyecto empresas solidarias",
     sub: "Más de 44.000 personas ya han sido beneficiadas.",
-    imagen: "/empresas-solidarias.png",
+    imagen: "/empresas-solidarias.webp",
     bg: "#ffffff",
     icono: null,
     url: "https://atalayas.com/empresas-solidarias/",
@@ -82,7 +82,7 @@ const comunidadItems = [
   {
     label: "Voy en bici al trabajo",
     sub: "Semana de la movilidad",
-    imagen: "/trabajo-bici.jpg",
+    imagen: "/trabajo-bici.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/semana-de-la-movilidad/",
@@ -90,7 +90,7 @@ const comunidadItems = [
   {
     label: "Atalayas circular",
     sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
-    imagen: "/atalayas-circular.jpg",
+    imagen: "/atalayas-circular.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/atalayas-circular/",
@@ -127,7 +127,7 @@ export default function Invitado() {
 
         {/* Background image */}
         <img
-          src="/background-invitado.jpg"
+          src="/background-invitado.webp"
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover z-0"
@@ -136,7 +136,7 @@ export default function Invitado() {
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
         {/* ── Navigation ─────────────────────────────────────────────── */}
-        <nav className="relative z-[60] w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+        <nav className="relative z-60 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
           {/* Logo */}
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
 
@@ -174,10 +174,10 @@ export default function Invitado() {
           closeOnClickAway={true}
           onMenuClose={() => setMobileMenuOpen(false)}
           items={[
-            { label: 'Noticias',      ariaLabel: 'Ir a Noticias',      link: '#noticias' },
-            { label: 'Comunidad',     ariaLabel: 'Ir a Comunidad',     link: '#comunidad' },
+            { label: 'Noticias', ariaLabel: 'Ir a Noticias', link: '#noticias' },
+            { label: 'Comunidad', ariaLabel: 'Ir a Comunidad', link: '#comunidad' },
             { label: 'Colaboradores', ariaLabel: 'Ir a Colaboradores', link: '#colaboradores' },
-            { label: 'Entrar',        ariaLabel: 'Iniciar sesión',     link: '/login' },
+            { label: 'Entrar', ariaLabel: 'Iniciar sesión', link: '/login' },
           ]}
         />
 
@@ -221,7 +221,7 @@ export default function Invitado() {
           {/* Featured card */}
           <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
             <Image
-              src="/background-invitado.jpg"
+              src="/background-invitado.webp"
               alt="Noticia destacada"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -257,19 +257,19 @@ export default function Invitado() {
             <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
               {[
                 {
-                  img: "/background-comunidad.jpg",
+                  img: "/background-comunidad.webp",
                   title: "Jornada de networking: conecta con +150 empresas del área",
                   tag: "Evento",
                   day: "18", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-invitado.jpg",
+                  img: "/background-invitado.webp",
                   title: "Nuevos servicios de transporte lanzadera desde Alicante",
                   tag: "Noticia",
                   day: "10", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-comunidad.jpg",
+                  img: "/background-comunidad.webp",
                   title: "Convocatoria: Programa de formación para pymes del área empresarial",
                   tag: "Convocatoria",
                   day: "03", month: "Abr", year: "2026",
@@ -315,15 +315,15 @@ export default function Invitado() {
           size={70}
           gap={90}
           logos={[
-            { src: "/logo.webp", alt: "EGM Atalayas" },
-            { src: "/logo-famosa.png", alt: "Empresa 2" },
-            { src: "/logo-aliaxis.png", alt: "Empresa 3" },
-            { src: "/logo-blinker.png", alt: "Empresa 4" },
-            { src: "/logo-seur.png", alt: "Empresa 5" },
-            { src: "/logo-gofre.png", alt: "Empresa 6" },
-            { src: "/logo-itae.png", alt: "Empresa 7" },
-            { src: "/logo-pompadour.png", alt: "Empresa 8" },
-            { src: "/logo-sprinter.png", alt: "Empresa 9" },
+            { src: "/logo.webp", alt: "EGM Atalayas", href: "https://www.atalayas.com" },
+            { src: "/logo-famosa.webp", alt: "Famosa", href: "https://www.famosa.es" },
+            { src: "/logo-aliaxis.webp", alt: "Aliaxis", href: "https://www.aliaxis.com" },
+            { src: "/logo-blinker.webp", alt: "Blinker", href: "https://www.blinker.com" },
+            { src: "/logo-seur.webp", alt: "Seur", href: "https://www.seur.com" },
+            { src: "/logo-gofre.webp", alt: "Gofre", href: "https://www.puntodeproductosvending.com" },
+            { src: "/logo-itae.webp", alt: "ITAE", href: "https://www.itae.es" },
+            { src: "/logo-pompadour.webp", alt: "Pompadour", href: "https://www.pompadour.es" },
+            { src: "/logo-sprinter.webp", alt: "Sprinter", href: "https://www.sprinter.es" },
           ]}
         />
       </section>
@@ -332,7 +332,7 @@ export default function Invitado() {
       <section
         id="comunidad"
         className="relative w-full mt-2"
-        style={{ backgroundImage: "url('/background-comunidad.png')", backgroundSize: "cover", backgroundPosition: "center" }}
+        style={{ backgroundImage: "url('/background-comunidad.webp')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
         <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #0d0d0d, transparent)" }} />

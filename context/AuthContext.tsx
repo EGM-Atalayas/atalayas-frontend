@@ -1,8 +1,8 @@
 "use client";
 
 import { API_URL, apiFetch } from "@/lib/api";
-import { createContext, useContext, useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 interface Usuario {
@@ -31,69 +31,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Lista de páginas que se pueden ver sin estar logueado
-const RUTAS_PUBLICAS = ["/login", "/register-empresa", "/terminos", "/privacidad"];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
-  useEffect(() => {
-    // Al montar la app (ej: al hacer F5), intentamos recuperar la sesión
-    const isGuest = localStorage.getItem("guest");
-    const token = localStorage.getItem("accessToken");
-
-    if (isGuest) {
-      loginInvitado();
-    } else if (token) {
-      checkSession();
-    } else {
-      // Si no hay sesión y la página NO es pública, expulsamos al login
-      if (!RUTAS_PUBLICAS.includes(pathname ?? "")) {
-        router.replace("/login");
-      }
-      setCargando(false);
+  const guardarUsuario = useCallback((nuevoUsuario: Usuario | null) => {
+    setUsuario(nuevoUsuario);
+    if (nuevoUsuario) {
+      console.log("[AuthContext] Usuario guardado:", nuevoUsuario.nombre);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const checkSession = async () => {
-    try {
-      console.log("[AuthContext] 🔄 Intentando recuperar sesión con el token guardado...");
-      const res = await apiFetch(`${API_URL}/auth/me`);
-      
-      if (!res.ok) {
-        throw new Error("Token inválido o expirado");
-      }
-
-      const data = await res.json();
-      const userData = data.data || data.usuario || data; // Extrae el usuario según el formato del backend
-
-      // Si el backend dice explícitamente que está desactivado, lo echamos
-      if (userData.activo === false) {
-        await logout();
-        return;
-      }
-
-      setUsuario(userData);
-      console.log(`[AuthContext] ✅ Sesión recuperada: Bienvenido de nuevo, ${userData.nombre}`);
-
-    } catch (err) {
-      console.warn("[AuthContext] ❌ Error recuperando sesión:", err);
-      // Limpiamos los rastros y redirigimos si no estamos en una página pública
-      localStorage.removeItem("accessToken");
-      setUsuario(null);
-      if (!RUTAS_PUBLICAS.includes(pathname ?? "")) {
-        router.replace("/login");
-      }
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
     } catch (error) {
@@ -104,16 +54,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsuario(null);
       router.push("/login");
     }
-  };
+  }, [router]);
 
-  const guardarUsuario = (nuevoUsuario: Usuario | null) => {
-    setUsuario(nuevoUsuario);
-    if (nuevoUsuario) {
-      console.log("[AuthContext] Usuario guardado:", nuevoUsuario.nombre);
+  const checkSession = useCallback(async () => {
+    try {
+      const res = await apiFetch(`${API_URL}/auth/me`);
+      if (!res.ok) throw new Error("Token inválido o expirado");
+
+      const data = await res.json();
+      const userData = data.data || data.usuario || data;
+
+      if (userData.activo === false) {
+        await logout();
+        return;
+      }
+
+      setUsuario(userData);
+    } catch (err) {
+      console.warn("[AuthContext] ❌ Error recuperando sesión:", err);
+      localStorage.removeItem("accessToken");
+      setUsuario(null);
+    } finally {
+      setCargando(false);
     }
-  };
+  }, [logout]);
 
-  const loginInvitado = () => {
+  const loginInvitado = useCallback(() => {
     const guestUser: Usuario = {
       nombre: "Invitado",
       codigoRol: "INVITADO",
@@ -123,23 +89,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("guest", "true");
     guardarUsuario(guestUser);
     setCargando(false);
-  };
+  }, [guardarUsuario]);
 
-  // --- CONTROL VISUAL DURANTE LA CARGA ---
-  // Si estamos en una ruta pública, NO mostramos la pantalla de carga, 
-  // así los Términos y Condiciones se ven al instante.
-  const esRutaPublica = RUTAS_PUBLICAS.includes(pathname ?? "");
+  // Al montar la app: recuperar sesión
+  useEffect(() => {
+    const isGuest = localStorage.getItem("guest");
+    const token = localStorage.getItem("accessToken");
 
-  if (cargando && !esRutaPublica) {
+    if (isGuest) {
+      loginInvitado();
+    } else if (token) {
+      checkSession();
+    } else {
+      setCargando(false);
+    }
+  }, [loginInvitado, checkSession]);
+
+  // Solo proteger rutas de dashboard: redirigir a login si no hay sesión
+  useEffect(() => {
+    if (cargando) return;
+
+    const path = window.location.pathname;
+    const esRutaProtegida = path.startsWith("/dashboard") || path.startsWith("/superadmin");
+
+    if (!esRutaProtegida) return;
+
+    const isGuest = localStorage.getItem("guest");
+    const token = localStorage.getItem("accessToken");
+
+    if (!isGuest && !token) {
+      router.replace("/login");
+    }
+  }, [cargando, router]);
+
+  if (cargando) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: "var(--azul-egm, #0d1b2e)" }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
-          <p className="text-white text-sm font-semibold tracking-widest uppercase opacity-80">
-            Recuperando sesión...
-          </p>
-        </div>
-      </div>
+      <AuthContext.Provider value={{ usuario, setUsuario, guardarUsuario, logout, loginInvitado }}>
+        {children}
+      </AuthContext.Provider>
     );
   }
 

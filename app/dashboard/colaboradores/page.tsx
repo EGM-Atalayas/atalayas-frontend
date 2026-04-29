@@ -7,7 +7,7 @@ export default function Page() {
             <DashboardHero
                 prefijo="Ecosistema de"
                 titulo="Proximidad."
-                imagenFondo="/bg-colaboraciones.jpg"
+                imagenFondo="/bg-colaboraciones.webp"
                 objectPosition="center 55%"
             />
             <Colaboradores variant="dashboard" />

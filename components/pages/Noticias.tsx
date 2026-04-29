@@ -649,7 +649,7 @@ export default function ComunicacionPage() {
         }
       `}</style>
 
-      <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.jpg" />
+      <DashboardHero prefijo="Centro de " titulo="Comunicación." imagenFondo="/background-comunicacion-empleado.webp" />
 
       <div className="px-6 md:px-10 lg:px-16 pt-8 md:pt-12 pb-20">
 
