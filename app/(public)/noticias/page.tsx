@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import logo from "@/public/logo.webp";
 import type { Noticia, Comunicado } from "@/lib/types/noticias";
+import StaggeredMenu from "@/components/ui/StaggeredMenu";
+import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -186,11 +189,13 @@ function FeaturedCard({ item }: { item: UnifiedItem }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NoticiasPublicasPage() {
-  const [noticias,    setNoticias]    = useState<Noticia[]>([]);
-  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [activeTab,   setActiveTab]   = useState<TabKey>("todos");
-  const [search,      setSearch]      = useState("");
+  const [noticias,      setNoticias]      = useState<Noticia[]>([]);
+  const [comunicados,   setComunicados]   = useState<Comunicado[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [activeTab,     setActiveTab]     = useState<TabKey>("todos");
+  const [search,        setSearch]        = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -247,33 +252,66 @@ export default function NoticiasPublicasPage() {
 
       {/* ── Top nav ──────────────────────────────────────────────────────── */}
       <nav
-        className="sticky top-0 z-50 w-full flex items-center justify-between px-6 sm:px-12 py-4 border-b"
-        style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", borderColor: "var(--gris-borde, #e5e7eb)" }}
+        className="sticky top-0 z-[60] w-full px-8 py-5 flex flex-row items-center justify-between md:grid md:grid-cols-3 border-b"
+        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderColor: "var(--gris-borde, #e5e7eb)" }}
       >
-        <Link href="/" className="flex items-center gap-3 shrink-0">
-          <Image src="/logo.webp" alt="EGM Atalayas" width={36} height={36} className="object-contain" />
-          <span className="font-bold text-base hidden sm:block" style={{ color: "var(--texto-primario, #111827)" }}>
-            Atalayas
-          </span>
+        {/* Logo */}
+        <Link href="/">
+          <Image src={logo} alt="Atalayas EGM" className="h-12 w-auto" />
         </Link>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-sm font-medium transition-colors"
-            style={{ color: "var(--texto-muted, #6b7280)" }}
-          >
-            ← Volver al inicio
-          </Link>
+        {/* Nav links — desktop only */}
+        <div className="hidden md:flex items-center justify-center gap-8">
+          <Link href="/" className="text-xl text-black/50 hover:text-black transition-colors">Inicio</Link>
+          <span className="text-xl text-black font-semibold cursor-default">Noticias</span>
+          <Link href="/#comunidad" className="text-xl text-black/50 hover:text-black transition-colors">Comunidad</Link>
+          <Link href="/#colaboradores" className="text-xl text-black/50 hover:text-black transition-colors">Colaboradores</Link>
+        </div>
+
+        {/* Desktop CTA */}
+        <div className="hidden md:flex items-center justify-end">
           <Link
             href="/login"
-            className="rounded-full px-5 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
+            className="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
             style={{ background: "var(--azul-egm, #1B3F7E)" }}
           >
             Iniciar sesión
           </Link>
         </div>
+
+        {/* Botón hamburguesa — solo móvil */}
+        <button
+          className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
+          onClick={() => {
+            staggeredMenuRef.current?.toggle();
+            setMobileMenuOpen((v) => !v);
+          }}
+          aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={mobileMenuOpen}
+        >
+          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[7px] bg-black" : "bg-black"}`} />
+          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "opacity-0 bg-black" : "bg-black"}`} />
+          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[7px] bg-black" : "bg-black"}`} />
+        </button>
       </nav>
+
+      {/* Mobile StaggeredMenu overlay */}
+      <StaggeredMenu
+        ref={staggeredMenuRef}
+        position="right"
+        colors={["#1B3F7E", "#0d1b2e"]}
+        accentColor="#A3B535"
+        displayItemNumbering={true}
+        closeOnClickAway={true}
+        onMenuClose={() => setMobileMenuOpen(false)}
+        items={[
+          { label: "Inicio",        ariaLabel: "Ir al inicio",        link: "/" },
+          { label: "Noticias",      ariaLabel: "Noticias",            link: "/noticias" },
+          { label: "Comunidad",     ariaLabel: "Ir a Comunidad",      link: "/#comunidad" },
+          { label: "Colaboradores", ariaLabel: "Ir a Colaboradores",  link: "/#colaboradores" },
+          { label: "Entrar",        ariaLabel: "Iniciar sesión",      link: "/login" },
+        ]}
+      />
 
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <header className="w-full px-6 sm:px-12 lg:px-20 pt-14 pb-10">
