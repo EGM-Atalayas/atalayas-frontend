@@ -65,8 +65,8 @@ const SolicitudesPendientes: React.FC = () => {
 
       const mensaje =
         accion === "APROBADA"
-          ? `✅ ${nombreEmpresa} ha sido aprobada correctamente`
-          : `❌ ${nombreEmpresa} ha sido rechazada`;
+          ? `${nombreEmpresa} ha sido aprobada correctamente`
+          : `${nombreEmpresa} ha sido rechazada`;
 
       setAviso({ tipo: "exito", mensaje });
       setProcesando(null);

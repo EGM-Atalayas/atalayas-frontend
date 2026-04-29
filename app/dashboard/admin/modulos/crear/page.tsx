@@ -286,7 +286,7 @@ function PortadaUpload({ preview, onFile, onRemove, accent = "var(--azul-egm)", 
         <div className="relative rounded-xl overflow-hidden" style={{ height: "190px", border: "1.5px solid var(--gris-borde)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Portada" className="w-full h-full object-cover" />
-          <button onClick={onRemove} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs hover:opacity-80" style={{ background: "rgba(0,0,0,0.55)" }}>✕</button>
+          <button onClick={onRemove} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs hover:opacity-80" style={{ background: "rgba(0,0,0,0.55)" }}><i className="bi bi-x-lg" style={{ fontSize: "12px" }} /></button>
         </div>
       ) : (
         <div onClick={() => ref.current?.click()} className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
@@ -761,12 +761,12 @@ export default function CrearModuloPage() {
                                   <button key={d.id} onClick={() => toggleDepto(d.id)}
                                     className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
                                     style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
-                                    {sel && "✓ "}{d.label}
+                                    {sel && <i className="bi bi-check-lg" style={{ fontSize: "12px", marginRight: "2px" }} />}{d.label}
                                   </button>
                                 );
                               })}
                             </div>
-                            {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
+                            {deptos.length === 0 && <p className="text-xs mt-3 flex items-center gap-1" style={{ color: "#d97706" }}><i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "13px" }} /> Selecciona al menos un departamento</p>}
                           </div>
                         )}
                         <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(4)} disabledNext={audiencia === "departamento" && deptos.length === 0} />
@@ -840,7 +840,7 @@ export default function CrearModuloPage() {
                           </div>
                         )}
                         {errorMsg && (
-                          <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
+                          <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}><i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "13px" }} /> {errorMsg}</div>
                         )}
                         <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} />
                       </div>

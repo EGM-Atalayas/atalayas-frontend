@@ -16,150 +16,157 @@ import {
   ChevronDown
 } from "lucide-react";
 import Colaboradores from "../ui/Colaboradores";
+import type { Comunicado, Noticia } from "@/lib/types/noticias";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
-interface Comunicado {
-  comunicadoId: string;
-  titulo: string;
-  mensaje: string;
-  imagenUrl?: string | null;
-  fechaPublicacion: string;
-  activo: boolean;
-}
-
 const comunidadItems = [
-  {
-    label: "En Femenino",
-    sub: "Liderazgo e igualdad en el entorno empresarial",
-    imagen: "/logo-en-femenino.png",
-    bg: "#8878c8",
-    icono: null,
-    url: "https://atalayas.com/en-femenino/",
-  },
-  {
-    label: "Autobús lanzadera",
-    sub: "Servicio de transporte directo al área empresarial",
-    imagen: "/autobus.jpg",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/autobus-lanzadera/",
-  },
-  {
-    label: "Coche compartido",
-    sub: "Coordina rutas con compañeros del área",
-    imagen: "/coche-compartido.jpg",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/journify-coche-compartido/",
-  },
-  {
-    label: "Aparcamiento VAO",
-    sub: "Plazas exclusivas para vehículos de alta ocupación",
-    imagen: "/aparcamiento-vao.png",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/aparcamientovao/",
-  },
-  {
-    label: "Empresarios de hoy y de mañana",
-    sub: "Networking y actividades entre empresas del área",
-    imagen: "/empresas-hoy.jpg",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/100-estudiantes-20-empresarios/",
-  },
-  {
-    label: "Proyecto empresas solidarias",
-    sub: "Más de 44.000 personas ya han sido beneficiadas.",
-    imagen: "/empresas-solidarias.png",
-    bg: "#ffffff",
-    icono: null,
-    url: "https://atalayas.com/empresas-solidarias/",
-  },
-  {
-    label: "Voy en bici al trabajo",
-    sub: "Semana de la movilidad",
-    imagen: "/trabajo-bici.jpg",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/semana-de-la-movilidad/",
-  },
-  {
-    label: "Atalayas circular",
-    sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
-    imagen: "/atalayas-circular.jpg",
-    bg: null,
-    icono: null,
-    url: "https://atalayas.com/atalayas-circular/",
-  },
+  { label: "En Femenino", sub: "Liderazgo e igualdad en el entorno empresarial", imagen: "/logo-en-femenino.png", bg: "#8878c8", icono: null, url: "https://atalayas.com/en-femenino/" },
+  { label: "Autobús lanzadera", sub: "Servicio de transporte directo al área empresarial", imagen: "/autobus.jpg", bg: null, icono: null, url: "https://atalayas.com/autobus-lanzadera/" },
+  { label: "Coche compartido", sub: "Coordina rutas con compañeros del área", imagen: "/coche-compartido.jpg", bg: null, icono: null, url: "https://atalayas.com/journify-coche-compartido/" },
+  { label: "Aparcamiento VAO", sub: "Plazas exclusivas para vehículos de alta ocupación", imagen: "/aparcamiento-vao.png", bg: null, icono: null, url: "https://atalayas.com/aparcamientovao/" },
+  { label: "Empresarios de hoy y de mañana", sub: "Networking y actividades entre empresas del área", imagen: "/empresas-hoy.jpg", bg: null, icono: null, url: "https://atalayas.com/100-estudiantes-20-empresarios/" },
+  { label: "Proyecto empresas solidarias", sub: "Más de 44.000 personas ya han sido beneficiadas.", imagen: "/empresas-solidarias.png", bg: "#ffffff", icono: null, url: "https://atalayas.com/empresas-solidarias/" },
+  { label: "Voy en bici al trabajo", sub: "Semana de la movilidad", imagen: "/trabajo-bici.jpg", bg: null, icono: null, url: "https://atalayas.com/semana-de-la-movilidad/" },
+  { label: "Atalayas circular", sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR", imagen: "/atalayas-circular.jpg", bg: null, icono: null, url: "https://atalayas.com/atalayas-circular/" },
 ];
 
+// Tipo normalizado para mostrar en la lista
+interface ItemLista {
+  id: string;
+  img: string | null;
+  title: string;
+  tag: string;
+  extracto: string;
+  day: string;
+  month: string;
+  year: string;
+  fuente: "egm" | "empresa";
+}
+
+function comunicadoToItem(c: Comunicado): ItemLista {
+  const fecha = c.fechaPublicacion ? new Date(c.fechaPublicacion) : new Date(c.actualizadoEn ?? "");
+  return {
+    id: c.comunicadoId,
+    img: c.imagenUrl ?? null,
+    title: c.titulo,
+    tag: c.categoria ?? "General",
+    extracto: c.mensaje?.slice(0, 120) ?? "",
+    day: fecha.getDate().toString().padStart(2, "0"),
+    month: fecha.toLocaleDateString("es-ES", { month: "short" }),
+    year: fecha.getFullYear().toString(),
+    fuente: "egm",
+  };
+}
+
+function anuncioToItem(n: Noticia): ItemLista {
+  const fecha = new Date(n.creadoEn);
+  return {
+    id: n.anuncioId,
+    img: n.imagenUrl ?? null,
+    title: n.titulo,
+    tag: n.empresaId ? "Empresa" : "General",
+    extracto: n.contenido?.slice(0, 120) ?? "",
+    day: fecha.getDate().toString().padStart(2, "0"),
+    month: fecha.toLocaleDateString("es-ES", { month: "short" }),
+    year: fecha.getFullYear().toString(),
+    fuente: "empresa",
+  };
+}
+
+const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
 export default function Invitado() {
-  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
-  const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [tabActivo, setTabActivo] = useState(0);
+  const [todosLosComunicados, setTodosLosComunicados] = useState<Comunicado[]>([]);
+  const [todosLosAnuncios, setTodosLosAnuncios] = useState<Noticia[]>([]);
+  const [loadingNoticias, setLoadingNoticias] = useState(true);
+
+  // Destacado (primero con imagenUrl o el primero)
+  const destacadoRaw = todosLosComunicados.find(c => c.destacado && c.imagenUrl) 
+    ?? todosLosComunicados.find(c => c.imagenUrl) 
+    ?? todosLosComunicados[0] 
+    ?? todosLosAnuncios[0]
+    ?? null;
+
+  const destacado = destacadoRaw
+    ? { ...comunicadoToItem(destacadoRaw as Comunicado), fuente: "egm" as const }
+    : (todosLosAnuncios.length > 0 ? anuncioToItem(todosLosAnuncios[0]) : null);
 
   useEffect(() => {
-    fetch(`${API_URL}/comunicados`)
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
+    Promise.all([
+      fetch(`${API_URL}/comunicados`).then((res) => { if (!res.ok) throw new Error(); return res.json(); }),
+      fetch(`${API_URL}/anuncios`).then((res) => { if (!res.ok) throw new Error(); return res.json(); }),
+    ])
+      .then(([comunicadosData, anunciosData]) => {
+        const comunicadosActivos = (comunicadosData as Comunicado[]).filter(c => c.activo && c.estado !== "borrador");
+        comunicadosActivos.sort((a, b) => new Date(b.fechaPublicacion ?? "").getTime() - new Date(a.fechaPublicacion ?? "").getTime());
+        setTodosLosComunicados(comunicadosActivos);
+
+        const anunciosActivos = (anunciosData as Noticia[]).filter(n => n.activo && n.estado !== "borrador");
+        anunciosActivos.sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
+        setTodosLosAnuncios(anunciosActivos);
       })
-      .then((data: Comunicado[]) =>
-        setComunicados(data.filter((c) => c.activo).slice(0, 3))
-      )
-      .catch(() => { })
-      .finally(() => setLoadingComunicados(false));
+      .catch(() => {})
+      .finally(() => setLoadingNoticias(false));
   }, []);
+
+  // Filtrar por tab — combina comunicados EGM + anuncios de empresas
+  const itemsComunicados = todosLosComunicados.map(comunicadoToItem);
+  const itemsAnuncios = todosLosAnuncios.map(anuncioToItem);
+
+  const itemsPorTab: ItemLista[][] = [
+    // Tab 0: Noticias → comunicados (Novedad/General) + anuncios de empresas
+    [
+      ...todosLosComunicados
+        .filter(c => !c.categoria || c.categoria === "Novedad" || c.categoria === "General")
+        .map(comunicadoToItem),
+      ...itemsAnuncios,
+    ].sort((a, b) => {
+      const dateA = new Date(`${a.year}-${MESES.indexOf(a.month)}-${a.day}`).getTime();
+      const dateB = new Date(`${b.year}-${MESES.indexOf(b.month)}-${b.day}`).getTime();
+      return dateB - dateA;
+    }),
+    // Tab 1: Eventos
+    todosLosComunicados
+      .filter(c => c.categoria === "Evento")
+      .map(comunicadoToItem),
+    // Tab 2: Comunicados → todos los comunicados EGM
+    itemsComunicados,
+    // Tab 3: Convocatorias → Aviso
+    todosLosComunicados
+      .filter(c => c.categoria === "Aviso")
+      .map(comunicadoToItem),
+  ];
+
+  const itemsActivos = itemsPorTab[tabActivo];
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          HERO — fullscreen background image with cinematic typography
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* HERO */}
       <section className="relative w-full min-h-screen flex flex-col overflow-hidden">
-
-        {/* Background image */}
-        <img
-          src="/background-invitado.jpg"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        />
-        {/* Dark overlay */}
+        <img src="/background-invitado.jpg" alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover z-0" />
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
-        {/* ── Navigation ─────────────────────────────────────────────── */}
-        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
-          {/* Logo */}
+        <nav className="absolute top-0 left-0 right-0 z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
-
-          {/* Nav links — desktop only */}
           <div className="hidden md:flex items-center justify-center gap-8">
             <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
             <a href="#noticias" className="text-2xl text-white/50 hover:text-white transition-colors">Noticias</a>
             <a href="#comunidad" className="text-2xl text-white/50 hover:text-white transition-colors">Comunidad</a>
             <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-white p-2 flex flex-col gap-1.5"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            aria-label="Menu"
-          >
+          <button className="md:hidden text-white p-2 flex flex-col gap-1.5" onClick={() => setMenuAbierto(!menuAbierto)} aria-label="Menu">
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
           </button>
         </nav>
 
-        {/* Mobile menu */}
         {menuAbierto && (
-          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
+          <div className="md:hidden absolute top-[88px] left-0 right-0 z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}>
             <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
             <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
             <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
@@ -167,19 +174,16 @@ export default function Invitado() {
           </div>
         )}
 
-        {/* ── Hero content ───────────────────────────────────────────── */}
-        <div className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
           <h1
             className="text-7xl sm:text-[9rem] md:text-[12rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
           >
             Atalayas Área Empresarial.
           </h1>
-
           <p className={`${playfair.className} text-white/60 text-xl sm:text-2xl max-w-3xl mt-8 leading-relaxed animate-fade-rise-delay`}>
             La plataforma digital de incorporación y formación empresarial para las empresas del área industrial de Atalayas, Alicante.
           </p>
-
           <Link
             href="/login"
             className="liquid-glass rounded-full px-14 py-5 text-xl text-white mt-12 hover:scale-[1.03] transition-transform animate-fade-rise-delay-2 inline-flex items-center justify-center"
@@ -192,26 +196,29 @@ export default function Invitado() {
 
       {/* NOTICIAS */}
       <section id="noticias" className="w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
-        {/* Header */}
         <div className="mb-14">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
             <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
-          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
-            Mantente al día<br />con Atalayas
+          <h2 className="text-3xl sm:text-4xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
+            Noticias y actualidad<br />del área empresarial
           </h2>
+          <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
+            Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
+            Mantente informado de todo lo que ocurre en el parque.
+          </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          {/* Featured card */}
+
+          {/* Featured card — usa datos reales si hay destacado */}
           <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
-            <Image
-              src="/background-invitado.jpg"
-              alt="Noticia destacada"
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+            {destacado?.img ? (
+              <img src={destacado.img} alt={destacado.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            ) : (
+              <Image src="/background-invitado.jpg" alt="Noticia destacada" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            )}
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
             <div className="absolute bottom-0 left-0 p-8 sm:p-10">
               <div className="flex items-center gap-2 mb-4">
@@ -219,7 +226,7 @@ export default function Invitado() {
                 <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
               </div>
               <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
-                EGM Atalayas lanza su nueva plataforma digital para empresas del área
+                {destacado?.title ?? "EGM Atalayas lanza su nueva plataforma digital para empresas del área"}
               </h3>
             </div>
             <div className="absolute top-5 right-5">
@@ -229,55 +236,71 @@ export default function Invitado() {
 
           {/* Right column */}
           <div className="flex-1 flex flex-col">
-            {/* Category tabs */}
+
+            {/* Tabs interactivos */}
             <div className="flex items-center gap-8 mb-8 overflow-x-auto pb-1" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
               {["Noticias", "Eventos", "Comunicados", "Convocatorias"].map((tab, i) => (
-                <div key={tab} className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer" style={{ borderBottom: i === 0 ? "2px solid var(--azul-egm)" : "2px solid transparent", marginBottom: "-1px" }}>
-                  <span className="text-base font-medium whitespace-nowrap" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>{tab}</span>
-                  <span className="text-sm" style={{ color: i === 0 ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
+                <div
+                  key={tab}
+                  onClick={() => setTabActivo(i)}
+                  className="flex items-center gap-1.5 pb-4 shrink-0 cursor-pointer transition-colors"
+                  style={{
+                    borderBottom: tabActivo === i ? "2px solid var(--azul-egm)" : "2px solid transparent",
+                    marginBottom: "-1px",
+                  }}
+                >
+                  <span className="text-base font-medium whitespace-nowrap transition-colors"
+                    style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>
+                    {tab}
+                  </span>
+                  <span style={{ color: tabActivo === i ? "var(--azul-egm)" : "var(--texto-muted)" }}>↗</span>
                 </div>
               ))}
             </div>
 
-            {/* Article list */}
-            <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
-              {[
-                {
-                  img: "/background-comunidad.jpg",
-                  title: "Jornada de networking: conecta con +150 empresas del área",
-                  tag: "Evento",
-                  day: "18", month: "Abr", year: "2026",
-                },
-                {
-                  img: "/background-invitado.jpg",
-                  title: "Nuevos servicios de transporte lanzadera desde Alicante",
-                  tag: "Noticia",
-                  day: "10", month: "Abr", year: "2026",
-                },
-                {
-                  img: "/background-comunidad.jpg",
-                  title: "Convocatoria: Programa de formación para pymes del área empresarial",
-                  tag: "Convocatoria",
-                  day: "03", month: "Abr", year: "2026",
-                },
-              ].map((item) => (
-                <Link href="/login" key={item.title} className="flex gap-6 py-7 group items-start">
-                  <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
-                    <Image src={item.img} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
-                    <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
-                    <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
-                  </div>
-                  <div className="shrink-0 text-right ml-3">
-                    <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
-                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
-                    <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {/* Lista artículos */}
+            {loadingNoticias ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+              </div>
+            ) : itemsActivos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-base font-medium mb-1" style={{ color: "var(--texto-primario)" }}>No hay contenido en esta categoría</p>
+                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Vuelve pronto para ver las novedades.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
+                {itemsActivos.slice(0, 3).map((item) => (
+                  <Link href="/login" key={item.id} className="flex gap-6 py-7 group items-start">
+                    <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
+                      {item.img ? (
+                        <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      ) : (
+                        <Image src="/background-comunidad.jpg" alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block"
+                        style={{ background: item.fuente === "egm" ? "var(--gris-superficie)" : "rgba(45,90,61,0.12)", color: item.fuente === "egm" ? "var(--texto-muted)" : "var(--verde-oliva)", border: `1px solid ${item.fuente === "egm" ? "var(--gris-borde)" : "rgba(45,90,61,0.25)"}` }}>
+                        {item.fuente === "egm" ? item.tag : item.tag}
+                      </p>
+                      <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline"
+                        style={{ color: "var(--texto-primario)" }}>
+                        {item.title}
+                      </h4>
+                      <p className="text-sm mt-1.5 line-clamp-2" style={{ color: "var(--texto-muted)" }}>
+                        {item.extracto || "Sin extracto disponible."}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right ml-3">
+                      <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
+                      <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
+                      <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -285,9 +308,7 @@ export default function Invitado() {
       {/* LOGO LOOP */}
       <section className="relative w-full pt-10 pb-20 sm:pt-14 sm:pb-28" style={{ background: "#F5F6F8" }}>
         <LogoLoop
-          speed={35}
-          size={70}
-          gap={90}
+          speed={35} size={70} gap={90}
           logos={[
             { src: "/logo.webp", alt: "EGM Atalayas" },
             { src: "/logo-famosa.png", alt: "Empresa 2" },
@@ -327,35 +348,29 @@ export default function Invitado() {
                   backdropFilter: 'bg' in item ? undefined : "blur(8px)",
                 }}
               >
-                {/* Imagen (En Femenino) */}
                 {(item.label === "Autobús lanzadera" || item.label === "Coche compartido" || item.label === "Aparcamiento VAO" || item.label === "Empresarios de hoy y de mañana" || item.label === "Voy en bici al trabajo" || item.label === "Atalayas circular") && 'imagen' in item && item.imagen ? (
                   <>
-                    <img src={item.imagen as string} alt={item.label}
-                      className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                    <img src={item.imagen as string} alt={item.label} className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
                     <div className="absolute inset-0 rounded-2xl bg-black/40" />
                     <div className="flex-1" />
                   </>
                 ) : item.label !== "Autobús lanzadera" && item.label !== "Coche compartido" && item.label !== "Aparcamiento VAO" && item.label !== "Empresarios de hoy y de mañana" && item.label !== "Voy en bici al trabajo" && item.label !== "Atalayas circular" && 'imagen' in item && item.imagen ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <img src={item.imagen as string} alt={item.label}
-                      className="w-full h-full object-contain p-3" />
+                    <img src={item.imagen as string} alt={item.label} className="w-full h-full object-contain p-3" />
                   </div>
                 ) : (
-                  /* Icono */
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}
-                  >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}>
                     {item.icono}
                   </div>
                 )}
-
-                {/* Texto */}
                 <div className="flex flex-col gap-1 relative z-10">
-                  <p className="text-sm font-semibold leading-snug" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
+                  <p className="text-sm font-semibold leading-snug"
+                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
                     {item.label}
                   </p>
-                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
+                  <p className="text-xs leading-relaxed line-clamp-2"
+                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
                     {item.sub}
                   </p>
                 </div>
@@ -365,14 +380,9 @@ export default function Invitado() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          COLABORADORES — Ecosistema de Proximidad
-      ══════════════════════════════════════════════════════════════════════ */}
-      < Colaboradores />
+      <Colaboradores />
+      <FooterCTA />
 
-      {/* FOOTER */}
-      < FooterCTA />
-
-    </div >
+    </div>
   );
 }

@@ -114,7 +114,7 @@ const EstadisticasPage: React.FC = () => {
     return (
       <div className="px-6 md:px-10 w-full max-w-[1400px] mx-auto mt-10">
         <div className="bg-red-50 text-red-600 p-5 rounded-2xl border border-red-100 text-sm shadow-sm">
-          ⚠️ {error}
+          <i className="bi bi-exclamation-triangle-fill me-2" style={{ fontSize: "16px" }} />{error}
         </div>
       </div>
     );

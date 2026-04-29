@@ -13,6 +13,7 @@ import {
 } from "../../lib/api/noticias";
 import type { Comunicado, Noticia, NoticiaInput } from "../../lib/types/noticias";
 import DashboardHero from "@/components/ui/DashboardHero";
+import BiIcon from "@/components/ui/BiIcon";
 
 // ── TIPOS ──────────────────────────────────────────────────────────────────────
 interface FeedItem {
@@ -211,7 +212,7 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         <span className={cls} style={{ ...pill, ...(dark
           ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
           : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }) }}>
-          ★ Destacado
+          <BiIcon name="star-fill" size={10} /> Destacado
         </span>
       )}
       {esNuevoItem && (
@@ -704,7 +705,7 @@ export default function ComunicacionPage() {
             {isPreview && (
               <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
                 style={{ background: "#fef9c3", color: "#854d0e", borderBottom: "1px solid #fde047" }}>
-                <span>👁</span> Vista previa — así verán los usuarios este anuncio
+                <BiIcon name="eye-fill" size={12} /> Vista previa — así verán los usuarios este anuncio
               </div>
             )}
 

@@ -96,9 +96,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
   return (
     <header
-      className="w-full sticky top-0 z-100"
+      className="w-full fixed top-0 left-0 right-0 z-100"
       style={{
-        background: "var(--azul-egm)",
+        background: "#1b3f7e",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
     >

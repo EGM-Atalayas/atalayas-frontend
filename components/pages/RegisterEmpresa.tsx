@@ -498,7 +498,7 @@ const RegisterEmpresa: React.FC = () => {
                       backdropFilter: "blur(8px)",
                     }}
                   >
-                    {isActive && !isCurrent ? "✓" : step.num}
+                    {isActive && !isCurrent ? <i className="bi bi-check-lg" style={{ fontSize: "18px" }} /> : step.num}
                   </div>
                   <div>
                     <p className="text-sm font-semibold leading-tight" style={{ color: isCurrent ? "#ffffff" : "rgba(255,255,255,0.38)" }}>

@@ -183,7 +183,7 @@ export default function ConfiguracionPage() {
 
   const handleEliminarCuenta = () => {
     const confirmacion = window.confirm(
-      "⚠️ Esta acción es irreversible. Se eliminarán todos tus datos permanentemente. ¿Estás seguro?"
+      "Esta acción es irreversible. Se eliminarán todos tus datos permanentemente. ¿Estás seguro?"
     );
 
     if (!confirmacion) return;

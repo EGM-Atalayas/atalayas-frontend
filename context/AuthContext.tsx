@@ -78,10 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUsuario(userData);
-      console.log(`[AuthContext] ✅ Sesión recuperada: Bienvenido de nuevo, ${userData.nombre}`);
+      console.log(`[AuthContext] Sesión recuperada: Bienvenido de nuevo, ${userData.nombre}`);
 
     } catch (err) {
-      console.warn("[AuthContext] ❌ Error recuperando sesión:", err);
+      console.warn("[AuthContext] Error recuperando sesión:", err);
       // Limpiamos los rastros y redirigimos si no estamos en una página pública
       localStorage.removeItem("accessToken");
       setUsuario(null);
