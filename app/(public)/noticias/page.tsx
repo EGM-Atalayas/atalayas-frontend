@@ -109,7 +109,8 @@ function ItemCard({ item }: { item: UnifiedItem }) {
     <article className="flex gap-5 py-6 group items-start border-b last:border-b-0" style={{ borderColor: "var(--gris-borde, #e5e7eb)" }}>
       <div className="relative w-28 h-20 sm:w-36 sm:h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
         {item.imagenUrl ? (
-          <Image src={item.imagenUrl} alt={item.titulo} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
@@ -152,7 +153,8 @@ function FeaturedCard({ item }: { item: UnifiedItem }) {
     <article className="relative rounded-2xl overflow-hidden min-h-[400px] sm:min-h-[520px] group flex flex-col justify-end"
       style={{ background: "#1B3F7E" }}>
       {item.imagenUrl && (
-        <Image src={item.imagenUrl} alt={item.titulo} fill className="object-cover opacity-60 transition-transform duration-500 group-hover:scale-105" />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.imagenUrl} alt={item.titulo} className="absolute inset-0 w-full h-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-105" />
       )}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)" }} />
       <div className="relative z-10 p-8 sm:p-10">
