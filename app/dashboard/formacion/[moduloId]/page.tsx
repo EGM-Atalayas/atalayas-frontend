@@ -395,7 +395,7 @@ export default function Page() {
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden flex items-center"
-        style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
+        style={{ minHeight: "clamp(260px, 30vw, 380px)", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
       >
         {/* Imagen de fondo */}
         <img

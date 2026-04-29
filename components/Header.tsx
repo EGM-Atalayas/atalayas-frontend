@@ -23,14 +23,17 @@ function getInitials(nombre: string): string {
 
 // Enlaces exclusivos para el SuperAdmin
 const SUPERADMIN_LINKS = [
-  { label: "Inicio", path: "/superadmin" },
+  { label: "Inicio",         path: "/superadmin" },
   { label: "Administración", path: "/superadmin/administracion" },
-  { label: "Comunicados", path: "/superadmin/comunicados" },
+  { label: "Comunicados",    path: "/superadmin/comunicados" },
 ];
 
 export default function Header({ logoEmpresa }: HeaderProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [noLeidas, setNoLeidas] = useState(0);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [noLeidas, setNoLeidas]       = useState(0);
+  const [scrolled, setScrolled]       = useState(false);
+  const [navProgress, setNavProgress] = useState(0); // 0 = oculto, 1-100 = progreso
+  const prevPathname                  = useRef<string | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -67,6 +70,33 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchContador]);
 
+  // Scroll: sombra+blur en desktop, cerrar menú mobile si está abierto
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+      if (window.scrollY > 8) setMobileOpen(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Barra de progreso de navegación: se dispara cuando cambia el pathname
+  useEffect(() => {
+    if (prevPathname.current === null) {
+      prevPathname.current = pathname;
+      return;
+    }
+    if (prevPathname.current === pathname) return;
+    prevPathname.current = pathname;
+
+    // Animación: sube rápido a 80%, luego espera y completa
+    setNavProgress(15);
+    const t1 = setTimeout(() => setNavProgress(80), 80);
+    const t2 = setTimeout(() => setNavProgress(100), 350);
+    const t3 = setTimeout(() => setNavProgress(0), 650);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [pathname]);
+
 
 
   const marcarTodasLeidas = async () => {
@@ -89,23 +119,45 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   const initials = usuario?.nombre ? getInitials(usuario.nombre) : "U";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
 
-  const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
-  const linkPerfil = isSuperAdmin ? "/superadmin/configuracion?tab=perfil" : "/dashboard/perfil";
-  const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion?tab=seguridad" : "/dashboard/configuracion";
-  const linkNotificaciones = isSuperAdmin ? "/superadmin/solicitudes" : "/dashboard/comunicacion";
+  const linkLogo           = isSuperAdmin ? "/superadmin" : "/dashboard";
+  const linkPerfil         = "/dashboard/perfil";
+  const linkConfiguracion  = "/dashboard/configuracion";
 
   return (
     <header
-      className="w-full fixed top-0 left-0 right-0 z-100"
+      className="w-full fixed top-0 left-0 right-0 z-50"
       style={{
-        background: "#1b3f7e",
+        background: scrolled ? "rgba(22,50,105,0.97)" : "#1b3f7e",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
+        boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,0.25)" : "none",
+        transition: "background 0.2s ease, box-shadow 0.2s ease, backdrop-filter 0.2s ease",
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-stretch h-20">
+      {/* Barra de progreso de navegación */}
+      {navProgress > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            height: "2px",
+            width: `${navProgress}%`,
+            background: "var(--verde-oliva-hover)",
+            transition: navProgress === 100
+              ? "width 0.15s ease, opacity 0.3s ease 0.15s"
+              : "width 0.3s ease",
+            opacity: navProgress === 100 ? 0 : 1,
+            borderRadius: "0 2px 2px 0",
+          }}
+        />
+      )}
 
-        {/* Logo dinámico */}
-        <div className="flex items-center pr-6 shrink-0">
+      <div className="w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14 flex items-stretch h-20 relative">
+
+        {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
+        <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 shrink-0 z-10">
           <Link href={linkLogo}>
             <Image
               src={logo}
@@ -113,20 +165,18 @@ export default function Header({ logoEmpresa }: HeaderProps) {
               width={180}
               height={50}
               priority
-              style={{ height: "52px", width: "auto" }}
-              className="brightness-0 invert cursor-pointer"
+              style={{
+                height: "clamp(40px, 6vw, 50px)",
+                width: "auto",
+                transition: "opacity 0.15s ease",
+              }}
+              className="brightness-0 invert cursor-pointer hover:opacity-75"
             />
           </Link>
         </div>
 
-        {/* Divisor vertical */}
-        <div
-          className="hidden sm:block w-px my-4 mr-8 shrink-0"
-          style={{ background: "rgba(255,255,255,0.25)" }}
-        />
-
-        {/* Navegación desktop unificada */}
-        <nav className="hidden sm:flex items-stretch flex-1">
+        {/* Navegación desktop — centrada en el header */}
+        <nav className="hidden md:flex items-stretch absolute left-1/2 -translate-x-1/2 h-full">
           {linksToRender.map((link) => {
             const isActive = pathname === link.path || (pathname.startsWith(link.path) && link.path !== linkLogo);
             return (
@@ -140,10 +190,10 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           })}
         </nav>
 
-        {/* Lado derecho - Modificado para alinear verticalmente en móvil */}
-        <div className="ml-auto flex items-center h-full gap-2 sm:gap-0">
+        {/* Lado derecho — campana pegada al avatar */}
+        <div className="ml-auto flex items-center h-full gap-3 md:gap-0 z-10">
 
-          {/* Campana */}
+          {/* Campana — px reducido para quedar cerca del avatar */}
           <div className="flex items-center h-full">
             <NotifMenu
               noLeidas={noLeidas}
@@ -151,114 +201,177 @@ export default function Header({ logoEmpresa }: HeaderProps) {
             />
           </div>
 
-          {/* Divisor (solo desktop) */}
-          <div className="hidden sm:block w-px self-stretch my-4"
-            style={{ background: "rgba(255,255,255,0.2)" }} />
+          {/* Avatar + menú — sin separador, el gap del nav los aleja naturalmente */}
+          <UserMenu
+            nombreMostrado={nombreMostrado}
+            empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
+            initials={initials}
+            logoEmpresa={logoEmpresa}
+            avatarUrl={usuario?.avatarUrl}
+            onPerfil={() => router.push(linkPerfil)}
+            onConfiguracion={() => router.push(linkConfiguracion)}
+            onCerrarSesion={handleLogout}
+          />
 
-          {/* Avatar + menú — solo desktop */}
-          <div className="hidden sm:flex items-center h-full">
-            <UserMenu
-              nombreMostrado={nombreMostrado}
-              empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
-              initials={initials}
-              logoEmpresa={logoEmpresa}
-              avatarUrl={usuario?.avatarUrl}
-              onPerfil={() => router.push(linkPerfil)}
-              onConfiguracion={() => router.push(linkConfiguracion)}
-              onCerrarSesion={handleLogout}
-            />
-          </div>
-
-          {/* Hamburguesa — solo móvil */}
+          {/* Hamburguesa → X — solo móvil */}
           <button
-            className="sm:hidden flex flex-col justify-center items-center rounded-lg transition-colors gap-1.5"
-            style={{ width: "40px", height: "40px" }}
+            className="md:hidden flex flex-col justify-center items-center rounded-lg gap-[5px]"
+            style={{
+              width: "40px", height: "40px",
+              background: mobileOpen ? "rgba(255,255,255,0.08)" : "transparent",
+              transition: "background 0.15s ease",
+            }}
             onClick={() => setMobileOpen((prev) => !prev)}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            aria-label="Menú"
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
           >
-            <span className="block h-0.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.8)", width: "18px" }} />
-            <span className="block h-0.5 rounded-full transition-all"
-              style={{ background: "rgba(255,255,255,0.8)", width: mobileOpen ? "12px" : "18px" }} />
-            <span className="block h-0.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.8)", width: "18px" }} />
+            <span style={{
+              display: "block", height: "2px", borderRadius: "2px",
+              background: "rgba(255,255,255,0.85)", width: "20px",
+              transform: mobileOpen ? "translateY(7px) rotate(45deg)" : "none",
+              transition: "transform 0.25s ease",
+            }} />
+            <span style={{
+              display: "block", height: "2px", borderRadius: "2px",
+              background: "rgba(255,255,255,0.85)", width: "20px",
+              opacity: mobileOpen ? 0 : 1,
+              transition: "opacity 0.15s ease",
+            }} />
+            <span style={{
+              display: "block", height: "2px", borderRadius: "2px",
+              background: "rgba(255,255,255,0.85)", width: "20px",
+              transform: mobileOpen ? "translateY(-7px) rotate(-45deg)" : "none",
+              transition: "transform 0.25s ease",
+            }} />
           </button>
         </div>
       </div>
 
-      {/* Menú móvil unificado */}
-      {mobileOpen && (
-        <div
-          className="sm:hidden flex flex-col"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.08)", background: "var(--azul-egm)" }}
-        >
-          <div className="px-4 py-3 flex flex-col gap-1"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            {linksToRender.map((link) => {
-              const isActive = pathname === link.path || (pathname.startsWith(link.path) && link.path !== linkLogo);
-              return (
-                <button
-                  key={link.path}
-                  onClick={() => handleNavClick(link.path)}
-                  className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors"
-                  style={{
-                    color: isActive ? "var(--blanco)" : "rgba(255,255,255,0.65)",
-                    background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
-                    fontWeight: isActive ? 600 : 400,
-                  }}
-                >
-                  {link.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="px-4 py-3 flex flex-col gap-1">
-            <div className="flex items-center gap-3 px-3 py-2 mb-1">
-              <div
-                className="rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+      {/* Menú móvil — con animación suave de entrada */}
+      <div
+        className="md:hidden flex flex-col overflow-hidden"
+        style={{
+          maxHeight: mobileOpen ? "100dvh" : "0px",
+          opacity:   mobileOpen ? 1 : 0,
+          transition: "max-height 0.3s ease, opacity 0.2s ease",
+          borderTop: mobileOpen ? "1px solid rgba(255,255,255,0.08)" : "none",
+          background: "var(--azul-egm)",
+          overflowY: "auto",
+        }}
+      >
+        {/* ── Sección nav ── */}
+        <div className="px-3 pt-3 pb-2 flex flex-col gap-0.5">
+          {linksToRender.map((link) => {
+            const isActive = pathname === link.path || (pathname.startsWith(link.path) && link.path !== linkLogo);
+            return (
+              <button
+                key={link.path}
+                onClick={() => handleNavClick(link.path)}
+                className="relative text-left px-4 py-3 text-sm rounded-xl"
                 style={{
-                  width: "32px",
-                  height: "32px",
-                  background: "rgba(255,255,255,0.15)",
-                  color: "var(--blanco)",
-                  border: "2px solid rgba(255,255,255,0.3)",
+                  color:      isActive ? "#fff" : "rgba(255,255,255,0.65)",
+                  background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                  fontWeight: isActive ? 600 : 400,
+                  transition: "background 0.15s ease, color 0.15s ease",
                 }}
               >
-                {initials}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
-                  {nombreMostrado}
-                </p>
-                <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  {isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => { setMobileOpen(false); router.push(linkPerfil); }}
-              className="text-left px-3 py-2.5 text-sm rounded-lg transition-colors"
-              style={{ color: "rgba(255,255,255,0.75)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              Mi perfil
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors"
-              style={{ color: "#f87171" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              Cerrar sesión
-            </button>
-          </div>
+                {/* Barra verde izquierda en activo */}
+                {isActive && (
+                  <span style={{
+                    position: "absolute", left: "6px", top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "3px", height: "18px",
+                    background: "var(--verde-oliva-hover)",
+                    borderRadius: "2px",
+                  }} />
+                )}
+                {link.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {/* ── Separador ── */}
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 16px" }} />
+
+        {/* ── Sección usuario ── */}
+        <div className="px-3 pt-2 pb-3 flex flex-col gap-0.5">
+
+          {/* Tarjeta usuario — clickable, va a perfil */}
+          <button
+            onClick={() => { setMobileOpen(false); router.push(linkPerfil); }}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              transition: "background 0.15s ease",
+            }}
+          >
+            {/* Avatar */}
+            <div className="shrink-0">
+              {usuario?.avatarUrl ? (
+                <img
+                  src={usuario.avatarUrl}
+                  alt={nombreMostrado}
+                  style={{
+                    width: "40px", height: "40px", borderRadius: "50%",
+                    objectFit: "cover", border: "2px solid rgba(255,255,255,0.3)",
+                  }}
+                />
+              ) : (
+                <div
+                  className="rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{
+                    width: "40px", height: "40px",
+                    background: "rgba(255,255,255,0.15)",
+                    color: "#fff",
+                    border: "2px solid rgba(255,255,255,0.3)",
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+            </div>
+
+            {/* Nombre + empresa */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.92)" }}>
+                {nombreMostrado}
+              </p>
+              <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.42)" }}>
+                {isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
+              </p>
+            </div>
+
+            {/* Chevron → indica que es tappable */}
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" strokeWidth={2.5} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Configuración */}
+          <button
+            onClick={() => { setMobileOpen(false); router.push(linkConfiguracion); }}
+            className="flex items-center gap-3 px-4 py-3 text-sm rounded-xl"
+            style={{ color: "rgba(255,255,255,0.7)", transition: "background 0.15s ease" }}
+          >
+            <i className="bi bi-gear" style={{ fontSize: "15px", opacity: 0.7, width: "16px" }} />
+            Configuración
+          </button>
+
+          {/* Separador antes de acción destructiva */}
+          <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "4px 8px" }} />
+
+          {/* Cerrar sesión */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl"
+            style={{ color: "#f87171", transition: "background 0.15s ease" }}
+          >
+            <i className="bi bi-box-arrow-right" style={{ fontSize: "15px", width: "16px" }} />
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
     </header>
   );
 }
@@ -297,10 +410,10 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="relative flex items-center px-5 whitespace-nowrap border-none cursor-pointer h-full"
+      className="relative flex items-center px-3 md:px-4 whitespace-nowrap border-none cursor-pointer h-full"
       style={{
-        fontSize: "16px",
-        fontWeight: isActive ? 700 : 500,
+        fontSize: "15px",
+        fontWeight: isActive ? 600 : 500,
         color: isActive
           ? "var(--verde-oliva-hover)"
           : hovered
@@ -311,23 +424,22 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
       }}
     >
       {label}
-      {!isActive && (
-        <span
-          style={{
-            position: "absolute",
-            bottom: "25px",
-            left: "12px",
-            right: "12px",
-            height: "2px",
-            background: "var(--verde-oliva-hover)",
-            borderRadius: "2px",
-            display: "block",
-            transform: hovered ? "scaleX(1)" : "scaleX(0)",
-            transformOrigin: origin,
-            transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-        />
-      )}
+      {/* Underline: fijo y visible cuando activo, animado desde el ratón en hover */}
+      <span
+        style={{
+          position: "absolute",
+          bottom: "18px",
+          left: "10px",
+          right: "10px",
+          height: "2px",
+          background: "var(--verde-oliva-hover)",
+          borderRadius: "2px",
+          display: "block",
+          transform: isActive || hovered ? "scaleX(1)" : "scaleX(0)",
+          transformOrigin: isActive ? "center" : origin,
+          transition: isActive ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      />
     </button>
   );
 }

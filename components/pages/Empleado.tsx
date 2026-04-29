@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import DashboardHero from "@/components/ui/DashboardHero";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
@@ -263,76 +264,14 @@ export default function Empleado() {
   return (
     <div>
       {/* ════════════════════════════════════════════
-          BANDA HERO
+          BANDA HERO — usa el banner personalizado del perfil
       ════════════════════════════════════════════ */}
-      <div
-        className="relative overflow-hidden flex items-center"
-        style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
-      >
-        <img src={usuario?.bannerUrl ?? "/background-dashboard.webp"} alt="" aria-hidden
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: "center 40%" }} />
-        <div className="absolute inset-0"
-          style={{ background: "rgba(10,20,40,0.60)" }} />
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
-
-        <div className="relative z-10 w-full px-10 lg:px-16 py-16">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5"
-            style={{ color: "var(--verde-oliva-hover)" }}>
-            {usuario?.nombreEmpresa ?? "Mi empresa"}
-            <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
-            {new Date().toLocaleDateString("es-ES", {
-              weekday: "long", day: "numeric", month: "long",
-            }).replace(/^\w/, (c) => c.toUpperCase())}
-          </p>
-
-          <div className="leading-none flex flex-wrap items-center gap-x-3">
-            <span
-              className="text-white"
-              style={{
-                fontSize: "clamp(3.5rem, 7vw, 4.5rem)",
-                fontFamily: "var(--font-poppins), sans-serif",
-                fontWeight: 300,
-                letterSpacing: "-0.03em",
-                animation: "heroFadeUp 0.8s ease both",
-              }}
-            >
-              Hola,
-            </span>
-            <span
-              style={{
-                fontSize: "clamp(3.5rem, 7vw, 6rem)",
-                fontFamily: "'Instrument Serif', serif",
-                fontStyle: "italic",
-                fontWeight: 400,
-                letterSpacing: "-0.01em",
-                lineHeight: 1,
-                background: "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-                backgroundSize: "300% 100%",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                animation: "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
-              }}
-            >
-              {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-            </span>
-          </div>
-          <style>{`
-              @keyframes heroFadeUp {
-                from { opacity: 0; transform: translateY(24px); }
-                to   { opacity: 1; transform: translateY(0); }
-              }
-              @keyframes gradientShift {
-                0%, 100% { background-position: 0% 50%; }
-                50%       { background-position: 100% 50%; }
-              }
-            `}</style>
-        </div>
-      </div>
+      <DashboardHero
+        prefijo="Hola, "
+        titulo={usuario?.nombre?.split(" ")[0] ?? "Empleado"}
+        imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
+        variante="inicio"
+      />
 
       {/* ════════════════════════════════════════════
           ONBOARDING BANNER (permanente)

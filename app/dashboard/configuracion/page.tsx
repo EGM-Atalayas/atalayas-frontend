@@ -150,7 +150,7 @@ export default function ConfiguracionPage() {
   return (
     <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
 
-      <DashboardHero prefijo="Mi " titulo="Configuración." />
+      <DashboardHero prefijo="Mi " titulo="Configuración" variante="minima" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
 

@@ -6,7 +6,7 @@ export default function Page() {
         <div>
             <DashboardHero
                 prefijo="Ecosistema de"
-                titulo="Proximidad."
+                titulo="Proximidad"
                 imagenFondo="/bg-colaboraciones.webp"
                 objectPosition="center 55%"
             />

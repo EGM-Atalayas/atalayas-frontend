@@ -508,21 +508,10 @@ export default function PerfilPage() {
 
   const disp = DISPONIBILIDAD_CONFIG[perfil?.disponibilidad ?? "DISPONIBLE"];
   const initials = getInitials(perfil?.nombre ?? "", perfil?.apellidos ?? "");
-  const bannerFondo = perfil?.bannerUrl ?? "/background-dashboard.webp";
-
   return (
     <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
 
       <style>{`
-        @keyframes heroFadeUp {
-          from { opacity: 0; transform: translateY(22px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes gradientShift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
         .buzon-card.buzon-focused {
           border-color: var(--azul-egm) !important;
         }
@@ -530,7 +519,7 @@ export default function PerfilPage() {
 
       {/* ── Hero con imagen de fondo + contenido encima ── */}
       <div className="relative overflow-hidden flex items-center group"
-        style={{ minHeight: "260px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}>
+        style={{ minHeight: "clamp(200px, 26vw, 300px)", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}>
         <img
           src={perfil?.bannerUrl ?? "/background-dashboard.webp"}
           alt=""
@@ -542,7 +531,7 @@ export default function PerfilPage() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.50) 0%, transparent 40%)" }} />
 
         {/* Contenido sobre la imagen */}
-        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-24 py-10 sm:py-14">
+        <div className="relative z-10 w-full px-6 sm:px-9 lg:px-14 py-10 sm:py-14">
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 sm:gap-6">
             {/* Avatar */}
             <div className="relative shrink-0" style={{ animation: "heroFadeUp 0.5s ease both" }}>
@@ -571,8 +560,8 @@ export default function PerfilPage() {
             </div>
 
             {/* Nombre + empresa */}
-            <div className="text-center sm:text-left min-w-0">
-              <p className="text-xs font-bold uppercase tracking-widest mb-1.5"
+            <div className="text-center sm:text-left min-w-0 overflow-hidden">
+              <p className="text-xs font-bold uppercase tracking-widest mb-1.5 truncate"
                 style={{ color: "rgba(255,255,255,0.85)", animation: "heroFadeUp 0.6s ease both" }}>
                 {perfil?.nombreEmpresa ?? ""}
               </p>
@@ -584,7 +573,7 @@ export default function PerfilPage() {
                     fontWeight:           700,
                     fontSize:             "clamp(2.2rem, 5vw, 3.5rem)",
                     lineHeight:           1.05,
-                    background:           "linear-gradient(90deg, #ffffff, #A3B535, #ffffff)",
+                    backgroundImage:      "linear-gradient(90deg, #ffffff, #A3B535, #ffffff)",
                     backgroundSize:       "300% auto",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor:  "transparent",
@@ -599,7 +588,7 @@ export default function PerfilPage() {
                 </span>
               </div>
               {perfil?.puestoTrabajo && (
-                <p className="text-sm mt-1.5" style={{ color: "rgba(255,255,255,0.55)", animation: "heroFadeUp 0.6s ease 0.2s both" }}>
+                <p className="text-sm mt-1.5 truncate" style={{ color: "rgba(255,255,255,0.55)", animation: "heroFadeUp 0.6s ease 0.2s both" }}>
                   {perfil.puestoTrabajo}
                 </p>
               )}
@@ -607,24 +596,35 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Botón cambiar portada — siempre visible, esquina inferior derecha */}
+        {/* Botón cambiar portada — esquina inferior derecha */}
         <button
           type="button"
           onClick={() => setShowBannerPicker(true)}
-          className="absolute z-20 flex items-center gap-2 font-medium text-sm bottom-3 right-3 sm:right-12 lg:right-20"
+          className="absolute z-20 flex items-center gap-2 bottom-4 right-4 sm:bottom-5 sm:right-5"
           style={{
-            padding: "10px 18px",
-            borderRadius: "10px",
-            background: "rgba(0,0,0,0.55)",
-            color: "#fff",
-            border: "1px solid rgba(255,255,255,0.2)",
+            padding: "8px 14px",
+            borderRadius: "8px",
+            background: "rgba(0,0,0,0.50)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            color: "rgba(255,255,255,0.85)",
+            border: "1px solid rgba(255,255,255,0.15)",
             cursor: "pointer",
             userSelect: "none",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "background 0.15s ease, border-color 0.15s ease",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.75)"}
-          onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.55)"}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(0,0,0,0.70)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.30)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(0,0,0,0.50)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+          }}
         >
-          <Camera size={15} strokeWidth={2} />
+          <Camera size={14} strokeWidth={2} />
           <span>Cambiar portada</span>
         </button>
       </div>
