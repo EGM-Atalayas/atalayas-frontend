@@ -67,6 +67,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchContador]);
 
+
+
   const marcarTodasLeidas = async () => {
     try {
       await apiFetch(`${API_URL}/notificaciones/me/leer-todas`, { method: "PATCH" });
@@ -88,8 +90,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   const nombreMostrado = usuario?.nombre ?? "Usuario";
 
   const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
-  const linkPerfil = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/perfil";
-  const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion" : "/dashboard/configuracion";
+  const linkPerfil = isSuperAdmin ? "/superadmin/configuracion?tab=perfil" : "/dashboard/perfil";
+  const linkConfiguracion = isSuperAdmin ? "/superadmin/configuracion?tab=seguridad" : "/dashboard/configuracion";
   const linkNotificaciones = isSuperAdmin ? "/superadmin/solicitudes" : "/dashboard/comunicacion";
 
   return (
