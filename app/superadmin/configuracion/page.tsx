@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { Suspense, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -25,7 +25,7 @@ const TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
   { id: "privacidad", label: "Privacidad", icon: <FaUserSecret /> },
 ];
 
-export default function ConfiguracionPage() {
+function ConfiguracionPageInner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { usuario } = useAuth();
   const searchParams = useSearchParams();
@@ -560,5 +560,13 @@ export default function ConfiguracionPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ConfiguracionPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>}>
+      <ConfiguracionPageInner />
+    </Suspense>
   );
 }
