@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function SuperadminComunicadosPage() {
-  redirect("/comunicacion");
+  redirect("/dashboard/comunicacion");
 }
