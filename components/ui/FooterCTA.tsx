@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import LineWaves from "@/components/ui/LineWaves";
+import Prism from "@/components/ui/Prism";
 import SplitText from "@/components/ui/SplitText";
 
 const HEADING = "¿Tu empresa está en el área empresarial?";
@@ -10,34 +10,30 @@ export default function FooterCTA() {
   return (
     <footer
       className="relative w-full flex flex-col"
-      style={{ background: "#000000", color: "white", minHeight: "75vh" }}
+      style={{ background: "#0a0a0f", color: "white", minHeight: "95vh" }}
     >
-      {/* ── LineWaves background ─────────────────────────────────────────── */}
+      {/* ── Prism background ─────────────────────────────────────────────── */}
       <div className="absolute inset-0 z-0">
-        <LineWaves
-          speed={0.3}
-          innerLineCount={32}
-          outerLineCount={36}
-          warpIntensity={1.0}
-          rotation={-45}
-          edgeFadeWidth={0.0}
-          colorCycleSpeed={1.0}
-          brightness={0.22}
-          color1="#4f7fff"
-          color2="#7b9fff"
-          color3="#a0c4ff"
-          enableMouseInteraction={true}
-          mouseInfluence={2.0}
+        <Prism
+          animationType="rotate"
+          glow={1.2}
+          noise={0.3}
+          scale={3.6}
+          colorFrequency={1}
+          bloom={1}
+          timeScale={0.5}
+          transparent={true}
+          suspendWhenOffscreen={true}
         />
       </div>
 
       {/* Dark overlay */}
-      <div className="absolute inset-0 z-[1] bg-black/55" />
+      <div className="absolute inset-0 z-[1] bg-black/30" />
 
       {/* Fade superior — mezcla con sección anterior */}
       <div
         className="absolute top-0 left-0 right-0 h-40 pointer-events-none z-[50]"
-        style={{ background: "linear-gradient(to bottom, #000000, transparent)" }}
+        style={{ background: "linear-gradient(to bottom, #0a0a0f, transparent)" }}
       />
 
       {/* Content */}

@@ -118,7 +118,6 @@ export default function FormacionPage() {
   const [busqueda,     setBusqueda]     = useState("");
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [filtroTipo,   setFiltroTipo]   = useState<string>("todos");
-  const [soloIA,       setSoloIA]       = useState(false);
   const [filtroOpen,   setFiltroOpen]   = useState(false);
   const [gestionOpen,  setGestionOpen]  = useState(false);
   const filtroRef  = useRef<HTMLDivElement>(null);
@@ -150,14 +149,16 @@ export default function FormacionPage() {
 
   const isAdmin = usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
 
-  // Tipos únicos disponibles en los módulos cargados
-  const tiposDisponibles = Array.from(new Set(modules.map((m) => m.tipoModulo)));
+  // Todos los tipos de Formación continua (excluye ONBOARDING), con al menos 1 módulo o definidos en el label
+  const modulosContinua = modules.filter((m) => !TIPOS_ONBOARDING.has(m.tipoModulo));
+  const tiposDisponibles = (Object.keys(MODULO_TIPO_LABEL) as (keyof typeof MODULO_TIPO_LABEL)[])
+    .filter((t) => !TIPOS_ONBOARDING.has(t));
 
   // Módulo "continuar": el primero en progreso (según progreso real de localStorage)
   const continuar = modules.find((m) => m.status === "en progreso" && m.porcentaje < 100);
 
   const hayFiltrosActivos =
-    busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos" || soloIA;
+    busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos";
 
   // ── Aplicar filtros (solo sobre módulos de Formación continua) ───────────
   const modulosFiltrados = modules.filter((m) => {
@@ -165,7 +166,6 @@ export default function FormacionPage() {
     if (busqueda && !m.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
     if (filtroEstado !== "todos" && m.status !== filtroEstado) return false;
     if (filtroTipo !== "todos" && m.tipoModulo !== filtroTipo) return false;
-    if (soloIA && !m.esEspecializadoIa) return false;
     return true;
   });
 
@@ -270,32 +270,26 @@ export default function FormacionPage() {
                   <div className="relative" ref={filtroRef}>
                     <button
                       onClick={() => setFiltroOpen((v) => !v)}
-                      className="flex items-center gap-2 px-3.5 rounded-xl text-sm font-semibold border transition-colors"
+                      title="Filtros"
+                      className="relative flex items-center justify-center rounded-xl border transition-colors"
                       style={{
-                        background:  filtroOpen || (filtroTipo !== "todos" || soloIA) ? "var(--azul-egm)" : "var(--blanco)",
-                        borderColor: filtroOpen || (filtroTipo !== "todos" || soloIA) ? "var(--azul-egm)" : "var(--gris-borde)",
-                        color:       filtroOpen || (filtroTipo !== "todos" || soloIA) ? "#ffffff" : "var(--texto-primario)",
-                        height:      "38px",
+                        background:  filtroOpen || filtroTipo !== "todos" ? "var(--azul-egm)" : "var(--blanco)",
+                        borderColor: filtroOpen || filtroTipo !== "todos" ? "var(--azul-egm)" : "var(--gris-borde)",
+                        color:       filtroOpen || filtroTipo !== "todos" ? "#ffffff" : "var(--texto-primario)",
+                        width: "38px", height: "38px",
                       }}
                     >
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                       </svg>
-                      Filtros
-                      {(filtroTipo !== "todos" || soloIA) && (
+                      {filtroTipo !== "todos" && (
                         <span
-                          className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                          style={{ background: "rgba(255,255,255,0.3)" }}
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
+                          style={{ background: "var(--azul-egm)", color: "#fff", border: "2px solid var(--blanco)" }}
                         >
-                          {(filtroTipo !== "todos" ? 1 : 0) + (soloIA ? 1 : 0)}
+                          1
                         </span>
                       )}
-                      <svg
-                        className={`w-3 h-3 shrink-0 transition-transform duration-200 ${filtroOpen ? "rotate-180" : ""}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
                     </button>
 
                     {/* Desplegable */}
@@ -314,44 +308,23 @@ export default function FormacionPage() {
                             Tipo de módulo
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            <PillFiltro label="Todos" active={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} count={modules.length} />
+                            <PillFiltro label="Todos" active={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} count={modulosContinua.length} />
                             {tiposDisponibles.map((tipo) => (
                               <PillFiltro
                                 key={tipo}
                                 label={MODULO_TIPO_LABEL[tipo] ?? tipo}
                                 active={filtroTipo === tipo}
                                 onClick={() => setFiltroTipo(tipo)}
-                                count={modules.filter((m) => m.tipoModulo === tipo).length}
+                                count={modulosContinua.filter((m) => m.tipoModulo === tipo).length}
                               />
                             ))}
                           </div>
                         </div>
 
-                        {/* IA */}
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
-                            Especialización
-                          </p>
-                          <button
-                            onClick={() => setSoloIA((v) => !v)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
-                            style={
-                              soloIA
-                                ? { background: "#7c3aed", color: "#ffffff", borderColor: "#7c3aed" }
-                                : { background: "var(--gris-superficie)", color: "var(--texto-muted)", borderColor: "var(--gris-borde)" }
-                            }
-                          >
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
-                            </svg>
-                            Solo especializados IA
-                          </button>
-                        </div>
-
                         {/* Limpiar */}
-                        {(filtroTipo !== "todos" || soloIA) && (
+                        {filtroTipo !== "todos" && (
                           <button
-                            onClick={() => { setFiltroTipo("todos"); setSoloIA(false); }}
+                            onClick={() => { setFiltroTipo("todos"); }}
                             className="text-xs font-medium text-left flex items-center gap-1 pt-1"
                             style={{ color: "var(--azul-egm)" }}
                           >
@@ -625,7 +598,7 @@ export default function FormacionPage() {
               <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
                 Prueba con otros filtros o{" "}
                 <button
-                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); }}
                   className="underline font-medium"
                   style={{ color: "var(--azul-egm)" }}
                 >
