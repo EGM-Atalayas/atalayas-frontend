@@ -420,24 +420,24 @@ export default function Empleado() {
               <div className="mb-6"><TituloSeccion noMargin letras>Servicios</TituloSeccion></div>
               <div
                 className="rounded-2xl overflow-hidden flex-1 relative"
-                style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
+                style={{ background: "linear-gradient(160deg, #f9fafb 0%, #f3f4f6 100%)" }}
               >
                 {/* Glow decorativo */}
                 <div className="absolute pointer-events-none" style={{
                   top: "-60px", left: "-60px", width: "240px", height: "240px",
                   borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)",
+                  background: "radial-gradient(circle, rgba(0,0,0,0.04) 0%, transparent 70%)",
                 }} />
 
                 {/* Mini cabecera */}
                 <div className="relative px-4 pt-4 pb-3 flex items-center justify-between"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
                   <p className="text-[11px] font-semibold uppercase tracking-widest"
-                    style={{ color: "rgba(255,255,255,0.38)" }}>
-                    Servicios del parque
+                    style={{ color: "rgba(0,0,0,0.45)" }}>
+                    Servicios del área empresarial
                   </p>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: "rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.50)", border: "1px solid rgba(0,0,0,0.10)" }}>
                     {SERVICIOS.filter(s => s.activo).length} / {SERVICIOS.length} activos
                   </span>
                 </div>
@@ -448,22 +448,22 @@ export default function Empleado() {
                       <div
                         className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
                         style={{
-                          background: s.activo ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
-                          border: s.activo ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.07)",
+                          background: s.activo ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.01)",
+                          border: s.activo ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(0,0,0,0.06)",
                           backdropFilter: "blur(8px)",
                           WebkitBackdropFilter: "blur(8px)",
-                          boxShadow: s.activo ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
+                          boxShadow: s.activo ? "inset 0 1px 0 rgba(0,0,0,0.05)" : "none",
                         }}
                       >
                         {/* Icono */}
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                           style={{
-                            background: s.activo ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
-                            border: s.activo ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.06)",
+                            background: s.activo ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)",
+                            border: s.activo ? "1px solid rgba(0,0,0,0.14)" : "1px solid rgba(0,0,0,0.05)",
                             backdropFilter: "blur(4px)",
                             WebkitBackdropFilter: "blur(4px)",
-                            color: s.activo ? "white" : "rgba(255,255,255,0.2)",
+                            color: s.activo ? "#000" : "rgba(0,0,0,0.2)",
                           }}
                         >
                           {s.icono}
@@ -472,11 +472,11 @@ export default function Empleado() {
                         {/* Texto */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate"
-                            style={{ color: s.activo ? "white" : "rgba(255,255,255,0.25)" }}>
+                            style={{ color: s.activo ? "#000" : "rgba(0,0,0,0.25)" }}>
                             {s.label}
                           </p>
                           <p className="text-xs mt-0.5 truncate"
-                            style={{ color: s.activo ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.15)" }}>
+                            style={{ color: s.activo ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.15)" }}>
                             {s.desc}
                           </p>
                         </div>
@@ -485,16 +485,16 @@ export default function Empleado() {
                         {s.activo ? (
                           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" strokeWidth={2}
-                            style={{ color: "rgba(255,255,255,0.4)" }}>
+                            style={{ color: "rgba(0,0,0,0.40)" }}>
                             <path strokeLinecap="round" strokeLinejoin="round"
                               d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
                         ) : (
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
                             style={{
-                              background: "rgba(255,255,255,0.07)",
-                              color: "rgba(255,255,255,0.25)",
-                              border: "1px solid rgba(255,255,255,0.08)",
+                              background: "rgba(0,0,0,0.05)",
+                              color: "rgba(0,0,0,0.30)",
+                              border: "1px solid rgba(0,0,0,0.08)",
                             }}>
                             Próx.
                           </span>
@@ -508,16 +508,16 @@ export default function Empleado() {
                         onMouseEnter={(e) => {
                           const d = e.currentTarget.firstElementChild as HTMLElement;
                           if (d) {
-                            d.style.background = "rgba(255,255,255,0.17)";
-                            d.style.borderColor = "rgba(255,255,255,0.28)";
+                            d.style.background = "rgba(0,0,0,0.10)";
+                            d.style.borderColor = "rgba(0,0,0,0.20)";
                             d.style.transform = "translateY(-1px)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           const d = e.currentTarget.firstElementChild as HTMLElement;
                           if (d) {
-                            d.style.background = "rgba(255,255,255,0.10)";
-                            d.style.borderColor = "rgba(255,255,255,0.18)";
+                            d.style.background = "rgba(0,0,0,0.04)";
+                            d.style.borderColor = "rgba(0,0,0,0.12)";
                             d.style.transform = "translateY(0)";
                           }
                         }}>
