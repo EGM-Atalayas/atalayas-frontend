@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/AuthContext";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import { Inter, Playfair_Display, Poppins, Raleway } from "next/font/google";
 
