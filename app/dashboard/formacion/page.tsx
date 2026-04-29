@@ -71,13 +71,20 @@ function leerPorcentajeLS(moduloId: string): number | null {
 }
 
 const DURACION_POR_TIPO: Record<string, string> = {
-  IDENTIDAD:  "20 min",
-  BASICA:     "35 min",
-  ESPECIFICA: "50 min",
-  DESARROLLO: "45 min",
-  COMUNIDAD:  "25 min",
-  RECOMPENSAS:"15 min",
+  IDENTIDAD:    "20 min",
+  BASICA:       "35 min",
+  ESPECIFICA:   "50 min",
+  DESARROLLO:   "45 min",
+  COMUNIDAD:    "25 min",
+  RECOMPENSAS:  "15 min",
+  CUMPLIMIENTO: "30 min",
+  LIDERAZGO:    "45 min",
+  TECNICO:      "40 min",
+  SOFT_SKILLS:  "35 min",
 };
+
+// Tipos que pertenecen al bloque "Onboarding" — el resto va a "Formación continua"
+const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
 
 function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   const pctLS = leerPorcentajeLS(m.moduloId);
@@ -152,8 +159,9 @@ export default function FormacionPage() {
   const hayFiltrosActivos =
     busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos" || soloIA;
 
-  // ── Aplicar filtros ───────────────────────────────────────────────────────
+  // ── Aplicar filtros (solo sobre módulos de Formación continua) ───────────
   const modulosFiltrados = modules.filter((m) => {
+    if (TIPOS_ONBOARDING.has(m.tipoModulo)) return false;           // excluir onboarding
     if (busqueda && !m.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
     if (filtroEstado !== "todos" && m.status !== filtroEstado) return false;
     if (filtroTipo !== "todos" && m.tipoModulo !== filtroTipo) return false;
@@ -177,7 +185,7 @@ export default function FormacionPage() {
         <>
           {/* ── SECCIÓN ONBOARDING ───────────────────────────────────── */}
           {(() => {
-            const modulosOnboarding = modules.filter((m) => m.tipoModulo === "ONBOARDING");
+            const modulosOnboarding = modules.filter((m) => TIPOS_ONBOARDING.has(m.tipoModulo));
             return (
               <section id="onboarding" className="mb-14 scroll-mt-8">
                 <div className="flex items-center justify-between mb-6">
@@ -507,10 +515,10 @@ export default function FormacionPage() {
             );
           })()}
 
-          {/* ── Módulos heading ──────────────────────────────────────── */}
+          {/* ── Formación continua heading ───────────────────────────── */}
           <div className="mb-10">
             <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              Módulos
+              Formación continua
             </h2>
           </div>
 
