@@ -65,7 +65,7 @@ const Prism: React.FC<PrismProps> = ({
 
     const canvasWidth = Math.ceil(container.clientWidth || 1);
     const canvasHeight = Math.ceil(container.clientHeight || 1);
-    const dpr = 1;
+    const dpr = 0.75;
     const renderer = new Renderer({
       dpr,
       alpha: transparent,

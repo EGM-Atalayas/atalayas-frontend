@@ -61,7 +61,7 @@ const comunidadItems = [
   {
     label: "En Femenino",
     sub: "Liderazgo e igualdad en el entorno empresarial",
-    imagen: "/logo-en-femenino.png",
+    imagen: "/logo-en-femenino.webp",
     bg: "#8878c8",
     icono: null,
     url: "https://atalayas.com/en-femenino/",
@@ -69,7 +69,7 @@ const comunidadItems = [
   {
     label: "Autobús lanzadera",
     sub: "Servicio de transporte directo al área empresarial",
-    imagen: "/autobus.jpg",
+    imagen: "/autobus.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/autobus-lanzadera/",
@@ -77,7 +77,7 @@ const comunidadItems = [
   {
     label: "Coche compartido",
     sub: "Coordina rutas con compañeros del área",
-    imagen: "/coche-compartido.jpg",
+    imagen: "/coche-compartido.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/journify-coche-compartido/",
@@ -85,7 +85,7 @@ const comunidadItems = [
   {
     label: "Aparcamiento VAO",
     sub: "Plazas exclusivas para vehículos de alta ocupación",
-    imagen: "/aparcamiento-vao.png",
+    imagen: "/aparcamiento-vao.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/aparcamientovao/",
@@ -93,7 +93,7 @@ const comunidadItems = [
   {
     label: "Empresarios de hoy y de mañana",
     sub: "Networking y actividades entre empresas del área",
-    imagen: "/empresas-hoy.jpg",
+    imagen: "/empresas-hoy.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/100-estudiantes-20-empresarios/",
@@ -101,7 +101,7 @@ const comunidadItems = [
   {
     label: "Proyecto empresas solidarias",
     sub: "Más de 44.000 personas ya han sido beneficiadas.",
-    imagen: "/empresas-solidarias.png",
+    imagen: "/empresas-solidarias.webp",
     bg: "#ffffff",
     icono: null,
     url: "https://atalayas.com/empresas-solidarias/",
@@ -109,7 +109,7 @@ const comunidadItems = [
   {
     label: "Voy en bici al trabajo",
     sub: "Semana de la movilidad",
-    imagen: "/trabajo-bici.jpg",
+    imagen: "/trabajo-bici.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/semana-de-la-movilidad/",
@@ -117,7 +117,7 @@ const comunidadItems = [
   {
     label: "Atalayas circular",
     sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
-    imagen: "/atalayas-circular.jpg",
+    imagen: "/atalayas-circular.webp",
     bg: null,
     icono: null,
     url: "https://atalayas.com/atalayas-circular/",
@@ -148,7 +148,7 @@ export default function Invitado() {
         anunciosActivos.sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
         setTodosLosAnuncios(anunciosActivos);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingNoticias(false));
   }, []);
 
@@ -190,7 +190,7 @@ export default function Invitado() {
 
         {/* Background image */}
         <img
-          src="/background-invitado.jpg"
+          src="/background-invitado.webp"
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover z-0"
@@ -272,7 +272,7 @@ export default function Invitado() {
           {/* Featured card — usa datos reales si hay destacado */}
           <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
             <Image
-              src="/background-invitado.jpg"
+              src="/background-invitado.webp"
               alt="Noticia destacada"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -320,19 +320,19 @@ export default function Invitado() {
             <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
               {[
                 {
-                  img: "/background-comunidad.jpg",
+                  img: "/background-comunidad.webp",
                   title: "Jornada de networking: conecta con +150 empresas del área",
                   tag: "Evento",
                   day: "18", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-invitado.jpg",
+                  img: "/background-invitado.webp",
                   title: "Nuevos servicios de transporte lanzadera desde Alicante",
                   tag: "Noticia",
                   day: "10", month: "Abr", year: "2026",
                 },
                 {
-                  img: "/background-comunidad.jpg",
+                  img: "/background-comunidad.webp",
                   title: "Convocatoria: Programa de formación para pymes del área empresarial",
                   tag: "Convocatoria",
                   day: "03", month: "Abr", year: "2026",

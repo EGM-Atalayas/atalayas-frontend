@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "bootstrap-icons/font/bootstrap-icons.css";
 
 /* Ocultar scrollbar nativo */
 html,
@@ -183,4 +182,33 @@ body {
   background: var(--gris-pagina);
   color: var(--texto-primario);
   font-family: var(--font-poppins), var(--font-inter), sans-serif;
+}
+
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30vw, -20vh) scale(1.1); }
+  50% { transform: translate(-10vw, -40vh) scale(0.9); }
+  75% { transform: translate(20vw, -10vh) scale(1.05); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-25vw, 15vh) scale(0.95); }
+  50% { transform: translate(15vw, 30vh) scale(1.1); }
+  75% { transform: translate(-10vw, 10vh) scale(0.9); }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20vw, 25vh) scale(1.15); }
+  66% { transform: translate(-25vw, -15vh) scale(0.85); }
+}
+
+.animate-float-orb-1 { animation: float-orb-1 18s ease-in-out infinite; }
+.animate-float-orb-2 { animation: float-orb-2 22s ease-in-out infinite; }
+.animate-float-orb-3 { animation: float-orb-3 25s ease-in-out infinite; }
+
+@keyframes prism-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
