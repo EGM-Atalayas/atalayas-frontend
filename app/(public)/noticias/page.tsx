@@ -20,11 +20,17 @@ interface UnifiedItem {
   id: string;
   titulo: string;
   extracto: string;
+  contenido: string;
   imagenUrl?: string | null;
   fecha: string;
   categoria: string;
   tab: Exclude<TabKey, "todos">;
   destacado?: boolean;
+  enlaceUrl?:     string | null;
+  enlaceTexto?:   string | null;
+  videoUrl?:      string | null;
+  adjuntoUrl?:    string | null;
+  adjuntoNombre?: string | null;
 }
 
 const TAB_LABELS: { key: TabKey; label: string }[] = [
@@ -62,135 +68,248 @@ function formatDate(iso: string) {
 function noticiaToUnified(n: Noticia): UnifiedItem {
   const cat = n.categoria ?? "Noticia";
   const tabMap: Record<string, Exclude<TabKey, "todos">> = {
-    Blog: "blog",
-    Evento: "eventos",
-    Noticia: "noticias",
+    Blog: "blog", Evento: "eventos", Noticia: "noticias",
   };
   return {
-    id:        n.anuncioId,
-    titulo:    n.titulo,
-    extracto:  n.contenido.slice(0, 120) + (n.contenido.length > 120 ? "…" : ""),
-    imagenUrl: n.imagenUrl,
-    fecha:     n.creadoEn,
-    categoria: cat,
-    tab:       tabMap[cat] ?? "noticias",
-    destacado: n.fijado,
+    id:           n.anuncioId,
+    titulo:       n.titulo,
+    contenido:    n.contenido,
+    extracto:     n.contenido.slice(0, 120) + (n.contenido.length > 120 ? "…" : ""),
+    imagenUrl:    n.imagenUrl,
+    fecha:        n.creadoEn,
+    categoria:    cat,
+    tab:          tabMap[cat] ?? "noticias",
+    destacado:    n.fijado,
+    enlaceUrl:    n.enlaceUrl,
+    enlaceTexto:  n.enlaceTexto,
+    videoUrl:     n.videoUrl,
+    adjuntoUrl:   n.adjuntoUrl,
+    adjuntoNombre: n.adjuntoNombre,
   };
 }
 
 function comunicadoToUnified(c: Comunicado): UnifiedItem {
   const cat = c.categoria ?? "Comunicado";
   const tabMap: Record<string, Exclude<TabKey, "todos">> = {
-    Evento:     "eventos",
-    Novedad:    "comunicados",
-    Aviso:      "comunicados",
-    General:    "comunicados",
-    Comunicado: "comunicados",
+    Evento: "eventos", Novedad: "comunicados", Aviso: "comunicados",
+    General: "comunicados", Comunicado: "comunicados",
   };
   return {
-    id:        c.comunicadoId,
-    titulo:    c.titulo,
-    extracto:  c.mensaje.slice(0, 120) + (c.mensaje.length > 120 ? "…" : ""),
-    imagenUrl: c.imagenUrl,
-    fecha:     c.fechaPublicacion ?? c.actualizadoEn ?? new Date().toISOString(),
-    categoria: cat,
-    tab:       tabMap[cat] ?? "comunicados",
-    destacado: c.destacado,
+    id:           c.comunicadoId,
+    titulo:       c.titulo,
+    contenido:    c.mensaje,
+    extracto:     c.mensaje.slice(0, 120) + (c.mensaje.length > 120 ? "…" : ""),
+    imagenUrl:    c.imagenUrl,
+    fecha:        c.fechaPublicacion ?? c.actualizadoEn ?? new Date().toISOString(),
+    categoria:    cat,
+    tab:          tabMap[cat] ?? "comunicados",
+    destacado:    c.destacado,
+    enlaceUrl:    c.enlaceUrl,
+    enlaceTexto:  c.enlaceTexto,
+    videoUrl:     c.videoUrl,
+    adjuntoUrl:   c.adjuntoUrl,
+    adjuntoNombre: c.adjuntoNombre,
   };
+}
+
+// ── Markdown renderer (basic: headings, bold, lists) ─────────────────────────
+
+function parsInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return <>{parts.map((p, i) => p.startsWith("**") && p.endsWith("**") ? <strong key={i}>{p.slice(2, -2)}</strong> : p)}</>;
+}
+
+function renderMarkdown(text: string): React.ReactNode {
+  const lines = text.split("\n");
+  const out: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith("## ")) {
+      out.push(<h3 key={i} style={{ fontWeight: 700, fontSize: "1rem", color: "var(--texto-primario, #111827)", margin: "12px 0 4px" }}>{parsInline(line.slice(3))}</h3>);
+    } else if (line.startsWith("# ")) {
+      out.push(<h2 key={i} style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--texto-primario, #111827)", margin: "14px 0 4px" }}>{parsInline(line.slice(2))}</h2>);
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && (lines[i].startsWith("- ") || lines[i].startsWith("* "))) {
+        items.push(<li key={i} style={{ marginLeft: "18px", listStyleType: "disc" }}>{parsInline(lines[i].slice(2))}</li>);
+        i++;
+      }
+      out.push(<ul key={`ul${i}`} style={{ margin: "4px 0 8px" }}>{items}</ul>);
+      continue;
+    } else if (line.trim() === "") {
+      out.push(<div key={i} style={{ height: "8px" }} />);
+    } else {
+      out.push(<p key={i} style={{ margin: "2px 0", lineHeight: 1.75 }}>{parsInline(line)}</p>);
+    }
+    i++;
+  }
+  return <>{out}</>;
+}
+
+function getVideoEmbedUrl(url: string): string | null {
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  const vimeo = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
 function NoticiaModal({ item, onClose }: { item: UnifiedItem; onClose: () => void }) {
-  const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
-  const { full } = formatDate(item.fecha);
+  const tagColor  = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
+  const { full }  = formatDate(item.fecha);
+  const embedUrl  = React.useMemo(() => item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null, [item.videoUrl]);
+  const contenidoMd = React.useMemo(() => renderMarkdown(item.contenido), [item.contenido]);
 
-  // Cerrar con Escape
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handler);
-      document.body.style.overflow = "";
-    };
+    return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
   }, [onClose]);
+
+  const hasResources = !!(embedUrl || item.adjuntoUrl || item.enlaceUrl);
 
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6"
-      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
       <div
-        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl flex flex-col"
+        className="relative w-full sm:max-w-[42rem] max-h-[92vh] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden"
         style={{ background: "white", fontFamily: "'Instrument Sans', sans-serif" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Image header */}
+        {/* ── Image / gradient header ─────────────────────────────────────── */}
         {item.imagenUrl ? (
-          <div className="relative w-full h-56 sm:h-72 shrink-0 rounded-t-3xl sm:rounded-t-2xl overflow-hidden bg-gray-100">
+          <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "260px" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.92) 0%, rgba(3,10,28,0.2) 55%, transparent 100%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 flex items-end justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: tagColor.bg, color: tagColor.color }}>{item.categoria}</span>
+                {item.destacado && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">★ Destacado</span>}
+              </div>
+              {full && <p className="text-xs font-semibold shrink-0 text-white/80">{full}</p>}
+            </div>
           </div>
         ) : (
-          <div className="w-full h-24 shrink-0 rounded-t-3xl sm:rounded-t-2xl" style={{ background: "linear-gradient(135deg, hsl(220,70%,28%), hsl(210,75%,42%))" }} />
+          <div className="relative w-full shrink-0" style={{ height: 150, background: "linear-gradient(135deg, hsl(220,70%,28%), hsl(210,75%,42%))" }}>
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 flex items-end justify-between gap-3">
+              <div className="flex flex-col gap-2 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: tagColor.bg, color: tagColor.color }}>{item.categoria}</span>
+                  {item.destacado && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">★ Destacado</span>}
+                </div>
+                <h2 className="text-white leading-tight line-clamp-2"
+                  style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.15rem, 2.5vw, 1.45rem)", letterSpacing: "-0.02em" }}>
+                  {item.titulo}
+                </h2>
+              </div>
+              {full && <p className="text-xs font-semibold shrink-0 self-end text-white/75">{full}</p>}
+            </div>
+          </div>
         )}
 
         {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)", color: "white" }}
-          aria-label="Cerrar"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M18 6 6 18M6 6l12 12"/>
-          </svg>
+        <button onClick={onClose} aria-label="Cerrar"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)", color: "white" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
 
-        {/* Content */}
-        <div className="p-6 sm:p-8 flex flex-col gap-4">
-          {/* Tag + date */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: tagColor.bg, color: tagColor.color }}>
-              {item.categoria}
-            </span>
-            {item.destacado && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-600">★ Destacado</span>
+        {/* ── Scrollable content ──────────────────────────────────────────── */}
+        <div className="overflow-y-auto flex-1 flex flex-col">
+          <div className="flex-1 px-6 pb-5 sm:px-8 flex flex-col gap-4" style={{ paddingTop: item.imagenUrl ? "1.5rem" : "1.25rem" }}>
+
+            {/* Title — only when image exists (otherwise shown in header) */}
+            {item.imagenUrl && (
+              <h2 className="leading-tight"
+                style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, fontSize: "clamp(1.4rem, 3vw, 1.85rem)", letterSpacing: "-0.02em", color: "var(--texto-primario, #111827)" }}>
+                {item.titulo}
+              </h2>
             )}
+
+            {/* Body — full markdown content */}
+            <div style={{ fontSize: "0.94rem", color: "#4b5563", lineHeight: 1.85, overflowWrap: "break-word", wordBreak: "break-word" }}>
+              {contenidoMd}
+            </div>
+
+            {/* Resources */}
+            {hasResources && (
+              <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde, #e5e7eb)", paddingTop: "1.25rem" }}>
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted, #6b7280)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted, #6b7280)" }}>Recursos adjuntos</p>
+                </div>
+
+                {embedUrl && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-medium" style={{ color: "var(--texto-muted, #6b7280)" }}>Vídeo</span>
+                    <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                      <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                    </div>
+                  </div>
+                )}
+
+                {item.adjuntoUrl && (
+                  <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                    style={{ background: "var(--gris-superficie, #f1f5f9)", border: "1px solid var(--gris-borde, #e5e7eb)", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie, #f1f5f9)")}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  </a>
+                )}
+
+                {item.enlaceUrl && (
+                  <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                    style={{ background: "var(--gris-superficie, #f1f5f9)", border: "1px solid var(--gris-borde, #e5e7eb)", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie, #f1f5f9)")}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </div>
+                    <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.enlaceTexto ?? "Ver enlace"}</span>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                  </a>
+                )}
+              </div>
+            )}
+
             {full && (
-              <span className="text-xs ml-auto" style={{ color: "var(--texto-muted, #6b7280)" }}>{full}</span>
+              <p className="text-xs text-right mt-auto pt-1" style={{ color: "var(--texto-muted, #6b7280)" }}>
+                Publicado el {full}
+              </p>
             )}
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl sm:text-3xl font-bold leading-snug" style={{ color: "var(--texto-primario, #111827)", letterSpacing: "-0.02em" }}>
-            {item.titulo}
-          </h2>
-
-          {/* Body */}
-          <p className="text-base leading-relaxed whitespace-pre-line" style={{ color: "var(--texto-muted, #374151)" }}>
-            {item.extracto}
-          </p>
-
-          {/* CTA */}
-          <div className="pt-2 flex items-center gap-3 border-t mt-2" style={{ borderColor: "var(--gris-borde, #e5e7eb)" }}>
+          {/* ── Footer ────────────────────────────────────────────────────── */}
+          <div className="flex items-center gap-3 px-6 py-4 sm:px-8" style={{ borderTop: "1px solid var(--gris-borde, #e5e7eb)" }}>
             <Link
               href="/login"
-              className="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] inline-flex items-center gap-2"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2 rounded-xl text-white transition-transform hover:scale-[1.03]"
               style={{ background: "var(--azul-egm, #1B3F7E)" }}
-              onClick={onClose}
             >
-              Ver más en la plataforma
-              <span>↗</span>
+              Ver en la plataforma
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
             </Link>
-            <button
-              onClick={onClose}
-              className="rounded-full px-5 py-2.5 text-sm font-medium border transition-colors"
+            <button onClick={onClose}
+              className="text-sm font-medium px-4 py-2 rounded-xl border transition-colors"
               style={{ borderColor: "var(--gris-borde, #e5e7eb)", color: "var(--texto-muted, #6b7280)" }}
-            >
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie, #f1f5f9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               Cerrar
             </button>
           </div>
