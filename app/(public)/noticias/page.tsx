@@ -264,10 +264,10 @@ export default function NoticiasPublicasPage() {
 
         {/* Nav links — desktop only */}
         <div className="hidden md:flex items-center justify-center gap-8">
-          <Link href="/" className="text-2xl text-black/50 hover:text-black transition-colors">Inicio</Link>
-          <span className="text-2xl text-black cursor-default transition-colors">Noticias</span>
-          <Link href="/#comunidad" className="text-2xl text-black/50 hover:text-black transition-colors">Comunidad</Link>
-          <Link href="/#colaboradores" className="text-2xl text-black/50 hover:text-black transition-colors">Colaboradores</Link>
+          <Link href="/" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Inicio</Link>
+          <span className="text-2xl font-medium text-black cursor-default transition-colors">Noticias</span>
+          <Link href="/#comunidad" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Comunidad</Link>
+          <Link href="/#colaboradores" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Colaboradores</Link>
         </div>
 
         {/* Desktop CTA */}

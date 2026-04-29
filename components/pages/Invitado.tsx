@@ -164,10 +164,10 @@ export default function Invitado() {
           {/* Logo */}
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
           <div className="hidden md:flex items-center justify-center gap-8">
-            <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
-            <a href="#noticias" className="text-2xl text-white/50 hover:text-white transition-colors">Noticias</a>
-            <a href="#comunidad" className="text-2xl text-white/50 hover:text-white transition-colors">Comunidad</a>
-            <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
+            <span className="text-2xl font-medium text-white cursor-default transition-colors">Inicio</span>
+            <a href="#noticias" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Noticias</a>
+            <a href="#comunidad" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Comunidad</a>
+            <a href="#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
           {/* Mobile hamburger */}
