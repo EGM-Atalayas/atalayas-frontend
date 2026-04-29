@@ -355,6 +355,17 @@ export default function Invitado() {
                 </Link>
               ))}
             </div>
+
+            {/* Botón ver todas */}
+            <div className="mt-8 flex justify-end">
+              <Link
+                href="/noticias"
+                className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
+                style={{ color: "var(--azul-egm)" }}
+              >
+                Ver todas las publicaciones ↗
+              </Link>
+            </div>
           </div>
         </div>
       </section>
