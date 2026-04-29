@@ -215,6 +215,7 @@ export default function Empleado() {
       mensaje: n.contenido,
       fecha: n.creadoEn,
       tipo: n.esGlobal ? "egm" : "empresa",
+      imagenUrl: n.imagenUrl ?? null,
     }))
     : [
       {
