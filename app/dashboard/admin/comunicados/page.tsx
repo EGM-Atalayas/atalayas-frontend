@@ -259,7 +259,7 @@ export default function ComunicadosAdminPage() {
 
   return (
     <>
-      <DashboardHero prefijo="Panel de " titulo="Comunicados." imagenFondo="/background-comunicacion-empleado.webp" />
+      <DashboardHero prefijo="Panel de " titulo="Comunicados" imagenFondo="/background-comunicacion-empleado.webp" />
 
       <div className="px-6 md:px-10 lg:px-16 pt-10 pb-16">
 

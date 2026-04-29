@@ -171,7 +171,7 @@ export default function FormacionPage() {
 
   return (
     <div className="w-full">
-      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.webp" />
+      <DashboardHero prefijo="Centro de " titulo="Formación" imagenFondo="/background-formacion-empleado.webp" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
       {/* ── Loading ───────────────────────────────────────────────────── */}

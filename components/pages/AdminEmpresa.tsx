@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { getActividadReciente } from "@/lib/api/progreso";
 import type { ActividadItem } from "@/lib/types/progreso";
+import DashboardHero from "@/components/ui/DashboardHero";
 
 interface ResumenAdmin {
   nombreEmpresa: string;
@@ -157,82 +158,16 @@ export default function AdminEmpresa() {
 
   return (
     <div>
-      {/* ── KEYFRAMES ── */}
-      <style>{`
-        @keyframes heroFadeUp {
-          from { opacity: 0; transform: translateY(22px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes gradientShift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
-
       {/* ══════════════════════════════════════════
           HERO
       ══════════════════════════════════════════ */}
-      <div
-        className="-mx-8 mb-0 relative overflow-hidden"
-        style={{ minHeight: "300px" }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "url('/background-dashboard.webp')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.50)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(10,20,40,0.55) 0%, rgba(0,0,0,0.15) 100%)" }} />
-
-        <div
-          className="relative z-10 px-10 lg:px-16 flex flex-col justify-center"
-          style={{ minHeight: "300px", paddingTop: "3rem", paddingBottom: "3rem" }}
-        >
-          <p
-            className="text-xs font-bold uppercase tracking-widest mb-4"
-            style={{ color: "var(--verde-oliva-hover)", animation: "heroFadeUp 0.6s ease both" }}
-          >
-            {nombreEmpresa}
-            <span style={{ color: "rgba(255,255,255,0.25)" }}> · </span>
-            {fechaHoy}
-          </p>
-
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0.4em", animation: "heroFadeUp 0.7s ease 0.08s both" }}>
-            <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 300, fontSize: "clamp(3rem, 6vw, 4rem)", color: "#ffffff", lineHeight: 1.1 }}>
-              Hola,
-            </span>
-            <span
-              style={{
-                fontFamily: "'Instrument Serif', serif",
-                fontStyle: "italic",
-                fontWeight: 400,
-                fontSize: "clamp(3rem, 6vw, 5rem)",
-                lineHeight: 1.05,
-                background: "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-                backgroundSize: "300% auto",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                animation: "heroFadeUp 0.7s ease 0.12s both, gradientShift 6s ease infinite",
-              }}
-            >
-              {firstName}
-            </span>
-          </div>
-
-          <p
-            className="text-sm mt-3"
-            style={{ color: "rgba(255,255,255,0.50)", animation: "heroFadeUp 0.7s ease 0.2s both" }}
-          >
-            Panel de administración · {nombreEmpresa}
-          </p>
-        </div>
-      </div>
+      <DashboardHero
+        prefijo="Hola, "
+        titulo={firstName}
+        subtitulo={`Administrando ${nombreEmpresa}`}
+        imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
+        variante="inicio"
+      />
 
       {/* ══════════════════════════════════════════
           CONTENT

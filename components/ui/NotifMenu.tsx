@@ -2,8 +2,8 @@
 
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { gsap } from "gsap";
-import { API_URL } from "@/lib/api"; // <-- Asegúrate de tener esto importado
 import { getNotificacionesNoLeidas, marcarNotificacionLeida, marcarTodasLeidas, type Notificacion } from "@/lib/api/notifusuario";
 import { getNoticias } from "@/lib/api/noticias";
 import type { Noticia } from "@/lib/types/noticias";
@@ -14,6 +14,8 @@ interface NotifMenuProps {
 }
 
 export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) {
+  const { usuario } = useAuth();
+  const isSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -29,36 +31,10 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   // ── ESTADO PARA EL POLLING DEL CONTADOR ──
   const [contadorNotifs, setContadorNotifs] = useState(noLeidas);
 
-  // 1. Efecto Polling (Llama al endpoint de César cada 30s)
+  // Sync contador desde el prop que ya gestiona el Header con su propio polling
   useEffect(() => {
-    const revisarContador = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
-        const res = await fetch(`${API_URL}/notificaciones/me/contador`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          // Ajusta 'data' según lo que devuelva tu backend (ej: data.contador, data.count, o solo data)
-          const cantidad = typeof data === "number" ? data : (data.contador || data.count || 0);
-          setContadorNotifs(cantidad);
-        }
-      } catch (error) {
-        console.error("Error revisando contador:", error);
-      }
-    };
-
-    // Llamamos nada más cargar la web
-    revisarContador();
-
-    // Lo programamos cada 30 segundos (30000 milisegundos)
-    const intervalo = setInterval(revisarContador, 30000);
-
-    return () => clearInterval(intervalo);
-  }, []);
+    setContadorNotifs(noLeidas);
+  }, [noLeidas]);
 
   // 2. Efecto para los anuncios (como lo tenías)
   useEffect(() => {
@@ -139,7 +115,6 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   async function handleClickNotificacion(notif: Notificacion) {
     await marcarNotificacionLeida(notif.notificacionId);
     setContadorNotifs(prev => Math.max(0, prev - 1)); // Restamos 1 al contador visual
-    onMarcarLeidas();
     closeMenu();
     if (notif.enlace) {
       const enlace = notif.enlace.replace("/formacion/modulo/", "/dashboard/formacion/");
@@ -184,7 +159,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
       {/* ── BOTÓN DE LA CAMPANITA ── */}
       <button
         onClick={toggle}
-        className="relative flex items-center justify-center h-full px-4 border-none cursor-pointer group"
+        className="relative flex items-center justify-center h-full px-3 border-none cursor-pointer group"
         style={{
           background: "transparent",
           color: hovered || open ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.7)",
@@ -302,8 +277,8 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
             
             {(notificaciones.length > 0 || anuncios.length > 0) && (
               <div className="p-3 border-t border-slate-100 bg-slate-50/50 text-center">
-                <button 
-                  onClick={() => { closeMenu(); router.push("/superadmin/comunicados"); }} 
+                <button
+                  onClick={() => { closeMenu(); router.push(isSuperAdmin ? "/superadmin/comunicados" : "/dashboard/comunicacion"); }}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
                 >
                   Ir al panel general

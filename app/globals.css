@@ -171,6 +171,17 @@ body::-webkit-scrollbar,
   }
 }
 
+/* ── Hero animations (compartidas entre DashboardHero, perfil, homes) ───────── */
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
 /* Ayuda al browser a promover capas solo cuando sea necesario */
 .animate-on-scroll,
 .group {

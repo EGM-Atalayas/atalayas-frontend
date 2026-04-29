@@ -125,43 +125,61 @@ export default function UserMenu({
   }
 
   return (
-    <div className="hidden sm:flex relative h-full items-stretch" ref={containerRef}>
+    <div className="hidden md:flex relative h-full items-stretch" ref={containerRef}>
       {/* Trigger */}
       <button
         onClick={toggle}
-        className="flex items-center gap-2.5 px-4 h-full border-none cursor-pointer"
-        style={{ background: "transparent", transition: "background 0.15s ease" }}
+        className="flex items-center gap-2.5 px-4 h-full border-none cursor-pointer rounded-none"
+        style={{
+          background:  hovered || open ? "rgba(255,255,255,0.07)" : "transparent",
+          transition:  "background 0.15s ease",
+        }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
+        {/* Avatar / logo / iniciales */}
         <div
           className="rounded-full flex items-center justify-center font-bold select-none shrink-0 text-sm overflow-hidden"
           style={{
-            width:      "36px",
-            height:     "36px",
+            width:      "34px",
+            height:     "34px",
             background: "rgba(255,255,255,0.15)",
             color:      "var(--blanco)",
-            border:     "2px solid rgba(255,255,255,0.5)",
+            border:     `2px solid ${hovered || open ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)"}`,
+            transition: "border-color 0.15s ease",
           }}
         >
           {avatarUrl ? (
-            <Image src={avatarUrl} alt="Avatar" width={36} height={36}
+            <Image src={avatarUrl} alt="Avatar" width={34} height={34}
               className="object-cover rounded-full" />
           ) : logoEmpresa ? (
-            <Image src={logoEmpresa} alt="Logo empresa" width={36} height={36}
+            <Image src={logoEmpresa} alt="Logo empresa" width={34} height={34}
               className="object-cover rounded-full" />
           ) : initials}
         </div>
 
-        <span className="max-w-[120px] truncate whitespace-nowrap"
-          style={{ fontSize: "18px", fontWeight: 600, color: hovered ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)", transition: "color 0.15s ease" }}>
+        {/* Nombre */}
+        <span
+          className="max-w-[110px] truncate whitespace-nowrap hidden lg:block"
+          style={{
+            fontSize:   "15px",
+            fontWeight: 500,
+            color:      hovered || open ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.75)",
+            transition: "color 0.15s ease",
+          }}
+        >
           {nombreMostrado}
         </span>
 
+        {/* Chevron */}
         <svg
-          className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-          style={{ color: hovered ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.5)", transition: "color 0.15s ease" }}
+          style={{
+            color:      hovered || open ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+            transition: "color 0.15s ease",
+            flexShrink: 0,
+          }}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
