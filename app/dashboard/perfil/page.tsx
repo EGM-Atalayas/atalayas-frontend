@@ -53,36 +53,36 @@ const BANNER_GRUPOS = [
   {
     grupo: "Atalayas",
     imagenes: [
-      "/background-dashboard.jpg",
-      "/background-empresa.jpg",
-      "/atalayas-circular.jpg",
+      "/background-dashboard.webp",
+      "/background-empresa.webp",
+      "/atalayas-circular.webp",
     ],
   },
   {
     grupo: "Formación",
     imagenes: [
-      "/background-formacion-empleado.jpg",
-      "/herramientas-digitales.jpg",
-      "/metodologias-agiles.jpg",
-      "/ciberseguridad-datos.jpg",
-      "/negociacion-habilidades.jpg",
+      "/background-formacion-empleado.webp",
+      "/herramientas-digitales.webp",
+      "/metodologias-agiles.webp",
+      "/ciberseguridad-datos.webp",
+      "/negociacion-habilidades.webp",
     ],
   },
   {
     grupo: "Comunidad",
     imagenes: [
-      "/background-comunidad.jpg",
-      "/comunidad.jpg",
-      "/diversidad.jpg",
-      "/comunicacion-trabajo.jpg",
+      "/background-comunidad.webp",
+      "/comunidad.webp",
+      "/diversidad.webp",
+      "/comunicacion-trabajo.webp",
     ],
   },
   {
     grupo: "Otros",
     imagenes: [
-      "/background-login.jpg",
-      "/background-invitado.jpg",
-      "/background-comunicacion-empleado.jpg",
+      "/background-login.webp",
+      "/background-invitado.webp",
+      "/background-comunicacion-empleado.webp",
     ],
   },
 ];
@@ -508,7 +508,7 @@ export default function PerfilPage() {
 
   const disp = DISPONIBILIDAD_CONFIG[perfil?.disponibilidad ?? "DISPONIBLE"];
   const initials = getInitials(perfil?.nombre ?? "", perfil?.apellidos ?? "");
-  const bannerFondo = perfil?.bannerUrl ?? "/background-dashboard.jpg";
+  const bannerFondo = perfil?.bannerUrl ?? "/background-dashboard.webp";
 
   return (
     <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
@@ -532,7 +532,7 @@ export default function PerfilPage() {
       <div className="relative overflow-hidden flex items-center group"
         style={{ minHeight: "260px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}>
         <img
-          src={perfil?.bannerUrl ?? "/background-dashboard.jpg"}
+          src={perfil?.bannerUrl ?? "/background-dashboard.webp"}
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover"

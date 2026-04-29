@@ -2,13 +2,13 @@ import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger" | "ghost";
-  size?:    "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }
 
 export const Button: React.FC<ButtonProps> = ({
   children,
-  variant  = "primary",
-  size     = "md",
+  variant = "primary",
+  size = "md",
   className = "",
   style,
   ...props
@@ -25,18 +25,18 @@ export const Button: React.FC<ButtonProps> = ({
 
   // Estilos por variante usando variables CSS
   const variantStyles: Record<string, React.CSSProperties> = {
-    primary:   { background: "var(--azul-egm)",      color: "var(--blanco)" },
+    primary: { background: "var(--azul-egm)", color: "var(--blanco)" },
     secondary: { background: "var(--gris-superficie)", color: "var(--texto-primario)", border: "1px solid var(--gris-borde)" },
-    danger:    { background: "var(--error)",           color: "var(--blanco)" },
-    ghost:     { background: "transparent",            color: "var(--azul-egm)",        border: "1px solid var(--gris-borde)" },
+    danger: { background: "var(--error)", color: "var(--blanco)" },
+    ghost: { background: "transparent", color: "var(--azul-egm)", border: "1px solid var(--gris-borde)" },
   };
 
   // Hover por variante, usando data attribute para no necesitar estado
   const hoverClass: Record<string, string> = {
-    primary:   "hover:opacity-90",
+    primary: "hover:opacity-90",
     secondary: "hover:bg-gray-100",
-    danger:    "hover:opacity-90",
-    ghost:     "hover:bg-[var(--azul-egm-light)]",
+    danger: "hover:opacity-90",
+    ghost: "hover:bg-[var(--azul-egm-light)]",
   };
 
   return (

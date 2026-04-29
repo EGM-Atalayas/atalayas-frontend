@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -8,6 +9,7 @@ import { API_URL } from "@/lib/api";
 import { Playfair_Display } from "next/font/google";
 import LogoLoop from "@/components/ui/LogoLoop";
 import FooterCTA from "@/components/ui/FooterCTA";
+import StaggeredMenu from "@/components/ui/StaggeredMenu";
 import {
   GraduationCap, BookOpen, Network,
   FlaskConical, Sprout, Building2,
@@ -21,78 +23,77 @@ import type { Comunicado, Noticia } from "@/lib/types/noticias";
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 const comunidadItems = [
-  { label: "En Femenino", sub: "Liderazgo e igualdad en el entorno empresarial", imagen: "/logo-en-femenino.png", bg: "#8878c8", icono: null, url: "https://atalayas.com/en-femenino/" },
-  { label: "Autobús lanzadera", sub: "Servicio de transporte directo al área empresarial", imagen: "/autobus.jpg", bg: null, icono: null, url: "https://atalayas.com/autobus-lanzadera/" },
-  { label: "Coche compartido", sub: "Coordina rutas con compañeros del área", imagen: "/coche-compartido.jpg", bg: null, icono: null, url: "https://atalayas.com/journify-coche-compartido/" },
-  { label: "Aparcamiento VAO", sub: "Plazas exclusivas para vehículos de alta ocupación", imagen: "/aparcamiento-vao.png", bg: null, icono: null, url: "https://atalayas.com/aparcamientovao/" },
-  { label: "Empresarios de hoy y de mañana", sub: "Networking y actividades entre empresas del área", imagen: "/empresas-hoy.jpg", bg: null, icono: null, url: "https://atalayas.com/100-estudiantes-20-empresarios/" },
-  { label: "Proyecto empresas solidarias", sub: "Más de 44.000 personas ya han sido beneficiadas.", imagen: "/empresas-solidarias.png", bg: "#ffffff", icono: null, url: "https://atalayas.com/empresas-solidarias/" },
-  { label: "Voy en bici al trabajo", sub: "Semana de la movilidad", imagen: "/trabajo-bici.jpg", bg: null, icono: null, url: "https://atalayas.com/semana-de-la-movilidad/" },
-  { label: "Atalayas circular", sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR", imagen: "/atalayas-circular.jpg", bg: null, icono: null, url: "https://atalayas.com/atalayas-circular/" },
+  {
+    label: "En Femenino",
+    sub: "Liderazgo e igualdad en el entorno empresarial",
+    imagen: "/logo-en-femenino.png",
+    bg: "#8878c8",
+    icono: null,
+    url: "https://atalayas.com/en-femenino/",
+  },
+  {
+    label: "Autobús lanzadera",
+    sub: "Servicio de transporte directo al área empresarial",
+    imagen: "/autobus.jpg",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/autobus-lanzadera/",
+  },
+  {
+    label: "Coche compartido",
+    sub: "Coordina rutas con compañeros del área",
+    imagen: "/coche-compartido.jpg",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/journify-coche-compartido/",
+  },
+  {
+    label: "Aparcamiento VAO",
+    sub: "Plazas exclusivas para vehículos de alta ocupación",
+    imagen: "/aparcamiento-vao.png",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/aparcamientovao/",
+  },
+  {
+    label: "Empresarios de hoy y de mañana",
+    sub: "Networking y actividades entre empresas del área",
+    imagen: "/empresas-hoy.jpg",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/100-estudiantes-20-empresarios/",
+  },
+  {
+    label: "Proyecto empresas solidarias",
+    sub: "Más de 44.000 personas ya han sido beneficiadas.",
+    imagen: "/empresas-solidarias.png",
+    bg: "#ffffff",
+    icono: null,
+    url: "https://atalayas.com/empresas-solidarias/",
+  },
+  {
+    label: "Voy en bici al trabajo",
+    sub: "Semana de la movilidad",
+    imagen: "/trabajo-bici.jpg",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/semana-de-la-movilidad/",
+  },
+  {
+    label: "Atalayas circular",
+    sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
+    imagen: "/atalayas-circular.jpg",
+    bg: null,
+    icono: null,
+    url: "https://atalayas.com/atalayas-circular/",
+  },
 ];
 
-// Tipo normalizado para mostrar en la lista
-interface ItemLista {
-  id: string;
-  img: string | null;
-  title: string;
-  tag: string;
-  extracto: string;
-  day: string;
-  month: string;
-  year: string;
-  fuente: "egm" | "empresa";
-}
-
-function comunicadoToItem(c: Comunicado): ItemLista {
-  const fecha = c.fechaPublicacion ? new Date(c.fechaPublicacion) : new Date(c.actualizadoEn ?? "");
-  return {
-    id: c.comunicadoId,
-    img: c.imagenUrl ?? null,
-    title: c.titulo,
-    tag: c.categoria ?? "General",
-    extracto: c.mensaje?.slice(0, 120) ?? "",
-    day: fecha.getDate().toString().padStart(2, "0"),
-    month: fecha.toLocaleDateString("es-ES", { month: "short" }),
-    year: fecha.getFullYear().toString(),
-    fuente: "egm",
-  };
-}
-
-function anuncioToItem(n: Noticia): ItemLista {
-  const fecha = new Date(n.creadoEn);
-  return {
-    id: n.anuncioId,
-    img: n.imagenUrl ?? null,
-    title: n.titulo,
-    tag: n.empresaId ? "Empresa" : "General",
-    extracto: n.contenido?.slice(0, 120) ?? "",
-    day: fecha.getDate().toString().padStart(2, "0"),
-    month: fecha.toLocaleDateString("es-ES", { month: "short" }),
-    year: fecha.getFullYear().toString(),
-    fuente: "empresa",
-  };
-}
-
-const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
 export default function Invitado() {
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const [tabActivo, setTabActivo] = useState(0);
-  const [todosLosComunicados, setTodosLosComunicados] = useState<Comunicado[]>([]);
-  const [todosLosAnuncios, setTodosLosAnuncios] = useState<Noticia[]>([]);
-  const [loadingNoticias, setLoadingNoticias] = useState(true);
-
-  // Destacado (primero con imagenUrl o el primero)
-  const destacadoRaw = todosLosComunicados.find(c => c.destacado && c.imagenUrl) 
-    ?? todosLosComunicados.find(c => c.imagenUrl) 
-    ?? todosLosComunicados[0] 
-    ?? todosLosAnuncios[0]
-    ?? null;
-
-  const destacado = destacadoRaw
-    ? { ...comunicadoToItem(destacadoRaw as Comunicado), fuente: "egm" as const }
-    : (todosLosAnuncios.length > 0 ? anuncioToItem(todosLosAnuncios[0]) : null);
 
   useEffect(() => {
     Promise.all([
@@ -147,10 +148,20 @@ export default function Invitado() {
 
       {/* HERO */}
       <section className="relative w-full min-h-screen flex flex-col overflow-hidden">
-        <img src="/background-invitado.jpg" alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover z-0" />
+
+        {/* Background image */}
+        <img
+          src="/background-invitado.jpg"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        {/* Dark overlay */}
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
-        <nav className="absolute top-0 left-0 right-0 z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+        {/* ── Navigation ─────────────────────────────────────────────── */}
+        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+          {/* Logo */}
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
           <div className="hidden md:flex items-center justify-center gap-8">
             <span className="text-2xl text-white cursor-default transition-colors">Inicio</span>
@@ -158,15 +169,22 @@ export default function Invitado() {
             <a href="#comunidad" className="text-2xl text-white/50 hover:text-white transition-colors">Comunidad</a>
             <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
-          <button className="md:hidden text-white p-2 flex flex-col gap-1.5" onClick={() => setMenuAbierto(!menuAbierto)} aria-label="Menu">
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden text-white p-2 flex flex-col gap-1.5"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+            aria-label="Menu"
+          >
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
             <div className="w-6 h-0.5 bg-white" />
           </button>
         </nav>
 
+        {/* Mobile menu */}
         {menuAbierto && (
-          <div className="md:hidden absolute top-[88px] left-0 right-0 z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}>
+          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
             <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
             <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
             <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
@@ -214,11 +232,12 @@ export default function Invitado() {
 
           {/* Featured card — usa datos reales si hay destacado */}
           <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
-            {destacado?.img ? (
-              <img src={destacado.img} alt={destacado.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-            ) : (
-              <Image src="/background-invitado.jpg" alt="Noticia destacada" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-            )}
+            <Image
+              src="/background-invitado.jpg"
+              alt="Noticia destacada"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
             <div className="absolute bottom-0 left-0 p-8 sm:p-10">
               <div className="flex items-center gap-2 mb-4">
@@ -258,49 +277,45 @@ export default function Invitado() {
               ))}
             </div>
 
-            {/* Lista artículos */}
-            {loadingNoticias ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-              </div>
-            ) : itemsActivos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-base font-medium mb-1" style={{ color: "var(--texto-primario)" }}>No hay contenido en esta categoría</p>
-                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Vuelve pronto para ver las novedades.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
-                {itemsActivos.slice(0, 3).map((item) => (
-                  <Link href="/login" key={item.id} className="flex gap-6 py-7 group items-start">
-                    <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
-                      {item.img ? (
-                        <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      ) : (
-                        <Image src="/background-comunidad.jpg" alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block"
-                        style={{ background: item.fuente === "egm" ? "var(--gris-superficie)" : "rgba(45,90,61,0.12)", color: item.fuente === "egm" ? "var(--texto-muted)" : "var(--verde-oliva)", border: `1px solid ${item.fuente === "egm" ? "var(--gris-borde)" : "rgba(45,90,61,0.25)"}` }}>
-                        {item.fuente === "egm" ? item.tag : item.tag}
-                      </p>
-                      <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline"
-                        style={{ color: "var(--texto-primario)" }}>
-                        {item.title}
-                      </h4>
-                      <p className="text-sm mt-1.5 line-clamp-2" style={{ color: "var(--texto-muted)" }}>
-                        {item.extracto || "Sin extracto disponible."}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right ml-3">
-                      <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
-                      <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
-                      <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+            {/* Article list */}
+            <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
+              {[
+                {
+                  img: "/background-comunidad.jpg",
+                  title: "Jornada de networking: conecta con +150 empresas del área",
+                  tag: "Evento",
+                  day: "18", month: "Abr", year: "2026",
+                },
+                {
+                  img: "/background-invitado.jpg",
+                  title: "Nuevos servicios de transporte lanzadera desde Alicante",
+                  tag: "Noticia",
+                  day: "10", month: "Abr", year: "2026",
+                },
+                {
+                  img: "/background-comunidad.jpg",
+                  title: "Convocatoria: Programa de formación para pymes del área empresarial",
+                  tag: "Convocatoria",
+                  day: "03", month: "Abr", year: "2026",
+                },
+              ].map((item) => (
+                <Link href="/login" key={item.title} className="flex gap-6 py-7 group items-start">
+                  <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
+                    <Image src={item.img} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
+                    <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
+                    <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
+                  </div>
+                  <div className="shrink-0 text-right ml-3">
+                    <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
+                    <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -310,15 +325,15 @@ export default function Invitado() {
         <LogoLoop
           speed={35} size={70} gap={90}
           logos={[
-            { src: "/logo.webp", alt: "EGM Atalayas" },
-            { src: "/logo-famosa.png", alt: "Empresa 2" },
-            { src: "/logo-aliaxis.png", alt: "Empresa 3" },
-            { src: "/logo-blinker.png", alt: "Empresa 4" },
-            { src: "/logo-seur.png", alt: "Empresa 5" },
-            { src: "/logo-gofre.png", alt: "Empresa 6" },
-            { src: "/logo-itae.png", alt: "Empresa 7" },
-            { src: "/logo-pompadour.png", alt: "Empresa 8" },
-            { src: "/logo-sprinter.png", alt: "Empresa 9" },
+            { src: "/logo.webp", alt: "EGM Atalayas", href: "https://www.atalayas.com" },
+            { src: "/logo-famosa.webp", alt: "Famosa", href: "https://www.famosa.es" },
+            { src: "/logo-aliaxis.webp", alt: "Aliaxis", href: "https://www.aliaxis.com" },
+            { src: "/logo-blinker.webp", alt: "Blinker", href: "https://www.blinker.com" },
+            { src: "/logo-seur.webp", alt: "Seur", href: "https://www.seur.com" },
+            { src: "/logo-gofre.webp", alt: "Gofre", href: "https://www.puntodeproductosvending.com" },
+            { src: "/logo-itae.webp", alt: "ITAE", href: "https://www.itae.es" },
+            { src: "/logo-pompadour.webp", alt: "Pompadour", href: "https://www.pompadour.es" },
+            { src: "/logo-sprinter.webp", alt: "Sprinter", href: "https://www.sprinter.es" },
           ]}
         />
       </section>
@@ -327,7 +342,7 @@ export default function Invitado() {
       <section
         id="comunidad"
         className="relative w-full mt-2"
-        style={{ backgroundImage: "url('/background-comunidad.png')", backgroundSize: "cover", backgroundPosition: "center" }}
+        style={{ backgroundImage: "url('/background-comunidad.webp')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
         <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #0d0d0d, transparent)" }} />

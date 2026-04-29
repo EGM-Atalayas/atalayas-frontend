@@ -1,6 +1,31 @@
 import { API_URL, apiFetch } from "@/lib/api";
 import type { Noticia, NoticiaInput, Comunicado, ComunicadoInput } from "@/lib/types/noticias";
 
+// ── UPLOAD (a través del backend — sin credenciales Supabase en el frontend) ──
+
+export async function subirImagenBackend(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await apiFetch(`${API_URL}/upload/imagen`, { method: "POST", body: fd });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `Error ${res.status} al subir imagen`);
+  }
+  const data = await res.json();
+  return data.url as string;
+}
+
+export async function subirAdjuntoBackend(file: File): Promise<{ url: string; nombre: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await apiFetch(`${API_URL}/upload/adjunto`, { method: "POST", body: fd });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `Error ${res.status} al subir adjunto`);
+  }
+  return res.json();
+}
+
 // ── ANUNCIOS (empresa) ────────────────────────────────────────────────────────
 
 export async function getNoticias(empresaId?: string | null): Promise<Noticia[]> {

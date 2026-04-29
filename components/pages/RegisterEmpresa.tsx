@@ -475,7 +475,7 @@ const RegisterEmpresa: React.FC = () => {
       {/* ── PANEL IZQUIERDO ── */}
       <div
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
-        style={{ background: "url('/background-empresa.jpg') no-repeat center center", backgroundSize: "cover" }}
+        style={{ background: "url('/background-empresa.webp') no-repeat center center", backgroundSize: "cover" }}
       >
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
 
@@ -522,7 +522,7 @@ const RegisterEmpresa: React.FC = () => {
       >
         {/* Branding móvil */}
         <div className="lg:hidden w-full px-6 py-12 mb-2 relative flex flex-col items-center"
-          style={{ background: "url('/background-empresa.jpg') center/cover no-repeat" }}>
+          style={{ background: "url('/background-empresa.webp') center/cover no-repeat" }}>
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="relative z-10 h-20 w-auto brightness-0 invert" />

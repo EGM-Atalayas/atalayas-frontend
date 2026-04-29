@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { subirImagenModulo } from "@/lib/supabase";
+import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Modo  = null | "manual" | "ia";
@@ -86,7 +86,7 @@ const PASOS_MANUAL = [
 const PASOS_IA = [
   { num: 1, label: "Información",  icon: <IconPencil /> },
   { num: 2, label: "Documento",    icon: <IconUpload sz={4} /> },
-  { num: 3, label: "Contenido",    icon: <IconDoc /> },
+  { num: 3, label: "Visibilidad",  icon: <IconUsers /> },
   { num: 4, label: "Test",         icon: <IconTest /> },
   { num: 5, label: "Generar",      icon: <IconSpark sz={4} /> },
 ];
@@ -121,12 +121,13 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 // ── CAMPOS BASE ───────────────────────────────────────────────────────────────
-function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria, setCategoria, idioma, setIdioma, duracion, setDuracion }: {
+function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria, setCategoria, idioma, setIdioma, duracion, setDuracion, ocultarDescripcion = false }: {
   nombre: string; setNombre: (v: string) => void;
   descripcion: string; setDescripcion: (v: string) => void;
   categoria: string; setCategoria: (v: string) => void;
   idioma: string; setIdioma: (v: string) => void;
   duracion: string; setDuracion: (v: string) => void;
+  ocultarDescripcion?: boolean;
 }) {
   const inputBase = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" };
   const onF = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; };
@@ -142,15 +143,19 @@ function CamposBase({ nombre, setNombre, descripcion, setDescripcion, categoria,
           className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all"
           style={inputBase} onFocus={onF} onBlur={onB} />
       </div>
-      <div>
-        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Descripción</label>
-        <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Breve descripción del módulo…" rows={3}
-          className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
-          style={inputBase as React.CSSProperties}
-          onFocus={onF as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
-          onBlur={onB as unknown as React.FocusEventHandler<HTMLTextAreaElement>} />
-      </div>
+      {!ocultarDescripcion && (
+        <div>
+          <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+            Descripción corta <span className="normal-case font-normal" style={{ color: "var(--texto-muted)" }}>(portada del módulo)</span>
+          </label>
+          <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Frase corta que aparecerá en la tarjeta del módulo…" rows={2}
+            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+            style={inputBase as React.CSSProperties}
+            onFocus={onF as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
+            onBlur={onB as unknown as React.FocusEventHandler<HTMLTextAreaElement>} />
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Categoría</label>
@@ -258,7 +263,7 @@ function NavBtns({ paso, setPaso, setModo, onNext, disabledNext, labelNext = "Co
 
 // ── SECCIÓN HEADER ────────────────────────────────────────────────────────────
 function SeccionHeader({ icono, titulo, subtitulo, iconoBg, iconoColor, right }: {
-  icono: React.ReactNode; titulo: string; subtitulo: string;
+  icono: React.ReactNode; titulo: string; subtitulo: React.ReactNode;
   iconoBg: string; iconoColor: string; right?: React.ReactNode;
 }) {
   return (
@@ -336,6 +341,9 @@ export default function CrearModuloPage() {
   const [genTest,        setGenTest]        = useState(false);
   const [portadaFile,    setPortadaFile]    = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState<string>("");
+  const [introduccion,   setIntroduccion]   = useState("");
+  const [genDesc,        setGenDesc]        = useState(false);
+  const [genDescError,   setGenDescError]   = useState("");
   const [guardando,      setGuardando]      = useState(false);
   const [guardado,       setGuardado]       = useState(false);
   const [errorMsg,       setErrorMsg]       = useState("");
@@ -376,6 +384,38 @@ export default function CrearModuloPage() {
     } finally { setGenTest(false); }
   };
 
+  const generarConIA = async () => {
+    if (!archivoMRaw) return;
+    setGenDesc(true);
+    setGenDescError("");
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      const formData = new FormData();
+      formData.append("archivo", archivoMRaw);
+      const res = await fetch(`${API_URL}/ai/generar-desde-archivo?tiposSalida=documentacion`, {
+        method: "POST",
+        credentials: "include",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: formData,
+      });
+      if (!res.ok) {
+        const errTxt = await res.text().catch(() => "");
+        setGenDescError(`Error ${res.status}${errTxt ? `: ${errTxt.slice(0, 120)}` : ""}`);
+        return;
+      }
+      const data = await res.json();
+      const desc: string = data?.descripcion ?? "";
+      const cont: string = data?.contenido ?? "";
+      if (desc.trim()) setDescripcion(desc.trim());
+      if (cont.trim()) setIntroduccion(cont.trim());
+      if (!desc.trim() && !cont.trim()) setGenDescError("La IA no devolvió contenido. Inténtalo de nuevo.");
+    } catch (e) {
+      setGenDescError(e instanceof Error ? e.message : "Error de red al contactar con la IA.");
+    } finally {
+      setGenDesc(false);
+    }
+  };
+
   const guardarManual = async () => {
     setGuardando(true); setErrorMsg("");
     try {
@@ -384,13 +424,21 @@ export default function CrearModuloPage() {
         : null;
       let imagenPortadaUrl: string | null = null;
       if (portadaFile) imagenPortadaUrl = await subirImagenModulo(portadaFile);
+      let adjuntoUrl: string | null = null;
+      let adjuntoNombre: string | null = null;
+      if (archivoMRaw) {
+        const adjunto = await subirAdjunto(archivoMRaw);
+        adjuntoUrl = adjunto.url;
+        adjuntoNombre = adjunto.nombre;
+      }
       const res = await apiFetch(`${API_URL}/modulos`, {
         method: "POST",
         body: JSON.stringify({
           nombre: nombre.trim(), descripcion: descripcion.trim(), tipoModulo: categoria,
           activo: true, empresaId: usuario?.empresaId ?? null, idioma, duracion, audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
-          testPreguntas: testJson, imagenPortadaUrl,
+          testPreguntas: testJson, imagenPortadaUrl, adjuntoUrl, adjuntoNombre,
+          contenidoMarkdown: introduccion.trim() || null,
         }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Error al guardar"); }
@@ -556,7 +604,7 @@ export default function CrearModuloPage() {
     <div className="w-full min-h-screen" style={{ background: "var(--gris-pagina)" }}>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .28s ease both}`}</style>
 
-      {/* ══ HEADER ══ */}
+      {/* ══ HEADER BREADCRUMBS ══ */}
       <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
         <div className="px-8 lg:px-12 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -567,17 +615,6 @@ export default function CrearModuloPage() {
               <Link href="/dashboard/admin" className="hover:underline">Administración</Link>
               <span>/</span>
               <span style={{ color: "var(--texto-primario)", fontWeight: 600 }}>Crear módulo</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold" style={{ color: "var(--texto-primario)" }}>
-                {modo === "ia" ? "Crear módulo con IA" : "Crear módulo formativo"}
-              </h1>
-              {modo === "ia" && (
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"
-                  style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}>
-                  <IconSpark sz={3} /> IA
-                </span>
-              )}
             </div>
           </div>
           {modo !== null && !guardado && !generado && (
@@ -595,133 +632,169 @@ export default function CrearModuloPage() {
       <div className="px-8 lg:px-12 py-8">
         <div className="max-w-4xl mx-auto">
 
-        {/* ── SELECCIÓN MODO ── */}
-        {modo === null && (
-          <div className="fade-up">
-            <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-primario)" }}>¿Cómo quieres crear el módulo?</p>
-            <p className="text-sm mb-7" style={{ color: "var(--texto-muted)" }}>Elige el método de creación que mejor se adapte a tu contenido.</p>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* ══ TARJETA ÚNICA ══ */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+
+          {/* ── CABECERA DE LA TARJETA ── */}
+          <div className="px-8 pt-7 pb-6" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            <h1 className="text-xl font-bold mb-1" style={{ color: "var(--texto-primario)" }}>Crear módulo formativo</h1>
+            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Publica módulos formativos adjuntando título, descripción, archivo y test de evaluación.</p>
+          </div>
+
+          {/* ── SELECTOR DE MODO ── */}
+          <div className="px-8 py-5" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+            <div className="grid grid-cols-2 gap-3">
               {([
-                { key: "manual" as Modo, icon: <IconPencil />, titulo: "Creación manual", desc: "Configura el módulo paso a paso: nombre, archivo adjunto, visibilidad y test de evaluación.", accent: "var(--azul-egm)", aLight: "var(--azul-egm-light)", pasos: ["Información básica","Archivo adjunto","Visibilidad","Test de evaluación"] },
-                { key: "ia"     as Modo, icon: <IconSpark sz={5} />, titulo: "Generar con Inteligencia Artificial", desc: "Sube un documento y la IA genera automáticamente el módulo completo con contenido estructurado y cuestionario.", accent: IA_ACCENT, aLight: "rgba(139,154,45,0.1)", pasos: ["Información básica","Documento fuente","Tipo de contenido","Test con IA","Generar"] },
-              ] as const).map((op) => (
-                <button key={op.key!} onClick={() => setModo(op.key)}
-                  className="rounded-2xl p-7 text-left transition-all"
-                  style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = op.accent; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-13 h-13 w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: op.aLight, color: op.accent }}>{op.icon}</div>
-                    {op.key === "ia" && <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: op.aLight, color: op.accent }}>IA</span>}
-                  </div>
-                  <p className="text-lg font-bold mb-2" style={{ color: "var(--texto-primario)" }}>{op.titulo}</p>
-                  <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
-                  <div className="flex flex-col gap-1.5 mb-6">
-                    {op.pasos.map((p, i) => (
-                      <div key={i} className="flex items-center gap-2.5">
-                        <div className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: op.aLight, color: op.accent }}>{i+1}</div>
-                        <span className="text-xs" style={{ color: "var(--texto-secundario)" }}>{p}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm font-bold" style={{ color: op.accent }}>Comenzar <IconArrow /></div>
-                </button>
-              ))}
+                { key: "manual" as Modo, icon: <IconPencil />, label: "Manual", desc: "Paso a paso", accent: "var(--azul-egm)", aLight: "var(--azul-egm-light)" },
+                { key: "ia"     as Modo, icon: <IconSpark sz={4} />, label: "Asistente IA", desc: "Generación automática", accent: IA_ACCENT, aLight: "rgba(139,154,45,0.1)" },
+              ] as const).map((op) => {
+                const active = modo === op.key;
+                return (
+                  <button key={op.key!} onClick={() => { setModo(op.key); if (op.key === "manual") setPasoManual(1); else setPasoIA(1); }}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all"
+                    style={{ border: `1.5px solid ${active ? op.accent : "var(--gris-borde)"}`, background: active ? op.aLight : "var(--gris-pagina)" }}
+                    onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = op.accent; e.currentTarget.style.background = op.aLight; } }}
+                    onMouseLeave={(e) => { if (!active) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; } }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
+                      style={{ background: active ? op.accent : "var(--gris-superficie)", color: active ? "#fff" : "var(--texto-muted)" }}>
+                      {op.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
+                      <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
+                    </div>
+                    {active && <div className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: op.accent }} />}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
 
-        {/* ══ LAYOUT CON SIDEBAR ══ */}
-        {modo !== null && !guardado && !generado && (
-          <div className="fade-up flex gap-7" style={{ alignItems: "flex-start" }}>
-
-            {/* ── SIDEBAR ── */}
-            <div className="shrink-0 sticky top-6" style={{ width: "220px" }}>
-              <div className="rounded-2xl overflow-hidden" style={{ background: "var(--marino)", boxShadow: "0 4px 20px rgba(0,0,0,0.18)" }}>
-                <div className="px-4 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                      style={{ background: modo === "ia" ? "rgba(139,154,45,0.2)" : "rgba(255,255,255,0.1)", color: modo === "ia" ? IA_ACCENT : "#fff" }}>
-                      {modo === "ia" ? <IconSpark sz={3} /> : <IconPencil />}
-                    </div>
-                    <p className="text-xs font-bold text-white">{modo === "ia" ? "Módulo con IA" : "Módulo manual"}</p>
-                  </div>
-                  <p className="text-[11px] pl-8" style={{ color: "rgba(255,255,255,0.35)" }}>
-                    Paso {modo === "ia" ? pasoIA : pasoManual} de {modo === "ia" ? 5 : 4}
-                  </p>
-                </div>
-                <div className="px-2.5 py-3">
-                  {modo === "ia"
-                    ? <SidebarStepper paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} pasos={PASOS_IA} accent={IA_ACCENT} />
-                    : <SidebarStepper paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} pasos={PASOS_MANUAL} />}
-                </div>
-                {nombre && (
-                  <div className="mx-3 mb-3 px-3 py-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>Módulo</p>
-                    <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{nombre}</p>
-                  </div>
-                )}
+          {/* ── PLACEHOLDER SI NO SE HA ELEGIDO MODO ── */}
+          {modo === null && (
+            <div className="px-8 py-16 flex flex-col items-center justify-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                <IconPencil />
               </div>
+              <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Selecciona un método de creación</p>
+              <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Elige entre creación manual o asistida por IA para continuar.</p>
             </div>
+          )}
 
-            {/* ── CONTENIDO ── */}
-            <div className="flex-1 min-w-0">
+          {/* ── INDICADOR DE PASOS ── */}
+          {modo !== null && !guardado && !generado && (
+            <div className="px-8 py-4 flex items-center gap-1" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+              {(modo === "manual" ? PASOS_MANUAL : PASOS_IA).map((p, idx, arr) => {
+                const currentPaso = modo === "manual" ? pasoManual : pasoIA;
+                const estado = p.num < currentPaso ? "done" : p.num === currentPaso ? "active" : "pending";
+                const accent = modo === "ia" ? IA_ACCENT : "var(--azul-egm)";
+                return (
+                  <div key={p.num} className="flex items-center gap-1 flex-1">
+                    <button
+                      onClick={() => estado === "done" && (modo === "manual" ? setPasoManual(p.num as PasoManual) : setPasoIA(p.num as PasoIA))}
+                      className="flex items-center gap-1.5 whitespace-nowrap"
+                      style={{ cursor: estado === "done" ? "pointer" : "default" }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all"
+                        style={{ background: estado === "done" ? "var(--verde-oliva)" : estado === "active" ? accent : "var(--gris-superficie)", color: estado === "pending" ? "var(--texto-muted)" : "#fff" }}>
+                        {estado === "done" ? "✓" : p.num}
+                      </div>
+                      <span className="text-xs font-semibold hidden sm:block" style={{ color: estado === "active" ? "var(--texto-primario)" : "var(--texto-muted)" }}>{p.label}</span>
+                    </button>
+                    {idx < arr.length - 1 && <div className="flex-1 h-px mx-1" style={{ background: p.num < currentPaso ? "var(--verde-oliva)" : "var(--gris-borde)", minWidth: "12px" }} />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-              {/* ── MANUAL ── */}
+          {/* ── CONTENIDO DEL PASO ── */}
+          {modo !== null && !guardado && !generado && (
+            <div className="px-8 py-7 fade-up">
+
+              {/* MANUAL */}
               {modo === "manual" && (
                 <>
-                  {/* P1 Información */}
                   {pasoManual === 1 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconPencil />} titulo="Información del módulo" subtitulo="Datos generales y configuración básica" iconoBg="var(--azul-egm-light)" iconoColor="var(--azul-egm)" />
-                        <div className="grid grid-cols-1 xl:grid-cols-[1fr_250px] gap-7">
-                          <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
-                          <PortadaUpload preview={portadaPreview} onFile={(f) => { setPortadaFile(f); setPortadaPreview(URL.createObjectURL(f)); }} onRemove={() => { setPortadaFile(null); setPortadaPreview(""); }} />
-                        </div>
-                        <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(2)} disabledNext={!nombre.trim()} />
+                    <>
+                      <SeccionHeader icono={<IconPencil />} titulo="Información del módulo" subtitulo="Datos generales y configuración básica" iconoBg="var(--azul-egm-light)" iconoColor="var(--azul-egm)" />
+                      <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-7">
+                        <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} ocultarDescripcion />
+                        <PortadaUpload preview={portadaPreview} onFile={(f) => { setPortadaFile(f); setPortadaPreview(URL.createObjectURL(f)); }} onRemove={() => { setPortadaFile(null); setPortadaPreview(""); }} />
                       </div>
-                    </div>
+                    </>
                   )}
-
-                  {/* P2 Archivo */}
                   {pasoManual === 2 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconUpload sz={4} />} titulo="Archivo del módulo" subtitulo="Sube el material formativo (opcional)" iconoBg="#e0f2fe" iconoColor="#0284c7"
-                          right={archivoM ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>1 archivo</span> : undefined} />
-                        {!archivoM ? (
-                          <div onDragOver={(e) => { e.preventDefault(); setDraggingM(true); }} onDragLeave={() => setDraggingM(false)}
-                            onDrop={(e) => { e.preventDefault(); setDraggingM(false); const f = e.dataTransfer.files[0]; if (f) { setArchivoM({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }); setArchivoMRaw(f); } }}
-                            onClick={() => inputRef.current?.click()}
-                            className="rounded-xl flex flex-col items-center gap-4 cursor-pointer transition-all"
-                            style={{ border: `2px dashed ${draggingM ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: draggingM ? "var(--azul-egm-light)" : "var(--gris-pagina)", minHeight: "190px", justifyContent: "center" }}>
-                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all" style={{ background: draggingM ? "var(--azul-egm)" : "var(--gris-superficie)", color: draggingM ? "#fff" : "var(--texto-muted)" }}><IconUpload sz={6} /></div>
-                            <div className="text-center">
-                              <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Arrastra un archivo o <span style={{ color: "var(--azul-egm)", textDecoration: "underline" }}>selecciona</span></p>
-                              <p className="text-xs" style={{ color: "var(--texto-muted)" }}>PDF, DOCX, PPT, MP4, MP3 — máx. 10 MB</p>
-                            </div>
-                            <input ref={inputRef} type="file" accept=".pdf,.docx,.ppt,.pptx,.mp4,.mp3,.txt" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setArchivoM({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }); setArchivoMRaw(f); } }} />
+                    <>
+                      <SeccionHeader icono={<IconUpload sz={4} />} titulo="Archivo del módulo" subtitulo={<>Sube el material formativo <span style={{ color: "#dc2626" }}>*</span></>} iconoBg="#e0f2fe" iconoColor="#0284c7"
+                        right={archivoM ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>1 archivo</span> : undefined} />
+                      {!archivoM ? (
+                        <div onDragOver={(e) => { e.preventDefault(); setDraggingM(true); }} onDragLeave={() => setDraggingM(false)}
+                          onDrop={(e) => { e.preventDefault(); setDraggingM(false); const f = e.dataTransfer.files[0]; if (f) { setArchivoM({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }); setArchivoMRaw(f); } }}
+                          onClick={() => inputRef.current?.click()}
+                          className="rounded-xl flex flex-col items-center gap-4 cursor-pointer transition-all"
+                          style={{ border: `2px dashed ${draggingM ? "var(--azul-egm)" : "var(--gris-borde)"}`, background: draggingM ? "var(--azul-egm-light)" : "var(--gris-pagina)", minHeight: "190px", justifyContent: "center" }}>
+                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all" style={{ background: draggingM ? "var(--azul-egm)" : "var(--gris-superficie)", color: draggingM ? "#fff" : "var(--texto-muted)" }}><IconUpload sz={6} /></div>
+                          <div className="text-center">
+                            <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Arrastra un archivo o <span style={{ color: "var(--azul-egm)", textDecoration: "underline" }}>selecciona</span></p>
+                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>PDF, DOCX, PPT, MP4, MP3 — máx. 10 MB</p>
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-3 rounded-xl px-5 py-4" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                              {archivoM.tipo === "video" ? <IconVideo /> : archivoM.tipo === "audio" ? <IconMic /> : <IconFile />}
-                            </div>
-                            <span className="text-sm font-semibold flex-1 truncate" style={{ color: "var(--texto-primario)" }}>{archivoM.nombre}</span>
-                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{archivoM.tamano}</span>
-                            <button onClick={() => { setArchivoM(null); setArchivoMRaw(null); }} className="p-2 rounded-lg transition-colors" style={{ color: "var(--texto-muted)" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
+                          <input ref={inputRef} type="file" accept=".pdf,.docx,.ppt,.pptx,.mp4,.mp3,.txt" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setArchivoM({ nombre: f.name, tamano: formatBytes(f.size), tipo: getTipo(f.name) }); setArchivoMRaw(f); } }} />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 rounded-xl px-5 py-4" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                            {archivoM.tipo === "video" ? <IconVideo /> : archivoM.tipo === "audio" ? <IconMic /> : <IconFile />}
                           </div>
-                        )}
-                        <p className="text-xs mt-3 text-center" style={{ color: "var(--texto-muted)" }}>El archivo es opcional, puedes continuar sin subir ninguno.</p>
-                        <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(3)} />
-                      </div>
-                    </div>
-                  )}
+                          <span className="text-sm font-semibold flex-1 truncate" style={{ color: "var(--texto-primario)" }}>{archivoM.nombre}</span>
+                          <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{archivoM.tamano}</span>
+                          <button onClick={() => { setArchivoM(null); setArchivoMRaw(null); }} className="p-2 rounded-lg transition-colors" style={{ color: "var(--texto-muted)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
+                        </div>
+                      )}
+                      {!archivoM && <p className="text-xs mt-3 text-center" style={{ color: "#dc2626" }}>⚠ Debes subir un archivo para continuar.</p>}
 
-                  {/* P3 Visibilidad */}
+                      {/* ── CONTENIDO DEL MÓDULO ── */}
+                      <div className="mt-6 flex flex-col gap-5" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "24px" }}>
+                        {/* Descripción corta con botón IA */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                              Descripción corta <span className="normal-case font-normal">(portada)</span>
+                            </label>
+                            {archivoM && (
+                              <button onClick={generarConIA} disabled={genDesc}
+                                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                                style={{ background: genDesc ? "var(--gris-superficie)" : "#f3e8ff", color: genDesc ? "var(--texto-muted)" : "#7c3aed", border: "1px solid #e9d5ff" }}>
+                                {genDesc
+                                  ? <><span className="w-3 h-3 border-2 rounded-full animate-spin inline-block" style={{ borderColor: "#e9d5ff", borderTopColor: "#7c3aed" }} />Generando…</>
+                                  : <><IconSpark sz={3} />Sugerir con IA</>}
+                              </button>
+                            )}
+                          </div>
+                          <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                            placeholder="Frase corta que aparecerá en la tarjeta del módulo…" rows={2}
+                            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+                            style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
+                            onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
+                            onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
+                          {genDescError && <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>⚠ {genDescError}</p>}
+                        </div>
+                        {/* Introducción del módulo */}
+                        <div>
+                          <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                            Introducción del módulo <span className="normal-case font-normal">(contenido visible para el empleado)</span>
+                          </label>
+                          <textarea value={introduccion} onChange={(e) => setIntroduccion(e.target.value)}
+                            placeholder="Escribe aquí la introducción o el contenido formativo del módulo…" rows={6}
+                            className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
+                            style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
+                            onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
+                            onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
+                        </div>
+                      </div>
+                    </>
+                  )}
                   {pasoManual === 3 && (
                     <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                       <div className="px-8 py-7">
@@ -761,20 +834,18 @@ export default function CrearModuloPage() {
                                   <button key={d.id} onClick={() => toggleDepto(d.id)}
                                     className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
                                     style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
-                                    {sel && <i className="bi bi-check-lg" style={{ fontSize: "12px", marginRight: "2px" }} />}{d.label}
+                                    {sel && "✓ "}{d.label}
                                   </button>
                                 );
                               })}
                             </div>
-                            {deptos.length === 0 && <p className="text-xs mt-3 flex items-center gap-1" style={{ color: "#d97706" }}><i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "13px" }} /> Selecciona al menos un departamento</p>}
+                            {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
                           </div>
                         )}
                         <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onNext={() => setPasoManual(4)} disabledNext={audiencia === "departamento" && deptos.length === 0} />
                       </div>
                     </div>
                   )}
-
-                  {/* P4 Test */}
                   {pasoManual === 4 && (
                     <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                       <div className="px-8 py-7">
@@ -840,7 +911,7 @@ export default function CrearModuloPage() {
                           </div>
                         )}
                         {errorMsg && (
-                          <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}><i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "13px" }} /> {errorMsg}</div>
+                          <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
                         )}
                         <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} />
                       </div>
@@ -849,71 +920,59 @@ export default function CrearModuloPage() {
                 </>
               )}
 
-              {/* ── IA ── */}
+              {/* IA */}
               {modo === "ia" && (
                 <>
-                  {/* IA P1 Información */}
                   {pasoIA === 1 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconPencil />} titulo="Información del módulo" subtitulo="Datos que usará la IA para estructurar el contenido" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
-                        <div className="grid grid-cols-1 xl:grid-cols-[1fr_250px] gap-7">
-                          <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
-                          <PortadaUpload preview={portadaIAPreview} onFile={(f) => { setPortadaIAFile(f); setPortadaIAPreview(URL.createObjectURL(f)); }} onRemove={() => { setPortadaIAFile(null); setPortadaIAPreview(""); }} accent={IA_ACCENT} accentLight="rgba(139,154,45,0.08)" />
-                        </div>
-                        <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo} onNext={() => setPasoIA(2)} disabledNext={!nombre.trim()} accent={IA_ACCENT} />
+                    <>
+                      <SeccionHeader icono={<IconPencil />} titulo="Información del módulo" subtitulo="Datos que usará la IA para estructurar el contenido" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
+                      <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-7">
+                        <CamposBase nombre={nombre} setNombre={setNombre} descripcion={descripcion} setDescripcion={setDescripcion} categoria={categoria} setCategoria={setCategoria} idioma={idioma} setIdioma={setIdioma} duracion={duracion} setDuracion={setDuracion} />
+                        <PortadaUpload preview={portadaIAPreview} onFile={(f) => { setPortadaIAFile(f); setPortadaIAPreview(URL.createObjectURL(f)); }} onRemove={() => { setPortadaIAFile(null); setPortadaIAPreview(""); }} accent={IA_ACCENT} accentLight="rgba(139,154,45,0.08)" />
                       </div>
-                    </div>
+                    </>
                   )}
-
-                  {/* IA P2 Documento */}
                   {pasoIA === 2 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconUpload sz={4} />} titulo="Documento base" subtitulo="La IA transformará este contenido en un módulo formativo" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT}
-                          right={archivosIA.length > 0 ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}>{archivosIA.length} archivo{archivosIA.length !== 1 ? "s" : ""}</span> : undefined} />
-                        <div onDragOver={(e) => { e.preventDefault(); setDraggingIA(true); }} onDragLeave={() => setDraggingIA(false)}
-                          onDrop={(e) => { e.preventDefault(); setDraggingIA(false); procesarArchivosIA(e.dataTransfer.files); }}
-                          onClick={() => inputIARef.current?.click()}
-                          className="rounded-xl flex flex-col items-center gap-4 cursor-pointer transition-all mb-4"
-                          style={{ border: `2px dashed ${draggingIA ? IA_ACCENT : "var(--gris-borde)"}`, background: draggingIA ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)", minHeight: "190px", justifyContent: "center" }}>
-                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all" style={{ background: draggingIA ? IA_ACCENT : "var(--gris-superficie)", color: draggingIA ? "#fff" : "var(--texto-muted)" }}><IconUpload sz={6} /></div>
-                          <div className="text-center">
-                            <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: IA_ACCENT, textDecoration: "underline" }}>selecciona</span></p>
-                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>PDF, DOCX, TXT — máx. 10 MB</p>
-                          </div>
-                          <input ref={inputIARef} type="file" multiple accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => procesarArchivosIA(e.target.files)} />
+                    <>
+                      {/* ── Documento ── */}
+                      <SeccionHeader icono={<IconUpload sz={4} />} titulo="Documento base" subtitulo="La IA transformará este contenido en un módulo formativo" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT}
+                        right={archivosIA.length > 0 ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}>{archivosIA.length} archivo{archivosIA.length !== 1 ? "s" : ""}</span> : undefined} />
+                      <div onDragOver={(e) => { e.preventDefault(); setDraggingIA(true); }} onDragLeave={() => setDraggingIA(false)}
+                        onDrop={(e) => { e.preventDefault(); setDraggingIA(false); procesarArchivosIA(e.dataTransfer.files); }}
+                        onClick={() => inputIARef.current?.click()}
+                        className="rounded-xl flex flex-col items-center gap-4 cursor-pointer transition-all mb-4"
+                        style={{ border: `2px dashed ${draggingIA ? IA_ACCENT : "var(--gris-borde)"}`, background: draggingIA ? "rgba(139,154,45,0.06)" : "var(--gris-pagina)", minHeight: "160px", justifyContent: "center" }}>
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all" style={{ background: draggingIA ? IA_ACCENT : "var(--gris-superficie)", color: draggingIA ? "#fff" : "var(--texto-muted)" }}><IconUpload sz={6} /></div>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: IA_ACCENT, textDecoration: "underline" }}>selecciona</span></p>
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>PDF, DOCX, TXT — máx. 10 MB</p>
                         </div>
-                        {archivosIA.length > 0 && (
-                          <div className="flex flex-col gap-2 mb-4">
-                            {archivosIA.map((a, idx) => (
-                              <div key={idx} className="flex items-center gap-3 rounded-xl px-5 py-3.5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}><IconFile /></div>
-                                <span className="text-sm font-semibold flex-1 truncate" style={{ color: "var(--texto-primario)" }}>{a.nombre}</span>
-                                <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{a.tamano}</span>
-                                <button onClick={() => { setArchivosIA((p) => p.filter((_,i) => i !== idx)); setArchivosIARaw((p) => p.filter((_,i) => i !== idx)); }}
-                                  className="p-2 rounded-lg transition-colors" style={{ color: "var(--texto-muted)" }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {errorIA && (
-                          <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
-                            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <p className="text-xs">{errorIA}</p>
-                          </div>
-                        )}
-                        <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo} onNext={() => setPasoIA(3)} disabledNext={archivosIA.length === 0} accent={IA_ACCENT} />
+                        <input ref={inputIARef} type="file" multiple accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => procesarArchivosIA(e.target.files)} />
                       </div>
-                    </div>
-                  )}
+                      {archivosIA.length > 0 && (
+                        <div className="flex flex-col gap-2 mb-6">
+                          {archivosIA.map((a, idx) => (
+                            <div key={idx} className="flex items-center gap-3 rounded-xl px-5 py-3.5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.12)", color: IA_ACCENT }}><IconFile /></div>
+                              <span className="text-sm font-semibold flex-1 truncate" style={{ color: "var(--texto-primario)" }}>{a.nombre}</span>
+                              <span className="text-xs" style={{ color: "var(--texto-muted)" }}>{a.tamano}</span>
+                              <button onClick={() => { setArchivosIA((p) => p.filter((_,i) => i !== idx)); setArchivosIARaw((p) => p.filter((_,i) => i !== idx)); }}
+                                className="p-2 rounded-lg transition-colors" style={{ color: "var(--texto-muted)" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}><IconTrash /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {errorIA && (
+                        <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
+                          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                          <p className="text-xs">{errorIA}</p>
+                        </div>
+                      )}
 
-                  {/* IA P3 Contenido */}
-                  {pasoIA === 3 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
+                      {/* ── Tipo de contenido (fusionado) ── */}
+                      <div className="pt-6 mt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                         <SeccionHeader icono={<IconDoc />} titulo="Tipo de contenido a generar" subtitulo="Elige los formatos que creará la IA a partir de tu documento" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                           {COMBOS.map((combo, idx) => {
@@ -939,139 +998,220 @@ export default function CrearModuloPage() {
                             );
                           })}
                         </div>
-                        <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo} onNext={() => setPasoIA(4)} accent={IA_ACCENT} />
                       </div>
-                    </div>
+                    </>
                   )}
-
-                  {/* IA P4 Test */}
-                  {pasoIA === 4 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconTest />} titulo="Test de evaluación" subtitulo="La IA generará las preguntas automáticamente a partir del contenido" iconoBg="#dcfce7" iconoColor="#15803d" right={<Toggle value={tieneTestIA} onChange={setTieneTestIA} />} />
-                        {tieneTestIA ? (
-                          <div className="flex flex-col gap-5">
-                            <div>
-                              <label className="block text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Número de preguntas</label>
-                              <div className="flex gap-3">
-                                {[3,5,7,10].map((n) => (
-                                  <button key={n} onClick={() => setNumPreguntasIA(n)}
-                                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
-                                    style={{ border: `1.5px solid ${numPreguntasIA===n ? IA_ACCENT : "var(--gris-borde)"}`, background: numPreguntasIA===n ? "rgba(139,154,45,0.08)" : "var(--gris-pagina)", color: numPreguntasIA===n ? IA_ACCENT : "var(--texto-muted)" }}>
-                                    {n}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="rounded-xl p-5 flex items-start gap-4" style={{ background: "rgba(139,154,45,0.05)", border: "1.5px solid rgba(139,154,45,0.2)" }}>
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.15)", color: IA_ACCENT }}><IconSpark sz={4} /></div>
-                              <div>
-                                <p className="text-sm font-bold mb-1" style={{ color: "var(--texto-primario)" }}>Generado automáticamente</p>
-                                <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
-                                  La IA creará <strong>{numPreguntasIA} preguntas tipo test</strong> basadas en el contenido del documento. Verás una previsualización al finalizar.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="rounded-xl flex flex-col items-center justify-center gap-3 py-14" style={{ background: "var(--gris-pagina)", border: "1.5px dashed var(--gris-borde)" }}>
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}><IconTest /></div>
-                            <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Sin test de evaluación</p>
-                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Activa el toggle para que la IA genere las preguntas.</p>
-                          </div>
-                        )}
-                        <NavBtns paso={pasoIA} setPaso={(p) => setPasoIA(p as PasoIA)} setModo={setModo} onNext={() => setPasoIA(5)} accent={IA_ACCENT} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* IA P5 Generar */}
-                  {pasoIA === 5 && (
-                    <div className="fade-up rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div className="px-8 py-7">
-                        <SeccionHeader icono={<IconSpark sz={4} />} titulo="Generar módulo con IA" subtitulo="Revisa la configuración y lanza la generación" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-                          {/* Resumen */}
-                          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                            <div className="px-5 py-3.5" style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Resumen</p>
-                            </div>
-                            <div className="divide-y" style={{ borderColor: "var(--gris-borde)" }}>
-                              {[
-                                { label: "Módulo",    value: <span className="font-semibold">{nombre}</span> },
-                                ...(descripcion ? [{ label: "Descripción", value: descripcion }] : []),
-                                { label: "Documento", value: archivosIA[0]?.nombre },
-                                { label: "Idioma",    value: ({ es: "Español", en: "Inglés", ca: "Valenciano" } as Record<string,string>)[idioma] ?? idioma },
-                                { label: "Contenido", value: (
-                                  <div className="flex gap-1.5 flex-wrap">
-                                    {tiposSalidaIA.map((t) => { const info = TIPOS_SALIDA.find((x) => x.key === t)!; return (<span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: info.bg, color: info.color }}>{info.icon}{info.label}</span>); })}
-                                  </div>
-                                )},
-                                { label: "Test", value: <span style={{ color: tieneTestIA ? "#15803d" : "var(--texto-muted)" }}>{tieneTestIA ? `Sí — ${numPreguntasIA} preguntas` : "No"}</span> },
-                              ].map((row, i) => (
-                                <div key={i} className="flex items-start gap-4 px-5 py-3">
-                                  <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color: "var(--texto-muted)" }}>{row.label}</span>
-                                  <span className="text-sm flex-1" style={{ color: "var(--texto-primario)" }}>{row.value}</span>
+                  {pasoIA === 3 && (
+                    <>
+                      <SeccionHeader icono={<IconUsers />} titulo="Visibilidad del módulo" subtitulo="Define quién puede acceder a este módulo" iconoBg="#f3e8ff" iconoColor="#7c3aed" />
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                        {([
+                          { key: "todos"           as AudienciaTipo, label: "Todos los empleados",   desc: "Visible para cualquier empleado",      icon: <IconUsers />,     accent: "var(--azul-egm)", bg: "var(--azul-egm-light)" },
+                          { key: "administradores" as AudienciaTipo, label: "Solo administradores", desc: "Solo admins de empresa",               icon: <IconShield />,    accent: "#7c3aed",         bg: "#f3e8ff"               },
+                          { key: "departamento"    as AudienciaTipo, label: "Por departamento",     desc: "Departamentos específicos",            icon: <IconBriefcase />, accent: "#d97706",         bg: "#fffbeb"               },
+                        ] as const).map((op) => {
+                          const sel = audiencia === op.key;
+                          return (
+                            <button key={op.key} onClick={() => setAudiencia(op.key)}
+                              className="flex flex-col gap-3 px-5 py-5 rounded-xl text-left transition-all w-full"
+                              style={{ border: `1.5px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.bg : "var(--gris-pagina)" }}>
+                              <div className="flex items-center justify-between">
+                                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: sel ? op.accent : "var(--gris-superficie)", color: sel ? "#fff" : "var(--texto-muted)" }}>{op.icon}</div>
+                                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border: `2px solid ${sel ? op.accent : "var(--gris-borde)"}`, background: sel ? op.accent : "transparent" }}>
+                                  {sel && <div className="w-2 h-2 rounded-full bg-white" />}
                                 </div>
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold mb-0.5" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
+                                <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {audiencia === "departamento" && (
+                        <div className="fade-up rounded-xl p-5 mb-2" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                          <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Selecciona los departamentos</p>
+                          <div className="flex flex-wrap gap-2">
+                            {DEPARTAMENTOS.map((d) => {
+                              const sel = deptos.includes(d.id);
+                              return (
+                                <button key={d.id} onClick={() => toggleDepto(d.id)}
+                                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                                  style={{ border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`, background: sel ? "#fffbeb" : "var(--blanco)", color: sel ? "#d97706" : "var(--texto-muted)" }}>
+                                  {sel && "✓ "}{d.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {deptos.length === 0 && <p className="text-xs mt-3" style={{ color: "#d97706" }}>⚠ Selecciona al menos un departamento</p>}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {pasoIA === 4 && (
+                    <>
+                      <SeccionHeader icono={<IconTest />} titulo="Test de evaluación" subtitulo="La IA generará las preguntas automáticamente a partir del contenido" iconoBg="#dcfce7" iconoColor="#15803d" right={<Toggle value={tieneTestIA} onChange={setTieneTestIA} />} />
+                      {tieneTestIA ? (
+                        <div className="flex flex-col gap-5">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wide mb-3" style={{ color: "var(--texto-muted)" }}>Número de preguntas</label>
+                            <div className="flex gap-3">
+                              {[3,5,7,10].map((n) => (
+                                <button key={n} onClick={() => setNumPreguntasIA(n)}
+                                  className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
+                                  style={{ border: `1.5px solid ${numPreguntasIA===n ? IA_ACCENT : "var(--gris-borde)"}`, background: numPreguntasIA===n ? "rgba(139,154,45,0.08)" : "var(--gris-pagina)", color: numPreguntasIA===n ? IA_ACCENT : "var(--texto-muted)" }}>
+                                  {n}
+                                </button>
                               ))}
                             </div>
                           </div>
-
-                          {/* Acciones */}
-                          <div className="flex flex-col gap-4">
-                            {!generando && (
-                              <button onClick={iniciarGeneracion} disabled={!puedeGenerar}
-                                className="w-full py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2.5 transition-all"
-                                style={{ background: puedeGenerar ? `linear-gradient(135deg, var(--azul-egm), ${IA_ACCENT})` : "var(--gris-superficie)", color: puedeGenerar ? "#fff" : "var(--texto-muted)", boxShadow: puedeGenerar ? "0 6px 20px rgba(27,63,126,0.22)" : "none", cursor: puedeGenerar ? "pointer" : "not-allowed" }}>
-                                <IconSpark sz={4} />
-                                {errorIA ? "Reintentar generación" : "Generar módulo con IA"}
-                              </button>
-                            )}
-                            {generando && (
-                              <div className="rounded-xl p-5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                                <div className="flex items-center gap-3 mb-4">
-                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.15)", color: IA_ACCENT }}>
-                                    <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${IA_ACCENT} transparent transparent transparent` }} />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Generando módulo…</p>
-                                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{msgProgreso}</p>
-                                  </div>
-                                </div>
-                                <div className="w-full rounded-full overflow-hidden" style={{ height: "6px", background: "var(--gris-borde)" }}>
-                                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progreso}%`, background: `linear-gradient(90deg, var(--azul-egm), ${IA_ACCENT})` }} />
-                                </div>
-                                <p className="text-right text-xs mt-1.5 font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>{progreso}%</p>
-                              </div>
-                            )}
-                            {errorIA && !generando && (
-                              <div className="px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
-                                <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                <div><p className="text-xs font-semibold">Error al generar el módulo</p><p className="text-xs mt-0.5">{errorIA}</p></div>
-                              </div>
-                            )}
-                            <div className="rounded-xl p-4" style={{ background: "var(--info-light)", border: "1px solid rgba(91,127,166,0.2)" }}>
-                              <p className="text-xs font-semibold mb-1" style={{ color: "var(--info)" }}>¿Cuánto tarda?</p>
-                              <p className="text-xs leading-relaxed" style={{ color: "var(--texto-secundario)" }}>Entre 30 seg. y 2 min. según el tamaño del documento. No cierres esta ventana.</p>
+                          <div className="rounded-xl p-5 flex items-start gap-4" style={{ background: "rgba(139,154,45,0.05)", border: "1.5px solid rgba(139,154,45,0.2)" }}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.15)", color: IA_ACCENT }}><IconSpark sz={4} /></div>
+                            <div>
+                              <p className="text-sm font-bold mb-1" style={{ color: "var(--texto-primario)" }}>Generado automáticamente</p>
+                              <p className="text-sm leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
+                                La IA creará <strong>{numPreguntasIA} preguntas tipo test</strong> basadas en el contenido del documento. Verás una previsualización al finalizar.
+                              </p>
                             </div>
-                            {!generando && (
-                              <button onClick={() => setPasoIA(4)} className="py-2.5 rounded-lg text-sm font-semibold hover:opacity-80 transition-opacity"
-                                style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>← Atrás</button>
-                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl flex flex-col items-center justify-center gap-3 py-14" style={{ background: "var(--gris-pagina)", border: "1.5px dashed var(--gris-borde)" }}>
+                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}><IconTest /></div>
+                          <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Sin test de evaluación</p>
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Activa el toggle para que la IA genere las preguntas.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {pasoIA === 5 && (
+                    <>
+                      <SeccionHeader icono={<IconSpark sz={4} />} titulo="Generar módulo con IA" subtitulo="Revisa la configuración y lanza la generación" iconoBg="rgba(139,154,45,0.12)" iconoColor={IA_ACCENT} />
+                      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+                        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                          <div className="px-5 py-3.5" style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Resumen</p>
+                          </div>
+                          <div className="divide-y" style={{ borderColor: "var(--gris-borde)" }}>
+                            {[
+                              { label: "Módulo",    value: <span className="font-semibold">{nombre}</span> },
+                              ...(descripcion ? [{ label: "Descripción", value: descripcion }] : []),
+                              { label: "Documento", value: archivosIA[0]?.nombre },
+                              { label: "Idioma",    value: ({ es: "Español", en: "Inglés", ca: "Valenciano" } as Record<string,string>)[idioma] ?? idioma },
+                              { label: "Contenido", value: (
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {tiposSalidaIA.map((t) => { const info = TIPOS_SALIDA.find((x) => x.key === t)!; return (<span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: info.bg, color: info.color }}>{info.icon}{info.label}</span>); })}
+                                </div>
+                              )},
+                              { label: "Test", value: <span style={{ color: tieneTestIA ? "#15803d" : "var(--texto-muted)" }}>{tieneTestIA ? `Sí — ${numPreguntasIA} preguntas` : "No"}</span> },
+                            ].map((row, i) => (
+                              <div key={i} className="flex items-start gap-4 px-5 py-3">
+                                <span className="text-xs font-semibold w-24 shrink-0 mt-0.5" style={{ color: "var(--texto-muted)" }}>{row.label}</span>
+                                <span className="text-sm flex-1" style={{ color: "var(--texto-primario)" }}>{row.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                          {!generando && (
+                            <button onClick={iniciarGeneracion} disabled={!puedeGenerar}
+                              className="w-full py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2.5 transition-all"
+                              style={{ background: puedeGenerar ? `linear-gradient(135deg, var(--azul-egm), ${IA_ACCENT})` : "var(--gris-superficie)", color: puedeGenerar ? "#fff" : "var(--texto-muted)", boxShadow: puedeGenerar ? "0 6px 20px rgba(27,63,126,0.22)" : "none", cursor: puedeGenerar ? "pointer" : "not-allowed" }}>
+                              <IconSpark sz={4} />
+                              {errorIA ? "Reintentar generación" : "Generar módulo con IA"}
+                            </button>
+                          )}
+                          {generando && (
+                            <div className="rounded-xl p-5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(139,154,45,0.15)", color: IA_ACCENT }}>
+                                  <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${IA_ACCENT} transparent transparent transparent` }} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Generando módulo…</p>
+                                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{msgProgreso}</p>
+                                </div>
+                              </div>
+                              <div className="w-full rounded-full overflow-hidden" style={{ height: "6px", background: "var(--gris-borde)" }}>
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progreso}%`, background: `linear-gradient(90deg, var(--azul-egm), ${IA_ACCENT})` }} />
+                              </div>
+                              <p className="text-right text-xs mt-1.5 font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>{progreso}%</p>
+                            </div>
+                          )}
+                          {errorIA && !generando && (
+                            <div className="px-4 py-3 rounded-xl flex items-start gap-2.5" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
+                              <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                              <div><p className="text-xs font-semibold">Error al generar el módulo</p><p className="text-xs mt-0.5">{errorIA}</p></div>
+                            </div>
+                          )}
+                          <div className="rounded-xl p-4" style={{ background: "var(--info-light)", border: "1px solid rgba(91,127,166,0.2)" }}>
+                            <p className="text-xs font-semibold mb-1" style={{ color: "var(--info)" }}>¿Cuánto tarda?</p>
+                            <p className="text-xs leading-relaxed" style={{ color: "var(--texto-secundario)" }}>Entre 30 seg. y 2 min. según el tamaño del documento. No cierres esta ventana.</p>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </>
               )}
-            </div>
-          </div>
-        )}
 
-        {/* ══ ÉXITO ══ */}
-        {(guardado || generado) && (
-          <div className="fade-up">
+              {/* ── BOTONES INFERIORES ── */}
+              <div className="flex items-center justify-end gap-3 mt-8 pt-6" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                <button
+                  onClick={() => { if (modo === "manual") { pasoManual > 1 ? setPasoManual((pasoManual - 1) as PasoManual) : setModo(null); } else { pasoIA > 1 ? setPasoIA((pasoIA - 1) as PasoIA) : setModo(null); } }}
+                  className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-80"
+                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
+                  {(modo === "manual" ? pasoManual : pasoIA) === 1 ? "Limpiar" : "← Atrás"}
+                </button>
+                {/* Último paso manual: guardar */}
+                {modo === "manual" && pasoManual === 4 ? (
+                  <button onClick={guardarManual} disabled={guardando}
+                    className="px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2"
+                    style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1, boxShadow: "0 4px 14px rgba(0,0,0,0.12)" }}>
+                    {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : "Guardar módulo"}
+                  </button>
+                ) : modo === "ia" && pasoIA === 5 ? null : (
+                  <button
+                    onClick={() => { if (modo === "manual") setPasoManual((pasoManual + 1) as PasoManual); else setPasoIA((pasoIA + 1) as PasoIA); }}
+                    disabled={
+                      (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                      (modo === "manual" && pasoManual === 2 && !archivoM) ||
+                      (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
+                      (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
+                      (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                      (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
+                    }
+                    className="px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all"
+                    style={{
+                      background: (
+                        (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                        (modo === "manual" && pasoManual === 2 && !archivoM) ||
+                        (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
+                        (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
+                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                        (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
+                      ) ? "var(--gris-superficie)" : modo === "ia" ? IA_ACCENT : "var(--azul-egm)",
+                      color: (
+                        (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
+                        (modo === "manual" && pasoManual === 2 && !archivoM) ||
+                        (modo === "manual" && pasoManual === 3 && audiencia === "departamento" && deptos.length === 0) ||
+                        (modo === "ia" && pasoIA === 1 && !nombre.trim()) ||
+                        (modo === "ia" && pasoIA === 2 && archivosIA.length === 0) ||
+                        (modo === "ia" && pasoIA === 3 && audiencia === "departamento" && deptos.length === 0)
+                      ) ? "var(--texto-muted)" : "#fff",
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
+                    }}>
+                    Continuar <IconArrow />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══ ÉXITO ══ */}
+          {(guardado || generado) && (
+            <div className="px-8 py-7 fade-up">
             {/* Banner */}
             <div className="rounded-2xl p-7 mb-6 flex items-center gap-6 flex-wrap"
               style={{ background: "linear-gradient(135deg, var(--verde-oliva), var(--exito))", boxShadow: "0 4px 24px rgba(45,125,78,0.22)" }}>
@@ -1155,7 +1295,9 @@ export default function CrearModuloPage() {
               )}
             </div>
           </div>
-        )}
+          )}
+
+        </div>{/* /tarjeta única */}
         </div>
       </div>
     </div>

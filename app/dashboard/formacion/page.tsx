@@ -31,23 +31,23 @@ const TIPO_GRADIENT: Record<string, string> = {
 
 // Imágenes por moduloId (mock) y por keywords del nombre (módulos reales)
 const FORMACION_IMG_BY_ID: Record<string, string> = {
-  "1": "/background-formacion-empleado.jpg",
-  "2": "/comunicacion-trabajo.jpg",
-  "3": "/herramientas-digitales.jpg",
-  "4": "/negociacion-habilidades.jpg",
-  "5": "/ciberseguridad-datos.jpg",
-  "6": "/metodologias-agiles.jpg",
-  "7": "/diversidad.jpg",
+  "1": "/background-formacion-empleado.webp",
+  "2": "/comunicacion-trabajo.webp",
+  "3": "/herramientas-digitales.webp",
+  "4": "/negociacion-habilidades.webp",
+  "5": "/ciberseguridad-datos.webp",
+  "6": "/metodologias-agiles.webp",
+  "7": "/diversidad.webp",
 };
 
 const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.webp" },
+  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.webp" },
+  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.webp" },
+  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.webp" },
+  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.webp" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.webp" },
+  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.webp" },
 ];
 
 function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: string | null): string | undefined {
@@ -71,13 +71,20 @@ function leerPorcentajeLS(moduloId: string): number | null {
 }
 
 const DURACION_POR_TIPO: Record<string, string> = {
-  IDENTIDAD:  "20 min",
-  BASICA:     "35 min",
-  ESPECIFICA: "50 min",
-  DESARROLLO: "45 min",
-  COMUNIDAD:  "25 min",
-  RECOMPENSAS:"15 min",
+  IDENTIDAD:    "20 min",
+  BASICA:       "35 min",
+  ESPECIFICA:   "50 min",
+  DESARROLLO:   "45 min",
+  COMUNIDAD:    "25 min",
+  RECOMPENSAS:  "15 min",
+  CUMPLIMIENTO: "30 min",
+  LIDERAZGO:    "45 min",
+  TECNICO:      "40 min",
+  SOFT_SKILLS:  "35 min",
 };
+
+// Tipos que pertenecen al bloque "Onboarding" — el resto va a "Formación continua"
+const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
 
 function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
   const pctLS = leerPorcentajeLS(m.moduloId);
@@ -111,7 +118,6 @@ export default function FormacionPage() {
   const [busqueda,     setBusqueda]     = useState("");
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [filtroTipo,   setFiltroTipo]   = useState<string>("todos");
-  const [soloIA,       setSoloIA]       = useState(false);
   const [filtroOpen,   setFiltroOpen]   = useState(false);
   const [gestionOpen,  setGestionOpen]  = useState(false);
   const filtroRef  = useRef<HTMLDivElement>(null);
@@ -143,27 +149,29 @@ export default function FormacionPage() {
 
   const isAdmin = usuario?.codigoRol !== "ROLE_EMPLEADO" && usuario?.codigoRol !== "INVITADO";
 
-  // Tipos únicos disponibles en los módulos cargados
-  const tiposDisponibles = Array.from(new Set(modules.map((m) => m.tipoModulo)));
+  // Todos los tipos de Formación continua (excluye ONBOARDING), con al menos 1 módulo o definidos en el label
+  const modulosContinua = modules.filter((m) => !TIPOS_ONBOARDING.has(m.tipoModulo));
+  const tiposDisponibles = (Object.keys(MODULO_TIPO_LABEL) as (keyof typeof MODULO_TIPO_LABEL)[])
+    .filter((t) => !TIPOS_ONBOARDING.has(t));
 
   // Módulo "continuar": el primero en progreso (según progreso real de localStorage)
   const continuar = modules.find((m) => m.status === "en progreso" && m.porcentaje < 100);
 
   const hayFiltrosActivos =
-    busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos" || soloIA;
+    busqueda !== "" || filtroEstado !== "todos" || filtroTipo !== "todos";
 
-  // ── Aplicar filtros ───────────────────────────────────────────────────────
+  // ── Aplicar filtros (solo sobre módulos de Formación continua) ───────────
   const modulosFiltrados = modules.filter((m) => {
+    if (TIPOS_ONBOARDING.has(m.tipoModulo)) return false;           // excluir onboarding
     if (busqueda && !m.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
     if (filtroEstado !== "todos" && m.status !== filtroEstado) return false;
     if (filtroTipo !== "todos" && m.tipoModulo !== filtroTipo) return false;
-    if (soloIA && !m.esEspecializadoIa) return false;
     return true;
   });
 
   return (
     <div className="w-full">
-      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.jpg" />
+      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.webp" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
       {/* ── Loading ───────────────────────────────────────────────────── */}
@@ -177,7 +185,7 @@ export default function FormacionPage() {
         <>
           {/* ── SECCIÓN ONBOARDING ───────────────────────────────────── */}
           {(() => {
-            const modulosOnboarding = modules.filter((m) => m.tipoModulo === "ONBOARDING");
+            const modulosOnboarding = modules.filter((m) => TIPOS_ONBOARDING.has(m.tipoModulo));
             return (
               <section id="onboarding" className="mb-14 scroll-mt-8">
                 <div className="flex items-center justify-between mb-6">
@@ -189,12 +197,217 @@ export default function FormacionPage() {
                       Tu programa de incorporación a la empresa
                     </p>
                   </div>
-                  {modulosOnboarding.length > 0 && (
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                      {modulosOnboarding.filter((m) => m.status === "completado").length} / {modulosOnboarding.length} completados
+                  <div className="flex items-center gap-3">
+                    {modulosOnboarding.length > 0 && (
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                        {modulosOnboarding.filter((m) => m.status === "completado").length} / {modulosOnboarding.length} completados
+                      </span>
+                    )}
+                  {/* Buscador */}
+                  <div className="relative" style={{ width: "260px" }}>
+                    <svg
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      style={{ color: "var(--texto-muted)" }}
+                    >
+                      <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Buscar formación..."
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 rounded-xl text-sm outline-none"
+                      style={{
+                        background: "var(--blanco)",
+                        border:     "1px solid var(--gris-borde)",
+                        color:      "var(--texto-primario)",
+                        fontSize:   "14px",
+                        height:     "38px",
+                      }}
+                    />
+                    {busqueda && (
+                      <button
+                        onClick={() => setBusqueda("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                        style={{ color: "var(--texto-muted)" }}
+                      >
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5">
+                          <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Pills de estado inline */}
+                  <div className="flex items-center gap-1.5">
+                    {ESTADO_LABELS.map(({ value, label }) => {
+                      const active = filtroEstado === value;
+                      const count = value === "todos" ? modules.length : modules.filter((m) => m.status === value).length;
+                      const colors: Record<string, { bg: string; color: string; border: string }> = {
+                        todos:        { bg: active ? "var(--azul-egm)"        : "var(--blanco)",          color: active ? "#fff"                  : "var(--texto-muted)",   border: active ? "var(--azul-egm)"        : "var(--gris-borde)" },
+                        pendiente:    { bg: active ? "var(--gris-superficie)" : "var(--blanco)",          color: active ? "var(--texto-primario)"  : "var(--texto-muted)",   border: active ? "var(--texto-primario)"  : "var(--gris-borde)" },
+                        "en progreso":{ bg: active ? "var(--azul-egm-light)"  : "var(--blanco)",          color: active ? "var(--azul-egm)"        : "var(--texto-muted)",   border: active ? "var(--azul-egm)"        : "var(--gris-borde)" },
+                        completado:   { bg: active ? "var(--exito-light)"     : "var(--blanco)",          color: active ? "var(--exito)"           : "var(--texto-muted)",   border: active ? "var(--exito)"           : "var(--gris-borde)" },
+                      };
+                      const c = colors[value] ?? colors.todos;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => setFiltroEstado(value)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+                          style={{ background: c.bg, color: c.color, borderColor: c.border, height: "32px", whiteSpace: "nowrap" }}
+                        >
+                          {label}
+                          <span className="tabular-nums opacity-60 text-[10px]">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Botón Filtros con desplegable */}
+                  <div className="relative" ref={filtroRef}>
+                    <button
+                      onClick={() => setFiltroOpen((v) => !v)}
+                      title="Filtros"
+                      className="relative flex items-center justify-center rounded-xl border transition-colors"
+                      style={{
+                        background:  filtroOpen || filtroTipo !== "todos" ? "var(--azul-egm)" : "var(--blanco)",
+                        borderColor: filtroOpen || filtroTipo !== "todos" ? "var(--azul-egm)" : "var(--gris-borde)",
+                        color:       filtroOpen || filtroTipo !== "todos" ? "#ffffff" : "var(--texto-primario)",
+                        width: "38px", height: "38px",
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                      </svg>
+                      {filtroTipo !== "todos" && (
+                        <span
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
+                          style={{ background: "var(--azul-egm)", color: "#fff", border: "2px solid var(--blanco)" }}
+                        >
+                          1
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Desplegable */}
+                    {filtroOpen && (
+                      <div
+                        className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl p-4 flex flex-col gap-4"
+                        style={{
+                          background: "var(--blanco)",
+                          border:     "1px solid var(--gris-borde)",
+                          width:      "320px",
+                        }}
+                      >
+                        {/* Tipo */}
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
+                            Tipo de módulo
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <PillFiltro label="Todos" active={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} count={modulosContinua.length} />
+                            {tiposDisponibles.map((tipo) => (
+                              <PillFiltro
+                                key={tipo}
+                                label={MODULO_TIPO_LABEL[tipo] ?? tipo}
+                                active={filtroTipo === tipo}
+                                onClick={() => setFiltroTipo(tipo)}
+                                count={modulosContinua.filter((m) => m.tipoModulo === tipo).length}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Limpiar */}
+                        {filtroTipo !== "todos" && (
+                          <button
+                            onClick={() => { setFiltroTipo("todos"); }}
+                            className="text-xs font-medium text-left flex items-center gap-1 pt-1"
+                            style={{ color: "var(--azul-egm)" }}
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Limpiar filtros
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contador resultados */}
+                  {hayFiltrosActivos && (
+                    <span className="text-xs ml-1" style={{ color: "var(--texto-muted)" }}>
+                      {modulosFiltrados.length} resultado{modulosFiltrados.length !== 1 ? "s" : ""}
                     </span>
                   )}
+
+                  {/* Botón gestión — solo admin */}
+                  {isAdmin && (
+                    <div className="relative" ref={gestionRef}>
+                      <button
+                        onClick={() => setGestionOpen((v) => !v)}
+                        title="Gestión de módulos"
+                        className="flex items-center justify-center rounded-xl border transition-colors"
+                        style={{
+                          width: "38px", height: "38px",
+                          background:  gestionOpen ? "var(--azul-egm)" : "var(--blanco)",
+                          borderColor: gestionOpen ? "var(--azul-egm)" : "var(--gris-borde)",
+                          color:       gestionOpen ? "#ffffff" : "var(--texto-primario)",
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+
+                      {gestionOpen && (
+                        <div
+                          className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl overflow-hidden"
+                          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", minWidth: "200px" }}
+                        >
+                          <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Gestión de módulos</p>
+                          </div>
+                          <div className="p-1.5 flex flex-col gap-0.5">
+                            <button
+                              onClick={() => { setGestionOpen(false); router.push("/dashboard/admin/modulos/crear"); }}
+                              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
+                              style={{ color: "var(--texto-primario)" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            >
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                              </div>
+                              <span className="font-medium">Nuevo módulo</span>
+                            </button>
+                            <button
+                              onClick={() => { setGestionOpen(false); router.push("/dashboard/admin?tab=formaciones"); }}
+                              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
+                              style={{ color: "var(--texto-primario)" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            >
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                </svg>
+                              </div>
+                              <span className="font-medium">Gestionar módulos</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  </div>
                 </div>
 
                 {modulosOnboarding.length === 0 ? (
@@ -275,235 +488,11 @@ export default function FormacionPage() {
             );
           })()}
 
-          {/* ── Barra de búsqueda + filtros ──────────────────────────── */}
-          <div className="flex items-center justify-between gap-2 mb-10">
+          {/* ── Formación continua heading ───────────────────────────── */}
+          <div className="mb-10">
             <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              Módulos
+              Formación continua
             </h2>
-            <div className="flex items-center gap-2">
-            {/* Buscador */}
-            <div className="relative" style={{ width: "260px" }}>
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                style={{ color: "var(--texto-muted)" }}
-              >
-                <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Buscar formación..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 rounded-xl text-sm outline-none"
-                style={{
-                  background: "var(--blanco)",
-                  border:     "1px solid var(--gris-borde)",
-                  color:      "var(--texto-primario)",
-                  fontSize:   "14px",
-                  height:     "38px",
-                }}
-              />
-              {busqueda && (
-                <button
-                  onClick={() => setBusqueda("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--texto-muted)" }}
-                >
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5">
-                    <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Botón Filtros con desplegable */}
-            <div className="relative" ref={filtroRef}>
-              <button
-                onClick={() => setFiltroOpen((v) => !v)}
-                className="flex items-center gap-2 px-3.5 rounded-xl text-sm font-semibold border transition-colors"
-                style={{
-                  background:  filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--blanco)",
-                  borderColor: filtroOpen || hayFiltrosActivos ? "var(--azul-egm)" : "var(--gris-borde)",
-                  color:       filtroOpen || hayFiltrosActivos ? "#ffffff" : "var(--texto-primario)",
-                  height:      "38px",
-                }}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-                </svg>
-                Filtros
-                {hayFiltrosActivos && (
-                  <span
-                    className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(255,255,255,0.3)" }}
-                  >
-                    {(filtroEstado !== "todos" ? 1 : 0) + (filtroTipo !== "todos" ? 1 : 0) + (soloIA ? 1 : 0)}
-                  </span>
-                )}
-                <svg
-                  className={`w-3 h-3 shrink-0 transition-transform duration-200 ${filtroOpen ? "rotate-180" : ""}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {/* Desplegable */}
-              {filtroOpen && (
-                <div
-                  className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl p-4 flex flex-col gap-4"
-                  style={{
-                    background: "var(--blanco)",
-                    border:     "1px solid var(--gris-borde)",
-                    width:      "320px",
-                  }}
-                >
-                  {/* Estado */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
-                      Estado
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {ESTADO_LABELS.map(({ value, label }) => (
-                        <PillFiltro
-                          key={value}
-                          label={label}
-                          active={filtroEstado === value}
-                          onClick={() => setFiltroEstado(value)}
-                          count={value === "todos" ? modules.length : modules.filter((m) => m.status === value).length}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tipo */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
-                      Tipo de módulo
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <PillFiltro label="Todos" active={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} count={modules.length} />
-                      {tiposDisponibles.map((tipo) => (
-                        <PillFiltro
-                          key={tipo}
-                          label={MODULO_TIPO_LABEL[tipo] ?? tipo}
-                          active={filtroTipo === tipo}
-                          onClick={() => setFiltroTipo(tipo)}
-                          count={modules.filter((m) => m.tipoModulo === tipo).length}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* IA */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--texto-muted)" }}>
-                      Especialización
-                    </p>
-                    <button
-                      onClick={() => setSoloIA((v) => !v)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
-                      style={
-                        soloIA
-                          ? { background: "#7c3aed", color: "#ffffff", borderColor: "#7c3aed" }
-                          : { background: "var(--gris-superficie)", color: "var(--texto-muted)", borderColor: "var(--gris-borde)" }
-                      }
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
-                      </svg>
-                      Solo especializados IA
-                    </button>
-                  </div>
-
-                  {/* Limpiar */}
-                  {hayFiltrosActivos && (
-                    <button
-                      onClick={() => { setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
-                      className="text-xs font-medium text-left flex items-center gap-1 pt-1"
-                      style={{ color: "var(--azul-egm)" }}
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Limpiar filtros
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Contador resultados */}
-            {hayFiltrosActivos && (
-              <span className="text-xs ml-1" style={{ color: "var(--texto-muted)" }}>
-                {modulosFiltrados.length} resultado{modulosFiltrados.length !== 1 ? "s" : ""}
-              </span>
-            )}
-
-            {/* Botón gestión — solo admin */}
-            {isAdmin && (
-              <div className="relative" ref={gestionRef}>
-                <button
-                  onClick={() => setGestionOpen((v) => !v)}
-                  title="Gestión de módulos"
-                  className="flex items-center justify-center rounded-xl border transition-colors"
-                  style={{
-                    width: "38px", height: "38px",
-                    background:  gestionOpen ? "var(--azul-egm)" : "var(--blanco)",
-                    borderColor: gestionOpen ? "var(--azul-egm)" : "var(--gris-borde)",
-                    color:       gestionOpen ? "#ffffff" : "var(--texto-primario)",
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-
-                {gestionOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-xl overflow-hidden"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", minWidth: "200px" }}
-                  >
-                    <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-                      <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Gestión de módulos</p>
-                    </div>
-                    <div className="p-1.5 flex flex-col gap-0.5">
-                      <button
-                        onClick={() => { setGestionOpen(false); router.push("/dashboard/admin/modulos/crear"); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
-                        style={{ color: "var(--texto-primario)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                        </div>
-                        <span className="font-medium">Nuevo módulo</span>
-                      </button>
-                      <button
-                        onClick={() => { setGestionOpen(false); router.push("/dashboard/admin?tab=formaciones"); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors"
-                        style={{ color: "var(--texto-primario)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-pagina)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                          </svg>
-                        </div>
-                        <span className="font-medium">Gestionar módulos</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            </div>
           </div>
 
           {/* ── Continue Learning card ───────────────────────────────── */}
@@ -609,7 +598,7 @@ export default function FormacionPage() {
               <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
                 Prueba con otros filtros o{" "}
                 <button
-                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); setSoloIA(false); }}
+                  onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); }}
                   className="underline font-medium"
                   style={{ color: "var(--azul-egm)" }}
                 >
