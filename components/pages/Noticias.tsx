@@ -2051,11 +2051,37 @@ function FormComunicado({
   const [uploadingImg, setUploadingImg]   = useState(false);
   const [uploadingAdj, setUploadingAdj]   = useState(false);
   const [localError, setLocalError]       = useState<string | null>(null);
+  const [aiLoading, setAiLoading]         = useState<"titulo" | "mensaje" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const adjuntoRef   = useRef<HTMLInputElement>(null);
   const errorMsg = localError ?? formError;
 
   const embedUrl = useMemo(() => getVideoEmbedUrl(form.videoUrl ?? ""), [form.videoUrl]);
+
+  async function sugerirConIA(campo: "titulo" | "mensaje") {
+    const base = campo === "titulo" ? (form.mensaje.trim() || form.titulo.trim()) : form.mensaje.trim();
+    if (!base) { setLocalError("Escribe algo antes de usar la IA."); return; }
+    setAiLoading(campo); setLocalError(null);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: campo === "titulo"
+            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
+            : `Mejora la redacción de este comunicado de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
+          }],
+          context: {},
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error();
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let out = "";
+      while (true) { const { done, value } = await reader.read(); if (done) break; out += dec.decode(value); }
+      if (campo === "titulo") setForm((f) => ({ ...f, titulo: out.trim() }));
+      else setForm((f) => ({ ...f, mensaje: out.trim() }));
+    } catch { setLocalError("La IA no está disponible en este momento."); }
+    finally { setAiLoading(null); }
+  }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -2135,7 +2161,9 @@ function FormComunicado({
 
             {/* Título */}
             <div>
-              <FieldLabel label="Título" required />
+              <FieldLabel label="Título" required
+                right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />}
+              />
               <input type="text" value={form.titulo}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                 placeholder="Título del comunicado..."
@@ -2145,7 +2173,9 @@ function FormComunicado({
 
             {/* Mensaje / contenido */}
             <div>
-              <FieldLabel label="Contenido" required />
+              <FieldLabel label="Contenido" required
+                right={<AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />}
+              />
               <textarea value={form.mensaje}
                 onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
                 placeholder="Escribe el contenido del comunicado... Puedes usar **negrita**, *cursiva*, - listas"
