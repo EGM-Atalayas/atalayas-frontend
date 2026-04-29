@@ -258,13 +258,9 @@ export default function Invitado() {
             <div className="w-10 h-px" style={{ background: "var(--azul-egm)" }} />
             <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
-            Noticias y actualidad<br />del área empresarial
+          <h2 className="text-5xl sm:text-6xl font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
+            Mantente al día<br />con Atalayas
           </h2>
-          <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
-            Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
-            Mantente informado de todo lo que ocurre en el parque.
-          </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
