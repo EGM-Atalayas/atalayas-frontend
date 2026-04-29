@@ -43,41 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const checkSession = async () => {
-    try {
-      console.log("[AuthContext] 🔄 Intentando recuperar sesión con el token guardado...");
-      const res = await apiFetch(`${API_URL}/auth/me`);
-      
-      if (!res.ok) {
-        throw new Error("Token inválido o expirado");
-      }
-
-      const data = await res.json();
-      const userData = data.data || data.usuario || data; // Extrae el usuario según el formato del backend
-
-      // Si el backend dice explícitamente que está desactivado, lo echamos
-      if (userData.activo === false) {
-        await logout();
-        return;
-      }
-
-      setUsuario(userData);
-      console.log(`[AuthContext] ✅ Sesión recuperada: Bienvenido de nuevo, ${userData.nombre}`);
-
-    } catch (err) {
-      console.warn("[AuthContext] ❌ Error recuperando sesión:", err);
-      // Limpiamos los rastros y redirigimos si no estamos en una página pública
-      localStorage.removeItem("accessToken");
-      setUsuario(null);
-      if (!RUTAS_PUBLICAS.includes(pathname ?? "")) {
-        router.replace("/login");
-      }
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await apiFetch(`${API_URL}/auth/logout`, { method: "POST" });
     } catch (error) {
