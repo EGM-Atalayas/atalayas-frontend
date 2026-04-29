@@ -292,6 +292,18 @@ export default function Invitado() {
                 </Link>
               ))}
             </div>
+
+            {/* Ver todas */}
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/noticias"
+                className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold border transition-all hover:scale-[1.03]"
+                style={{ borderColor: "var(--azul-egm)", color: "var(--azul-egm)", background: "transparent" }}
+              >
+                Ver todas las publicaciones
+                <span>↗</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
