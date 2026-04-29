@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -8,6 +9,7 @@ import { API_URL } from "@/lib/api";
 import { Playfair_Display } from "next/font/google";
 import LogoLoop from "@/components/ui/LogoLoop";
 import FooterCTA from "@/components/ui/FooterCTA";
+import StaggeredMenu from "@/components/ui/StaggeredMenu";
 import {
   GraduationCap, BookOpen, Network,
   FlaskConical, Sprout, Building2,
@@ -99,7 +101,8 @@ const comunidadItems = [
 export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
-  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/comunicados`)
@@ -133,7 +136,7 @@ export default function Invitado() {
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
         {/* ── Navigation ─────────────────────────────────────────────── */}
-        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+        <nav className="relative z-[60] w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
           {/* Logo */}
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
 
@@ -145,27 +148,38 @@ export default function Invitado() {
             <a href="#colaboradores" className="text-2xl text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
-          {/* Mobile hamburger */}
+          {/* Botón hamburguesa — solo móvil */}
           <button
-            className="md:hidden text-white p-2 flex flex-col gap-1.5"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            aria-label="Menu"
+            className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
+            onClick={() => {
+              staggeredMenuRef.current?.toggle();
+              setMobileMenuOpen((v) => !v);
+            }}
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileMenuOpen}
           >
-            <div className="w-6 h-0.5 bg-white" />
-            <div className="w-6 h-0.5 bg-white" />
-            <div className="w-6 h-0.5 bg-white" />
+            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+            <span className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
           </button>
         </nav>
 
-        {/* Mobile menu */}
-        {menuAbierto && (
-          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
-            <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
-            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
-            <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
-            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
-          </div>
-        )}
+        {/* Mobile StaggeredMenu overlay */}
+        <StaggeredMenu
+          ref={staggeredMenuRef}
+          position="right"
+          colors={['#1B3F7E', '#0d1b2e']}
+          accentColor="#A3B535"
+          displayItemNumbering={true}
+          closeOnClickAway={true}
+          onMenuClose={() => setMobileMenuOpen(false)}
+          items={[
+            { label: 'Noticias',      ariaLabel: 'Ir a Noticias',      link: '#noticias' },
+            { label: 'Comunidad',     ariaLabel: 'Ir a Comunidad',     link: '#comunidad' },
+            { label: 'Colaboradores', ariaLabel: 'Ir a Colaboradores', link: '#colaboradores' },
+            { label: 'Entrar',        ariaLabel: 'Iniciar sesión',     link: '/login' },
+          ]}
+        />
 
         {/* ── Hero content ───────────────────────────────────────────── */}
         <div className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
