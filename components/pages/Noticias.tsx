@@ -2040,23 +2040,66 @@ function FormComunicado({
   onSubmit: (data: ComunicadoInput) => void;
   onPreview: (item: FeedItem) => void;
 }) {
-  const [form, setForm] = useState<ComunicadoInput>({ ...EMPTY_FORM_COMUNICADO, ...initialValues });
-  const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
-  const isDirty   = JSON.stringify(form) !== initialSnapshot.current;
-  const canSubmit = form.titulo.trim().length > 0 && form.mensaje.trim().length > 0;
+  type Tab = "contenido" | "multimedia" | "publicacion";
+  const [tab, setTab]         = useState<Tab>("contenido");
+  const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
+  const [touched, setTouched] = useState(false);
+  const [form, setForm]       = useState<ComunicadoInput>({ ...EMPTY_FORM_COMUNICADO, ...initialValues });
+  const initialSnapshot       = useRef<string>(JSON.stringify(initialValues));
+  const isDirty               = JSON.stringify(form) !== initialSnapshot.current;
+  const canSubmit             = form.titulo.trim().length > 0 && form.mensaje.trim().length > 0;
 
   const [confirmClose, setConfirmClose] = useState(false);
   const handleRequestClose = () => { if (isDirty) setConfirmClose(true); else onClose(); };
 
-  const [uploadingImg, setUploadingImg]   = useState(false);
-  const [uploadingAdj, setUploadingAdj]   = useState(false);
-  const [localError, setLocalError]       = useState<string | null>(null);
-  const [aiLoading, setAiLoading]         = useState<"titulo" | "mensaje" | null>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [uploadingAdj, setUploadingAdj] = useState(false);
+  const [aiLoading, setAiLoading]       = useState<"titulo" | "mensaje" | null>(null);
+  const [localError, setLocalError]     = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const adjuntoRef   = useRef<HTMLInputElement>(null);
-  const errorMsg = localError ?? formError;
+  const errorMsg     = localError ?? formError;
 
-  const embedUrl = useMemo(() => getVideoEmbedUrl(form.videoUrl ?? ""), [form.videoUrl]);
+  const tituloError  = touched && !form.titulo.trim();
+  const mensajeError = touched && !form.mensaje.trim();
+
+  const badgeMult = useMemo(() => [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length, [form.imagenUrl, form.videoUrl, form.adjuntoUrl]);
+  const badgePub  = useMemo(() => [form.enlaceUrl, form.destacado].filter(Boolean).length, [form.enlaceUrl, form.destacado]);
+  const badgeCont = useMemo(() => touched ? [!form.titulo.trim(), !form.mensaje.trim()].filter(Boolean).length : 0, [touched, form.titulo, form.mensaje]);
+  const embedUrl  = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
+
+  const TABS = useMemo<{ id: Tab; label: string; badge?: number; error?: boolean }[]>(() => [
+    { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
+    { id: "multimedia",  label: "Multimedia",  badge: badgeMult || undefined },
+    { id: "publicacion", label: "Publicación", badge: badgePub  || undefined },
+  ], [badgeCont, badgeMult, badgePub]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") handleRequestClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isDirty]);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingImg(true); setLocalError(null);
+    try { const url = await subirImagenBackend(file); setForm((f) => ({ ...f, imagenUrl: url })); }
+    catch { setLocalError("Error al subir la imagen."); }
+    finally { setUploadingImg(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
+
+  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingAdj(true); setLocalError(null);
+    try { const { url, nombre } = await subirAdjuntoBackend(file); setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre })); }
+    catch { setLocalError("Error al subir el adjunto."); }
+    finally { setUploadingAdj(false); if (adjuntoRef.current) adjuntoRef.current.value = ""; }
+  }
 
   async function sugerirConIA(campo: "titulo" | "mensaje") {
     const base = campo === "titulo" ? (form.mensaje.trim() || form.titulo.trim()) : form.mensaje.trim();
@@ -2083,57 +2126,47 @@ function FormComunicado({
     finally { setAiLoading(null); }
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]; if (!file) return;
-    setUploadingImg(true); setLocalError(null);
-    try { const url = await subirImagenBackend(file); setForm((f) => ({ ...f, imagenUrl: url })); }
-    catch { setLocalError("Error al subir la imagen."); }
-    finally { setUploadingImg(false); }
-  }
-
-  async function handleAdjuntoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]; if (!file) return;
-    setUploadingAdj(true); setLocalError(null);
-    try { const { url, nombre } = await subirAdjuntoBackend(file); setForm((f) => ({ ...f, adjuntoUrl: url, adjuntoNombre: nombre })); }
-    catch { setLocalError("Error al subir el adjunto."); }
-    finally { setUploadingAdj(false); }
-  }
-
   function handlePreview() {
     const item: FeedItem = {
-      id: "preview", titulo: form.titulo, descripcion: form.mensaje,
+      id: "preview", titulo: form.titulo || "(Sin título)", descripcion: form.mensaje,
       imagenUrl: form.imagenUrl ?? null, fecha: new Date().toISOString(),
       fuente: "egm", categoria: form.categoria, destacado: form.destacado,
-      esNuevoItem: false, _raw: {} as Comunicado,
+      esNuevoItem: true, _raw: {} as Comunicado,
       videoUrl: form.videoUrl ?? null, adjuntoUrl: form.adjuntoUrl ?? null,
       adjuntoNombre: form.adjuntoNombre ?? null,
       enlaceUrl: form.enlaceUrl ?? null, enlaceTexto: form.enlaceTexto ?? null,
-      estado: form.estado ?? "publicado",
+      estado: "publicado",
     };
     onPreview(item);
   }
-
-  const inputStyle: React.CSSProperties = {
-    background: "var(--gris-superficie)", border: "1.5px solid var(--gris-borde)",
-    color: "var(--texto-primario)", borderRadius: 12,
-  };
-  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "var(--blanco)"; };
-  const onBlur  = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-superficie)"; };
 
   const CATS_COM = ["General", "Novedad", "Aviso", "Evento"];
 
   return (
     <>
+    {/* Overlay */}
     <div className="fixed inset-0 flex items-start justify-center"
       style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
       onClick={handleRequestClose}>
+
       <div className="relative w-full flex flex-col"
-        style={{ maxWidth: 660, height: "auto", maxHeight: "calc(100vh - 112px)", background: "var(--blanco)", borderRadius: 20, boxShadow: "0 24px 80px rgba(0,0,0,0.22)", overflow: "hidden", isolation: "isolate", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}
+        style={{
+          maxWidth: 660,
+          height: "auto",
+          maxHeight: "calc(100vh - 112px)",
+          background: "var(--blanco)",
+          borderRadius: 20,
+          boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
+          overflow: "hidden",
+          isolation: "isolate",
+          animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
         onClick={(e) => e.stopPropagation()}>
 
-        {/* Cabecera */}
+        {/* ── Cabecera ── */}
         <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
           <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1 min-w-0">
               <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.65rem, 4vw, 2.1rem)", lineHeight: 1.1, letterSpacing: "-0.03em", color: "#ffffff", margin: 0, textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}>
@@ -2145,88 +2178,149 @@ function FormComunicado({
             </div>
             <button onClick={handleRequestClose}
               className="shrink-0 flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.9)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}>
-              <span style={{ color: "#fff" }}><IconX size={14} /></span>
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
+              title="Cerrar (Esc)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* Cuerpo scrolleable */}
-        <div className="overflow-y-auto flex-1">
-          <div className="flex flex-col gap-5" style={{ padding: "28px 32px" }}>
+        {/* ── Tabs ── */}
+        <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
+          <div className="flex">
+            {TABS.map(({ id, label, badge, error }) => (
+              <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
+                className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
+                style={{ color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)", background: "none" }}>
+                {label}
+                {badge ? (
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
+                    style={{ background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db", color: error || tab === id ? "#fff" : "var(--texto-muted)", minWidth: 18, textAlign: "center" }}>
+                    {badge}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <div style={{
+            position: "absolute", bottom: 0, left: 0,
+            width: `${100 / TABS.length}%`, height: 2,
+            borderRadius: "2px 2px 0 0",
+            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
+            transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
+            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
+          }} />
+        </div>
 
-            {/* Título */}
+        {/* ── Cuerpo con scroll ── */}
+        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
+
+          {/* ── TAB: Contenido ── */}
+          <div style={{ display: tab === "contenido" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             <div>
               <FieldLabel label="Título" required
-                right={<AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />}
+                right={
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                  </div>
+                }
               />
               <input type="text" value={form.titulo}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                placeholder="Título del comunicado..."
+                placeholder="Ej: Networking Day — Viernes 25 de abril"
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
+              />
+              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
             </div>
 
-            {/* Mensaje / contenido */}
             <div>
               <FieldLabel label="Contenido" required
-                right={<AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />}
+                right={
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.mensaje.length} car.</span>
+                    <AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />
+                  </div>
+                }
               />
               <textarea value={form.mensaje}
                 onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                placeholder="Escribe el contenido del comunicado... Puedes usar **negrita**, *cursiva*, - listas"
-                rows={6}
+                placeholder="Escribe el contenido. Puedes usar **negrita** y - listas."
                 className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
-                style={{ ...inputStyle, lineHeight: 1.7 }}
-                onFocus={onFocus as any} onBlur={onBlur as any} />
+                style={{ ...inputStyle, minHeight: 180, lineHeight: 1.7, ...(mensajeError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                onFocus={onFocus} onBlur={onBlur}
+              />
+              {mensajeError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El contenido es obligatorio</p>}
             </div>
 
-            {/* Categoría */}
             <div>
               <FieldLabel label="Categoría" />
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {CATS_COM.map((cat) => {
+                  const active = (form.categoria ?? "General") === cat;
                   const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
-                  const active = form.categoria === cat;
                   return (
                     <button key={cat} type="button"
                       onClick={() => setForm({ ...form, categoria: cat as ComunicadoInput["categoria"] })}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-full"
-                      style={{ background: active ? col.bg : "var(--gris-superficie)", color: active ? col.text : "var(--texto-secundario)", border: `1px solid ${active ? col.border : "var(--gris-borde)"}`, transition: "all 0.18s ease" }}>
+                      className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
+                      style={{
+                        background: active ? col.bg : "var(--blanco)",
+                        color: active ? col.text : "var(--texto-muted)",
+                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
+                        boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
+                      }}>
                       {cat}
                     </button>
                   );
                 })}
               </div>
             </div>
+          </div></div>
 
+          {/* ── TAB: Multimedia ── */}
+          {visitedTabs.current.has("multimedia") && (
+          <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             {/* Imagen */}
             <div>
               <FieldLabel label="Imagen de portada" />
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               {form.imagenUrl ? (
-                <div className="relative">
+                <div className="relative mt-1">
                   <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
                   <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
                   <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
                     className="absolute top-2 right-2 flex items-center justify-center transition-all"
                     style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                    <IconX size={12} />
-                  </button>
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    title="Quitar imagen"><IconX size={12} /></button>
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm disabled:opacity-60"
-                  style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                  className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
+                  style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
                   onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}>
-                  {uploadingImg ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></> : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                  onDrop={(e) => {
+                    e.preventDefault(); e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)";
+                    const file = e.dataTransfer.files?.[0];
+                    if (file?.type.startsWith("image/")) handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                  }}>
+                  {uploadingImg
+                    ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                    : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
                 </button>
               )}
             </div>
@@ -2243,11 +2337,11 @@ function FormComunicado({
                     </div>
                     <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
                       className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "all 0.18s ease" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; }}>
-                      Quitar
-                    </button>
+                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                      onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                      onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
                   </div>
                   <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
                     <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
@@ -2259,8 +2353,14 @@ function FormComunicado({
                     onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
                     placeholder="https://youtube.com/watch?v=..."
                     className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
-                  {form.videoUrl && <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>Solo se pueden incrustar vídeos de YouTube o Vimeo</p>}
+                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {form.videoUrl && (
+                    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                      Solo se pueden incrustar vídeos de YouTube o Vimeo
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -2275,23 +2375,31 @@ function FormComunicado({
                   <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
                   <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
                     className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "all 0.18s ease" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; }}>
-                    Quitar
-                  </button>
+                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
                 </div>
               ) : (
                 <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm disabled:opacity-60"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
                   style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
                   onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
-                  {uploadingAdj ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></> : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+                  {uploadingAdj
+                    ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                    : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
                 </button>
               )}
             </div>
+          </div></div>
+          )}
 
+          {/* ── TAB: Publicación ── */}
+          {visitedTabs.current.has("publicacion") && (
+          <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
+          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
             {/* Enlace externo */}
             <div>
               <FieldLabel label="Enlace externo" />
@@ -2300,14 +2408,16 @@ function FormComunicado({
                   onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
                   placeholder="https://..."
                   className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                  style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                  style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                />
                 {form.enlaceUrl && (
                   <>
                     <input type="text" value={form.enlaceTexto || ""}
                       onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
                       placeholder='Texto del enlace — ej: "Más información"'
                       className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                      style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                    />
                     <div className="flex flex-col gap-1.5 pt-1">
                       <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el comunicado</p>
                       <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
@@ -2319,11 +2429,11 @@ function FormComunicado({
                         </div>
                         <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
                           className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "all 0.18s ease" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; }}>
-                          Quitar
-                        </button>
+                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
                       </div>
                     </div>
                   </>
@@ -2332,30 +2442,34 @@ function FormComunicado({
             </div>
 
             {/* Destacado */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${form.destacado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "border-color 0.18s" }}>
-              <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                style={{ background: form.destacado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
-                onClick={() => setForm({ ...form, destacado: !form.destacado })}>
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: form.destacado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.destacado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
+            <div>
+              <FieldLabel label="Estado" />
+              <div className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${form.destacado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "border-color 0.18s" }}>
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                  style={{ background: form.destacado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
+                  onClick={() => setForm({ ...form, destacado: !form.destacado })}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: form.destacado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.destacado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: form.destacado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
+                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold leading-tight" style={{ color: form.destacado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
-                    <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
-                  </div>
+                  <Toggle checked={form.destacado} onChange={(v) => setForm({ ...form, destacado: v })} color="#2563eb" />
                 </div>
-                <Toggle checked={form.destacado} onChange={(v) => setForm({ ...form, destacado: v })} color="#2563eb" />
               </div>
             </div>
+          </div></div>
+          )}
 
-          </div>
-        </div>
+        </div>{/* fin scroll */}
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
           style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
           <div className="flex-1 min-w-0">
@@ -2383,14 +2497,14 @@ function FormComunicado({
             {(() => {
               const active = canSubmit && (!editando || isDirty);
               const bg = active ? GRAD_EGM : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
-              const shadow = active ? "0 2px 8px rgba(27,63,126,0.3)" : "none";
               return (
-                <button onClick={() => { if (!active) return; onSubmit(form); }}
+                <button
+                  onClick={() => { if (!active) { setTouched(true); return; } onSubmit(form); }}
                   disabled={submitting}
                   title={!canSubmit ? "Título y contenido son obligatorios" : editando && !isDirty ? "No has cambiado nada aún" : undefined}
                   className="text-sm font-semibold px-5 py-2 rounded-xl"
-                  style={{ background: bg, color: "#fff", boxShadow: shadow, cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, transform 0.18s ease" }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                  style={{ background: bg, color: "#fff", boxShadow: active ? "0 2px 8px rgba(27,63,126,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, transform 0.18s ease" }}
+                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; }}}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
                   onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
                   onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
