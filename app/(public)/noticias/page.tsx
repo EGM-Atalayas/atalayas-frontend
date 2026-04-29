@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -97,6 +97,190 @@ function comunicadoToUnified(c: Comunicado): UnifiedItem {
     tab:       tabMap[cat] ?? "comunicados",
     destacado: c.destacado,
   };
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+function NoticiaModal({ item, onClose }: { item: UnifiedItem; onClose: () => void }) {
+  const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
+  const { full } = formatDate(item.fecha);
+
+  // Cerrar con Escape
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl flex flex-col"
+        style={{ background: "white", fontFamily: "'Instrument Sans', sans-serif" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Image header */}
+        {item.imagenUrl ? (
+          <div className="relative w-full h-56 sm:h-72 shrink-0 rounded-t-3xl sm:rounded-t-2xl overflow-hidden bg-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
+          </div>
+        ) : (
+          <div className="w-full h-24 shrink-0 rounded-t-3xl sm:rounded-t-2xl" style={{ background: "linear-gradient(135deg, hsl(220,70%,28%), hsl(210,75%,42%))" }} />
+        )}
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)", color: "white" }}
+          aria-label="Cerrar"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
+        {/* Content */}
+        <div className="p-6 sm:p-8 flex flex-col gap-4">
+          {/* Tag + date */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: tagColor.bg, color: tagColor.color }}>
+              {item.categoria}
+            </span>
+            {item.destacado && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-600">★ Destacado</span>
+            )}
+            {full && (
+              <span className="text-xs ml-auto" style={{ color: "var(--texto-muted, #6b7280)" }}>{full}</span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl sm:text-3xl font-bold leading-snug" style={{ color: "var(--texto-primario, #111827)", letterSpacing: "-0.02em" }}>
+            {item.titulo}
+          </h2>
+
+          {/* Body */}
+          <p className="text-base leading-relaxed whitespace-pre-line" style={{ color: "var(--texto-muted, #374151)" }}>
+            {item.extracto}
+          </p>
+
+          {/* CTA */}
+          <div className="pt-2 flex items-center gap-3 border-t mt-2" style={{ borderColor: "var(--gris-borde, #e5e7eb)" }}>
+            <Link
+              href="/login"
+              className="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] inline-flex items-center gap-2"
+              style={{ background: "var(--azul-egm, #1B3F7E)" }}
+              onClick={onClose}
+            >
+              Ver más en la plataforma
+              <span>↗</span>
+            </Link>
+            <button
+              onClick={onClose}
+              className="rounded-full px-5 py-2.5 text-sm font-medium border transition-colors"
+              style={{ borderColor: "var(--gris-borde, #e5e7eb)", color: "var(--texto-muted, #6b7280)" }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Bento card sizes ──────────────────────────────────────────────────────────
+// Pattern repeats every 7 items: large, medium, small, small, medium, small, small
+const BENTO_PATTERN: Array<"large" | "medium" | "small"> = [
+  "large", "medium", "small", "small", "medium", "small", "small",
+];
+
+type CardSize = "large" | "medium" | "small";
+
+function BentoCard({ item, size, onClick }: { item: UnifiedItem; size: CardSize; onClick: () => void }) {
+  const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
+  const { day, month, year, full } = formatDate(item.fecha);
+  const hasImage = !!item.imagenUrl;
+
+  const sizeClasses: Record<CardSize, string> = {
+    large:  "col-span-2 row-span-2 min-h-[300px]",
+    medium: "col-span-2 row-span-1 min-h-[180px] md:col-span-1 md:row-span-2",
+    small:  "col-span-2 row-span-1 min-h-[160px] md:col-span-1",
+  };
+
+  return (
+    <article
+      className={`relative rounded-2xl overflow-hidden group cursor-pointer flex flex-col justify-between ${sizeClasses[size]}`}
+      style={{
+        background: hasImage ? "#0f1423" : "var(--gris-superficie, #f1f5f9)",
+        border: hasImage ? "none" : "1px solid var(--gris-borde, #e5e7eb)",
+      }}
+      onClick={onClick}
+    >
+      {hasImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.imagenUrl!} alt={item.titulo} className="absolute inset-0 w-full h-full object-cover opacity-50 transition-transform duration-500 group-hover:scale-105" />
+      )}
+      {hasImage && (
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)" }} />
+      )}
+
+      {/* Top — tag */}
+      <div className="relative z-10 p-5 pb-0 flex items-start justify-between">
+        <span
+          className="text-xs font-semibold px-2.5 py-1 rounded-full inline-block"
+          style={{
+            background:     hasImage ? "rgba(255,255,255,0.15)" : tagColor.bg,
+            color:          hasImage ? "rgba(255,255,255,0.9)"  : tagColor.color,
+            backdropFilter: hasImage ? "blur(4px)" : "none",
+          }}
+        >
+          {item.categoria}
+        </span>
+        {item.destacado && (
+          <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/20 text-yellow-500">★</span>
+        )}
+      </div>
+
+      {/* Bottom — text */}
+      <div className="relative z-10 p-5 pt-3">
+        <h3
+          className={`font-semibold leading-snug group-hover:underline ${size === "large" ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}
+          style={{ color: hasImage ? "white" : "var(--texto-primario, #111827)" }}
+        >
+          {item.titulo}
+        </h3>
+        {size !== "small" && (
+          <p className={`text-sm mt-1.5 leading-relaxed ${size === "large" ? "line-clamp-3" : "line-clamp-2"}`}
+            style={{ color: hasImage ? "rgba(255,255,255,0.65)" : "var(--texto-muted, #6b7280)" }}>
+            {item.extracto}
+          </p>
+        )}
+        <p className="text-xs mt-2" style={{ color: hasImage ? "rgba(255,255,255,0.45)" : "var(--texto-muted, #6b7280)" }}>
+          {size === "large" ? full : `${day} ${month} ${year}`}
+        </p>
+      </div>
+
+      {/* Arrow on hover */}
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+          style={{ background: hasImage ? "rgba(255,255,255,0.2)" : "rgba(27,63,126,0.1)", color: hasImage ? "white" : "#1B3F7E", backdropFilter: "blur(4px)" }}>
+          ↗
+        </div>
+      </div>
+    </article>
+  );
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -196,7 +380,8 @@ export default function NoticiasPublicasPage() {
   const [loading,       setLoading]       = useState(true);
   const [activeTab,     setActiveTab]     = useState<TabKey>("todos");
   const [search,        setSearch]        = useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen,  setMobileMenuOpen]  = useState(false);
+  const [selectedItem,    setSelectedItem]    = useState<UnifiedItem | null>(null);
   const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
 
   useEffect(() => {
@@ -252,52 +437,75 @@ export default function NoticiasPublicasPage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--fondo-pagina, #f9fafb)", fontFamily: "'Instrument Sans', sans-serif" }}>
 
-      {/* ── Top nav ──────────────────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-[60] w-full px-8 py-5 flex flex-row items-center justify-between md:grid md:grid-cols-3 border-b"
-        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderColor: "var(--gris-borde, #e5e7eb)" }}
-      >
-        {/* Logo */}
-        <Link href="/">
-          <Image src={logo} alt="Atalayas EGM" className="h-12 w-auto" />
-        </Link>
+      {/* ── Hero + Nav unificados ─────────────────────────────────────────── */}
+      <section className="relative w-full min-h-[60vh] flex flex-col overflow-hidden">
 
-        {/* Nav links — desktop only */}
-        <div className="hidden md:flex items-center justify-center gap-8">
-          <Link href="/" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Inicio</Link>
-          <span className="text-2xl font-medium text-black cursor-default transition-colors">Noticias</span>
-          <Link href="/#comunidad" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Comunidad</Link>
-          <Link href="/#colaboradores" className="text-2xl font-medium text-black/50 hover:text-black transition-colors">Colaboradores</Link>
-        </div>
+        {/* Background image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/background-invitado.webp"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.55)" }} />
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center justify-end">
-          <Link
-            href="/login"
-            className="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
-            style={{ background: "var(--azul-egm, #1B3F7E)" }}
-          >
-            Iniciar sesión
+        {/* Nav — flotante sobre la imagen, sin borde */}
+        <nav className="relative z-[60] w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
+          <Link href="/">
+            <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
           </Link>
+
+          <div className="hidden md:flex items-center justify-center gap-8">
+            <Link href="/" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Inicio</Link>
+            <span className="text-2xl font-medium text-white cursor-default">Noticias</span>
+            <Link href="/#comunidad" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Comunidad</Link>
+            <Link href="/#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</Link>
+          </div>
+
+          <div className="hidden md:flex items-center justify-end">
+            <Link
+              href="/login"
+              className="liquid-glass rounded-full px-6 py-2.5 text-base font-semibold text-white hover:scale-[1.03] transition-transform inline-flex items-center justify-center"
+              style={{ background: "rgba(59, 130, 246, 0.25)" }}
+            >
+              Iniciar sesión
+            </Link>
+          </div>
+
+          {/* Hamburguesa móvil */}
+          <button
+            className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
+            onClick={() => { staggeredMenuRef.current?.toggle(); setMobileMenuOpen((v) => !v); }}
+            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[7px] bg-black" : "bg-white"}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "opacity-0 bg-black" : "bg-white"}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[7px] bg-black" : "bg-white"}`} />
+          </button>
+        </nav>
+
+        {/* Hero text */}
+        <div className="relative z-20 flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 pb-20 pt-10">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-4">
+            Blog · Noticias · Eventos · Comunicados
+          </p>
+          <h1
+            className="text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-[0.95] max-w-4xl"
+            style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2px" }}
+          >
+            Mantente al día con Atalayas.
+          </h1>
+          <p className="mt-6 text-base sm:text-lg text-white/60 max-w-xl leading-relaxed">
+            Toda la actualidad del Área Empresarial: noticias, eventos, comunicados y más.
+          </p>
         </div>
 
-        {/* Botón hamburguesa — solo móvil */}
-        <button
-          className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
-          onClick={() => {
-            staggeredMenuRef.current?.toggle();
-            setMobileMenuOpen((v) => !v);
-          }}
-          aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={mobileMenuOpen}
-        >
-          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[7px] bg-black" : "bg-black"}`} />
-          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "opacity-0 bg-black" : "bg-black"}`} />
-          <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[7px] bg-black" : "bg-black"}`} />
-        </button>
-      </nav>
+      </section>
 
-      {/* Mobile StaggeredMenu overlay */}
+      {/* Mobile StaggeredMenu */}
       <StaggeredMenu
         ref={staggeredMenuRef}
         position="right"
@@ -307,39 +515,18 @@ export default function NoticiasPublicasPage() {
         closeOnClickAway={true}
         onMenuClose={() => setMobileMenuOpen(false)}
         items={[
-          { label: "Inicio",        ariaLabel: "Ir al inicio",        link: "/" },
-          { label: "Noticias",      ariaLabel: "Noticias",            link: "/noticias" },
-          { label: "Comunidad",     ariaLabel: "Ir a Comunidad",      link: "/#comunidad" },
-          { label: "Colaboradores", ariaLabel: "Ir a Colaboradores",  link: "/#colaboradores" },
-          { label: "Entrar",        ariaLabel: "Iniciar sesión",      link: "/login" },
+          { label: "Inicio",        ariaLabel: "Ir al inicio",       link: "/" },
+          { label: "Noticias",      ariaLabel: "Noticias",           link: "/noticias" },
+          { label: "Comunidad",     ariaLabel: "Ir a Comunidad",     link: "/#comunidad" },
+          { label: "Colaboradores", ariaLabel: "Ir a Colaboradores", link: "/#colaboradores" },
+          { label: "Entrar",        ariaLabel: "Iniciar sesión",     link: "/login" },
         ]}
       />
 
-      {/* ── Page header ──────────────────────────────────────────────────── */}
-      <header className="w-full px-6 sm:px-12 lg:px-20 pt-14 pb-10">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-px" style={{ background: "var(--azul-egm, #1B3F7E)" }} />
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted, #6b7280)" }}>
-            Blog · Noticias · Eventos · Comunicados
-          </p>
-        </div>
-        <h1
-          className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-none"
-          style={{ color: "var(--texto-primario, #111827)", letterSpacing: "-0.03em" }}
-        >
-          Mantente al día
-          <br />
-          <span style={{ color: "var(--azul-egm, #1B3F7E)" }}>con Atalayas</span>
-        </h1>
-        <p className="mt-5 text-base sm:text-lg leading-relaxed max-w-2xl" style={{ color: "var(--texto-muted, #6b7280)" }}>
-          Toda la actualidad del Área Empresarial de Atalayas: noticias, eventos, comunicados y más — en un solo lugar y sin necesidad de cuenta.
-        </p>
-      </header>
-
       {/* ── Filters bar ──────────────────────────────────────────────────── */}
       <div
-        className="sticky top-[65px] z-40 w-full px-6 sm:px-12 lg:px-20 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b"
-        style={{ background: "rgba(249,250,251,0.95)", backdropFilter: "blur(8px)", borderColor: "var(--gris-borde, #e5e7eb)" }}
+        className="sticky top-[65px] z-40 w-full px-6 sm:px-12 lg:px-20 py-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        style={{ background: "var(--fondo-pagina, #f9fafb)" }}
       >
         {/* Tab pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 flex-nowrap">
@@ -349,7 +536,7 @@ export default function NoticiasPublicasPage() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all whitespace-nowrap shrink-0"
                 style={{
                   background:   active ? "var(--azul-egm, #1B3F7E)" : "white",
                   color:        active ? "white" : "var(--texto-muted, #6b7280)",
@@ -409,34 +596,32 @@ export default function NoticiasPublicasPage() {
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="flex flex-col lg:flex-row gap-10">
+          <>
+            <p className="mb-6 text-xs" style={{ color: "var(--texto-muted, #6b7280)" }}>
+              Mostrando {filtered.length} {filtered.length === 1 ? "publicación" : "publicaciones"}
+              {activeTab !== "todos" && ` en ${TAB_LABELS.find((t) => t.key === activeTab)?.label}`}
+              {search && ` para «${search}»`}
+            </p>
 
-            {/* Featured */}
-            <div className="lg:w-[44%] shrink-0">
-              {featured && <FeaturedCard item={featured} />}
-              {/* Count info */}
-              <p className="mt-4 text-xs" style={{ color: "var(--texto-muted, #6b7280)" }}>
-                Mostrando {filtered.length} {filtered.length === 1 ? "publicación" : "publicaciones"}
-                {activeTab !== "todos" && ` en ${TAB_LABELS.find((t) => t.key === activeTab)?.label}`}
-                {search && ` para «${search}»`}
-              </p>
-            </div>
-
-            {/* List */}
-            <div className="flex-1 min-w-0">
-              {rest.length === 0 && featured && (
-                <p className="text-sm py-8 text-center" style={{ color: "var(--texto-muted, #6b7280)" }}>
-                  Solo hay una publicación en esta categoría.
-                </p>
-              )}
-              {rest.map((item) => (
-                <ItemCard key={item.id} item={item} />
+            {/* Bento grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[180px] gap-4">
+              {filtered.map((item, idx) => (
+                <BentoCard
+                  key={item.id}
+                  item={item}
+                  size={BENTO_PATTERN[idx % BENTO_PATTERN.length]}
+                  onClick={() => setSelectedItem(item)}
+                />
               ))}
             </div>
-
-          </div>
+          </>
         )}
       </main>
+
+      {/* ── Modal ────────────────────────────────────────────────────────── */}
+      {selectedItem && (
+        <NoticiaModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      )}
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer

@@ -22,6 +22,41 @@ import type { Comunicado, Noticia } from "@/lib/types/noticias";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
+const MESES = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+interface ItemLista {
+  img: string;
+  title: string;
+  tag: string;
+  day: string;
+  month: string;
+  year: string;
+}
+
+function comunicadoToItem(c: Comunicado): ItemLista {
+  const d = new Date(c.fechaPublicacion ?? c.actualizadoEn ?? "");
+  return {
+    img: c.imagenUrl ?? "/background-invitado.webp",
+    title: c.titulo,
+    tag: c.categoria ?? "Comunicado",
+    day: d.getDate().toString().padStart(2, "0"),
+    month: MESES[d.getMonth() + 1],
+    year: d.getFullYear().toString(),
+  };
+}
+
+function anuncioToItem(n: Noticia): ItemLista {
+  const d = new Date(n.creadoEn);
+  return {
+    img: n.imagenUrl ?? "/background-invitado.webp",
+    title: n.titulo,
+    tag: n.categoria ?? "Noticia",
+    day: d.getDate().toString().padStart(2, "0"),
+    month: MESES[d.getMonth() + 1],
+    year: d.getFullYear().toString(),
+  };
+}
+
 const comunidadItems = [
   {
     label: "En Femenino",
@@ -94,6 +129,10 @@ export default function Invitado() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [todosLosComunicados, setTodosLosComunicados] = useState<Comunicado[]>([]);
+  const [todosLosAnuncios, setTodosLosAnuncios] = useState<Noticia[]>([]);
+  const [loadingNoticias, setLoadingNoticias] = useState(true);
+  const [tabActivo, setTabActivo] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -245,7 +284,7 @@ export default function Invitado() {
                 <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
               </div>
               <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
-                {destacado?.title ?? "EGM Atalayas lanza su nueva plataforma digital para empresas del área"}
+                {"EGM Atalayas lanza su nueva plataforma digital para empresas del área"}
               </h3>
             </div>
             <div className="absolute top-5 right-5">
