@@ -63,11 +63,15 @@ const Prism: React.FC<PrismProps> = ({
     const HOVSTR = Math.max(0, hoverStrength || 1);
     const INERT = Math.max(0, Math.min(1, inertia || 0.12));
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const canvasWidth = Math.ceil(container.clientWidth || 1);
+    const canvasHeight = Math.ceil(container.clientHeight || 1);
+    const dpr = 1;
     const renderer = new Renderer({
       dpr,
       alpha: transparent,
-      antialias: false
+      antialias: false,
+      width: canvasWidth,
+      height: canvasHeight,
     });
     const gl = renderer.gl;
     gl.disable(gl.DEPTH_TEST);
@@ -79,7 +83,8 @@ const Prism: React.FC<PrismProps> = ({
       inset: '0',
       width: '100%',
       height: '100%',
-      display: 'block'
+      display: 'block',
+      imageRendering: 'auto',
     } as Partial<CSSStyleDeclaration>);
     container.appendChild(gl.canvas);
 
@@ -177,7 +182,7 @@ const Prism: React.FC<PrismProps> = ({
           wob = mat2(c0, c1, c2, c0);
         }
 
-        const int STEPS = 100;
+        const int STEPS = 60;
         for (int i = 0; i < STEPS; i++) {
           p = vec3(f, z);
           p.xz = p.xz * wob;

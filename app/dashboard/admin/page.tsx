@@ -318,7 +318,7 @@ function AdminContent() {
       <DashboardHero
         prefijo="Panel de "
         titulo="Administración."
-        imagenFondo="/background-formacion-empleado.jpg"
+        imagenFondo="/background-formacion-empleado.webp"
       />
 
       <div className="px-10 lg:px-16 pt-10 pb-16">

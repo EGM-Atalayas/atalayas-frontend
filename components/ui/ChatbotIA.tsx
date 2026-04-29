@@ -879,7 +879,7 @@ export default function ChatbotIA() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-chatbot.png"
+src="/logo-chatbot.webp"
             alt="Asistente IA"
             style={{
               width: "60%", height: "60%",
@@ -958,7 +958,7 @@ export default function ChatbotIA() {
                   flexShrink: 0,
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/logo-chatbot.png" alt="AtalaIA"
+                  <img src="/logo-chatbot.webp" alt="AtalaIA"
                     style={{
                       width: "62%", height: "62%",
                       objectFit: "contain", objectPosition: "center",

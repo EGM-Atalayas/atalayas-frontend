@@ -31,23 +31,23 @@ const TIPO_GRADIENT: Record<string, string> = {
 
 // Imágenes por moduloId (mock) y por keywords del nombre (módulos reales)
 const FORMACION_IMG_BY_ID: Record<string, string> = {
-  "1": "/background-formacion-empleado.jpg",
-  "2": "/comunicacion-trabajo.jpg",
-  "3": "/herramientas-digitales.jpg",
-  "4": "/negociacion-habilidades.jpg",
-  "5": "/ciberseguridad-datos.jpg",
-  "6": "/metodologias-agiles.jpg",
-  "7": "/diversidad.jpg",
+  "1": "/background-formacion-empleado.webp",
+  "2": "/comunicacion-trabajo.webp",
+  "3": "/herramientas-digitales.webp",
+  "4": "/negociacion-habilidades.webp",
+  "5": "/ciberseguridad-datos.webp",
+  "6": "/metodologias-agiles.webp",
+  "7": "/diversidad.webp",
 };
 
 const FORMACION_IMG_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid"],              imagen: "/background-formacion-empleado.webp" },
+  { keywords: ["comunicac", "efectiva"],                imagen: "/comunicacion-trabajo.webp" },
+  { keywords: ["herramienta", "digital", "colaborat"],  imagen: "/herramientas-digitales.webp" },
+  { keywords: ["negociaci", "habilidad", "directiv"],   imagen: "/negociacion-habilidades.webp" },
+  { keywords: ["cibersegur", "datos", "rgpd"],          imagen: "/ciberseguridad-datos.webp" },
+  { keywords: ["metodolog", "agil", "scrum", "kanban"], imagen: "/metodologias-agiles.webp" },
+  { keywords: ["diversidad", "inclusi"],                imagen: "/diversidad.webp" },
 ];
 
 function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: string | null): string | undefined {
@@ -171,7 +171,7 @@ export default function FormacionPage() {
 
   return (
     <div className="w-full">
-      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.jpg" />
+      <DashboardHero prefijo="Centro de " titulo="Formación." imagenFondo="/background-formacion-empleado.webp" />
 
       <div className="px-10 lg:px-16 pt-14 pb-16">
       {/* ── Loading ───────────────────────────────────────────────────── */}

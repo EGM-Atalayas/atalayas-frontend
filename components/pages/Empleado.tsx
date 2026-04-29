@@ -47,21 +47,21 @@ const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
 ];
 
 const FORMACION_IMAGES_BY_ID: Record<string, string> = {
-  "mock-1": "/background-formacion-empleado.jpg",
-  "mock-2": "/comunicacion-trabajo.jpg",
-  "mock-3": "/diversidad.jpg",
-  "mock-4": "/herramientas-digitales.jpg",
+  "mock-1": "/background-formacion-empleado.webp",
+  "mock-2": "/comunicacion-trabajo.webp",
+  "mock-3": "/diversidad.webp",
+  "mock-4": "/herramientas-digitales.webp",
 };
 
 const FORMACION_IMAGES_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid", "atalayas"], imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva", "trabajo"], imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["prl", "prevenci", "riesgos", "laboral"], imagen: "/diversidad.jpg" },
-  { keywords: ["digitaliz", "herramienta", "colaborat"], imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad"], imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["metodolog", "agil"], imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["cibersegur", "datos"], imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid", "atalayas"], imagen: "/background-formacion-empleado.webp" },
+  { keywords: ["comunicac", "efectiva", "trabajo"], imagen: "/comunicacion-trabajo.webp" },
+  { keywords: ["prl", "prevenci", "riesgos", "laboral"], imagen: "/diversidad.webp" },
+  { keywords: ["digitaliz", "herramienta", "colaborat"], imagen: "/herramientas-digitales.webp" },
+  { keywords: ["negociaci", "habilidad"], imagen: "/negociacion-habilidades.webp" },
+  { keywords: ["metodolog", "agil"], imagen: "/metodologias-agiles.webp" },
+  { keywords: ["cibersegur", "datos"], imagen: "/ciberseguridad-datos.webp" },
+  { keywords: ["diversidad", "inclusi"], imagen: "/diversidad.webp" },
 ];
 
 function getFormacionImage(moduloId: string, nombre: string): string | undefined {
@@ -268,7 +268,7 @@ export default function Empleado() {
         className="relative overflow-hidden flex items-center"
         style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
       >
-        <img src={usuario?.bannerUrl ?? "/background-dashboard.jpg"} alt="" aria-hidden
+        <img src={usuario?.bannerUrl ?? "/background-dashboard.webp"} alt="" aria-hidden
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: "center 40%" }} />
         <div className="absolute inset-0"

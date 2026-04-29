@@ -124,7 +124,7 @@ const LoginPage: React.FC = () => {
       <div
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
         style={{
-          background:     "url('/background-login.jpg') no-repeat center center",
+          background:     "url('/background-login.webp') no-repeat center center",
           backgroundSize: "cover",
         }}
       >
@@ -146,7 +146,7 @@ const LoginPage: React.FC = () => {
       >
         {/* Branding visible solo en móvil */}
         <div className="lg:hidden w-full px-6 py-12 mb-2 relative flex flex-col items-center"
-          style={{ background: "url('/background-login.jpg') center/cover no-repeat" }}>
+          style={{ background: "url('/background-login.webp') center/cover no-repeat" }}>
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="relative z-10 h-20 w-auto brightness-0 invert" />

@@ -10,9 +10,9 @@ interface LogoItem {
 
 interface LogoLoopProps {
   logos: LogoItem[];
-  speed?: number; // segundos para un ciclo completo
-  size?: number;  // altura en px de cada logo
-  gap?: number;   // gap en px entre logos
+  speed?: number;
+  size?: number;
+  gap?: number;
 }
 
 export default function LogoLoop({
@@ -21,14 +21,10 @@ export default function LogoLoop({
   size = 48,
   gap = 64,
 }: LogoLoopProps) {
-  // Duplicamos los logos para el efecto loop infinito
   const items = [...logos, ...logos];
 
   return (
-    <div
-      className="w-full overflow-hidden"
-      style={{ maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}
-    >
+    <div className="w-full overflow-hidden">
       <div
         className="flex items-center"
         style={{
@@ -36,6 +32,7 @@ export default function LogoLoop({
           width: "max-content",
           animation: `logoLoop ${speed}s linear infinite`,
           gap: `${gap}px`,
+          willChange: "transform",
         }}
       >
         {items.map((logo, idx) => {
@@ -44,20 +41,23 @@ export default function LogoLoop({
               key={idx}
               src={logo.src}
               alt={logo.alt}
+              loading="lazy"
+              decoding="async"
               style={{
                 height: `${size}px`,
                 width: "auto",
                 objectFit: "contain",
-                filter: "grayscale(100%) brightness(0) invert(0.6)",
                 flexShrink: 0,
-                transition: "filter 0.3s",
+                opacity: 0.5,
+                transition: "opacity 0.3s",
+                pointerEvents: "auto",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.filter = "none")}
-              onMouseLeave={(e) => (e.currentTarget.style.filter = "grayscale(100%) brightness(0) invert(0.6)")}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
             />
           );
           return logo.href ? (
-            <a key={idx} href={logo.href} target="_blank" rel="noopener noreferrer">
+            <a key={idx} href={logo.href} target="_blank" rel="noopener noreferrer" style={{ cursor: "pointer", pointerEvents: "auto" }}>
               {img}
             </a>
           ) : (
