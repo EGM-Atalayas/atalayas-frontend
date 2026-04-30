@@ -209,15 +209,25 @@ export default function Invitado() {
             <a href="#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
-          {/* Mobile hamburger */}
+          {/* Mobile hamburger / close */}
           <button
-            className="md:hidden text-white p-2 flex flex-col gap-1.5"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            aria-label="Menu"
+            className="md:hidden p-2 flex items-center justify-center outline-none focus:outline-none"
+            onClick={() => setMenuAbierto(prev => !prev)}
+            onMouseDown={(e) => e.preventDefault()}
+            aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
           >
-            <div className="w-6 h-0.5 bg-white" />
-            <div className="w-6 h-0.5 bg-white" />
-            <div className="w-6 h-0.5 bg-white" />
+            {menuAbierto ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
           </button>
         </nav>
 

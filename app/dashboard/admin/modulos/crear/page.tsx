@@ -404,8 +404,25 @@ export default function CrearModuloPage() {
         return;
       }
       const data = await res.json();
-      const desc: string = data?.descripcion ?? "";
       const cont: string = data?.contenido ?? "";
+      let desc: string = data?.descripcion ?? "";
+      // Si el backend no devuelve descripción corta, pedimos a la IA local que genere una
+      if (!desc.trim() && cont.trim()) {
+        try {
+          const resDesc = await fetch("/api/chat/generate-content", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: `Genera una descripción corta para este módulo formativo:\n\n${cont.slice(0, 3000)}`,
+              systemPrompt: `Eres un asistente que genera descripciones para módulos de formación empresarial. Responde ÚNICAMENTE con un objeto JSON válido sin markdown: {"titulo":"título del módulo","descripcion":"una sola frase en español que resuma todo el contenido, máximo 20 palabras, tono profesional"}`,
+            }),
+          });
+          if (resDesc.ok) {
+            const dDesc = await resDesc.json();
+            desc = dDesc?.descripcion ?? dDesc?.resumen ?? "";
+          }
+        } catch { /* silencioso, se deja vacío */ }
+      }
       if (desc.trim()) setDescripcion(desc.trim());
       if (cont.trim()) setIntroduccion(cont.trim());
       if (!desc.trim() && !cont.trim()) setGenDescError("La IA no devolvió contenido. Inténtalo de nuevo.");
