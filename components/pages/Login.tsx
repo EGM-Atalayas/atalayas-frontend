@@ -99,16 +99,24 @@ const LoginPage: React.FC = () => {
 
   const handleForgotPassword = async () => {
     if (!forgotEmail) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) return;
     setForgotLoading(true);
     try {
-      await fetch(`${API_URL}/auth/forgot-password`, {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail }),
       });
-    } catch { /* silencioso */ } finally {
-      setForgotLoading(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setForgotSent(true);
+      } else {
+        setForgotSent(true);
+      }
+    } catch {
       setForgotSent(true);
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -441,76 +449,123 @@ const LoginPage: React.FC = () => {
           onClick={(e) => { if (e.target === e.currentTarget) setShowForgotModal(false); }}
         >
           <div
-            className="w-full max-w-md rounded-2xl p-8 flex flex-col gap-5"
+            className="w-full max-w-md rounded-2xl overflow-hidden"
             style={{ background: "#ffffff", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
           >
             {!forgotSent ? (
               <>
-                <div>
-                  <h3 className="text-2xl font-bold mb-1" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif" }}>
+                {/* Header */}
+                <div style={{ background: "#1B3F7E", padding: "24px 32px 20px" }}>
+                  <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
                     Recuperar contraseña
                   </h3>
-                  <p className="text-sm" style={{ color: "#6B7A8D" }}>
-                    Escribe tu correo y te enviaremos un enlace para restablecerla.
+                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
+                    Introduce tu correo y te enviaremos un enlace
                   </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: "#3D4A5C" }}>
-                    Correo electrónico
-                  </label>
-                  <input
-                    type="email"
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="tu@empresa.com"
-                    className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all"
-                    style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.22)", color: "#0f1923" }}
-                    onFocus={(e) => { e.target.style.borderColor = "#1B3F7E"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "rgba(27,63,126,0.22)"; e.target.style.boxShadow = "none"; }}
-                    onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowForgotModal(false)}
-                    className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
-                    style={{ color: "#6B7A8D", borderColor: "#e2e5ea", background: "transparent" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6f8")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleForgotPassword}
-                    disabled={!forgotEmail || forgotLoading}
-                    className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
-                    style={{ background: "#1B3F7E", color: "#ffffff" }}
-                    onMouseEnter={(e) => { if (forgotEmail && !forgotLoading) e.currentTarget.style.background = "#2A5298"; }}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
-                  >
-                    {forgotLoading ? "Enviando..." : "Enviar enlace"}
-                  </button>
+
+                <div className="p-8 flex flex-col gap-5">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#3D4A5C" }}>
+                      Correo electrónico
+                    </label>
+                    <div className="relative">
+                      <FiMail className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#6B7A8D" }} />
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="tu@empresa.com"
+                        className="w-full pl-11 pr-4 py-3 text-sm rounded-lg outline-none transition-all"
+                        style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.22)", color: "#0f1923" }}
+                        onFocus={(e) => { e.target.style.borderColor = "#1B3F7E"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
+                        onBlur={(e) => { e.target.style.borderColor = "rgba(27,63,126,0.22)"; e.target.style.boxShadow = "none"; }}
+                        onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
+                      />
+                    </div>
+                    {forgotEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail) && (
+                      <p className="text-xs mt-1.5" style={{ color: "#C84B31" }}>
+                        Introduce un correo electrónico válido
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowForgotModal(false)}
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
+                      style={{ color: "#6B7A8D", borderColor: "#e2e5ea", background: "transparent" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6f8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleForgotPassword}
+                      disabled={!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail) || forgotLoading}
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: "#1B3F7E", color: "#ffffff" }}
+                      onMouseEnter={(e) => { if (!forgotLoading) e.currentTarget.style.background = "#2A5298"; }}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
+                    >
+                      {forgotLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Enviando...
+                        </span>
+                      ) : "Enviar enlace"}
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex flex-col items-center text-center gap-4 py-4">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "#e8f0fe" }}>
-                    <FiMail size={26} style={{ color: "#1B3F7E" }} />
+                <div className="p-8 flex flex-col items-center text-center gap-5">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#e8f0fe" }}>
+                    <FiMail size={28} style={{ color: "#1B3F7E" }} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-1" style={{ color: "#1B3F7E" }}>Correo enviado</h3>
-                    <p className="text-sm" style={{ color: "#6B7A8D" }}>
-                      Si <strong>{forgotEmail}</strong> está registrado, recibirás un enlace para restablecer tu contraseña en breve.
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#0f1923" }}>¡Correo enviado!</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#6B7A8D" }}>
+                      Si <strong>{forgotEmail}</strong> está registrado, recibirás un enlace para restablecer tu contraseña en los próximos minutos.
                     </p>
                   </div>
-                  <button
-                    onClick={() => setShowForgotModal(false)}
-                    className="w-full py-3 rounded-lg text-sm font-semibold"
-                    style={{ background: "#1B3F7E", color: "#ffffff" }}
-                  >
-                    Entendido
-                  </button>
+
+                  <div className="w-full rounded-xl p-4 text-sm" style={{ background: "#f5f6f8", border: "1px solid #e2e5ea" }}>
+                    <p className="mb-1 font-medium" style={{ color: "#3D4A5C" }}>¿Qué hacer ahora?</p>
+                    <ul className="text-xs space-y-1.5" style={{ color: "#6B7A8D" }}>
+                      <li>1. Revisa tu bandeja de entrada</li>
+                      <li>2. Haz clic en el enlace del correo</li>
+                      <li>3. Elige una nueva contraseña segura</li>
+                    </ul>
+                    <p className="text-xs mt-2" style={{ color: "#6B7A8D" }}>
+                      ¿No lo ves? Revisa la carpeta de spam.
+                    </p>
+                  </div>
+
+                  <div className="w-full flex gap-3">
+                    <button
+                      onClick={() => { setForgotSent(false); setForgotEmail(""); }}
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
+                      style={{ color: "#1B3F7E", borderColor: "#1B3F7E", background: "transparent" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      Reenviar
+                    </button>
+                    <button
+                      onClick={() => setShowForgotModal(false)}
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all"
+                      style={{ background: "#1B3F7E", color: "#ffffff" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#2A5298")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
+                    >
+                      Cerrar
+                    </button>
+                  </div>
                 </div>
               </>
             )}
