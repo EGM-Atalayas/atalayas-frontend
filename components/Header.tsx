@@ -32,8 +32,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [noLeidas, setNoLeidas]       = useState(0);
   const [scrolled, setScrolled]       = useState(false);
-  const [navProgress, setNavProgress] = useState(0); // 0 = oculto, 1-100 = progreso
-  const prevPathname                  = useRef<string | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -83,23 +81,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Barra de progreso de navegación: se dispara cuando cambia el pathname
-  useEffect(() => {
-    if (prevPathname.current === null) {
-      prevPathname.current = pathname;
-      return;
-    }
-    if (prevPathname.current === pathname) return;
-    prevPathname.current = pathname;
-
-    // Animación: sube rápido a 80%, luego espera y completa
-    setNavProgress(15);
-    const t1 = setTimeout(() => setNavProgress(80), 80);
-    const t2 = setTimeout(() => setNavProgress(100), 350);
-    const t3 = setTimeout(() => setNavProgress(0), 650);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [pathname]);
-
 
 
   const marcarTodasLeidas = async () => {
@@ -138,25 +119,6 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         transition:         "background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease",
       }}
     >
-      {/* Barra de progreso de navegación */}
-      {navProgress > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            height: "2px",
-            width: `${navProgress}%`,
-            background: "var(--verde-oliva-hover)",
-            transition: navProgress === 100
-              ? "width 0.15s ease, opacity 0.3s ease 0.15s"
-              : "width 0.3s ease",
-            opacity: navProgress === 100 ? 0 : 1,
-            borderRadius: "0 2px 2px 0",
-          }}
-        />
-      )}
-
       <div className="w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14 flex items-stretch h-20 relative">
 
         {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
