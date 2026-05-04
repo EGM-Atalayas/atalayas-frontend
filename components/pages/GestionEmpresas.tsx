@@ -241,7 +241,7 @@ const GestionEmpresas: React.FC = () => {
                     colorClase = coloresEstado.APROBADA;
                     colorPunto = "bg-emerald-500";
                   } else if (esAprobada && !esActiva) {
-                    textoEstado = "INACTIVA";
+                    textoEstado = "PAUSADA";
                     colorClase = coloresEstado.INACTIVA;
                     colorPunto = "bg-slate-400";
                   }
