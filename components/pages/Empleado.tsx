@@ -7,8 +7,10 @@ import DashboardHero from "@/components/ui/DashboardHero";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getServicios } from "@/lib/api/servicios";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
+import type { Servicio } from "@/lib/types/servicios";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 import DotField from "@/components/ui/DotField";
 import BiIcon from "@/components/ui/BiIcon";
@@ -92,62 +94,40 @@ function applyProgress(base: FormacionLocal[], map: Record<string, number>): For
   });
 }
 
-const SERVICIOS = [
-  {
-    label: "Coche compartido",
-    desc: "Ahorra hasta 2.500€/año compartiendo ruta.",
-    href: "https://www.lokinn.com/compartir-coche/atalayas",
-    activo: true,
-    icono: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-      </svg>
-    ),
-  },
-  {
-    label: "Autobús lanzadera",
-    desc: "Línea 7P con horarios laborales.",
-    href: "https://atalayas.com/autobus-lanzadera/",
-    activo: true,
-    icono: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h2m4 0h2M3 11l1-5h16l1 5M3 11v6a1 1 0 001 1h1m14 0h1a1 1 0 001-1v-6M3 11h18" />
-      </svg>
-    ),
-  },
-  {
-    label: "Aparcamiento VAO",
-    desc: "Plazas para grupos que comparten vehículo.",
-    href: "https://atalayas.com/aparcamientovao/",
-    activo: true,
-    icono: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 0h4a2 2 0 012 2v12a2 2 0 01-2 2h-4m-6 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m-6 0h6" />
-      </svg>
-    ),
-  },
-  {
-    label: "Guardería",
-    desc: "Conciliación familiar en el área.",
-    href: null,
-    activo: false,
-    icono: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
-  },
-  {
-    label: "Descuentos y ventajas",
-    desc: "Beneficios para trabajadores del parque.",
-    href: null,
-    activo: false,
-    icono: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    ),
-  },
+const ICONO_MAP: Record<string, React.ReactNode> = {
+  coche_compartido: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  ),
+  autobus: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h2m4 0h2M3 11l1-5h16l1 5M3 11v6a1 1 0 001 1h1m14 0h1a1 1 0 001-1v-6M3 11h18" />
+    </svg>
+  ),
+  aparcamiento: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 0h4a2 2 0 012 2v12a2 2 0 01-2 2h-4m-6 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m-6 0h6" />
+    </svg>
+  ),
+  guarderia: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  ),
+  descuentos: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+    </svg>
+  ),
+};
+
+const SERVICIOS_MOCK: Servicio[] = [
+  { servicioId: "m1", nombre: "Coche compartido", descripcion: "Ahorra hasta 2.500€/año compartiendo ruta.", url: "https://www.lokinn.com/compartir-coche/atalayas", activo: true, icono: "coche_compartido", orden: 1 },
+  { servicioId: "m2", nombre: "Autobús lanzadera", descripcion: "Línea 7P con horarios laborales.", url: "https://atalayas.com/autobus-lanzadera/", activo: true, icono: "autobus", orden: 2 },
+  { servicioId: "m3", nombre: "Aparcamiento VAO", descripcion: "Plazas para grupos que comparten vehículo.", url: "https://atalayas.com/aparcamientovao/", activo: true, icono: "aparcamiento", orden: 3 },
+  { servicioId: "m4", nombre: "Guardería", descripcion: "Conciliación familiar en el área.", url: null, activo: false, icono: "guarderia", orden: 4 },
+  { servicioId: "m5", nombre: "Descuentos y ventajas", descripcion: "Beneficios para trabajadores del parque.", url: null, activo: false, icono: "descuentos", orden: 5 },
 ];
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
@@ -159,20 +139,24 @@ export default function Empleado() {
   const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
   const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [servicios, setServicios] = useState<Servicio[]>(SERVICIOS_MOCK);
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [noticiasData, modulosData] = await Promise.all([
+        const [noticiasData, modulosData, serviciosData] = await Promise.all([
           getNoticias(usuario?.empresaId).catch(() => []),
           getModulosConProgreso().catch(() => []),
+          getServicios().catch(() => []),
         ]);
         setNoticias((noticiasData as Noticia[]).slice(0, 6));
         const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
         setFormaciones(real);
-        // Si la API no devuelve módulos, usar mock con progreso de localStorage
         if (real.length === 0) {
           setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
+        }
+        if (serviciosData && serviciosData.length > 0) {
+          setServicios(serviciosData);
         }
       } finally {
         setCargando(false);
@@ -378,12 +362,13 @@ export default function Empleado() {
                   </p>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                     style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.50)", border: "1px solid rgba(0,0,0,0.10)" }}>
-                    {SERVICIOS.filter(s => s.activo).length} / {SERVICIOS.length} activos
+                    {servicios.filter(s => s.activo).length} / {servicios.length} activos
                   </span>
                 </div>
 
                 <div className="relative p-4 flex flex-col gap-2">
-                  {SERVICIOS.map((s) => {
+                  {servicios.sort((a, b) => a.orden - b.orden).map((s) => {
+                    const icono = s.icono ? ICONO_MAP[s.icono] : null;
                     const content = (
                       <div
                         className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
@@ -395,7 +380,6 @@ export default function Empleado() {
                           boxShadow: s.activo ? "inset 0 1px 0 rgba(0,0,0,0.05)" : "none",
                         }}
                       >
-                        {/* Icono */}
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                           style={{
@@ -406,22 +390,20 @@ export default function Empleado() {
                             color: s.activo ? "#000" : "rgba(0,0,0,0.2)",
                           }}
                         >
-                          {s.icono}
+                          {icono}
                         </div>
 
-                        {/* Texto */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate"
                             style={{ color: s.activo ? "#000" : "rgba(0,0,0,0.25)" }}>
-                            {s.label}
+                            {s.nombre}
                           </p>
                           <p className="text-xs mt-0.5 truncate"
                             style={{ color: s.activo ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.15)" }}>
-                            {s.desc}
+                            {s.descripcion}
                           </p>
                         </div>
 
-                        {/* Acción */}
                         {s.activo ? (
                           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" strokeWidth={2}
@@ -442,8 +424,8 @@ export default function Empleado() {
                       </div>
                     );
 
-                    return s.activo && s.href ? (
-                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                    return s.activo && s.url ? (
+                      <a key={s.servicioId} href={s.url} target="_blank" rel="noopener noreferrer"
                         className="block" style={{ textDecoration: "none" }}
                         onMouseEnter={(e) => {
                           const d = e.currentTarget.firstElementChild as HTMLElement;
@@ -463,7 +445,7 @@ export default function Empleado() {
                         }}>
                         {content}
                       </a>
-                    ) : <div key={s.label}>{content}</div>;
+                    ) : <div key={s.servicioId}>{content}</div>;
                   })}
                 </div>
               </div>
