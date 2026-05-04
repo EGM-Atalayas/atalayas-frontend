@@ -411,7 +411,7 @@ export default function Page() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,27,46,0.80) 0%, transparent 50%)" }} />
 
         {/* Contenido del hero — mismo layout que DashboardHero */}
-        <div className="relative z-10 w-full py-14">
+        <div className="relative z-10 w-full py-14" style={{ paddingTop: "80px" }}>
           <div className="w-full px-8 sm:px-12">
 
             {/* Breadcrumb */}
