@@ -427,7 +427,6 @@ function NavButton({ label, isActive, scrolled, onClick }: NavButtonProps) {
             : (scrolled ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.85)"),
         transition: "color 0.35s ease",
         background: "transparent",
-        transition: "color 0.15s ease",
       }}
     >
       {label}
