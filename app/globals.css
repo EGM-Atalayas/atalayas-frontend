@@ -182,6 +182,11 @@ body::-webkit-scrollbar,
   50%       { background-position: 100% 50%; }
 }
 
+@keyframes heroPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.5); }
+}
+
 /* Ayuda al browser a promover capas solo cuando sea necesario */
 .animate-on-scroll,
 .group {
