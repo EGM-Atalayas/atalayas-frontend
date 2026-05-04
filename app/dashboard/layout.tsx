@@ -72,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
       <Header />
-      <main className="pt-20 pb-2">
+      <main className="pb-2">
         {children}
       </main>
       <ChatbotIA />

@@ -17,7 +17,7 @@ export default function OnboardingPage() {
   ];
 
   return (
-    <div>
+    <div className="pt-20">
       <div className="mb-10 text-center">
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Tu ruta de incorporación</h1>
         <p className="text-sm text-gray-400 mt-2">Sigue estos pasos para completar tu llegada a {usuario?.nombreEmpresa || "la empresa"}.</p>

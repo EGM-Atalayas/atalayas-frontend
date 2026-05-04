@@ -115,7 +115,10 @@ export default function DashboardHero({
       {/* Contenido — en inicio limitamos el ancho en desktop */}
       <div
         className={`relative z-10 w-full px-6 sm:px-9 lg:px-14 ${paddingY}`}
-        style={variante === "inicio" ? { maxWidth: "720px" } : undefined}
+        style={{
+          paddingTop:  "80px",
+          ...(variante === "inicio" ? { maxWidth: "720px" } : {}),
+        }}
       >
         {/* Etiqueta: punto pulsante + fecha */}
         <p
