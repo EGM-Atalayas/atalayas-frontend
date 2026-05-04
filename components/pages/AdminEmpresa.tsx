@@ -27,6 +27,64 @@ interface Anuncio {
 }
 
 // ── Mock data (sustituir cuando la API lo soporte) ──────────────────────────
+const SERVICIOS = [
+  {
+    label: "Coche compartido",
+    desc: "Ahorra hasta 2.500€/año compartiendo ruta.",
+    href: "https://www.lokinn.com/compartir-coche/atalayas",
+    activo: true,
+    icono: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      </svg>
+    ),
+  },
+  {
+    label: "Autobús lanzadera",
+    desc: "Línea 7P con horarios laborales.",
+    href: "https://atalayas.com/autobus-lanzadera/",
+    activo: true,
+    icono: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h2m4 0h2M3 11l1-5h16l1 5M3 11v6a1 1 0 001 1h1m14 0h1a1 1 0 001-1v-6M3 11h18" />
+      </svg>
+    ),
+  },
+  {
+    label: "Aparcamiento VAO",
+    desc: "Plazas para grupos que comparten vehículo.",
+    href: "https://atalayas.com/aparcamientovao/",
+    activo: true,
+    icono: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 0h4a2 2 0 012 2v12a2 2 0 01-2 2h-4m-6 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
+    label: "Guardería",
+    desc: "Conciliación familiar en el área.",
+    href: null,
+    activo: false,
+    icono: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
+    label: "Descuentos y ventajas",
+    desc: "Beneficios para trabajadores del parque.",
+    href: null,
+    activo: false,
+    icono: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+    ),
+  },
+];
+
 const MOCK_MODULOS = [
   { id: "m1", nombre: "Prevención de Riesgos Laborales", completados: 18, enProgreso: 6, pendientes: 4, total: 28 },
   { id: "m2", nombre: "Protección de Datos (RGPD)", completados: 22, enProgreso: 3, pendientes: 3, total: 28 },
@@ -288,7 +346,8 @@ export default function AdminEmpresa() {
               <div className="flex flex-col gap-2">
                 {[
                   { label: "Añadir empleado", desc: "Registra un nuevo miembro del equipo", href: "/dashboard/admin?tab=empleados", bg: "var(--azul-egm-light)", color: "var(--azul-egm)", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
-                  { label: "Nuevo módulo", desc: "Crea contenido formativo para tu equipo", href: "/dashboard/admin/modulos/crear", bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                  { label: "Gestión de módulos", desc: "Administra los módulos formativos", href: "/dashboard/admin?tab=formaciones", bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
+                  { label: "Crear módulo", desc: "Crea contenido formativo para tu equipo", href: "/dashboard/admin/modulos/crear", bg: "var(--azul-egm-light)", color: "var(--azul-egm)", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
                   { label: "Publicar anuncio", desc: "Comunica algo importante a tu equipo", href: "/dashboard/admin?tab=anuncios", bg: "#fef3c7", color: "#b45309", icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
                 ].map((a) => (
                   <button
@@ -317,7 +376,7 @@ export default function AdminEmpresa() {
             </div>
 
             {/* Últimos comunicados */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-1">
               <div className="flex items-center justify-between mb-6">
                 <TituloSeccion noMargin>Últimos comunicados</TituloSeccion>
                 <button onClick={() => router.push("/dashboard/admin?tab=anuncios")} className="text-xs font-medium hover:underline shrink-0" style={{ color: "var(--azul-egm)" }}>
@@ -351,6 +410,112 @@ export default function AdminEmpresa() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Servicios */}
+            <div className="lg:col-span-1">
+              <div className="mb-6"><TituloSeccion noMargin>Servicios</TituloSeccion></div>
+              <div
+                className="rounded-2xl overflow-hidden flex-1 relative"
+                style={{ background: "linear-gradient(160deg, #f9fafb 0%, #f3f4f6 100%)" }}
+              >
+                {/* Glow decorativo */}
+                <div className="absolute pointer-events-none" style={{
+                  top: "-60px", left: "-60px", width: "240px", height: "240px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(0,0,0,0.04) 0%, transparent 70%)",
+                }} />
+
+
+
+                <div className="relative p-4 flex flex-col gap-2">
+                  {SERVICIOS.map((s) => {
+                    const content = (
+                      <div
+                        className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
+                        style={{
+                          background: s.activo ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.01)",
+                          border: s.activo ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(0,0,0,0.06)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          boxShadow: s.activo ? "inset 0 1px 0 rgba(0,0,0,0.05)" : "none",
+                        }}
+                      >
+                        {/* Icono */}
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                          style={{
+                            background: s.activo ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)",
+                            border: s.activo ? "1px solid rgba(0,0,0,0.14)" : "1px solid rgba(0,0,0,0.05)",
+                            backdropFilter: "blur(4px)",
+                            WebkitBackdropFilter: "blur(4px)",
+                            color: s.activo ? "#000" : "rgba(0,0,0,0.2)",
+                          }}
+                        >
+                          {s.icono}
+                        </div>
+
+                        {/* Texto */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate"
+                            style={{ color: s.activo ? "#000" : "rgba(0,0,0,0.25)" }}>
+                            {s.label}
+                          </p>
+                          <p className="text-xs mt-0.5 truncate"
+                            style={{ color: s.activo ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.15)" }}>
+                            {s.desc}
+                          </p>
+                        </div>
+
+                        {/* Acción */}
+                        {s.activo ? (
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" strokeWidth={2}
+                            style={{ color: "rgba(0,0,0,0.40)" }}>
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        ) : (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                            style={{
+                              background: "rgba(0,0,0,0.05)",
+                              color: "rgba(0,0,0,0.30)",
+                              border: "1px solid rgba(0,0,0,0.08)",
+                            }}>
+                            Próx.
+                          </span>
+                        )}
+                      </div>
+                    );
+
+                    return s.activo && s.href ? (
+                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                        className="block" style={{ textDecoration: "none" }}
+                        onMouseEnter={(e) => {
+                          const d = e.currentTarget.firstElementChild as HTMLElement;
+                          if (d) {
+                            d.style.background = "rgba(0,0,0,0.10)";
+                            d.style.borderColor = "rgba(0,0,0,0.20)";
+                            d.style.transform = "translateY(-1px)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          const d = e.currentTarget.firstElementChild as HTMLElement;
+                          if (d) {
+                            d.style.background = s.activo ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.01)";
+                            d.style.borderColor = s.activo ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.06)";
+                            d.style.transform = "none";
+                          }
+                        }}
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={s.label}>{content}</div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
           </div>
