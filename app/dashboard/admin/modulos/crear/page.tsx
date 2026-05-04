@@ -618,7 +618,7 @@ export default function CrearModuloPage() {
 
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full min-h-screen" style={{ background: "var(--gris-pagina)" }}>
+    <div className="w-full min-h-screen pt-20" style={{ background: "var(--gris-pagina)" }}>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .28s ease both}`}</style>
 
       {/* ══ HEADER BREADCRUMBS ══ */}

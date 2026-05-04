@@ -182,7 +182,7 @@ const AdminGeneral: React.FC = () => {
   }
 
   return (
-    <div className="px-6 md:px-8 lg:px-10 w-full animate-fadeIn mt-6 pb-10">
+    <div className="px-6 md:px-8 lg:px-10 w-full animate-fadeIn mt-6 pb-10 pt-20">
 
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 text-sm font-medium">

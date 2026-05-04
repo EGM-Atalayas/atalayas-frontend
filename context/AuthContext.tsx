@@ -40,6 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(nuevoUsuario);
     if (nuevoUsuario) {
       console.log("[AuthContext] Usuario guardado:", nuevoUsuario.nombre);
+      // Persistir bannerUrl y avatarUrl para que sobrevivan al cierre de sesión y vuelta
+      if (nuevoUsuario.bannerUrl) localStorage.setItem("cachedBannerUrl", nuevoUsuario.bannerUrl);
+      if (nuevoUsuario.avatarUrl)  localStorage.setItem("cachedAvatarUrl", nuevoUsuario.avatarUrl);
     }
   }, []);
 
@@ -68,6 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await logout();
         return;
       }
+
+      // Recuperar imágenes cacheadas si el backend no las devuelve
+      if (!userData.bannerUrl) userData.bannerUrl = localStorage.getItem("cachedBannerUrl") ?? undefined;
+      if (!userData.avatarUrl)  userData.avatarUrl  = localStorage.getItem("cachedAvatarUrl")  ?? undefined;
 
       setUsuario(userData);
     } catch (err) {

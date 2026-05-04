@@ -531,7 +531,7 @@ export default function PerfilPage() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.50) 0%, transparent 40%)" }} />
 
         {/* Contenido sobre la imagen */}
-        <div className="relative z-10 w-full px-6 sm:px-9 lg:px-14 py-10 sm:py-14">
+        <div className="relative z-10 w-full px-6 sm:px-9 lg:px-14 py-10 sm:py-14" style={{ paddingTop: "80px" }}>
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 sm:gap-6">
             {/* Avatar */}
             <div className="relative shrink-0" style={{ animation: "heroFadeUp 0.5s ease both" }}>

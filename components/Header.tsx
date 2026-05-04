@@ -70,12 +70,15 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchContador]);
 
-  // Scroll: sombra+blur en desktop, cerrar menú mobile si está abierto
+  // Scroll: transparente en top, sólido+compacto al bajar
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 8);
-      if (window.scrollY > 8) setMobileOpen(false);
+      const y = window.scrollY;
+      setScrolled(y > 10);
+      if (y > 10) setMobileOpen(false);
     };
+    // Evaluar estado inicial (por si la página carga ya scrolleada)
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -127,12 +130,12 @@ export default function Header({ logoEmpresa }: HeaderProps) {
     <header
       className="w-full fixed top-0 left-0 right-0 z-50"
       style={{
-        background: scrolled ? "rgba(22,50,105,0.97)" : "#1b3f7e",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-        boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,0.25)" : "none",
-        transition: "background 0.2s ease, box-shadow 0.2s ease, backdrop-filter 0.2s ease",
+        background:         scrolled ? "rgba(22,50,105,0.97)" : "transparent",
+        borderBottom:       scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
+        backdropFilter:     scrolled ? "blur(14px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(14px)" : "none",
+        boxShadow:          scrolled ? "0 4px 28px rgba(0,0,0,0.30)" : "none",
+        transition:         "background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease",
       }}
     >
       {/* Barra de progreso de navegación */}
@@ -166,8 +169,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
               height={50}
               priority
               style={{
-                height: "clamp(40px, 6vw, 50px)",
-                width: "auto",
+                height:     "clamp(40px, 6vw, 50px)",
+                width:      "auto",
                 transition: "opacity 0.15s ease",
               }}
               className="brightness-0 invert cursor-pointer hover:opacity-75"
@@ -184,6 +187,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
                 key={link.path}
                 label={link.label}
                 isActive={isActive}
+                scrolled={scrolled}
                 onClick={() => handleNavClick(link.path)}
               />
             );
@@ -254,7 +258,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           opacity:   mobileOpen ? 1 : 0,
           transition: "max-height 0.3s ease, opacity 0.2s ease",
           borderTop: mobileOpen ? "1px solid rgba(255,255,255,0.08)" : "none",
-          background: "var(--azul-egm)",
+          background: "rgba(22,50,105,0.98)",
+          backdropFilter: "blur(14px)",
           overflowY: "auto",
         }}
       >
@@ -380,10 +385,11 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 interface NavButtonProps {
   label: string;
   isActive: boolean;
+  scrolled: boolean;
   onClick: () => void;
 }
 
-function NavButton({ label, isActive, onClick }: NavButtonProps) {
+function NavButton({ label, isActive, scrolled, onClick }: NavButtonProps) {
   const [hovered, setHovered] = useState(false);
   const [origin, setOrigin] = useState<"left" | "right">("left");
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -415,12 +421,12 @@ function NavButton({ label, isActive, onClick }: NavButtonProps) {
         fontSize: "15px",
         fontWeight: isActive ? 600 : 500,
         color: isActive
-          ? "var(--verde-oliva-hover)"
+          ? (scrolled ? "var(--verde-oliva-hover)" : "#ffffff")
           : hovered
-            ? "rgba(255,255,255,0.95)"
-            : "rgba(255,255,255,0.6)",
+            ? "#ffffff"
+            : (scrolled ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.85)"),
+        transition: "color 0.35s ease",
         background: "transparent",
-        transition: "color 0.15s ease",
       }}
     >
       {label}

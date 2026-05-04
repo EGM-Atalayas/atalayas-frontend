@@ -222,7 +222,7 @@ export default function AdminEmpresa() {
       <DashboardHero
         prefijo="Hola, "
         titulo={firstName}
-        subtitulo={`Administrando ${nombreEmpresa}`}
+
         imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
         variante="inicio"
       />

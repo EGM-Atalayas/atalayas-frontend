@@ -26,7 +26,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   let heroConfig: HeroConfig = {
     prefijo:        "Bienvenido, ",
     titulo:         nombreParaMostrar,
-    subtitulo:      "Panel de administración de EGM Atalayas",
     imagenFondo:    "/background-dashboard.webp",
     objectPosition: "center 40%",
   };
@@ -38,7 +37,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Panel de ",
       titulo:       "Administración",
-      subtitulo:    "Gestiona empresas, usuarios y configuración global de la plataforma",
       imagenFondo:  "/background-empresa.webp",
       objectPosition: "center 30%",
     };
@@ -46,7 +44,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Gestiona las ",
       titulo:       "Empresas",
-      subtitulo:    "Alta, edición y seguimiento de todas las empresas del parque",
       imagenFondo:  "/background-empresa.webp",
       objectPosition: "center 50%",
     };
@@ -54,7 +51,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Revisa las ",
       titulo:       "Solicitudes",
-      subtitulo:    "Gestiona las solicitudes pendientes de empresas y usuarios",
       imagenFondo:  "/background-comunidad.webp",
       objectPosition: "center 40%",
     };
@@ -62,7 +58,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Analiza las ",
       titulo:       "Estadísticas",
-      subtitulo:    "Métricas de uso, formación y actividad en la plataforma",
       imagenFondo:  "/background-dashboard.webp",
       objectPosition: "center 60%",
     };
@@ -76,7 +71,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-10 pt-20">
+    <div className="min-h-screen bg-slate-50/50 pb-10">
       <Header />
       <DashboardHero
         prefijo={heroConfig.prefijo}
