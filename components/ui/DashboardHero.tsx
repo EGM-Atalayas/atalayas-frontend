@@ -1,11 +1,9 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-
 interface DashboardHeroProps {
   prefijo?: string;
   titulo: string;
-  subtitulo?: string; // mantenido por retrocompatibilidad, ya no se renderiza
+  subtitulo?: string; // mantenido por retrocompatibilidad
   imagenFondo?: string;
   objectPosition?: string;
   /** "inicio"  = hero grande (home de cada rol)
@@ -22,60 +20,91 @@ export default function DashboardHero({
   variante = "seccion",
 }: DashboardHeroProps) {
 
-  const { usuario } = useAuth();
-
-  const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
-  const etiquetaRol  = esSuperAdmin ? "SuperAdmin" : null; // reservado para uso futuro
-
-  /* ── Tamaños según variante ── */
+  /* ── Alturas ── */
   const alturaMin = variante === "inicio"
-    ? "clamp(190px, 28vw, 360px)"
+    ? "clamp(220px, 35vw, 400px)"
     : variante === "minima"
       ? "clamp(100px, 12vw, 160px)"
-      : "clamp(170px, 25vw, 290px)";
+      : "clamp(200px, 28vw, 320px)";
 
-  const paddingY = variante === "inicio"
-    ? "py-8 sm:py-12 lg:py-16"
-    : variante === "minima"
-      ? "py-5 sm:py-7"
-      : "py-8 sm:py-11 lg:py-14";
-
-  const sizePrefijo = variante === "inicio"
-    ? "clamp(1.4rem, 3.2vw, 3rem)"
-    : variante === "minima"
-      ? "clamp(0.95rem, 1.6vw, 1.25rem)"
-      : "clamp(1.6rem, 3.2vw, 2.8rem)";
-
+  /* ── Tipografía ── */
   const sizeTitulo = variante === "inicio"
-    ? "clamp(2.6rem, 6vw, 5.8rem)"   // más grande en inicio
+    ? "clamp(2.4rem, 5.5vw, 5rem)"
     : variante === "minima"
       ? "clamp(1.2rem, 2vw, 1.6rem)"
       : "clamp(2.6rem, 5vw, 4.2rem)";
 
-  /* ── Opacidades de overlay según variante ── */
-  const overlayBase    = variante === "minima" ? "rgba(8,17,34,0.60)" : "rgba(8,17,34,0.45)";
-  const overlayLateral = variante === "minima"
-    ? "none"
-    : "linear-gradient(to right, rgba(8,17,34,0.75) 0%, rgba(8,17,34,0.35) 55%, transparent 100%)";
+  const sizePrefijo = sizeTitulo;
 
-  /* ── En móvil suavizamos el overlay lateral ── */
-  const overlayMobile = variante !== "minima"
-    ? "linear-gradient(to right, rgba(8,17,34,0.60) 0%, rgba(8,17,34,0.20) 70%, transparent 100%)"
-    : "none";
+  /* ── Overlay base ── */
+  const overlayBase = variante === "minima"
+    ? "rgba(8,17,34,0.60)"
+    : "rgba(8,17,34,0.30)";
+
+  /* ── Padding inferior ── */
+  const paddingBottom = variante === "inicio"
+    ? "clamp(2.5rem, 5vw, 3.5rem)"
+    : variante === "minima"
+      ? "1.5rem"
+      : "clamp(1.75rem, 3.5vw, 2.5rem)";
 
   const fechaHoy = new Date().toLocaleDateString("es-ES", {
     weekday: "long", day: "numeric", month: "long",
   }).replace(/^\w/, (c) => c.toUpperCase());
 
+  /* ── Minima: centrado, sin cambios ── */
+  if (variante === "minima") {
+    return (
+      <div
+        className="relative overflow-hidden flex items-center"
+        style={{ minHeight: alturaMin, boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}
+      >
+        <img src={imagenFondo} alt="" aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition }} />
+        <div className="absolute inset-0" style={{ background: overlayBase }} />
+        <div
+          className="absolute top-0 left-0 right-0 pointer-events-none"
+          style={{ height: "60%", background: "linear-gradient(to bottom, rgba(8,17,34,0.50) 0%, transparent 100%)" }}
+        />
+        <div
+          className="relative z-10 w-full px-6 sm:px-9 lg:px-14 flex flex-wrap items-baseline gap-x-2"
+          style={{ paddingTop: "80px" }}
+        >
+          {prefijo && (
+            <span style={{
+              fontSize:   sizeTitulo,
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle:  "italic",
+              fontWeight: 500,
+              color:      "rgba(255,255,255,0.65)",
+              lineHeight: 1.1,
+            }}>
+              {prefijo}
+            </span>
+          )}
+          <span style={{
+            fontSize:   sizeTitulo,
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle:  "italic",
+            fontWeight: 500,
+            color:      "rgba(255,255,255,0.90)",
+            lineHeight: 1.1,
+          }}>
+            {titulo}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Inicio / Seccion: texto anclado abajo-izquierda ── */
   return (
     <div
-      className="relative overflow-hidden flex items-center"
-      style={{
-        minHeight: alturaMin,
-        boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
-      }}
+      className="relative overflow-hidden flex items-end"
+      style={{ minHeight: alturaMin, boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}
     >
-      {/* Imagen de fondo */}
+      {/* Imagen */}
       <img
         src={imagenFondo}
         alt=""
@@ -87,78 +116,76 @@ export default function DashboardHero({
       {/* Overlay base */}
       <div className="absolute inset-0" style={{ background: overlayBase }} />
 
-      {/* Overlay lateral — desktop */}
-      {overlayLateral !== "none" && (
-        <div
-          className="absolute inset-0 hidden sm:block"
-          style={{ background: overlayLateral }}
-        />
-      )}
-
-      {/* Overlay lateral — móvil (más suave) */}
-      {overlayMobile !== "none" && (
-        <div
-          className="absolute inset-0 block sm:hidden"
-          style={{ background: overlayMobile }}
-        />
-      )}
-
-      {/* Fade inferior */}
+      {/* Gradiente superior — protege header transparente */}
       <div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        className="absolute top-0 left-0 right-0 pointer-events-none"
         style={{
-          height: "60px",
-          background: "linear-gradient(to bottom, transparent, rgba(8,17,34,0.30))",
+          height: "45%",
+          background: "linear-gradient(to bottom, rgba(8,17,34,0.55) 0%, transparent 100%)",
         }}
       />
 
-      {/* Contenido — en inicio limitamos el ancho en desktop */}
+      {/* Gradiente inferior — legibilidad del texto */}
       <div
-        className={`relative z-10 w-full px-6 sm:px-9 lg:px-14 ${paddingY}`}
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
         style={{
-          paddingTop:  "80px",
-          ...(variante === "inicio" ? { maxWidth: "720px" } : {}),
+          height: "65%",
+          background: "linear-gradient(to bottom, transparent 0%, rgba(8,17,34,0.55) 50%, rgba(8,17,34,0.82) 100%)",
+        }}
+      />
+
+      {/* Contenido */}
+      <div
+        className="relative z-10 w-full px-6 sm:px-9 lg:px-14"
+        style={{
+          paddingBottom,
+          ...(variante === "inicio" ? { maxWidth: "800px" } : {}),
         }}
       >
-        {/* Etiqueta: punto pulsante + fecha */}
-        <p
-          className="flex items-center gap-2 text-xs font-semibold uppercase mb-3 sm:mb-4"
-          style={{
-            color:         "rgba(255,255,255,0.45)",
-            letterSpacing: "0.12em",
-            animation:     "heroFadeUp 0.6s ease both",
-          }}
-        >
-          <span
-            className="inline-block rounded-full shrink-0"
+        {/* Fecha — solo en inicio */}
+        {variante === "inicio" && (
+          <p
+            className="flex items-center gap-2 mb-3 sm:mb-4"
             style={{
-              width:      "6px",
-              height:     "6px",
-              background: "var(--verde-oliva-hover)",
-              animation:  "heroPulse 2.4s ease-in-out infinite",
+              fontSize:      "0.875rem",
+              fontWeight:    500,
+              color:         "rgba(255,255,255,0.68)",
+              letterSpacing: "0.02em",
+              animation:     "heroFadeUp 0.6s ease both",
             }}
-          />
-          <span className="whitespace-nowrap shrink-0">{fechaHoy}</span>
-        </p>
+          >
+            <span
+              className="inline-block rounded-full shrink-0"
+              style={{
+                width:      "6px",
+                height:     "6px",
+                background: "var(--verde-oliva-hover)",
+                animation:  "heroPulse 2.4s ease-in-out infinite",
+              }}
+            />
+            <span className="whitespace-nowrap">{fechaHoy}</span>
+          </p>
+        )}
 
-        {/* Título */}
+        {/* Prefijo + Título */}
         <div style={{ animation: "heroFadeUp 0.7s ease 0.1s both" }}>
-          <div className="leading-tight flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <div className="leading-tight flex flex-wrap items-baseline gap-x-3 gap-y-1">
+
             {prefijo && (
               <span
-                className="text-white"
                 style={{
-                  fontSize:      sizePrefijo,
-                  fontFamily:    "var(--font-poppins), sans-serif",
-                  fontWeight:    400,
-                  letterSpacing: "-0.025em",
-                  lineHeight:    1.1,
-                  opacity:       0.7,   // prefijo más tenue para que el título destaque
+                  fontSize:   sizePrefijo,
+                  fontFamily: "'Instrument Serif', serif",
+                  fontStyle:  "italic",
+                  fontWeight: 500,
+                  lineHeight: 1.05,
+                  color:      "#ffffff",
                 }}
               >
                 {prefijo}
               </span>
             )}
+
             <span
               style={{
                 fontSize:             sizeTitulo,
@@ -181,7 +208,6 @@ export default function DashboardHero({
               {titulo}
             </span>
           </div>
-
         </div>
       </div>
     </div>

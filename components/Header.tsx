@@ -179,7 +179,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         </div>
 
         {/* Navegación desktop — centrada en el header */}
-        <nav className="hidden md:flex items-stretch absolute left-1/2 -translate-x-1/2 h-full">
+        <nav className="hidden lg:flex items-stretch absolute left-1/2 -translate-x-1/2 h-full">
           {linksToRender.map((link) => {
             const isActive = pathname === link.path || (pathname.startsWith(link.path) && link.path !== linkLogo);
             return (
@@ -195,7 +195,7 @@ export default function Header({ logoEmpresa }: HeaderProps) {
         </nav>
 
         {/* Lado derecho — campana pegada al avatar */}
-        <div className="ml-auto flex items-center h-full gap-3 md:gap-0 z-10">
+        <div className="ml-auto flex items-center h-full gap-2 lg:gap-1 z-10">
 
           {/* Campana — px reducido para quedar cerca del avatar */}
           <div className="flex items-center h-full">
@@ -217,12 +217,14 @@ export default function Header({ logoEmpresa }: HeaderProps) {
             onCerrarSesion={handleLogout}
           />
 
-          {/* Hamburguesa → X — solo móvil */}
+          {/* Hamburguesa → X — solo hasta lg */}
           <button
-            className="md:hidden flex flex-col justify-center items-center rounded-lg gap-[5px]"
+            className="lg:hidden flex flex-col justify-center items-center gap-[5px]"
             style={{
-              width: "40px", height: "40px",
-              background: mobileOpen ? "rgba(255,255,255,0.08)" : "transparent",
+              width: "42px", height: "42px",
+              borderRadius: "11px",
+              background: mobileOpen ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.14)",
               transition: "background 0.15s ease",
             }}
             onClick={() => setMobileOpen((prev) => !prev)}
@@ -252,14 +254,15 @@ export default function Header({ logoEmpresa }: HeaderProps) {
 
       {/* Menú móvil — con animación suave de entrada */}
       <div
-        className="md:hidden flex flex-col overflow-hidden"
+        className="lg:hidden flex flex-col overflow-hidden"
         style={{
           maxHeight: mobileOpen ? "100dvh" : "0px",
           opacity:   mobileOpen ? 1 : 0,
           transition: "max-height 0.3s ease, opacity 0.2s ease",
-          borderTop: mobileOpen ? "1px solid rgba(255,255,255,0.08)" : "none",
+          borderTop: mobileOpen ? "1px solid rgba(255,255,255,0.07)" : "none",
           background: "rgba(22,50,105,0.98)",
           backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
           overflowY: "auto",
         }}
       >
@@ -420,12 +423,10 @@ function NavButton({ label, isActive, scrolled, onClick }: NavButtonProps) {
       style={{
         fontSize: "15px",
         fontWeight: isActive ? 600 : 500,
-        color: isActive
-          ? (scrolled ? "var(--verde-oliva-hover)" : "#ffffff")
-          : hovered
-            ? "#ffffff"
-            : (scrolled ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.85)"),
-        transition: "color 0.35s ease",
+        color: isActive || hovered
+          ? "#ffffff"
+          : (scrolled ? "rgba(255,255,255,0.58)" : "rgba(255,255,255,0.82)"),
+        transition: "color 0.3s ease",
         background: "transparent",
       }}
     >

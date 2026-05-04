@@ -125,14 +125,24 @@ export default function UserMenu({
   }
 
   return (
-    <div className="hidden md:flex relative h-full items-stretch" ref={containerRef}>
+    <div className="hidden lg:flex relative h-full items-center px-1" ref={containerRef}>
       {/* Trigger */}
       <button
         onClick={toggle}
-        className="flex items-center gap-2.5 px-4 h-full border-none cursor-pointer rounded-none"
+        className="flex items-center gap-2 border-none cursor-pointer"
         style={{
-          background:  hovered || open ? "rgba(255,255,255,0.07)" : "transparent",
-          transition:  "background 0.15s ease",
+          height:       "42px",
+          padding:      "0 12px 0 6px",
+          borderRadius: "11px",
+          background:   open
+            ? "rgba(255,255,255,0.13)"
+            : hovered
+              ? "rgba(255,255,255,0.10)"
+              : "transparent",
+          border:      open || hovered
+            ? "1px solid rgba(255,255,255,0.18)"
+            : "1px solid transparent",
+          transition:  "background 0.15s ease, border-color 0.15s ease",
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -141,19 +151,19 @@ export default function UserMenu({
         <div
           className="rounded-full flex items-center justify-center font-bold select-none shrink-0 text-sm overflow-hidden"
           style={{
-            width:      "34px",
-            height:     "34px",
+            width:      "30px",
+            height:     "30px",
             background: "rgba(255,255,255,0.15)",
             color:      "var(--blanco)",
-            border:     `2px solid ${hovered || open ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)"}`,
+            border:     `2px solid ${hovered || open ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.30)"}`,
             transition: "border-color 0.15s ease",
           }}
         >
           {avatarUrl ? (
-            <Image src={avatarUrl} alt="Avatar" width={34} height={34}
+            <Image src={avatarUrl} alt="Avatar" width={30} height={30}
               className="object-cover rounded-full" />
           ) : logoEmpresa ? (
-            <Image src={logoEmpresa} alt="Logo empresa" width={34} height={34}
+            <Image src={logoEmpresa} alt="Logo empresa" width={30} height={30}
               className="object-cover rounded-full" />
           ) : initials}
         </div>
@@ -162,7 +172,7 @@ export default function UserMenu({
         <span
           className="max-w-[110px] truncate whitespace-nowrap hidden lg:block"
           style={{
-            fontSize:   "15px",
+            fontSize:   "14px",
             fontWeight: 500,
             color:      hovered || open ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.75)",
             transition: "color 0.15s ease",
@@ -176,7 +186,7 @@ export default function UserMenu({
           className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
           style={{
-            color:      hovered || open ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+            color:      hovered || open ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.50)",
             transition: "color 0.15s ease",
             flexShrink: 0,
           }}
