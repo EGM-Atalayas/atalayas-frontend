@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
 import Link from "next/link";
 import Image from "next/image";
@@ -133,6 +133,22 @@ export default function Invitado() {
   const [todosLosAnuncios, setTodosLosAnuncios] = useState<Noticia[]>([]);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
   const [tabActivo, setTabActivo] = useState(0);
+  const [carruselIndex, setCarruselIndex] = useState(0);
+  const carruselTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carruselNoAnim = useRef(false);
+  const carruselInitialized = useRef(false);
+
+  // Slides del carrusel: primero noticias EGM (empresaId null), luego comunicados
+  const slidesCarrusel: ItemLista[] = useMemo(() => {
+    const items: ItemLista[] = [
+      ...todosLosAnuncios.filter(a => a.empresaId === null).slice(0, 5).map(anuncioToItem),
+      ...todosLosComunicados.slice(0, 2).map(comunicadoToItem),
+    ];
+    return items.length > 0 ? items : [
+      { img: "/background-invitado.webp", title: "EGM Atalayas lanza su nueva plataforma digital para empresas del área", tag: "Destacado", day: "", month: "", year: "" },
+      { img: "/background-comunidad.webp", title: "Jornada de networking: conecta con +150 empresas del área", tag: "Evento", day: "", month: "", year: "" },
+    ];
+  }, [todosLosAnuncios, todosLosComunicados]);
 
   useEffect(() => {
     Promise.all([
@@ -151,6 +167,12 @@ export default function Invitado() {
       .catch(() => { })
       .finally(() => setLoadingNoticias(false));
   }, []);
+
+  // Auto-avance del carrusel (sin snap, índice crece indefinidamente)
+  useEffect(() => {
+    carruselTimer.current = setTimeout(() => setCarruselIndex(p => p + 1), 6000);
+    return () => { if (carruselTimer.current) clearTimeout(carruselTimer.current); };
+  }, [carruselIndex]);
 
   // Filtrar por tab — combina comunicados EGM + anuncios de empresas
   const itemsComunicados = todosLosComunicados.map(comunicadoToItem);
@@ -269,7 +291,7 @@ export default function Invitado() {
             <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>Blog, Noticias, Eventos</p>
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
-            Mantente al día<br />con Atalayas
+            Mantente al día con Atalayas
           </h2>
           <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
             Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
@@ -277,86 +299,183 @@ export default function Invitado() {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-10">
+        {/* ── Carrusel estilo Apple TV Portrait ─────────────────────────── */}
+        {(() => {
+          const n = slidesCarrusel.length;
+          if (n === 0) return null;
 
-          {/* Featured card — usa datos reales si hay destacado */}
-          <Link href="/login" className="relative rounded-2xl overflow-hidden shrink-0 lg:w-[48%] min-h-[480px] sm:min-h-[560px] group block">
-            <Image
-              src="/background-invitado.webp"
-              alt="Noticia destacada"
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
-            <div className="absolute bottom-0 left-0 p-8 sm:p-10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-5 h-px bg-white/60" />
-                <span className="text-sm text-white/70 font-medium uppercase tracking-wider">Destacado</span>
+          const CARD_W = 820;
+          const CARD_H = 460;
+          const CARD_GAP = 20;
+          const CARD_TOTAL = CARD_W + CARD_GAP;
+          const TRANS = "0.52s cubic-bezier(0.25,0.46,0.45,0.94)";
+          const HALF = Math.min(n - 1, 2);
+
+          // Índice real 0..n-1 — nunca hay snap, crece indefinidamente
+          const realIdx = ((carruselIndex % n) + n) % n;
+
+          const goTo = (ri: number) => {
+            if (carruselTimer.current) clearTimeout(carruselTimer.current);
+            const base = carruselIndex - realIdx;
+            setCarruselIndex(base + ri + (ri < realIdx ? n : 0));
+            carruselTimer.current = setTimeout(() => setCarruselIndex(p => p + 1), 6000);
+          };
+          const goNext = () => {
+            if (carruselTimer.current) clearTimeout(carruselTimer.current);
+            setCarruselIndex(p => p + 1);
+            carruselTimer.current = setTimeout(() => setCarruselIndex(p => p + 1), 6000);
+          };
+          const goPrev = () => {
+            if (carruselTimer.current) clearTimeout(carruselTimer.current);
+            setCarruselIndex(p => p - 1);
+            carruselTimer.current = setTimeout(() => setCarruselIndex(p => p + 1), 6000);
+          };
+
+          // Ventana de tarjetas absolutas con key estable = carruselIndex + relOffset
+          // Cuando carruselIndex cambia, cada tarjeta existente anima su transform (sin snap)
+          const windowCards = Array.from({ length: HALF * 2 + 1 }, (_, k) => {
+            const relOffset = k - HALF;
+            const cardIdx = ((carruselIndex + relOffset) % n + n) % n;
+            return { cardIdx, relOffset, key: carruselIndex + relOffset };
+          });
+
+          return (
+            <div
+              className="-mx-6 sm:-mx-16 lg:-mx-24 xl:-mx-32 relative"
+              onMouseEnter={() => { if (carruselTimer.current) clearTimeout(carruselTimer.current); }}
+              onMouseLeave={() => { carruselTimer.current = setTimeout(() => setCarruselIndex(p => p + 1), 6000); }}
+            >
+              {/* Contenedor */}
+              <div className="overflow-hidden relative" style={{ height: CARD_H + 48 }}>
+                {windowCards.map(({ cardIdx, relOffset, key }) => {
+                  const slide = slidesCarrusel[cardIdx];
+                  const dist = Math.abs(relOffset);
+                  const isActive = dist === 0;
+                  const scale = isActive ? 1 : dist === 1 ? 0.88 : 0.78;
+                  const opacity = isActive ? 1 : dist === 1 ? 0.55 : 0.28;
+                  return (
+                    <div
+                      key={key}
+                      onClick={isActive ? undefined : () => goTo(cardIdx)}
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        width: CARD_W,
+                        height: CARD_H,
+                        borderRadius: 20,
+                        overflow: "hidden",
+                        opacity,
+                        cursor: isActive ? "default" : "pointer",
+                        transform: `translate(calc(${relOffset * CARD_TOTAL - CARD_W / 2}px), -50%) scale(${scale})`,
+                        transition: `transform ${TRANS}, opacity ${TRANS}`,
+                        willChange: "transform, opacity",
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={slide.img} alt={slide.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 75%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 35%)" }} />
+
+                      {/* Tag */}
+                      <div style={{ position: "absolute", top: 18, left: 18 }}>
+                        <span style={{
+                          display: "inline-block", padding: "3px 11px", borderRadius: 999,
+                          fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.09em",
+                          textTransform: "uppercase", background: "rgba(255,255,255,0.18)",
+                          backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.92)",
+                        }}>
+                          {slide.tag}
+                        </span>
+                      </div>
+
+                      {/* Contenido inferior */}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 22px 22px" }}>
+                        <p style={{
+                          color: "white", fontWeight: 700,
+                          fontSize: isActive ? "1.15rem" : "0.95rem",
+                          lineHeight: 1.35, marginBottom: isActive ? 16 : 0,
+                          textShadow: "0 1px 8px rgba(0,0,0,0.6)",
+                          display: "-webkit-box", WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical", overflow: "hidden",
+                        }}>
+                          {slide.title}
+                        </p>
+                        {isActive && (
+                          <Link href="/noticias" style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "9px 20px", borderRadius: 999, fontSize: "0.82rem",
+                            fontWeight: 600, background: "rgba(255,255,255,0.95)",
+                            color: "#111827", textDecoration: "none",
+                          }}>
+                            Ver noticia
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <h3 className="text-white text-2xl sm:text-3xl font-bold leading-snug max-w-sm">
-                {"EGM Atalayas lanza su nueva plataforma digital para empresas del área"}
-              </h3>
+
+              {/* Flechas */}
+              {n > 1 && (
+                <>
+                  <button onClick={goPrev} style={{
+                    position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+                    zIndex: 10, width: 44, height: 44, borderRadius: "50%", border: "none",
+                    background: "rgba(255,255,255,0.13)", backdropFilter: "blur(8px)",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.2s",
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.24)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.13)")}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button onClick={goNext} style={{
+                    position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                    zIndex: 10, width: 44, height: 44, borderRadius: "50%", border: "none",
+                    background: "rgba(255,255,255,0.13)", backdropFilter: "blur(8px)",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.2s",
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.24)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.13)")}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              {/* Puntos */}
+              {n > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 14 }}>
+                  {slidesCarrusel.map((_, i) => (
+                    <button key={i} onClick={() => goTo(i)} style={{
+                      width: i === realIdx ? 22 : 7, height: 7, borderRadius: 999,
+                      border: "none", cursor: "pointer", padding: 0,
+                      background: i === realIdx ? "var(--texto-primario)" : "var(--gris-borde)",
+                      transition: "all 0.3s ease",
+                    }} />
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="absolute top-5 right-5">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm text-white text-base">↗</div>
-            </div>
+          );
+        })()}
+
+        {/* Ver todas las publicaciones */}
+        <div className="mt-6 flex justify-end">
+          <Link
+            href="/noticias"
+            className="inline-flex items-center gap-2 text-base font-semibold transition-colors hover:opacity-80"
+            style={{ color: "var(--azul-egm)" }}
+          >
+            Ver todas las publicaciones ↗
           </Link>
-
-          {/* Right column */}
-          <div className="flex-1 flex flex-col">
-
-            {/* Ver todas */}
-            <div className="flex items-center justify-between mb-8 pb-4" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-              <Link
-                href="/noticias"
-                className="inline-flex items-center gap-2 text-base font-semibold transition-colors hover:opacity-80"
-                style={{ color: "var(--azul-egm)" }}
-              >
-                Ver todas las publicaciones ↗
-              </Link>
-            </div>
-
-            {/* Article list */}
-            <div className="flex flex-col divide-y" style={{ borderColor: "var(--gris-borde)" }}>
-              {[
-                {
-                  img: "/background-comunidad.webp",
-                  title: "Jornada de networking: conecta con +150 empresas del área",
-                  tag: "Evento",
-                  day: "18", month: "Abr", year: "2026",
-                },
-                {
-                  img: "/background-invitado.webp",
-                  title: "Nuevos servicios de transporte lanzadera desde Alicante",
-                  tag: "Noticia",
-                  day: "10", month: "Abr", year: "2026",
-                },
-                {
-                  img: "/background-comunidad.webp",
-                  title: "Convocatoria: Programa de formación para pymes del área empresarial",
-                  tag: "Convocatoria",
-                  day: "03", month: "Abr", year: "2026",
-                },
-              ].map((item) => (
-                <Link href="/login" key={item.title} className="flex gap-6 py-7 group items-start">
-                  <div className="relative w-32 h-22 sm:w-40 sm:h-28 rounded-xl overflow-hidden shrink-0" style={{ minHeight: "88px" }}>
-                    <Image src={item.img} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold mb-2 px-2.5 py-1 rounded-full inline-block" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>{item.tag}</p>
-                    <h4 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 group-hover:underline" style={{ color: "var(--texto-primario)" }}>{item.title}</h4>
-                    <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>Sin extracto disponible.</p>
-                  </div>
-                  <div className="shrink-0 text-right ml-3">
-                    <p className="text-3xl font-bold leading-none" style={{ color: "var(--texto-primario)" }}>{item.day}</p>
-                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{item.month}</p>
-                    <p className="text-sm" style={{ color: "var(--texto-muted)" }}>{item.year}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-          </div>
         </div>
       </section>
 
