@@ -155,30 +155,45 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   const totalNuevas = contadorNotifs + anunciosNuevosCount;
 
   return (
-    <div className="relative h-full" ref={containerRef}>
+    <div className="relative flex items-center h-full px-1" ref={containerRef}>
       {/* ── BOTÓN DE LA CAMPANITA ── */}
       <button
         onClick={toggle}
-        className="relative flex items-center justify-center h-full px-3 border-none cursor-pointer group"
+        className="relative flex items-center justify-center border-none cursor-pointer"
         style={{
-          background: "transparent",
-          color: hovered || open ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.7)",
-          transition: "all 0.2s ease",
+          width:        "42px",
+          height:       "42px",
+          borderRadius: "11px",
+          background:   open
+            ? "rgba(255,255,255,0.13)"
+            : hovered
+              ? "rgba(255,255,255,0.10)"
+              : "transparent",
+          border:      open || hovered
+            ? "1px solid rgba(255,255,255,0.18)"
+            : "1px solid transparent",
+          color:       hovered || open ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.72)",
+          transition:  "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         aria-label="Notificaciones"
       >
-        <div className={`p-2 rounded-full transition-colors ${open ? "bg-white/10" : "group-hover:bg-white/10"}`}>
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </div>
+        <svg width="21" height="21" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
 
-        {/* El famoso puntito rojo alimentado por el polling */}
+        {/* Badge de notificaciones */}
         {totalNuevas > 0 && (
-          <span className="absolute top-3 right-3 min-w-[18px] h-[18px] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none shadow-sm animate-pulse" 
-                style={{ background: "#ef4444", border: "2px solid var(--azul-egm)" }}>
+          <span
+            className="absolute min-w-[16px] h-[16px] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none pointer-events-none"
+            style={{
+              top:       "-4px",
+              right:     "-4px",
+              background: "#ef4444",
+              boxShadow: "0 0 0 2px rgba(0,0,0,0.25)",
+            }}
+          >
             {totalNuevas > 99 ? "99+" : totalNuevas}
           </span>
         )}
@@ -186,7 +201,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
 
       {/* ── PANEL DESPLEGABLE ── */}
       {visible && (
-        <div ref={dropdownRef} className="absolute right-0 top-full mt-2 z-50 will-change-transform" style={{ width: "380px" }}>
+        <div ref={dropdownRef} className="absolute right-0 top-full mt-2 z-50 will-change-transform" style={{ width: "min(380px, calc(100vw - 2rem))" }}>
           <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-100">
             
             <div className="px-5 py-4 flex items-center justify-between bg-slate-50/50 border-b border-slate-100">
