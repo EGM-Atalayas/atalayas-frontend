@@ -170,9 +170,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           {/* Avatar + menú — sin separador, el gap del nav los aleja naturalmente */}
           <UserMenu
             nombreMostrado={nombreMostrado}
-            empresaNombre={isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
+            email={usuario?.email}
             initials={initials}
-            logoEmpresa={logoEmpresa}
             avatarUrl={usuario?.avatarUrl}
             onPerfil={() => router.push(linkPerfil)}
             onConfiguracion={() => router.push(linkConfiguracion)}
@@ -321,10 +320,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           {/* Configuración */}
           <button
             onClick={() => { setMobileOpen(false); router.push(linkConfiguracion); }}
-            className="flex items-center gap-3 px-4 py-3 text-sm rounded-xl"
+            className="flex items-center px-4 py-3 text-sm rounded-xl active:bg-white/10"
             style={{ color: "rgba(255,255,255,0.7)", transition: "background 0.15s ease" }}
           >
-            <i className="bi bi-gear" style={{ fontSize: "15px", opacity: 0.7, width: "16px" }} />
             Configuración
           </button>
 
@@ -334,10 +332,9 @@ export default function Header({ logoEmpresa }: HeaderProps) {
           {/* Cerrar sesión */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl active:bg-red-500/10"
             style={{ color: "#f87171", transition: "background 0.15s ease" }}
           >
-            <i className="bi bi-box-arrow-right" style={{ fontSize: "15px", width: "16px" }} />
             Cerrar sesión
           </button>
         </div>
