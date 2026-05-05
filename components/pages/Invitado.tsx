@@ -15,7 +15,8 @@ import {
   FlaskConical, Sprout, Building2,
   Rocket, Lightbulb, MonitorDot,
   Microchip, Cpu, Factory,
-  ChevronDown
+  ChevronDown, Users, Bus, Car, ParkingCircle,
+  Bike, Recycle, Heart, Briefcase
 } from "lucide-react";
 import Colaboradores from "../ui/Colaboradores";
 import type { Comunicado, Noticia } from "@/lib/types/noticias";
@@ -61,65 +62,57 @@ const comunidadItems = [
   {
     label: "En Femenino",
     sub: "Liderazgo e igualdad en el entorno empresarial",
-    imagen: "/logo-en-femenino.webp",
-    bg: "#8878c8",
-    icono: null,
+    color: "#8878c8",
+    icono: <Users size={28} />,
     url: "https://atalayas.com/en-femenino/",
   },
   {
     label: "Autobús lanzadera",
     sub: "Servicio de transporte directo al área empresarial",
-    imagen: "/autobus.webp",
-    bg: null,
-    icono: null,
+    color: "#2563eb",
+    icono: <Bus size={28} />,
     url: "https://atalayas.com/autobus-lanzadera/",
   },
   {
     label: "Coche compartido",
     sub: "Coordina rutas con compañeros del área",
-    imagen: "/coche-compartido.webp",
-    bg: null,
-    icono: null,
+    color: "#0891b2",
+    icono: <Car size={28} />,
     url: "https://atalayas.com/journify-coche-compartido/",
   },
   {
     label: "Aparcamiento VAO",
     sub: "Plazas exclusivas para vehículos de alta ocupación",
-    imagen: "/aparcamiento-vao.webp",
-    bg: null,
-    icono: null,
+    color: "#059669",
+    icono: <ParkingCircle size={28} />,
     url: "https://atalayas.com/aparcamientovao/",
   },
   {
     label: "Empresarios de hoy y de mañana",
     sub: "Networking y actividades entre empresas del área",
-    imagen: "/empresas-hoy.webp",
-    bg: null,
-    icono: null,
+    color: "#d97706",
+    icono: <Briefcase size={28} />,
     url: "https://atalayas.com/100-estudiantes-20-empresarios/",
   },
   {
     label: "Proyecto empresas solidarias",
     sub: "Más de 44.000 personas ya han sido beneficiadas.",
-    imagen: "/empresas-solidarias.webp",
-    bg: "#ffffff",
-    icono: null,
+    color: "#dc2626",
+    icono: <Heart size={28} />,
     url: "https://atalayas.com/empresas-solidarias/",
   },
   {
     label: "Voy en bici al trabajo",
     sub: "Semana de la movilidad",
-    imagen: "/trabajo-bici.webp",
-    bg: null,
-    icono: null,
+    color: "#16a34a",
+    icono: <Bike size={28} />,
     url: "https://atalayas.com/semana-de-la-movilidad/",
   },
   {
     label: "Atalayas circular",
     sub: "3R: REDUCIR, REUTILIZAR Y RECICLAR",
-    imagen: "/atalayas-circular.webp",
-    bg: null,
-    icono: null,
+    color: "#0d9488",
+    icono: <Recycle size={28} />,
     url: "https://atalayas.com/atalayas-circular/",
   },
 ];
@@ -137,6 +130,7 @@ export default function Invitado() {
   const carruselTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const carruselNoAnim = useRef(false);
   const carruselInitialized = useRef(false);
+  const [comunidadAbierto, setComunidadAbierto] = useState<string | null>(null);
 
   // Slides del carrusel: primero noticias EGM (empresaId null), luego comunicados
   const slidesCarrusel: ItemLista[] = useMemo(() => {
@@ -293,10 +287,17 @@ export default function Invitado() {
           <h2 className="text-4xl sm:text-5xl font-bold leading-tight mb-3" style={{ color: "var(--texto-primario)" }}>
             Mantente al día con Atalayas
           </h2>
-          <p className="text-base leading-relaxed max-w-xl" style={{ color: "var(--texto-muted)" }}>
+          <p className="text-base leading-relaxed max-xl mb-4" style={{ color: "var(--texto-muted)" }}>
             Descubre los últimos eventos, comunicados y convocatorias de Atalayas Ciudad Empresarial.
             Mantente informado de todo lo que ocurre en el parque.
           </p>
+          <Link
+            href="/noticias"
+            className="inline-flex items-center gap-2 text-base font-semibold transition-colors hover:opacity-80"
+            style={{ color: "var(--azul-egm)" }}
+          >
+            Ver todas las publicaciones ↗
+          </Link>
         </div>
 
         {/* ── Carrusel estilo Apple TV Portrait ─────────────────────────── */}
@@ -467,16 +468,6 @@ export default function Invitado() {
           );
         })()}
 
-        {/* Ver todas las publicaciones */}
-        <div className="mt-6 flex justify-end">
-          <Link
-            href="/noticias"
-            className="inline-flex items-center gap-2 text-base font-semibold transition-colors hover:opacity-80"
-            style={{ color: "var(--azul-egm)" }}
-          >
-            Ver todas las publicaciones ↗
-          </Link>
-        </div>
       </section>
 
       {/* LOGO LOOP */}
@@ -498,61 +489,118 @@ export default function Invitado() {
       </section>
 
       {/* COMUNIDAD */}
-      <section
-        id="comunidad"
-        className="relative w-full mt-2"
-        style={{ backgroundImage: "url('/background-comunidad.webp')", backgroundSize: "cover", backgroundPosition: "center" }}
-      >
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.3) 100%)" }} />
-        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, #0d0d0d, transparent)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, #000000)" }} />
-        <div className="relative z-10 w-full px-6 sm:px-16 lg:px-24 xl:px-32 py-24 sm:py-36">
-          <h2 className="text-5xl sm:text-6xl font-bold leading-tight mb-12 text-center" style={{ color: "white" }}>
-            Nuestra Comunidad
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {comunidadItems.map((item) => (
+      {(() => {
+        const itemAbierto = comunidadItems.find(i => i.label === comunidadAbierto) ?? null;
+
+        return (
+          <section id="comunidad" className="relative w-full overflow-hidden py-16 sm:py-24" style={{ background: "#ffffff" }}>
+            {/* Imagen decorativa pegada al borde derecho */}
+            <div className="hidden lg:block absolute right-0 top-0 bottom-0 pointer-events-none select-none" style={{ width: 500 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/circulos-decoracion.png" alt="" aria-hidden
+                className="absolute right-0 top-1/2 -translate-y-1/2"
+                style={{ width: 500, opacity: 1, filter: "invert(18%) sepia(60%) saturate(800%) hue-rotate(200deg) brightness(60%)" }} />
+            </div>
+
+            {/* Layout: lista centrada con margen */}
+            <div className="relative w-full px-6 sm:px-20 lg:px-36 xl:px-48">
+              {/* Título */}
+              <h2 className="text-4xl sm:text-5xl font-bold mb-10 text-center" style={{ color: "#111827", maxWidth: 800 }}>
+                Nuestra Comunidad
+              </h2>
+              {/* Lista en dos columnas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ maxWidth: 800 }}>
+                {comunidadItems.map((item, i) => (
+                  <div
+                    key={item.label}
+                    onClick={() => setComunidadAbierto(item.label)}
+                    className="flex items-center justify-between gap-4 cursor-pointer group transition-colors duration-200 px-6 py-5"
+                    style={{
+                      borderBottom: "1px solid rgba(0,0,0,0.07)",
+                      background: "transparent",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Icono pequeño */}
+                      <div
+                        className="flex items-center justify-center rounded-full shrink-0"
+                        style={{ width: 44, height: 44, background: "rgba(27,63,126,0.12)", color: "#1b3f7e" }}
+                      >
+                        {item.icono}
+                      </div>
+                      <div>
+                        <p className="font-bold text-base leading-snug mb-0.5" style={{ color: "#111827" }}>{item.label}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>{item.sub}</p>
+                      </div>
+                    </div>
+                    {/* Flecha */}
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="rgba(27,63,126,0.4)" strokeWidth={2}
+                      className="shrink-0 transition-transform duration-200 group-hover:translate-x-1">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+            {/* Modal expandido */}
+            {itemAbierto && (
               <div
-                key={item.label}
-                onClick={() => item.url && window.open(item.url, "_blank")}
-                className="relative aspect-square flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] overflow-hidden"
-                style={{
-                  background: 'bg' in item && item.bg ? item.bg as string : "rgba(255,255,255,0.07)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  backdropFilter: 'bg' in item ? undefined : "blur(8px)",
-                }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+                onClick={() => setComunidadAbierto(null)}
               >
-                {(item.label === "Autobús lanzadera" || item.label === "Coche compartido" || item.label === "Aparcamiento VAO" || item.label === "Empresarios de hoy y de mañana" || item.label === "Voy en bici al trabajo" || item.label === "Atalayas circular") && 'imagen' in item && item.imagen ? (
-                  <>
-                    <img src={item.imagen as string} alt={item.label} className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
-                    <div className="absolute inset-0 rounded-2xl bg-black/40" />
-                    <div className="flex-1" />
-                  </>
-                ) : item.label !== "Autobús lanzadera" && item.label !== "Coche compartido" && item.label !== "Aparcamiento VAO" && item.label !== "Empresarios de hoy y de mañana" && item.label !== "Voy en bici al trabajo" && item.label !== "Atalayas circular" && 'imagen' in item && item.imagen ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <img src={item.imagen as string} alt={item.label} className="w-full h-full object-contain p-3" />
+                <div
+                  className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
+                  style={{ background: "#fff" }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {/* Icono superior */}
+                  <div className="flex items-center justify-center pt-10 pb-6" style={{ background: itemAbierto.color + "18" }}>
+                    <div
+                      className="flex items-center justify-center rounded-full"
+                      style={{ width: 88, height: 88, background: itemAbierto.color + "22", color: itemAbierto.color }}
+                    >
+                      {itemAbierto.icono}
+                    </div>
                   </div>
-                ) : (
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)" }}>
-                    {item.icono}
+
+                  {/* Botón cerrar */}
+                  <button
+                    onClick={() => setComunidadAbierto(null)}
+                    className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+                    style={{ background: "rgba(0,0,0,0.45)", color: "white" }}
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  {/* Contenido */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "#111827" }}>{itemAbierto.label}</h3>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: "#6b7280" }}>{itemAbierto.sub}</p>
+                    {itemAbierto.url && (
+                      <a
+                        href={itemAbierto.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-80"
+                        style={{ background: "var(--azul-egm)", color: "white" }}
+                      >
+                        Saber más ↗
+                      </a>
+                    )}
                   </div>
-                )}
-                <div className="flex flex-col gap-1 relative z-10">
-                  <p className="text-sm font-semibold leading-snug"
-                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "#111827" : "#ffffff" }}>
-                    {item.label}
-                  </p>
-                  <p className="text-xs leading-relaxed line-clamp-2"
-                    style={{ color: 'bg' in item && item.bg === "#ffffff" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
-                    {item.sub}
-                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            )}
+          </section>
+        );
+      })()}
 
       <Colaboradores />
       <FooterCTA />
