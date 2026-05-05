@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaBuilding, FaClock, FaChartBar } from "react-icons/fa";
+import { FaBuilding, FaClock, FaChartBar, FaExclamationTriangle } from "react-icons/fa";
 import GestionEmpresas from "@/components/pages/GestionEmpresas";
 import SolicitudesPendientes from "@/components/pages/SolicitudesPendientes";
+import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import EstadisticasPage from "@/app/superadmin/estadisticas/page";
 
-type TabType = "empresas" | "solicitudes" | "estadisticas";
+type TabType = "empresas" | "solicitudes" | "estadisticas" | "incidencias";
 
 const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
   { id: "empresas", label: "Empresas", icon: <FaBuilding className="text-lg" /> },
   { id: "solicitudes", label: "Solicitudes", icon: <FaClock className="text-lg" /> },
   { id: "estadisticas", label: "Estadísticas", icon: <FaChartBar className="text-lg" /> },
+  { id: "incidencias", label: "Incidencias", icon: <FaExclamationTriangle className="text-lg" /> },
 ];
 
 export default function AdministracionPage() {
@@ -55,6 +57,12 @@ export default function AdministracionPage() {
           {activeTab === "estadisticas" && (
             <div>
               <EstadisticasPage />
+            </div>
+          )}
+
+          {activeTab === "incidencias" && (
+            <div>
+              <GestionIncidencias esSuperadmin={true} />
             </div>
           )}
         </div>
