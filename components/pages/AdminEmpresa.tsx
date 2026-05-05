@@ -6,8 +6,10 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { getActividadReciente } from "@/lib/api/progreso";
 import { getServicios } from "@/lib/api/servicios";
+import { getModulos, getMiProgreso } from "@/lib/api/modulos";
 import type { ActividadItem } from "@/lib/types/progreso";
 import type { Servicio } from "@/lib/types/servicios";
+import type { Modulo, ProgresoItem } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 interface ResumenAdmin {
@@ -65,12 +67,14 @@ const SERVICIOS_MOCK: Servicio[] = [
   { servicioId: "m5", nombre: "Descuentos y ventajas", descripcion: "Beneficios para trabajadores del parque.", url: null, activo: false, icono: "descuentos", orden: 5 },
 ];
 
-const MOCK_MODULOS = [
-  { id: "m1", nombre: "Prevención de Riesgos Laborales", completados: 18, enProgreso: 6, pendientes: 4, total: 28 },
-  { id: "m2", nombre: "Protección de Datos (RGPD)", completados: 22, enProgreso: 3, pendientes: 3, total: 28 },
-  { id: "m3", nombre: "Habilidades de Comunicación", completados: 12, enProgreso: 9, pendientes: 7, total: 28 },
-  { id: "m4", nombre: "Onboarding Corporativo", completados: 25, enProgreso: 2, pendientes: 1, total: 28 },
-];
+interface ModuloStats {
+  moduloId: string;
+  nombre: string;
+  completados: number;
+  enProgreso: number;
+  pendientes: number;
+  total: number;
+}
 
 function tiempoRelativo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
@@ -151,15 +155,19 @@ export default function AdminEmpresa() {
   const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [cargando, setCargando] = useState(true);
   const [servicios, setServicios] = useState<Servicio[]>(SERVICIOS_MOCK);
+  const [modulosStats, setModulosStats] = useState<ModuloStats[]>([]);
+  const [progresoMedio, setProgresoMedio] = useState(0);
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [resRes, anunciosRes, actividadData, serviciosData] = await Promise.all([
+        const [resRes, anunciosRes, actividadData, serviciosData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           apiFetch(`${API_URL}/anuncios`),
           getActividadReciente(5).catch(() => [] as ActividadItem[]),
           getServicios().catch(() => []),
+          getModulos().catch(() => [] as Modulo[]),
+          getMiProgreso().catch(() => [] as ProgresoItem[]),
         ]);
         if (resRes.ok) setResumen(await resRes.json());
         if (anunciosRes.ok) {
@@ -169,6 +177,42 @@ export default function AdminEmpresa() {
         setActividad(actividadData);
         if (serviciosData && serviciosData.length > 0) {
           setServicios(serviciosData);
+        }
+
+        // Calcular estadísticas reales de módulos
+        const modulos = modulosData.filter((m: Modulo) => m.activo);
+        if (modulos.length > 0 && progresoData.length > 0) {
+          const stats: ModuloStats[] = modulos.map((modulo: Modulo) => {
+            const registros = progresoData;
+            const totalEmpleados = (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0);
+            const completados = registros.filter((r: ProgresoItem) => r.completado).length;
+            const enProgreso = registros.filter((r: ProgresoItem) => r.tiempoSegundos > 0 && !r.completado).length;
+            const pendientes = Math.max(0, totalEmpleados - completados - enProgreso);
+            return {
+              moduloId: modulo.moduloId,
+              nombre: modulo.nombre,
+              completados,
+              enProgreso,
+              pendientes,
+              total: totalEmpleados || 1,
+            };
+          });
+          setModulosStats(stats);
+
+          // Calcular progreso medio real
+          const totalContenidos = progresoData.length;
+          const completadosTotal = progresoData.filter((r: ProgresoItem) => r.completado).length;
+          const pct = totalContenidos > 0 ? Math.round((completadosTotal / totalContenidos) * 100) : 0;
+          setProgresoMedio(pct);
+        } else if (modulos.length > 0) {
+          setModulosStats(modulos.map((m: Modulo) => ({
+            moduloId: m.moduloId,
+            nombre: m.nombre,
+            completados: 0,
+            enProgreso: 0,
+            pendientes: (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0),
+            total: (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0),
+          })));
         }
       } catch { }
       finally { setCargando(false); }
@@ -192,12 +236,11 @@ export default function AdminEmpresa() {
   const fechaHoy = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
     .replace(/^\w/, (c) => c.toUpperCase());
 
-  // Métricas reales + mockeadas
+  // Métricas reales
   const activos = resumen?.usuariosActivos ?? 0;
   const inactivos = resumen?.usuariosInactivos ?? 0;
   const totalEmpleados = activos + inactivos;
-  const progresoMedio = 67; // mock — API pendiente
-  const modulosTotal = MOCK_MODULOS.length;
+  const modulosTotal = modulosStats.length;
 
   return (
     <div>
@@ -264,34 +307,41 @@ export default function AdminEmpresa() {
                 </button>
               </div>
               <div className="flex flex-col gap-3">
-                {MOCK_MODULOS.map((mod) => {
-                  const pctC = Math.round((mod.completados / mod.total) * 100);
-                  const pctP = Math.round((mod.enProgreso / mod.total) * 100);
-                  return (
-                    <div key={mod.id} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
-                        <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
+                {modulosStats.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
+                    <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin módulos de formación</p>
+                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo para tu equipo</p>
+                  </div>
+                ) : (
+                  modulosStats.map((mod) => {
+                    const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
+                    const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
+                    return (
+                      <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
+                          <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
+                        </div>
+                        <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
+                          <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
+                          <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
+                        </div>
+                        <div className="flex gap-4 mt-2">
+                          {[
+                            { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
+                            { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
+                            { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
+                          ].map((s) => (
+                            <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
+                              {s.n} {s.label}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
-                        <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
-                        <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
-                      </div>
-                      <div className="flex gap-4 mt-2">
-                        {[
-                          { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
-                          { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
-                          { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
-                        ].map((s) => (
-                          <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
-                            {s.n} {s.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 

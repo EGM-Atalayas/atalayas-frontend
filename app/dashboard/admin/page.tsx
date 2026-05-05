@@ -12,6 +12,7 @@ import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
+import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 const EMPTY_ANUNCIO: NoticiaInput = {
@@ -110,7 +111,7 @@ function AdminContent() {
   const searchParams = useSearchParams();
   const { usuario } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones">("empleados");
+  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias">("empleados");
 
   const [empleados, setEmpleados] = useState<Usuario[]>([]);
   const [cargandoEmpleados, setCargandoEmpleados] = useState(true);
@@ -384,6 +385,17 @@ function AdminContent() {
         </svg>
       ),
     },
+    {
+      key: "incidencias" as const,
+      label: "Incidencias",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      ),
+    },
   ];
 
   // Accent colors per modulo tipo for top strip
@@ -426,7 +438,7 @@ function AdminContent() {
         <div className="sm:hidden mb-8">
           <select
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones")}
+            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias")}
             className="w-full rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none"
             style={{
               border: "1px solid var(--gris-borde)",
@@ -469,21 +481,19 @@ function AdminContent() {
 
             {/* Formulario nuevo empleado */}
             {showFormEmpleado && (
-              <div className="rounded-2xl p-6 mb-8"
+              <form onSubmit={(e) => e.preventDefault()} className="rounded-2xl p-6 mb-8"
                 style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{ background: "var(--azul-egm-light)" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--azul-egm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--azul-egm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />
                       </svg>
                     </div>
                     <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>Añadir nuevo empleado</h2>
                   </div>
-                  <button onClick={() => setShowFormEmpleado(false)}
+                  <button type="button" onClick={() => setShowFormEmpleado(false)}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-lg leading-none transition-colors"
                     style={{ color: "var(--texto-muted)", background: "var(--gris-pagina)" }}>×</button>
                 </div>
@@ -549,12 +559,13 @@ function AdminContent() {
                 )}
                 <div className="flex gap-3 justify-end pt-5 mt-4"
                   style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                  <button onClick={() => setShowFormEmpleado(false)}
+                  <button type="button" onClick={() => setShowFormEmpleado(false)}
                     className="text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
                     style={{ color: "var(--texto-secundario)", background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
                     Cancelar
                   </button>
                   <button
+                    type="button"
                     onClick={handleCrearEmpleado}
                     disabled={guardandoEmpleado}
                     className="text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50 transition-colors"
@@ -565,7 +576,7 @@ function AdminContent() {
                     {guardandoEmpleado ? "Creando..." : "Crear empleado"}
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* Layout tabla + drawer */}
@@ -1341,6 +1352,11 @@ function AdminContent() {
               </div>
             </div>
           </>
+        )}
+
+        {/* ── TAB INCIDENCIAS ── */}
+        {activeTab === "incidencias" && (
+          <GestionIncidencias empresaId={usuario?.empresaId} />
         )}
       </div>
 
