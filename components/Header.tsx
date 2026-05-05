@@ -11,10 +11,6 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { NAV_ROUTES, NAV_ITEMS_BY_ROLE } from "@/lib/routes";
 
-interface HeaderProps {
-  logoEmpresa?: string;
-}
-
 const POLLING_INTERVAL = 30_000;
 
 function getInitials(nombre: string): string {
@@ -28,7 +24,7 @@ const SUPERADMIN_LINKS = [
   { label: "Comunicados",    path: "/superadmin/comunicados" },
 ];
 
-export default function Header({ logoEmpresa }: HeaderProps) {
+export default function Header() {
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [noLeidas, setNoLeidas]       = useState(0);
   const [scrolled, setScrolled]       = useState(false);
@@ -72,8 +68,8 @@ export default function Header({ logoEmpresa }: HeaderProps) {
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      setScrolled(y > 10);
-      if (y > 10) setMobileOpen(false);
+      setScrolled(y > 50);
+      if (y > 20) setMobileOpen(false);
     };
     // Evaluar estado inicial (por si la página carga ya scrolleada)
     onScroll();
