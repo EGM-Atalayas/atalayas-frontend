@@ -14,8 +14,8 @@ import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
-import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import DashboardHero from "@/components/ui/DashboardHero";
+import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import ExcelJS from "exceljs";
 
 const EMPTY_ANUNCIO: NoticiaInput = {
@@ -74,7 +74,7 @@ interface Usuario {
   fechaRegistro: string;
 }
 
-interface NuevoEmpleadoForm {
+export interface NuevoEmpleadoForm {
   nombre: string;
   apellidos: string;
   email: string;
@@ -549,104 +549,85 @@ function AdminContent() {
               </div>
             </div>
 
-            {/* Formulario nuevo empleado */}
+            {/* Formulario nuevo empleado - Diseño simple */}
             {showFormEmpleado && (
-              <form onSubmit={(e) => e.preventDefault()} className="rounded-2xl p-6 mb-8"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ background: "var(--azul-egm-light)" }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--azul-egm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />
-                      </svg>
+              <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setShowFormEmpleado(false)}>
+                <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                  {/* Header */}
+                  <div className="px-6 py-5" style={{ background: "linear-gradient(135deg, #1b3f7e, #0d1b2e)" }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-white text-2xl font-bold">Añadir nuevo empleado</h3>
+                        <p className="text-white text-sm opacity-70 mt-1">Crea una cuenta para un nuevo miembro</p>
+                      </div>
+                      <button onClick={() => setShowFormEmpleado(false)} className="w-8 h-8 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-white">
+                        ×
+                      </button>
                     </div>
-                    <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>Añadir nuevo empleado</h2>
                   </div>
-                  <button type="button" onClick={() => setShowFormEmpleado(false)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-lg leading-none transition-colors"
-                    style={{ color: "var(--texto-muted)", background: "var(--gris-pagina)" }}>×</button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { label: "Nombre", key: "nombre", type: "text", placeholder: "María", required: true },
-                    { label: "Apellidos", key: "apellidos", type: "text", placeholder: "García López", required: false },
-                    { label: "Email", key: "email", type: "email", placeholder: "m.garcia@empresa.com", required: true },
-                    { label: "Contraseña inicial", key: "password", type: "password", placeholder: "Mínimo 8 caracteres", required: true },
-                  ].map((f) => (
-                    <div key={f.key}>
-                      <label className="block text-xs font-semibold mb-2" style={{ color: "var(--texto-secundario)" }}>
-                        {f.label} {f.required && <span style={{ color: "var(--error)" }}>*</span>}
-                      </label>
-                      <input
-                        type={f.type}
-                        value={formEmpleado[f.key as keyof NuevoEmpleadoForm]}
-                        onChange={(e) => setFormEmpleado({ ...formEmpleado, [f.key]: e.target.value })}
-                        placeholder={f.placeholder}
-                        className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
-                        style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: "var(--texto-primario)" }}
-                      />
+
+                  {/* Formulario */}
+                  <form onSubmit={(e) => { e.preventDefault(); if (formEmpleado.nombre.trim() && formEmpleado.email.trim() && formEmpleado.password.trim()) handleCrearEmpleado(); }} className="p-8 space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Nombre *</label>
+                      <input type="text" value={formEmpleado.nombre} onChange={(e) => setFormEmpleado({ ...formEmpleado, nombre: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400" placeholder="María" />
                     </div>
-                  ))}
-                  <div>
-                    <label className="block text-xs font-semibold mb-2" style={{ color: "var(--texto-secundario)" }}>
-                      Puesto de trabajo
-                    </label>
-                    <input
-                      type="text"
-                      value={formEmpleado.puestoTrabajo}
-                      onChange={(e) => setFormEmpleado({ ...formEmpleado, puestoTrabajo: e.target.value })}
-                      placeholder="Ej: Técnico de producción"
-                      className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
-                      style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: "var(--texto-primario)" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-2" style={{ color: "var(--texto-secundario)" }}>
-                      Departamento
-                    </label>
-                    <select
-                      value={formEmpleado.departamento}
-                      onChange={(e) => setFormEmpleado({ ...formEmpleado, departamento: e.target.value })}
-                      className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-                      style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: formEmpleado.departamento ? "var(--texto-primario)" : "var(--texto-muted)" }}
-                    >
-                      <option value="">Sin departamento</option>
-                      {DEPARTAMENTOS.map((d) => (
-                        <option key={d.id} value={d.id}>{d.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Apellidos</label>
+                      <input type="text" value={formEmpleado.apellidos} onChange={(e) => setFormEmpleado({ ...formEmpleado, apellidos: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400" placeholder="García López" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Email *</label>
+                      <input type="email" value={formEmpleado.email} onChange={(e) => setFormEmpleado({ ...formEmpleado, email: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400" placeholder="m.garcia@empresa.com" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Contraseña inicial *</label>
+                      <input type="password" value={formEmpleado.password} onChange={(e) => setFormEmpleado({ ...formEmpleado, password: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400" placeholder="Mínimo 8 caracteres" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Puesto de trabajo</label>
+                      <input type="text" value={formEmpleado.puestoTrabajo} onChange={(e) => setFormEmpleado({ ...formEmpleado, puestoTrabajo: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400" placeholder="Ej: Técnico de producción" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Departamento</label>
+                      <select value={formEmpleado.departamento} onChange={(e) => setFormEmpleado({ ...formEmpleado, departamento: e.target.value })}
+                        className="w-full rounded-xl px-4 py-3 border border-gray-300 focus:outline-none focus:border-blue-400">
+                        <option value="">Sin departamento</option>
+                        <option value="PRODUCCION">Producción</option>
+                        <option value="RRHH">RRHH</option>
+                        <option value="LOGISTICA">Logística</option>
+                        <option value="CALIDAD">Calidad</option>
+                        <option value="MANTENIMIENTO">Mantenimiento</option>
+                        <option value="VENTAS">Ventas</option>
+                        <option value="ADMINISTRACION">Administración</option>
+                        <option value="IT">IT</option>
+                        <option value="SEGURIDAD">Seguridad</option>
+                        <option value="FORMACION">Formación</option>
+                      </select>
+                    </div>
+                    {errorEmpleado && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs">
+                        {errorEmpleado}
+                      </div>
+                    )}
+                    <div className="flex gap-3 pt-4 border-t border-gray-200">
+                      <button type="button" onClick={() => setShowFormEmpleado(false)}
+                        className="flex-1 px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300 bg-gray-50">
+                        Cancelar
+                      </button>
+                      <button type="submit" disabled={guardandoEmpleado}
+                        className="flex-1 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white disabled:opacity-50">
+                        {guardandoEmpleado ? <span className="loading-dots">Creando</span> : "Crear empleado"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-                {errorEmpleado && (
-                  <div className="flex items-center gap-2 mt-4 px-4 py-3 rounded-xl"
-                    style={{ background: "var(--error-light)", border: "1px solid var(--error)" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <p className="text-xs font-medium" style={{ color: "var(--error)" }}>{errorEmpleado}</p>
-                  </div>
-                )}
-                <div className="flex gap-3 justify-end pt-5 mt-4"
-                  style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                  <button type="button" onClick={() => setShowFormEmpleado(false)}
-                    className="text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCrearEmpleado}
-                    disabled={guardandoEmpleado}
-                    className="text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50 transition-colors"
-                    style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-                  >
-                    {guardandoEmpleado ? "Creando..." : "Crear empleado"}
-                  </button>
-                </div>
-              </form>
+              </div>
             )}
 
             {/* Layout tabla + drawer */}
@@ -850,9 +831,9 @@ function AdminContent() {
                     <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
                     <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
                     <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
-                     <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
-                     <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
-                   </div>
+                    <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
+                    <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
+                  </div>
                   <div className="pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                     <button
                       onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
@@ -864,9 +845,9 @@ function AdminContent() {
                       {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
                     </button>
                   </div>
-                 </div>
-               )}
-             </div>
+                </div>
+              )}
+            </div>
 
             {/* Bottom sheet móvil */}
             {empleadoSeleccionado && (
@@ -900,15 +881,13 @@ function AdminContent() {
                   <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
                   <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
                 </div>
-                  <button
-                    onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
-                    className="w-full text-sm font-semibold py-3 rounded-xl"
-                    style={empleadoSeleccionado.activo
-                      ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }
-                      : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
-                  >
-                    {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
-                  </button>
+                <button
+                  onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
+                  className="w-full text-sm font-semibold py-3 rounded-xl"
+                  style={empleadoSeleccionado.activo ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" } : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
+                >
+                  {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                </button>
               </div>
             )}
           </div>
