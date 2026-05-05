@@ -13,6 +13,7 @@
     "@gsap/react": "^2.1.2",
     "@supabase/supabase-js": "^2.104.1",
     "bootstrap-icons": "^1.13.1",
+    "exceljs": "^4.4.0",
     "groq-sdk": "^1.1.2",
     "gsap": "^3.15.0",
     "hls.js": "^1.6.16",

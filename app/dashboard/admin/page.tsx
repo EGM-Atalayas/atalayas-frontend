@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getProgresoEmpresa } from "@/lib/api/progreso";
+import type { ProgresoEmpleado } from "@/lib/types/progreso";
 import ModuloForm from "@/components/ModuloForm";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
@@ -13,6 +15,7 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
+import ExcelJS from "exceljs";
 
 const EMPTY_ANUNCIO: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
@@ -43,15 +46,6 @@ const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border:
 function esNuevo(fecha: string) {
   return Date.now() - new Date(fecha).getTime() < 48 * 3600000;
 }
-
-const MOCK_MODULO_STATS = [
-  { asignados: 28, completado: 64 },
-  { asignados: 28, completado: 89 },
-  { asignados: 28, completado: 43 },
-  { asignados: 28, completado: 17 },
-  { asignados: 28, completado: 71 },
-  { asignados: 28, completado: 55 },
-];
 
 const DEPARTAMENTOS = [
   { id: "PRODUCCION", label: "Producción" },
@@ -130,6 +124,8 @@ function AdminContent() {
   const [showBorradores, setShowBorradores] = useState(true);
 
   const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
+  const [progresoEmpresa, setProgresoEmpresa] = useState<ProgresoEmpleado[]>([]);
+  const [cargandoProgreso, setCargandoProgreso] = useState(true);
   const [showFormModulo, setShowFormModulo] = useState(false);
   const [editingModulo, setEditingModulo] = useState<ModuloConProgreso | null>(null);
 
@@ -144,12 +140,17 @@ function AdminContent() {
 
   const refreshData = async () => {
     if (!usuario?.empresaId) return;
-    const [news, modulos] = await Promise.allSettled([
+    const [news, modulos, progreso] = await Promise.allSettled([
       getNoticias(usuario.empresaId),
       getModulosConProgreso(),
+      getProgresoEmpresa(usuario.empresaId),
     ]);
     if (news.status === "fulfilled") setNoticias(news.value);
     if (modulos.status === "fulfilled") setFormaciones(modulos.value);
+    if (progreso.status === "fulfilled") {
+      setProgresoEmpresa(progreso.value);
+      setCargandoProgreso(false);
+    }
   };
 
   useEffect(() => {
@@ -210,10 +211,15 @@ function AdminContent() {
     }
   };
 
-  const handleDesactivarEmpleado = async (usuarioId: string) => {
-    if (!confirm("¿Seguro que quieres desactivar este empleado?")) return;
+  const handleToggleEmpleado = async (usuarioId: string, activo: boolean) => {
+    const accion = activo ? "desactivar" : "activar";
+    if (!confirm(`¿Seguro que quieres ${accion} este empleado?`)) return;
     try {
-      await apiFetch(`${API_URL}/users/${usuarioId}/desactivar`, { method: "DELETE" });
+      if (activo) {
+        await apiFetch(`${API_URL}/users/${usuarioId}/desactivar`, { method: "DELETE" });
+      } else {
+        await apiFetch(`${API_URL}/users/${usuarioId}/activar`, { method: "PATCH" });
+      }
       await cargarEmpleados();
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
     } catch { }
@@ -352,6 +358,55 @@ function AdminContent() {
     return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
   }
 
+  const exportarEmpleadosExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Empleados");
+
+    worksheet.columns = [
+      { header: "Nombre", key: "nombre", width: 20 },
+      { header: "Apellidos", key: "apellidos", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Puesto", key: "puesto", width: 25 },
+      { header: "Departamento", key: "departamento", width: 20 },
+      { header: "Rol", key: "rol", width: 15 },
+      { header: "Estado", key: "estado", width: 12 },
+      { header: "Fecha de alta", key: "fechaAlta", width: 18 },
+    ];
+
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF2D5A3D" },
+      };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+    });
+
+    empleados.forEach((e) => {
+      worksheet.addRow({
+        nombre: e.nombre,
+        apellidos: e.apellidos,
+        email: e.email,
+        puesto: e.puestoTrabajo ?? "",
+        departamento: DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento ?? "",
+        rol: e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
+        estado: e.activo ? "Activo" : "Inactivo",
+        fechaAlta: formatFecha(e.fechaRegistro),
+      });
+    });
+
+    const fecha = new Date().toISOString().split("T")[0];
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `empleados_${fecha}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const tabs = [
     {
       key: "empleados" as const,
@@ -453,18 +508,33 @@ function AdminContent() {
                   {empleados.length} persona{empleados.length !== 1 ? "s" : ""} en tu empresa
                 </p>
               </div>
-              <button
-                onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Añadir empleado
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={exportarEmpleadosExcel}
+                  disabled={empleados.length === 0}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                  style={{ background: "var(--verde-oliva)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--verde-oliva)")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Exportar Excel
+                </button>
+                <button
+                  onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Añadir empleado
+                </button>
+              </div>
             </div>
 
             {/* Formulario nuevo empleado */}
@@ -769,42 +839,23 @@ function AdminContent() {
                     <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
                     <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
                     <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
-                    <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
-                    <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
-                  </div>
-                  {/* Formación asignada */}
-                  <div className="pt-4" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                    <p className="text-xs font-semibold mb-3" style={{ color: "var(--texto-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Formación asignada</p>
-                    <div className="flex flex-col gap-2.5">
-                      {[
-                        { nombre: "Prevención de Riesgos", pct: 100, color: "var(--verde-oliva)" },
-                        { nombre: "Protección de Datos", pct: 72, color: "var(--azul-egm)" },
-                        { nombre: "Onboarding Corporativo", pct: 45, color: "#f59e0b" },
-                      ].map((m) => (
-                        <div key={m.nombre}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs" style={{ color: "var(--texto-primario)" }}>{m.nombre}</p>
-                            <span className="text-xs font-semibold" style={{ color: m.color }}>{m.pct}%</span>
-                          </div>
-                          <div className="w-full rounded-full overflow-hidden" style={{ height: "4px", background: "var(--gris-superficie)" }}>
-                            <div style={{ width: `${m.pct}%`, height: "100%", background: m.color, borderRadius: "9999px" }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                     <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
+                     <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
+                   </div>
                   <div className="pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                     <button
-                      onClick={() => handleDesactivarEmpleado(empleadoSeleccionado.usuarioId)}
+                      onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
                       className="w-full text-sm font-semibold py-2.5 rounded-xl transition-colors"
-                      style={{ background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }}
+                      style={empleadoSeleccionado.activo
+                        ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }
+                        : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
                     >
-                      Desactivar empleado
+                      {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
+                 </div>
+               )}
+             </div>
 
             {/* Bottom sheet móvil */}
             {empleadoSeleccionado && (
@@ -838,12 +889,15 @@ function AdminContent() {
                   <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
                   <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
                 </div>
-                <button
-                  onClick={() => handleDesactivarEmpleado(empleadoSeleccionado.usuarioId)}
-                  className="w-full text-sm font-semibold py-3 rounded-xl"
-                  style={{ background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }}>
-                  Desactivar empleado
-                </button>
+                  <button
+                    onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
+                    className="w-full text-sm font-semibold py-3 rounded-xl"
+                    style={empleadoSeleccionado.activo
+                      ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }
+                      : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
+                  >
+                    {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                  </button>
               </div>
             )}
           </div>
@@ -880,7 +934,7 @@ function AdminContent() {
                   formError={formError}
                   onClose={cerrarForm}
                   onSubmit={handleSubmitAnuncio}
-                  onPreview={() => {}}
+                  onPreview={() => { }}
                 />
               </div>
             )}
@@ -916,10 +970,10 @@ function AdminContent() {
                               {n.imagenUrl
                                 ? <img src={n.imagenUrl} alt="" className="rounded-xl object-cover shrink-0" style={{ width: 44, height: 44 }} />
                                 : <div className="rounded-xl shrink-0 flex items-center justify-center" style={{ width: 44, height: 44, background: "#eff6ff" }}>
-                                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
-                                  </div>
+                                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                  </svg>
+                                </div>
                               }
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
@@ -1116,6 +1170,86 @@ function AdminContent() {
           </>
         )}
 
+        {/* ── TAB PROGRESO DEL EQUIPO ── */}
+        {activeTab === "empleados" && (
+          <div className="rounded-2xl overflow-hidden mt-6" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+              <div>
+                <p style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "1.2rem", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                  Progreso del equipo
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Seguimiento individual por empleado</p>
+              </div>
+              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                {progresoEmpresa.length} empleado{progresoEmpresa.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {cargandoProgreso ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-6 h-6 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+              </div>
+            ) : progresoEmpresa.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>No hay datos de progreso</p>
+                <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>Los datos aparecerán cuando los empleados completen módulos</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Empleado</th>
+                      {progresoEmpresa[0]?.modulos.map((m) => (
+                        <th key={m.moduloId} className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                          {m.nombreModulo}
+                        </th>
+                      ))}
+                      <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Media</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {progresoEmpresa.map((emp, idx, arr) => {
+                      const media = emp.modulos.length > 0
+                        ? Math.round(emp.modulos.reduce((acc, m) => acc + m.porcentaje, 0) / emp.modulos.length)
+                        : 0;
+                      const initials = [emp.nombre, emp.apellidos].join(" ").split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase();
+                      return (
+                        <tr key={emp.usuarioId} style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                {initials}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{emp.nombre} {emp.apellidos}</p>
+                              </div>
+                            </div>
+                          </td>
+                          {emp.modulos.map((m) => (
+                            <td key={m.moduloId} className="py-3.5 px-4">
+                              <div className="flex items-center gap-2 justify-center">
+                                <div className="w-16 rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
+                                  <div style={{ width: `${m.porcentaje}%`, height: "100%", background: m.porcentaje === 100 ? "var(--verde-oliva)" : m.porcentaje >= 50 ? "var(--azul-egm)" : "#f59e0b", borderRadius: "9999px" }} />
+                                </div>
+                                <span className="text-xs font-semibold" style={{ color: m.porcentaje === 100 ? "var(--verde-oliva)" : m.porcentaje >= 50 ? "var(--azul-egm)" : "#b45309" }}>{m.porcentaje}%</span>
+                              </div>
+                            </td>
+                          ))}
+                          <td className="py-3.5 px-4 text-center">
+                            <span className="text-sm font-bold" style={{ color: media >= 80 ? "var(--verde-oliva)" : media >= 50 ? "var(--azul-egm)" : "#b45309" }}>{media}%</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── TAB MÓDULOS FORMATIVOS ── */}
         {activeTab === "formaciones" && (
           <>
@@ -1162,9 +1296,8 @@ function AdminContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {formaciones.map((f, fIdx) => {
+                {formaciones.map((f) => {
                   const accentColor = tipoAccentColor[f.tipoModulo] ?? "var(--azul-egm)";
-                  const mockStats = MOCK_MODULO_STATS[fIdx % MOCK_MODULO_STATS.length];
                   return (
                     <div
                       key={f.moduloId}
@@ -1190,156 +1323,75 @@ function AdminContent() {
                           style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
                       )}
                       <div className="p-5 flex flex-col flex-1">
-                      {/* Badges */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {MODULO_TIPO_LABEL[f.tipoModulo] && (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                            {MODULO_TIPO_LABEL[f.tipoModulo]}
-                          </span>
-                        )}
-                        {f.empresaId === null ? (
-                          <span className="text-xs px-2.5 py-1 rounded-full italic"
-                            style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                            EGM Global
-                          </span>
-                        ) : (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                            style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                            Tu empresa
-                          </span>
-                        )}
-                        {!f.activo && (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                            style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
-                            Desactivado
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Title + description */}
-                      <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
-                        {f.nombre}
-                      </p>
-                      <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
-                        {f.descripcion}
-                      </p>
-
-                      {/* Mock stats */}
-                      <div className="flex items-center gap-4 mt-3 mb-1">
-                        <span className="text-xs flex items-center gap-1.5" style={{ color: "var(--texto-muted)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          {mockStats.asignados} asignados
-                        </span>
-                        <span className="text-xs flex items-center gap-1.5" style={{ color: "var(--verde-oliva)" }}>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {mockStats.completado}% completado
-                        </span>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center justify-end gap-2 mt-4 pt-3"
-                        style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                        {f.empresaId !== null ? (
-                          <>
-                            <button onClick={() => handleEditModulo(f)}
-                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                        {/* Badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {MODULO_TIPO_LABEL[f.tipoModulo] && (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
                               style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                              Editar
-                            </button>
-                            <button onClick={() => handleDesactivarModulo(f)}
-                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                              style={{ background: "#fef9c3", color: "#854d0e" }}>
-                              {f.activo ? "Desactivar" : "Activar"}
-                            </button>
-                            <button onClick={() => handleEliminarModulo(f.moduloId)}
-                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                              style={{ background: "var(--error-light)", color: "var(--error)" }}>
-                              Eliminar
-                            </button>
-                          </>
-                        ) : (
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-lg"
-                            style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
-                            Solo lectura
-                          </span>
-                        )}
-                      </div>
+                              {MODULO_TIPO_LABEL[f.tipoModulo]}
+                            </span>
+                          )}
+                          {f.empresaId === null ? (
+                            <span className="text-xs px-2.5 py-1 rounded-full italic"
+                              style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                              EGM Global
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                              style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                              Tu empresa
+                            </span>
+                          )}
+                          {!f.activo && (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                              style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
+                              Desactivado
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title + description */}
+                        <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
+                          {f.nombre}
+                        </p>
+                        <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
+                          {f.descripcion}
+                        </p>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-2 mt-4 pt-3"
+                          style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                          {f.empresaId !== null ? (
+                            <>
+                              <button onClick={() => handleEditModulo(f)}
+                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                Editar
+                              </button>
+                              <button onClick={() => handleDesactivarModulo(f)}
+                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                style={{ background: "#fef9c3", color: "#854d0e" }}>
+                                {f.activo ? "Desactivar" : "Activar"}
+                              </button>
+                              <button onClick={() => handleEliminarModulo(f.moduloId)}
+                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                style={{ background: "var(--error-light)", color: "var(--error)" }}>
+                                Eliminar
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs font-medium px-2.5 py-1 rounded-lg"
+                              style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
+                              Solo lectura
+                            </span>
+                          )}
+                        </div>
                       </div>{/* /p-5 */}
                     </div>
                   );
                 })}
               </div>
             )}
-
-            {/* Seguimiento de empleados — tabla mockeada */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-                <div>
-                  <p style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "1.2rem", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                    Progreso del equipo
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Seguimiento individual por empleado</p>
-                </div>
-                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                  {empleados.length > 0 ? empleados.length : 4} empleados
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                      {["Empleado", "Prevención RR.LL.", "Protección Datos", "Comunicación", "Onboarding", "Media"].map((h) => (
-                        <th key={h} className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { nombre: "Ana García", apellidos: "Martínez", pcts: [100, 72, 45, 100] },
-                      { nombre: "Carlos Ruiz", apellidos: "López", pcts: [100, 100, 80, 100] },
-                      { nombre: "María López", apellidos: "Sánchez", pcts: [65, 40, 20, 100] },
-                      { nombre: "David Torres", apellidos: "Gil", pcts: [30, 15, 0, 80] },
-                    ].map((emp, idx, arr) => {
-                      const media = Math.round(emp.pcts.reduce((a, b) => a + b, 0) / emp.pcts.length);
-                      const initials = [emp.nombre, emp.apellidos].join(" ").split(" ").slice(0, 2).map(p => p[0]).join("");
-                      return (
-                        <tr key={emp.nombre} style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                {initials}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{emp.nombre} {emp.apellidos}</p>
-                              </div>
-                            </div>
-                          </td>
-                          {emp.pcts.map((pct, i) => (
-                            <td key={i} className="py-3.5 px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-16 rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
-                                  <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? "var(--verde-oliva)" : pct >= 50 ? "var(--azul-egm)" : "#f59e0b", borderRadius: "9999px" }} />
-                                </div>
-                                <span className="text-xs font-semibold" style={{ color: pct === 100 ? "var(--verde-oliva)" : pct >= 50 ? "var(--azul-egm)" : "#b45309" }}>{pct}%</span>
-                              </div>
-                            </td>
-                          ))}
-                          <td className="py-3.5 px-4">
-                            <span className="text-sm font-bold" style={{ color: media >= 80 ? "var(--verde-oliva)" : media >= 50 ? "var(--azul-egm)" : "#b45309" }}>{media}%</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </>
         )}
       </div>
@@ -1356,7 +1408,7 @@ function AdminContent() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[300] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
+        <div className="fixed bottom-6 left-1/2 z-300 flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg, #1b3f7e 0%, #2563eb 100%)", color: "#fff", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
