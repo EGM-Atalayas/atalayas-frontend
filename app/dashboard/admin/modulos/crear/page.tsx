@@ -697,7 +697,7 @@ export default function CrearModuloPage() {
                 </div>
               </div>
             </div>
-            {modo !== null && !guardado && !generado && (
+            {!editId && modo !== null && !guardado && !generado && (
               <button onClick={() => setModo(null)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-80 transition-opacity"
                 style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
