@@ -8,7 +8,7 @@ import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/l
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
 import type { ProgresoEmpleado } from "@/lib/types/progreso";
-import ModuloForm from "@/components/ModuloForm";
+
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
@@ -127,9 +127,6 @@ function AdminContent() {
   const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
   const [progresoEmpresa, setProgresoEmpresa] = useState<ProgresoEmpleado[]>([]);
   const [cargandoProgreso, setCargandoProgreso] = useState(true);
-  const [showFormModulo, setShowFormModulo] = useState(false);
-  const [editingModulo, setEditingModulo] = useState<ModuloConProgreso | null>(null);
-
   const cargarEmpleados = async () => {
     setCargandoEmpleados(true);
     try {
@@ -310,9 +307,7 @@ function AdminContent() {
       mostrarToast("Anuncio publicado correctamente");
     } catch { mostrarToast("Error al publicar el anuncio"); }
   }
-
-  const resetFormModulo = () => { setEditingModulo(null); setShowFormModulo(false); };
-  const handleEditModulo = (f: ModuloConProgreso) => { setEditingModulo(f); setShowFormModulo(true); };
+  const handleEditModulo = (f: ModuloConProgreso) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
   const handleDesactivarModulo = async (modulo: ModuloConProgreso) => {
     const estaActivo = modulo.activo;
@@ -1394,15 +1389,7 @@ function AdminContent() {
         )}
       </div>
 
-      {/* Modal edicion modulo — overlay global */}
-      {showFormModulo && (
-        <ModuloForm
-          editando={editingModulo}
-          empresaId={usuario?.empresaId}
-          onSave={() => { resetFormModulo(); refreshData(); }}
-          onCancel={resetFormModulo}
-        />
-      )}
+
 
       {/* Toast */}
       {toast && (
