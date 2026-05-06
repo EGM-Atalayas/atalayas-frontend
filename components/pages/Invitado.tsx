@@ -210,13 +210,16 @@ export default function Invitado() {
       {/* HERO */}
       <section className="relative w-full min-h-screen flex flex-col overflow-hidden">
 
-        {/* Background image */}
-        <img
-          src="/background-invitado.webp"
-          alt=""
-          aria-hidden
+        {/* Background video */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
           className="absolute inset-0 w-full h-full object-cover z-0"
-        />
+        >
+          <source src="/atalayas-fondo.mp4" type="video/mp4" />
+        </video>
         {/* Dark overlay */}
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
