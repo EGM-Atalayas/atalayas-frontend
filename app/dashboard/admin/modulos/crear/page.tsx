@@ -346,6 +346,18 @@ export default function CrearModuloPage() {
           if (modulo.imagenPortadaUrl) {
             setPortadaPreview(modulo.imagenPortadaUrl);
           }
+          // Precargar archivo adjunto (PDF) - mostrar como ya existente
+          if (modulo.adjuntoUrl && modulo.adjuntoNombre) {
+            const ext = modulo.adjuntoNombre.split('.').pop()?.toLowerCase() || '';
+            const tipoArchivo = ["pdf","docx","txt","ppt","pptx"].includes(ext) ? "pdf" as const :
+                                ["mp4","mov"].includes(ext) ? "video" as const :
+                                ["mp3","wav"].includes(ext) ? "audio" as const : "otro" as const;
+            setArchivoM({ 
+              nombre: modulo.adjuntoNombre, 
+              tamano: "Archivo existente", 
+              tipo: tipoArchivo
+            });
+          }
           // Establecer modo manual para edición
           setModo("manual");
           setPasoManual(1);
