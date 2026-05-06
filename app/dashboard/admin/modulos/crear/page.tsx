@@ -1246,23 +1246,19 @@ export default function CrearModuloPage() {
                   </>
                 )}
 
-                {/* ── BOTONES INFERIORES ── */}
-                <div className="flex items-center justify-end gap-3 mt-8 pt-6" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                  <button
-                    onClick={() => { if (modo === "manual") { pasoManual > 1 ? setPasoManual((pasoManual - 1) as PasoManual) : setModo(null); } else { pasoIA > 1 ? setPasoIA((pasoIA - 1) as PasoIA) : setModo(null); } }}
-                    className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-80"
-                    style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
-                    {(modo === "manual" ? pasoManual : pasoIA) === 1 ? "Limpiar" : "← Atrás"}
-                  </button>
-                  {/* Último paso manual: guardar */}
-                  {modo === "manual" && pasoManual === 4 ? (
-                    <button onClick={guardarManual} disabled={guardando}
-                      className="px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2"
-                      style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1, boxShadow: "0 4px 14px rgba(0,0,0,0.12)" }}>
-          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : (editId ? "Actualizar módulo" : "Guardar módulo")}
-                    </button>
-                  ) : modo === "ia" && pasoIA === 5 ? null : (
+                  {/* ── BOTONES INFERIORES ── */}
+                  <div className="flex items-center justify-end gap-3 mt-8 pt-6" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                     <button
+                      onClick={() => { if (modo === "manual") { pasoManual > 1 ? setPasoManual((pasoManual - 1) as PasoManual) : setModo(null); } else { pasoIA > 1 ? setPasoIA((pasoIA - 1) as PasoIA) : setModo(null); } }}
+                      className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
+                      {(modo === "manual" ? pasoManual : pasoIA) === 1 ? "Limpiar" : "← Atrás"}
+                    </button>
+                    {/* Último paso manual: guardar */}
+                    {modo === "manual" && pasoManual === 4 ? (
+                      <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} editing={!!editId} />
+                    ) : modo === "ia" && pasoIA === 5 ? null : (
+                      <button
                       onClick={() => { if (modo === "manual") setPasoManual((pasoManual + 1) as PasoManual); else setPasoIA((pasoIA + 1) as PasoIA); }}
                       disabled={
                         (modo === "manual" && pasoManual === 1 && !nombre.trim()) ||
