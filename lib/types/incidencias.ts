@@ -2,9 +2,8 @@ export interface Incidencia {
   incidenciaId: string;
   titulo: string;
   descripcion: string;
-  tipo: string;
-  prioridad: 'baja' | 'media' | 'alta' | 'critica';
-  estado: 'abierta' | 'en_curso' | 'resuelta' | 'cerrada';
+  prioridad: 'NORMAL' | 'CRITICA';
+  estado: 'ABIERTA' | 'EN_CURSO' | 'RESUELTA' | 'CERRADA';
   creadoPor: string;
   nombreCreador: string;
   emailCreador: string;
@@ -27,7 +26,6 @@ export interface ComentarioIncidencia {
 export interface IncidenciaInput {
   titulo: string;
   descripcion: string;
-  tipo: string;
-  prioridad: 'baja' | 'media' | 'alta';
+  prioridad: 'NORMAL' | 'CRITICA';
   empresaId: string | null;
 }

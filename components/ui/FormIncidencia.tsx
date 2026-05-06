@@ -4,11 +4,9 @@ import { useState } from "react";
 import { crearIncidencia } from "@/lib/api/incidencias";
 import type { IncidenciaInput } from "@/lib/types/incidencias";
 
-const TIPOS = ["IT", "Mantenimiento", "RRHH", "Instalaciones", "Seguridad", "Otro"];
 const PRIORIDADES = [
-  { value: "baja", label: "Baja", color: "#6b7280" },
-  { value: "media", label: "Media", color: "#d97706" },
-  { value: "alta", label: "Alta", color: "#dc2626" },
+  { value: "NORMAL", label: "Normal", color: "#6b7280" },
+  { value: "CRITICA", label: "Crítica", color: "#dc2626" },
 ];
 
 interface Props {
@@ -19,7 +17,7 @@ interface Props {
 
 export default function FormIncidencia({ empresaId, onClose, onSuccess }: Props) {
   const [form, setForm] = useState<IncidenciaInput>({
-    titulo: "", descripcion: "", tipo: "Otro", prioridad: "media", empresaId,
+    titulo: "", descripcion: "", prioridad: "NORMAL", empresaId,
   });
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,17 +48,6 @@ export default function FormIncidencia({ empresaId, onClose, onSuccess }: Props)
         </button>
         <h2 className="text-xl font-bold mb-6" style={{ color: "var(--texto-primario)" }}>Reportar Incidencia</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="text-sm font-semibold block mb-1">Tipo</label>
-            <select
-              className="w-full p-2.5 rounded-lg border text-sm"
-              value={form.tipo}
-              onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-              style={{ borderColor: "var(--gris-borde)", background: "var(--blanco)" }}
-            >
-              {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
           <div>
             <label className="text-sm font-semibold block mb-1">Título</label>
             <input
