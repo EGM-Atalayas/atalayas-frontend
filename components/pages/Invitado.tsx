@@ -219,7 +219,7 @@ export default function Invitado() {
           <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
           <div className="hidden md:flex items-center justify-center gap-8">
             <span className="text-2xl font-medium text-white cursor-default transition-colors">Inicio</span>
-            <a href="#noticias" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Noticias</a>
+            <Link href="/noticias" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Noticias</Link>
             <a href="#comunidad" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Comunidad</a>
             <a href="#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
@@ -249,7 +249,7 @@ export default function Invitado() {
         {/* Mobile menu */}
         {menuAbierto && (
           <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
-            <a href="#noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</a>
+            <Link href="/noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</Link>
             <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
             <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
             <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
