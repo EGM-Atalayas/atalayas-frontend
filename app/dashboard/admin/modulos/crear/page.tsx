@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
+import type { ModuloConProgreso } from "@/lib/types/modulos";
+import { getModulosConProgreso } from "@/lib/api/modulos";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type Modo = null | "manual" | "ia";
@@ -232,23 +234,23 @@ function SidebarStepper({ paso, setPaso, pasos, accent = "var(--azul-egm)" }: {
 }
 
 // ── BOTONES NAVEGACIÓN ────────────────────────────────────────────────────────
-function NavBtns({ paso, setPaso, setModo, onNext, disabledNext, labelNext = "Continuar", onSave, guardando, accent = "var(--azul-egm)" }: {
+function NavBtns({ paso, setPaso, setModo, onNext, disabledNext, labelNext = "Continuar", onSave, guardando, accent = "var(--azul-egm)", editing = false }: {
   paso: number; setPaso: (p: number) => void; setModo: (m: Modo) => void;
   onNext?: () => void; disabledNext?: boolean; labelNext?: string;
-  onSave?: () => void; guardando?: boolean; accent?: string;
+  onSave?: () => void; guardando?: boolean; accent?: string; editing?: boolean;
 }) {
   return (
     <div className="flex gap-3 pt-6 mt-6" style={{ borderTop: "1px solid var(--gris-borde)" }}>
       <button onClick={() => paso > 1 ? setPaso(paso - 1) : setModo(null)}
-        className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-80"
+        className="px-5 py-2.5 rounded-lg text-sm font-semibold hover:opacity-80 transition-opacity"
         style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
-        {paso === 1 ? "Cancelar" : "← Atrás"}
+        {paso === 1 ? (editing ? "Cancelar edición" : "Cancelar") : "← Atrás"}
       </button>
       {onSave ? (
         <button onClick={onSave} disabled={guardando}
           className="flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
           style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1 }}>
-          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : "Guardar módulo"}
+          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : (editing ? "Actualizar módulo" : "Guardar módulo")}
         </button>
       ) : (
         <button onClick={onNext} disabled={disabledNext}
@@ -312,14 +314,50 @@ function PortadaUpload({ preview, onFile, onRemove, accent = "var(--azul-egm)", 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CrearModuloPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const inputIARef = useRef<HTMLInputElement>(null);
   const { usuario } = useAuth();
+
+  const editId = searchParams.get("edit");
+  const [moduloEditando, setModuloEditando] = useState<ModuloConProgreso | null>(null);
+  const [cargandoEdicion, setCargandoEdicion] = useState(!!editId);
 
   useEffect(() => {
     if (usuario && ROLES_BLOQUEADOS.includes(usuario.codigoRol)) router.replace("/dashboard");
   }, [usuario]);
   if (!usuario || ROLES_BLOQUEADOS.includes(usuario.codigoRol)) return null;
+
+  // Cargar datos del módulo a editar
+  useEffect(() => {
+    if (!editId || !usuario?.empresaId) return;
+    const cargarModulo = async () => {
+      try {
+        const modulos = await getModulosConProgreso();
+        const modulo = modulos.find((m) => m.moduloId === editId);
+        if (modulo) {
+          setModuloEditando(modulo);
+          // Precargar datos básicos
+          setNombre(modulo.nombre);
+          setDescripcion(modulo.descripcion || "");
+          // Precargar tipo de módulo
+          if (modulo.tipoModulo) setCategoria(modulo.tipoModulo);
+          // Precargar imagen de portada
+          if (modulo.imagenPortadaUrl) {
+            setPortadaPreview(modulo.imagenPortadaUrl);
+          }
+          // Establecer modo manual para edición
+          setModo("manual");
+          setPasoManual(1);
+        }
+      } catch (e) {
+        console.error("Error al cargar módulo para editar:", e);
+      } finally {
+        setCargandoEdicion(false);
+      }
+    };
+    cargarModulo();
+  }, [editId, usuario?.empresaId]);
 
   const [modo, setModo] = useState<Modo>(null);
 
@@ -446,6 +484,8 @@ export default function CrearModuloPage() {
         } catch (e) {
           console.warn("No se pudo subir la imagen de portada:", e);
         }
+      } else if (editId && moduloEditando?.imagenPortadaUrl) {
+        imagenPortadaUrl = moduloEditando.imagenPortadaUrl;
       }
       let adjuntoUrl: string | null = null;
       let adjuntoNombre: string | null = null;
@@ -454,11 +494,13 @@ export default function CrearModuloPage() {
         adjuntoUrl = adjunto.url;
         adjuntoNombre = adjunto.nombre;
       }
-      const res = await apiFetch(`${API_URL}/modulos`, {
-        method: "POST",
+      const url = editId ? `${API_URL}/modulos/${editId}` : `${API_URL}/modulos`;
+      const method = editId ? "PUT" : "POST";
+      const res = await apiFetch(url, {
+        method,
         body: JSON.stringify({
           nombre: nombre.trim(), descripcion: descripcion.trim(), tipoModulo: categoria,
-          activo: true, empresaId: usuario?.empresaId ?? null, idioma, duracion, audiencia,
+          activo: moduloEditando?.activo ?? true, empresaId: usuario?.empresaId ?? null, idioma, duracion, audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
           testPreguntas: testJson, imagenPortadaUrl, adjuntoUrl, adjuntoNombre,
           contenidoMarkdown: introduccion.trim() || null,
@@ -649,7 +691,9 @@ export default function CrearModuloPage() {
                   <span>/</span>
                   <Link href="/dashboard/admin" className="hover:underline">Administración</Link>
                   <span>/</span>
-                  <span style={{ color: "var(--texto-primario)", fontWeight: 600 }}>Crear módulo</span>
+                  <span style={{ color: "var(--texto-primario)", fontWeight: 600 }}>
+                    {editId ? "Editar módulo" : "Crear módulo"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -671,40 +715,48 @@ export default function CrearModuloPage() {
           {/* ══ TARJETA ÚNICA ══ */}
           <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
 
-            {/* ── CABECERA DE LA TARJETA ── */}
-            <div className="px-8 pt-7 pb-6" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-              <h1 className="text-xl font-bold mb-1" style={{ color: "var(--texto-primario)" }}>Crear módulo formativo</h1>
-              <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Publica módulos formativos adjuntando título, descripción, archivo y test de evaluación.</p>
-            </div>
-
-            {/* ── SELECTOR DE MODO ── */}
-            <div className="px-8 py-5" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { key: "manual" as Modo, icon: <IconPencil />, label: "Manual", desc: "Paso a paso", accent: "var(--azul-egm)", aLight: "var(--azul-egm-light)" },
-                  { key: "ia" as Modo, icon: <IconSpark sz={4} />, label: "Asistente IA", desc: "Generación automática", accent: IA_ACCENT, aLight: "rgba(139,154,45,0.1)" },
-                ] as const).map((op) => {
-                  const active = modo === op.key;
-                  return (
-                    <button key={op.key!} onClick={() => { setModo(op.key); if (op.key === "manual") setPasoManual(1); else setPasoIA(1); }}
-                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all"
-                      style={{ border: `1.5px solid ${active ? op.accent : "var(--gris-borde)"}`, background: active ? op.aLight : "var(--gris-pagina)" }}
-                      onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = op.accent; e.currentTarget.style.background = op.aLight; } }}
-                      onMouseLeave={(e) => { if (!active) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; } }}>
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
-                        style={{ background: active ? op.accent : "var(--gris-superficie)", color: active ? "#fff" : "var(--texto-muted)" }}>
-                        {op.icon}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
-                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
-                      </div>
-                      {active && <div className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: op.accent }} />}
-                    </button>
-                  );
-                })}
+              {/* ── CABECERA DE LA TARJETA ── */}
+              <div className="px-8 pt-7 pb-6" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+                <h1 className="text-xl font-bold mb-1" style={{ color: "var(--texto-primario)" }}>
+                  {editId ? "Editar módulo formativo" : "Crear módulo formativo"}
+                </h1>
+                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                  {editId
+                    ? "Modifica los datos del módulo formativo existente."
+                    : "Publica módulos formativos adjuntando título, descripción, archivo y test de evaluación."}
+                </p>
               </div>
-            </div>
+
+            {/* ── SELECTOR DE MODO (solo en creación) ── */}
+            {!editId && (
+              <div className="px-8 py-5" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    { key: "manual" as Modo, icon: <IconPencil />, label: "Manual", desc: "Paso a paso", accent: "var(--azul-egm)", aLight: "var(--azul-egm-light)" },
+                    { key: "ia" as Modo, icon: <IconSpark sz={4} />, label: "Asistente IA", desc: "Generación automática", accent: IA_ACCENT, aLight: "rgba(139,154,45,0.1)" },
+                  ] as const).map((op) => {
+                    const active = modo === op.key;
+                    return (
+                      <button key={op.key!} onClick={() => { setModo(op.key); if (op.key === "manual") setPasoManual(1); else setPasoIA(1); }}
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all"
+                        style={{ border: `1.5px solid ${active ? op.accent : "var(--gris-borde)"}`, background: active ? op.aLight : "var(--gris-pagina)" }}
+                        onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = op.accent; e.currentTarget.style.background = op.aLight; } }}
+                        onMouseLeave={(e) => { if (!active) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; } }}>
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
+                          style={{ background: active ? op.accent : "var(--gris-superficie)", color: active ? "#fff" : "var(--texto-muted)" }}>
+                          {op.icon}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>{op.label}</p>
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{op.desc}</p>
+                        </div>
+                        {active && <div className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: op.accent }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* ── PLACEHOLDER SI NO SE HA ELEGIDO MODO ── */}
             {modo === null && (
@@ -717,8 +769,8 @@ export default function CrearModuloPage() {
               </div>
             )}
 
-            {/* ── INDICADOR DE PASOS ── */}
-            {modo !== null && !guardado && !generado && (
+            {/* ── INDICADOR DE PASOS (solo si no es edición) ── */}
+            {!editId && modo !== null && !guardado && !generado && (
               <div className="px-8 py-4 flex items-center gap-1" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
                 {(modo === "manual" ? PASOS_MANUAL : PASOS_IA).map((p, idx, arr) => {
                   const currentPaso = modo === "manual" ? pasoManual : pasoIA;
@@ -949,7 +1001,7 @@ export default function CrearModuloPage() {
                           {errorMsg && (
                             <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
                           )}
-                          <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} />
+                          <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} editing={!!editId} />
                         </div>
                       </div>
                     )}
@@ -1207,7 +1259,7 @@ export default function CrearModuloPage() {
                     <button onClick={guardarManual} disabled={guardando}
                       className="px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2"
                       style={{ background: "var(--verde-oliva)", color: "#fff", opacity: guardando ? 0.7 : 1, boxShadow: "0 4px 14px rgba(0,0,0,0.12)" }}>
-                      {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : "Guardar módulo"}
+          {guardando ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</> : (editId ? "Actualizar módulo" : "Guardar módulo")}
                     </button>
                   ) : modo === "ia" && pasoIA === 5 ? null : (
                     <button

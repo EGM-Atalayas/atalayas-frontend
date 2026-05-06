@@ -172,9 +172,12 @@ function AdminContent() {
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
-      if (f) { setEditingModulo(f); setShowFormModulo(true); }
+      if (f) {
+        // Redirigir a la página completa de edición
+        router.push(`/dashboard/admin/modulos/crear?edit=${editId}`);
+      }
     }
-  }, [searchParams, formaciones]);
+  }, [searchParams, formaciones, router]);
 
   const handleCrearEmpleado = async () => {
     if (!formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()) {
