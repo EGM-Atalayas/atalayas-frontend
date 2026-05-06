@@ -672,7 +672,7 @@ export default function NoticiasPublicasPage() {
 
       {/* ── Filters bar ──────────────────────────────────────────────────── */}
       <div
-        className="sticky top-[65px] z-40 w-full px-6 sm:px-12 lg:px-20 py-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        className="w-full px-6 sm:px-12 lg:px-20 py-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3"
         style={{ background: "var(--fondo-pagina, #f9fafb)" }}
       >
         {/* Tab pills */}
