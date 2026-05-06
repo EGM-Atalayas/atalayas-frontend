@@ -1001,7 +1001,6 @@ export default function CrearModuloPage() {
                           {errorMsg && (
                             <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>⚠ {errorMsg}</div>
                           )}
-                          <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} editing={!!editId} />
                         </div>
                       </div>
                     )}
@@ -1248,12 +1247,6 @@ export default function CrearModuloPage() {
 
                   {/* ── BOTONES INFERIORES ── */}
                   <div className="flex items-center justify-end gap-3 mt-8 pt-6" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                    <button
-                      onClick={() => { if (modo === "manual") { pasoManual > 1 ? setPasoManual((pasoManual - 1) as PasoManual) : setModo(null); } else { pasoIA > 1 ? setPasoIA((pasoIA - 1) as PasoIA) : setModo(null); } }}
-                      className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-80"
-                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
-                      {(modo === "manual" ? pasoManual : pasoIA) === 1 ? "Limpiar" : "← Atrás"}
-                    </button>
                     {/* Último paso manual: guardar */}
                     {modo === "manual" && pasoManual === 4 ? (
                       <NavBtns paso={pasoManual} setPaso={(p) => setPasoManual(p as PasoManual)} setModo={setModo} onSave={guardarManual} guardando={guardando} editing={!!editId} />
