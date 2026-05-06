@@ -5,17 +5,15 @@ import { getIncidencias, cambiarEstadoIncidencia } from "@/lib/api/incidencias";
 import type { Incidencia } from "@/lib/types/incidencias";
 
 const ESTADOS = [
-  { value: "abierta", label: "Abierta", color: "#dc2626", bg: "#fee2e2" },
-  { value: "en_curso", label: "En curso", color: "#d97706", bg: "#fef3c7" },
-  { value: "resuelta", label: "Resuelta", color: "#16a34a", bg: "#dcfce7" },
-  { value: "cerrada", label: "Cerrada", color: "#6b7280", bg: "#f3f4f6" },
+  { value: "ABIERTA", label: "Abierta", color: "#dc2626", bg: "#fee2e2" },
+  { value: "EN_CURSO", label: "En curso", color: "#d97706", bg: "#fef3c7" },
+  { value: "RESUELTA", label: "Resuelta", color: "#16a34a", bg: "#dcfce7" },
+  { value: "CERRADA", label: "Cerrada", color: "#6b7280", bg: "#f3f4f6" },
 ];
 
 const PRIORIDAD_COLORS: Record<string, string> = {
-  baja: "#6b7280",
-  media: "#d97706",
-  alta: "#dc2626",
-  critica: "#991b1b",
+  NORMAL: "#6b7280",
+  CRITICA: "#dc2626",
 };
 
 interface Props {

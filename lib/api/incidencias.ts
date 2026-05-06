@@ -40,6 +40,15 @@ function getUserInfo() {
   };
 }
 
+async function parseApiError(res: Response): Promise<string> {
+  try {
+    const data = await res.json();
+    if (data.fieldErrors) return Object.values(data.fieldErrors as Record<string, string>).join(", ");
+    if (data.message) return data.message;
+  } catch { /* noop */ }
+  return `Error del servidor (${res.status})`;
+}
+
 export async function getIncidencias(empresaId?: string | null): Promise<Incidencia[]> {
   try {
     const url = empresaId ? `${API_URL}/incidencias?empresaId=${empresaId}` : `${API_URL}/incidencias`;
@@ -58,13 +67,21 @@ export async function getIncidencias(empresaId?: string | null): Promise<Inciden
 }
 
 export async function crearIncidencia(data: IncidenciaInput): Promise<Incidencia> {
+  let isNetworkError = false;
   try {
     const res = await apiFetch(`${API_URL}/incidencias`, {
       method: "POST",
       body: JSON.stringify(data),
     });
     if (res.ok) return await res.json();
-  } catch {
+    const msg = await parseApiError(res);
+    throw new Error(msg);
+  } catch (err: any) {
+    if (!isNetworkError) {
+      isNetworkError = true;
+      // Solo caer a localStorage si fue network error (sin response), no HTTP error
+      if (err?.message && err.message !== "Failed to fetch") throw err;
+    }
     console.log("Guardando incidencia en localStorage");
   }
 
@@ -72,8 +89,8 @@ export async function crearIncidencia(data: IncidenciaInput): Promise<Incidencia
   const newInc: Incidencia = {
     ...data,
     incidenciaId: `inc-local-${Date.now()}`,
-    prioridad: data.prioridad as any,
-    estado: "abierta",
+    prioridad: data.prioridad,
+    estado: "ABIERTA",
     creadoPor: user.usuarioId,
     nombreCreador: user.nombre,
     emailCreador: user.email,
@@ -96,7 +113,10 @@ export async function cambiarEstadoIncidencia(incidenciaId: string, estado: stri
       body: JSON.stringify({ estado }),
     });
     if (res.ok) return await res.json();
-  } catch {
+    const msg = await parseApiError(res);
+    throw new Error(msg);
+  } catch (err: any) {
+    if (err?.message && err.message !== "Failed to fetch") throw err;
     console.log("Actualizando estado en localStorage");
   }
 
