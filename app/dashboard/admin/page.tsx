@@ -560,7 +560,7 @@ function AdminContent() {
                         <h3 className="text-white text-2xl font-bold">Añadir nuevo empleado</h3>
                         <p className="text-white text-sm opacity-70 mt-1">Crea una cuenta para un nuevo miembro</p>
                       </div>
-                      <button onClick={() => setShowFormEmpleado(false)} className="w-8 h-8 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-white">
+                      <button onClick={() => setShowFormEmpleado(false)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-800 font-bold hover:bg-gray-200 transition-colors">
                         ×
                       </button>
                     </div>
