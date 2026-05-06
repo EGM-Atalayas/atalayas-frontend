@@ -1,52 +1,39 @@
 import { API_URL, apiFetch } from "../api";
-import type { Servicio, ServicioInput } from "@/lib/types/servicios";
+import type { Servicio, ServicioInput, CategoriaServicio } from "@/lib/types/servicios";
 
-export async function getServicios(): Promise<Servicio[]> {
-  const response = await apiFetch(`${API_URL}/servicios`);
-  if (!response.ok) {
-    throw new Error("Error al obtener los servicios");
-  }
-  return response.json();
+export async function getServicios(categoria?: CategoriaServicio): Promise<Servicio[]> {
+  const url = categoria
+    ? `${API_URL}/servicios?categoria=${categoria}`
+    : `${API_URL}/servicios`;
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error("Error al obtener los servicios");
+  return res.json();
 }
 
 export async function crearServicio(data: ServicioInput): Promise<Servicio> {
-  const response = await apiFetch(`${API_URL}/servicios`, {
-    method: "POST",
+  const res = await apiFetch(`${API_URL}/servicios`, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body:    JSON.stringify(data),
   });
-  if (!response.ok) {
-    throw new Error("Error al crear el servicio");
-  }
-  return response.json();
+  if (!res.ok) throw new Error("Error al crear el servicio");
+  return res.json();
 }
 
 export async function editarServicio(id: string, data: ServicioInput): Promise<Servicio> {
-  const response = await apiFetch(`${API_URL}/servicios/${id}`, {
-    method: "PATCH",
+  const res = await apiFetch(`${API_URL}/servicios/${id}`, {
+    method:  "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body:    JSON.stringify(data),
   });
-  if (!response.ok) {
-    throw new Error("Error al editar el servicio");
-  }
-  return response.json();
+  if (!res.ok) throw new Error("Error al editar el servicio");
+  return res.json();
 }
 
-export async function toggleServicio(id: string): Promise<void> {
-  const response = await apiFetch(`${API_URL}/servicios/${id}/toggle`, {
+export async function desactivarServicio(id: string): Promise<Servicio> {
+  const res = await apiFetch(`${API_URL}/servicios/${id}/desactivar`, {
     method: "PATCH",
   });
-  if (!response.ok) {
-    throw new Error("Error al cambiar el estado del servicio");
-  }
-}
-
-export async function eliminarServicio(id: string): Promise<void> {
-  const response = await apiFetch(`${API_URL}/servicios/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Error al eliminar el servicio");
-  }
+  if (!res.ok) throw new Error("Error al desactivar el servicio");
+  return res.json();
 }

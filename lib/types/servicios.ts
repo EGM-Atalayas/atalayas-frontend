@@ -1,20 +1,26 @@
+export type CategoriaServicio = "MOVILIDAD" | "INSTALACIONES" | "INICIATIVAS" | "COMUNES";
+
 export interface Servicio {
-  servicioId: string;
-  nombre: string;
-  descripcion: string | null;
-  url: string | null;
-  activo: boolean;
-  icono: string | null;
-  orden: number;
-  creadoEn?: string;
-  actualizadoEn?: string;
+  servicioId:   string;
+  titulo:       string;
+  descripcion:  string | null;
+  categoria:    CategoriaServicio;
+  iconoUrl:     string | null;
+  urlInfo:      string | null;
+  telefono:     string | null;
+  comoAcceder:  string | null;
+  creadoPor:    string | null;
+  activo:       boolean;
+  creadoEn:     string;
+  actualizadoEn: string;
 }
 
 export interface ServicioInput {
-  nombre: string;
+  titulo:       string;
   descripcion?: string | null;
-  url?: string | null;
-  activo?: boolean;
-  icono?: string | null;
-  orden?: number;
+  categoria:    CategoriaServicio;
+  iconoUrl?:    string | null;
+  urlInfo?:     string | null;
+  telefono?:    string | null;
+  comoAcceder?: string | null;
 }
