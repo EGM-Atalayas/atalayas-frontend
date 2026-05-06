@@ -36,7 +36,7 @@ export default function FormEmpleado({
       <div className="relative w-full flex flex-col"
         style={{
           maxWidth: 520,
-          background: "var(--blanco)",
+          background: "var(--gris-fondo)",
           borderRadius: 20,
           boxShadow: "0 24px 80px rgba(0,0,0,0.22)",
           overflow: "hidden",
@@ -59,23 +59,23 @@ export default function FormEmpleado({
         <form onSubmit={handleSubmit} className="overflow-y-auto p-8">
           <div className="mb-4">
             <label className="block text-xs font-semibold mb-2">Nombre *</label>
-            <input type="text" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} 
+            <input type="text" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })}
               className="w-full rounded-xl px-4 py-3 border border-gray-300" />
           </div>
           <div className="mb-4">
             <label className="block text-xs font-semibold mb-2">Email *</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} 
+            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full rounded-xl px-4 py-3 border border-gray-300" />
           </div>
           <div className="mb-4">
             <label className="block text-xs font-semibold mb-2">Contraseña *</label>
-            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} 
+            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full rounded-xl px-4 py-3 border border-gray-300" />
           </div>
           <div className="flex gap-3 mt-6">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300">Cancelar</button>
             <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white disabled:opacity-50">
-              {submitting ? "Creando..." : "Crear empleado"}
+              {submitting ? <span className="loading-dots">Creando</span> : "Crear empleado"}
             </button>
           </div>
         </form>

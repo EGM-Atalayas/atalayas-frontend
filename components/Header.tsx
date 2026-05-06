@@ -33,8 +33,12 @@ export default function Header() {
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
 
-  // DETECTAMOS SI ES SUPERADMIN 
+  // DETECTAMOS SI ES SUPERADMIN
   const isSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN" || pathname.startsWith("/superadmin");
+
+  // HEADER SÓLIDO EN PÁGINAS CON FONDO CLARO (ej: crear módulo)
+  const paginasFondoClaro = ["/dashboard/admin/modulos/crear"];
+  const forceSolid = paginasFondoClaro.some((p) => pathname.startsWith(p));
 
   // LÓGICA DE RUTAS DINÁMICAS
   let linksToRender = [];
@@ -107,11 +111,11 @@ export default function Header() {
     <header
       className="w-full fixed top-0 left-0 right-0 z-50"
       style={{
-        background:         scrolled ? "rgba(22,50,105,0.97)" : "transparent",
-        borderBottom:       scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
-        backdropFilter:     scrolled ? "blur(14px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(14px)" : "none",
-        boxShadow:          scrolled ? "0 4px 28px rgba(0,0,0,0.30)" : "none",
+        background:         forceSolid || scrolled ? "rgba(22,50,105,0.97)" : "transparent",
+        borderBottom:       forceSolid || scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
+        backdropFilter:     forceSolid || scrolled ? "blur(14px)" : "none",
+        WebkitBackdropFilter: forceSolid || scrolled ? "blur(14px)" : "none",
+        boxShadow:          forceSolid || scrolled ? "0 4px 28px rgba(0,0,0,0.30)" : "none",
         transition:         "background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease",
       }}
     >
