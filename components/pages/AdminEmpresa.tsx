@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { getActividadReciente } from "@/lib/api/progreso";
-import { getServicios } from "@/lib/api/servicios";
+
 import { getModulos, getMiProgreso } from "@/lib/api/modulos";
 import type { ActividadItem } from "@/lib/types/progreso";
-import type { Servicio } from "@/lib/types/servicios";
+// Widget simplificado de servicios (pantalla inicio, no la página /servicios)
+type Servicio = { servicioId: string; nombre: string; descripcion: string | null; url: string | null; activo: boolean; icono: string | null; orden: number; };
 import type { Modulo, ProgresoItem } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 
@@ -161,11 +162,10 @@ export default function AdminEmpresa() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [resRes, anunciosRes, actividadData, serviciosData, modulosData, progresoData] = await Promise.all([
+        const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           apiFetch(`${API_URL}/anuncios`),
           getActividadReciente(5).catch(() => [] as ActividadItem[]),
-          getServicios().catch(() => []),
           getModulos().catch(() => [] as Modulo[]),
           getMiProgreso().catch(() => [] as ProgresoItem[]),
         ]);
@@ -175,9 +175,7 @@ export default function AdminEmpresa() {
           setAnuncios(data.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
         setActividad(actividadData);
-        if (serviciosData && serviciosData.length > 0) {
-          setServicios(serviciosData);
-        }
+        // servicios: usa mock hasta conectar el nuevo endpoint
 
         // Calcular estadísticas reales de módulos
         const modulos = modulosData.filter((m: Modulo) => m.activo);

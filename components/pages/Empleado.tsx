@@ -7,10 +7,11 @@ import DashboardHero from "@/components/ui/DashboardHero";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
-import { getServicios } from "@/lib/api/servicios";
+
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import type { Servicio } from "@/lib/types/servicios";
+// Widget simplificado de servicios (pantalla inicio, no la página /servicios)
+type Servicio = { servicioId: string; nombre: string; descripcion: string | null; url: string | null; activo: boolean; icono: string | null; orden: number; };
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
 import DotField from "@/components/ui/DotField";
 import BiIcon from "@/components/ui/BiIcon";
@@ -146,10 +147,9 @@ export default function Empleado() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [noticiasData, modulosData, serviciosData] = await Promise.all([
+        const [noticiasData, modulosData] = await Promise.all([
           getNoticias(usuario?.empresaId).catch(() => []),
           getModulosConProgreso().catch(() => []),
-          getServicios().catch(() => []),
         ]);
         setNoticias((noticiasData as Noticia[]).slice(0, 6));
         const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
@@ -157,9 +157,7 @@ export default function Empleado() {
         if (real.length === 0) {
           setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
         }
-        if (serviciosData && serviciosData.length > 0) {
-          setServicios(serviciosData);
-        }
+        // servicios: usa mock hasta conectar el nuevo endpoint
       } finally {
         setCargando(false);
       }

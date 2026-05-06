@@ -325,8 +325,8 @@ function SkeletonFila() {
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function ServiciosPage() {
-  const { user } = useAuth();
-  const esSuperAdmin = user?.rol === "ROLE_ADMIN";
+  const { usuario } = useAuth();
+  const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
 
   const [servicios,  setServicios]  = useState<Servicio[]>([]);
   const [cargando,   setCargando]   = useState(true);
@@ -382,17 +382,20 @@ export default function ServiciosPage() {
   return (
     <div className="flex flex-col gap-6 pb-10">
       <DashboardHero
-        title="Servicios"
-        subtitle="Recursos y servicios del área empresarial EGM Atalayas disponibles para todos los trabajadores."
-        actions={esSuperAdmin ? (
+        titulo="Servicios"
+        subtitulo="Recursos y servicios del área empresarial EGM Atalayas disponibles para todos los trabajadores."
+        variante="seccion"
+      />
+      {esSuperAdmin && (
+        <div className="px-4 sm:px-6 lg:px-8 -mt-2">
           <Button variant="primary" onClick={() => { setEditando(null); setModalOpen(true); }}>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} className="mr-1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
             Nuevo servicio
           </Button>
-        ) : undefined}
-      />
+        </div>
+      )}
 
       <div className="px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
         {cargando ? (
@@ -450,12 +453,12 @@ export default function ServiciosPage() {
       {/* Confirm desactivar */}
       {confirmDes && (
         <ConfirmDialog
-          title="¿Desactivar servicio?"
-          description={`"${confirmDes.titulo}" dejará de ser visible para los empleados.`}
-          confirmLabel="Desactivar"
-          danger
-          onConfirm={() => confirmarDesactivar(confirmDes)}
-          onCancel={() => setConfirmDes(null)}
+          titulo="¿Desactivar servicio?"
+          mensaje={`"${confirmDes.titulo}" dejará de ser visible para los empleados.`}
+          labelOk="Desactivar"
+          peligro
+          onOk={() => confirmarDesactivar(confirmDes)}
+          onCerrar={() => setConfirmDes(null)}
         />
       )}
 
