@@ -127,8 +127,8 @@ const SERVICIOS_MOCK: Servicio[] = [
   { servicioId: "m1", nombre: "Coche compartido", descripcion: "Ahorra hasta 2.500€/año compartiendo ruta.", url: "https://www.lokinn.com/compartir-coche/atalayas", activo: true, icono: "coche_compartido", orden: 1 },
   { servicioId: "m2", nombre: "Autobús lanzadera", descripcion: "Línea 7P con horarios laborales.", url: "https://atalayas.com/autobus-lanzadera/", activo: true, icono: "autobus", orden: 2 },
   { servicioId: "m3", nombre: "Aparcamiento VAO", descripcion: "Plazas para grupos que comparten vehículo.", url: "https://atalayas.com/aparcamientovao/", activo: true, icono: "aparcamiento", orden: 3 },
-  { servicioId: "m4", nombre: "Guardería", descripcion: "Conciliación familiar en el área.", url: null, activo: false, icono: "guarderia", orden: 4 },
-  { servicioId: "m5", nombre: "Descuentos y ventajas", descripcion: "Beneficios para trabajadores del parque.", url: null, activo: false, icono: "descuentos", orden: 5 },
+  { servicioId: "m4", nombre: "Guardería", descripcion: "Conciliación familiar en el área.", url: "https://atalayas.com/servicios/", activo: true, icono: "guarderia", orden: 4 },
+  { servicioId: "m5", nombre: "Descuentos y ventajas", descripcion: "Beneficios para trabajadores del parque.", url: "https://atalayas.com/servicios-a-los-trabajadores/", activo: true, icono: "descuentos", orden: 5 },
 ];
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
