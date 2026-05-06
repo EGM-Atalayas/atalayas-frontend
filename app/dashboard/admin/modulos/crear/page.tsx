@@ -1298,7 +1298,7 @@ export default function CrearModuloPage() {
                     <IconCheck sz={7} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-bold text-white mb-1">¡Módulo creado correctamente!</h2>
+                    <h2 className="text-xl font-bold text-white mb-1">¡Módulo {editId ? "actualizado" : "creado"} correctamente!</h2>
                     <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
                       <strong className="text-white">{resultadoIA?.titulo || nombre}</strong> ya está disponible en la plataforma.
                     </p>
