@@ -38,7 +38,6 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "noticias",    label: "Noticias" },
   { key: "eventos",     label: "Eventos" },
   { key: "comunicados", label: "Comunicados" },
-  { key: "blog",        label: "Blog" },
 ];
 
 const TAG_COLORS: Record<string, { bg: string; color: string }> = {
@@ -347,84 +346,53 @@ function NoticiaModal({ item, onClose }: { item: UnifiedItem; onClose: () => voi
   );
 }
 
-// ── Bento card sizes ──────────────────────────────────────────────────────────
-// Pattern repeats every 7 items: large, medium, small, small, medium, small, small
-const BENTO_PATTERN: Array<"large" | "medium" | "small"> = [
-  "large", "medium", "small", "small", "medium", "small", "small",
-];
-
-type CardSize = "large" | "medium" | "small";
-
-function BentoCard({ item, size, onClick }: { item: UnifiedItem; size: CardSize; onClick: () => void }) {
+function NewsCard({ item, onClick }: { item: UnifiedItem; onClick: () => void }) {
   const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
-  const { day, month, year, full } = formatDate(item.fecha);
-  const hasImage = !!item.imagenUrl;
-
-  const sizeClasses: Record<CardSize, string> = {
-    large:  "col-span-2 row-span-2 min-h-[300px]",
-    medium: "col-span-2 row-span-1 min-h-[180px] md:col-span-1 md:row-span-2",
-    small:  "col-span-2 row-span-1 min-h-[160px] md:col-span-1",
-  };
+  const { full } = formatDate(item.fecha);
 
   return (
     <article
-      className={`relative rounded-2xl overflow-hidden group cursor-pointer flex flex-col justify-between ${sizeClasses[size]}`}
-      style={{
-        background: hasImage ? "#0f1423" : "var(--gris-superficie, #f1f5f9)",
-        border: hasImage ? "none" : "1px solid var(--gris-borde, #e5e7eb)",
-      }}
+      className="group cursor-pointer rounded-2xl overflow-hidden flex flex-col"
+      style={{ background: "#fff", border: "1px solid #e5e7eb", transition: "box-shadow 0.2s ease, transform 0.2s ease" }}
       onClick={onClick}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
     >
-      {hasImage && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.imagenUrl!} alt={item.titulo} className="absolute inset-0 w-full h-full object-cover opacity-50 transition-transform duration-500 group-hover:scale-105" />
-      )}
-      {hasImage && (
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)" }} />
-      )}
+      {/* Imagen */}
+      <div className="w-full overflow-hidden shrink-0" style={{ aspectRatio: "16/9", background: "#f1f5f9" }}>
+        {item.imagenUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.imagenUrl}
+            alt={item.titulo}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 9 4-4 4 4 4-4 4 4"/>
+            </svg>
+          </div>
+        )}
+      </div>
 
-      {/* Top — tag */}
-      <div className="relative z-10 p-5 pb-0 flex items-start justify-between">
+      {/* Contenido */}
+      <div className="flex flex-col flex-1 p-5 gap-2">
         <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full inline-block"
-          style={{
-            background:     hasImage ? "rgba(255,255,255,0.15)" : tagColor.bg,
-            color:          hasImage ? "rgba(255,255,255,0.9)"  : tagColor.color,
-            backdropFilter: hasImage ? "blur(4px)" : "none",
-          }}
+          className="text-xs font-semibold px-2.5 py-1 rounded-full self-start"
+          style={{ background: tagColor.bg, color: tagColor.color }}
         >
           {item.categoria}
         </span>
-        {item.destacado && (
-          <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/20 text-yellow-500">★</span>
-        )}
-      </div>
-
-      {/* Bottom — text */}
-      <div className="relative z-10 p-5 pt-3">
-        <h3
-          className={`font-semibold leading-snug group-hover:underline ${size === "large" ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}
-          style={{ color: hasImage ? "white" : "var(--texto-primario, #111827)" }}
-        >
+        <h3 className="font-bold text-base leading-snug line-clamp-3" style={{ color: "#111827" }}>
           {item.titulo}
         </h3>
-        {size !== "small" && (
-          <p className={`text-sm mt-1.5 leading-relaxed ${size === "large" ? "line-clamp-3" : "line-clamp-2"}`}
-            style={{ color: hasImage ? "rgba(255,255,255,0.65)" : "var(--texto-muted, #6b7280)" }}>
-            {item.extracto}
-          </p>
-        )}
-        <p className="text-xs mt-2" style={{ color: hasImage ? "rgba(255,255,255,0.45)" : "var(--texto-muted, #6b7280)" }}>
-          {size === "large" ? full : `${day} ${month} ${year}`}
+        <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "#6b7280" }}>
+          {item.extracto}
         </p>
-      </div>
-
-      {/* Arrow on hover */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-          style={{ background: hasImage ? "rgba(255,255,255,0.2)" : "rgba(27,63,126,0.1)", color: hasImage ? "white" : "#1B3F7E", backdropFilter: "blur(4px)" }}>
-          ↗
-        </div>
+        {full && (
+          <p className="text-xs mt-auto pt-1" style={{ color: "#9ca3af" }}>{full}</p>
+        )}
       </div>
     </article>
   );
@@ -597,7 +565,7 @@ export default function NoticiasPublicasPage() {
         {/* Background image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/background-invitado.webp"
+          src="/noticias-hero.jpg"
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover z-0"
@@ -699,11 +667,12 @@ export default function NoticiasPublicasPage() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all whitespace-nowrap shrink-0"
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all whitespace-nowrap shrink-0${active ? " liquid-glass" : ""}`}
                 style={{
-                  background:   active ? "var(--azul-egm, #1B3F7E)" : "white",
-                  color:        active ? "white" : "var(--texto-muted, #6b7280)",
-                  borderColor:  active ? "var(--azul-egm, #1B3F7E)" : "var(--gris-borde, #e5e7eb)",
+                  background:  active ? "rgba(27,63,126,0.25)" : "white",
+                  color:       active ? "#1B3F7E" : "var(--texto-muted, #6b7280)",
+                  borderColor: active ? "rgba(27,63,126,0.3)" : "var(--gris-borde, #e5e7eb)",
+                  boxShadow:   active ? "0 2px 12px rgba(27,63,126,0.15)" : "none",
                 }}
               >
                 {label}
@@ -766,13 +735,12 @@ export default function NoticiasPublicasPage() {
               {search && ` para «${search}»`}
             </p>
 
-            {/* Bento grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[180px] gap-4">
-              {filtered.map((item, idx) => (
-                <BentoCard
+            {/* Grid 3 columnas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((item) => (
+                <NewsCard
                   key={item.id}
                   item={item}
-                  size={BENTO_PATTERN[idx % BENTO_PATTERN.length]}
                   onClick={() => setSelectedItem(item)}
                 />
               ))}
