@@ -46,7 +46,7 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
   const handleEstado = async (id: string, nuevoEstado: string) => {
     try {
       await cambiarEstadoIncidencia(id, nuevoEstado);
-      setIncidencias(prev => prev.map(i => i.incidenciaId === id ? { ...i, estado: nuevoEstado as any } : i));
+      setIncidencias(prev => prev.map(i => i.incidenciaId === id ? { ...i, estado: nuevoEstado as Incidencia['estado'] } : i));
     } catch (e: any) {
       alert(e.message || "Error al cambiar el estado de la incidencia");
     }
@@ -104,7 +104,7 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: `${PRIORIDAD_COLORS[inc.prioridad]}15`, color: PRIORIDAD_COLORS[inc.prioridad] }}>
                         {inc.prioridad.toUpperCase()}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>{inc.tipo}</span>
+
                     </div>
                     <p className="text-xs line-clamp-2 mb-2" style={{ color: "var(--texto-muted)" }}>{inc.descripcion}</p>
                     <div className="flex items-center gap-4 text-[11px]" style={{ color: "var(--texto-muted)" }}>
