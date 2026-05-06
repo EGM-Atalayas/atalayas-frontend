@@ -130,7 +130,6 @@ export default function Invitado() {
   const carruselTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const carruselNoAnim = useRef(false);
   const carruselInitialized = useRef(false);
-  const [comunidadAbierto, setComunidadAbierto] = useState<string | null>(null);
 
   // Slides del carrusel: primero noticias EGM (empresaId null), luego comunicados
   const slidesCarrusel: ItemLista[] = useMemo(() => {
@@ -489,118 +488,60 @@ export default function Invitado() {
       </section>
 
       {/* COMUNIDAD */}
-      {(() => {
-        const itemAbierto = comunidadItems.find(i => i.label === comunidadAbierto) ?? null;
+      <section id="comunidad" className="relative w-full overflow-hidden py-16 sm:py-24" style={{ background: "#ffffff" }}>
+        {/* Imagen decorativa pegada al borde derecho */}
+        <div className="hidden lg:block absolute right-0 top-0 bottom-0 pointer-events-none select-none" style={{ width: 500 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/circulos-decoracion.png" alt="" aria-hidden
+            className="absolute right-0 top-1/2 -translate-y-1/2"
+            style={{ width: 500, opacity: 1, filter: "invert(18%) sepia(60%) saturate(800%) hue-rotate(200deg) brightness(60%)" }} />
+        </div>
 
-        return (
-          <section id="comunidad" className="relative w-full overflow-hidden py-16 sm:py-24" style={{ background: "#ffffff" }}>
-            {/* Imagen decorativa pegada al borde derecho */}
-            <div className="hidden lg:block absolute right-0 top-0 bottom-0 pointer-events-none select-none" style={{ width: 500 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/circulos-decoracion.png" alt="" aria-hidden
-                className="absolute right-0 top-1/2 -translate-y-1/2"
-                style={{ width: 500, opacity: 1, filter: "invert(18%) sepia(60%) saturate(800%) hue-rotate(200deg) brightness(60%)" }} />
-            </div>
-
-            {/* Layout: lista centrada con margen */}
-            <div className="relative w-full px-6 sm:px-20 lg:px-36 xl:px-48">
-              {/* Título */}
-              <h2 className="text-4xl sm:text-5xl font-bold mb-10 text-center" style={{ color: "#111827", maxWidth: 800 }}>
-                Nuestra Comunidad
-              </h2>
-              {/* Lista en dos columnas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ maxWidth: 800 }}>
-                {comunidadItems.map((item, i) => (
-                  <div
-                    key={item.label}
-                    onClick={() => setComunidadAbierto(item.label)}
-                    className="flex items-center justify-between gap-4 cursor-pointer group transition-colors duration-200 px-6 py-5"
-                    style={{
-                      borderBottom: "1px solid rgba(0,0,0,0.07)",
-                      background: "transparent",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <div className="flex items-center gap-4">
-                      {/* Icono pequeño */}
-                      <div
-                        className="flex items-center justify-center rounded-full shrink-0"
-                        style={{ width: 44, height: 44, background: "rgba(27,63,126,0.12)", color: "#1b3f7e" }}
-                      >
-                        {item.icono}
-                      </div>
-                      <div>
-                        <p className="font-bold text-base leading-snug mb-0.5" style={{ color: "#111827" }}>{item.label}</p>
-                        <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>{item.sub}</p>
-                      </div>
-                    </div>
-                    {/* Flecha */}
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="rgba(27,63,126,0.4)" strokeWidth={2}
-                      className="shrink-0 transition-transform duration-200 group-hover:translate-x-1">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                ))}
-              </div>
-
-            </div>
-
-            {/* Modal expandido */}
-            {itemAbierto && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
-                onClick={() => setComunidadAbierto(null)}
+        {/* Layout: lista centrada con margen */}
+        <div className="relative w-full px-6 sm:px-20 lg:px-36 xl:px-48">
+          {/* Título */}
+          <h2 className="text-4xl sm:text-5xl font-bold mb-10 text-center" style={{ color: "#111827", maxWidth: 800 }}>
+            Nuestra Comunidad
+          </h2>
+          {/* Lista en dos columnas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ maxWidth: 800 }}>
+            {comunidadItems.map((item) => (
+              <a
+                key={item.label}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-4 cursor-pointer group transition-colors duration-200 px-6 py-5 no-underline"
+                style={{
+                  borderBottom: "1px solid rgba(0,0,0,0.07)",
+                  background: "transparent",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
-                <div
-                  className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-                  style={{ background: "#fff" }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  {/* Icono superior */}
-                  <div className="flex items-center justify-center pt-10 pb-6" style={{ background: itemAbierto.color + "18" }}>
-                    <div
-                      className="flex items-center justify-center rounded-full"
-                      style={{ width: 88, height: 88, background: itemAbierto.color + "22", color: itemAbierto.color }}
-                    >
-                      {itemAbierto.icono}
-                    </div>
-                  </div>
-
-                  {/* Botón cerrar */}
-                  <button
-                    onClick={() => setComunidadAbierto(null)}
-                    className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
-                    style={{ background: "rgba(0,0,0,0.45)", color: "white" }}
+                <div className="flex items-center gap-4">
+                  {/* Icono pequeño */}
+                  <div
+                    className="flex items-center justify-center rounded-full shrink-0"
+                    style={{ width: 44, height: 44, background: "rgba(27,63,126,0.12)", color: "#1b3f7e" }}
                   >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-
-                  {/* Contenido */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2" style={{ color: "#111827" }}>{itemAbierto.label}</h3>
-                    <p className="text-sm leading-relaxed mb-5" style={{ color: "#6b7280" }}>{itemAbierto.sub}</p>
-                    {itemAbierto.url && (
-                      <a
-                        href={itemAbierto.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-80"
-                        style={{ background: "var(--azul-egm)", color: "white" }}
-                      >
-                        Saber más ↗
-                      </a>
-                    )}
+                    {item.icono}
+                  </div>
+                  <div>
+                    <p className="font-bold text-base leading-snug mb-0.5" style={{ color: "#111827" }}>{item.label}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>{item.sub}</p>
                   </div>
                 </div>
-              </div>
-            )}
-          </section>
-        );
-      })()}
+                {/* Flecha */}
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="rgba(27,63,126,0.4)" strokeWidth={2}
+                  className="shrink-0 transition-transform duration-200 group-hover:translate-x-1">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <Colaboradores />
       <FooterCTA />
