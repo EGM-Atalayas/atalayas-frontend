@@ -346,15 +346,15 @@ function NoticiaModal({ item, onClose }: { item: UnifiedItem; onClose: () => voi
   );
 }
 
-function NewsCard({ item, onClick }: { item: UnifiedItem; onClick: () => void }) {
+function NewsCard({ item }: { item: UnifiedItem }) {
   const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
   const { full } = formatDate(item.fecha);
 
   return (
+    <Link href={`/noticias/${item.id}`} style={{ textDecoration: "none" }}>
     <article
-      className="group cursor-pointer rounded-2xl overflow-hidden flex flex-col"
+      className="group cursor-pointer rounded-2xl overflow-hidden flex flex-col h-full"
       style={{ background: "#fff", border: "1px solid #e5e7eb", transition: "box-shadow 0.2s ease, transform 0.2s ease" }}
-      onClick={onClick}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
     >
@@ -395,6 +395,7 @@ function NewsCard({ item, onClick }: { item: UnifiedItem; onClick: () => void })
         )}
       </div>
     </article>
+    </Link>
   );
 }
 
@@ -496,7 +497,6 @@ export default function NoticiasPublicasPage() {
   const [activeTab,     setActiveTab]     = useState<TabKey>("todos");
   const [search,        setSearch]        = useState("");
   const [mobileMenuOpen,  setMobileMenuOpen]  = useState(false);
-  const [selectedItem,    setSelectedItem]    = useState<UnifiedItem | null>(null);
   const [scrolled,        setScrolled]        = useState(false);
   const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
 
@@ -738,21 +738,12 @@ export default function NoticiasPublicasPage() {
             {/* Grid 3 columnas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((item) => (
-                <NewsCard
-                  key={item.id}
-                  item={item}
-                  onClick={() => setSelectedItem(item)}
-                />
+                <NewsCard key={item.id} item={item} />
               ))}
             </div>
           </>
         )}
       </main>
-
-      {/* ── Modal ────────────────────────────────────────────────────────── */}
-      {selectedItem && (
-        <NoticiaModal item={selectedItem} onClose={() => setSelectedItem(null)} />
-      )}
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer
