@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   titulo:    string;
@@ -73,33 +74,12 @@ export default function ConfirmDialog({
 
         {/* Botones */}
         <div className="flex items-center justify-end gap-2.5 px-5 py-4">
-          <button
-            onClick={onCerrar}
-            className="px-4 py-2 rounded-xl text-sm font-medium"
-            style={{
-              background: "transparent",
-              color:      "#6b7280",
-              border:     "1px solid rgba(0,0,0,0.12)",
-              transition: "background 0.12s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
+          <Button variant="secondary" onClick={onCerrar}>
             Cancelar
-          </button>
-
-          <button
-            onClick={() => { onOk(); onCerrar(); }}
-            className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{
-              background: peligro ? "#dc2626" : "var(--azul-egm)",
-              transition: "opacity 0.12s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-          >
+          </Button>
+          <Button variant={peligro ? "danger" : "primary"} onClick={() => { onOk(); onCerrar(); }}>
             {labelOk}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

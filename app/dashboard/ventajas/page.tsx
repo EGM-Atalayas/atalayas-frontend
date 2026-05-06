@@ -3,11 +3,45 @@
 import { useEffect, useState, useCallback } from "react";
 import Link          from "next/link";
 import DashboardHero from "@/components/ui/DashboardHero";
+import { Button }    from "@/components/ui/Button";
+import { getIconoBeneficio } from "@/lib/iconosBeneficio";
 import { useAuth } from "@/context/AuthContext";
 import { getBeneficios, crearBeneficio, editarBeneficio, desactivarBeneficio } from "@/lib/api/beneficios";
 import type { Beneficio, BeneficioInput } from "@/lib/types/beneficios";
 import BeneficioModal  from "@/components/ui/BeneficioModal";
 import ConfirmDialog   from "@/components/ui/ConfirmDialog";
+
+// ── Breadcrumb de vuelta ──────────────────────────────────────────────────────
+function BreadcrumbBack({ href, label }: { href: string; label: string }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-2"
+      style={{
+        color:      hovered ? "var(--azul-egm)" : "#4b5563",
+        fontWeight: 500,
+        fontSize:   "0.9375rem",   // entre sm y base — más presencia sin ser grande
+        transition: "color 0.15s ease",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <svg
+        width="18" height="18" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor" strokeWidth={2}
+        style={{
+          transform:  hovered ? "translateX(-5px)" : "translateX(0)",
+          transition: "transform 0.35s cubic-bezier(0.34,1.20,0.64,1)",
+        }}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      {label}
+    </Link>
+  );
+}
 
 // ── Icono genérico por defecto ────────────────────────────────────────────────
 function IconoDefault() {
@@ -72,13 +106,9 @@ function BeneficioCard({
       <div className="flex items-start gap-3 px-5 pt-5 pb-3">
         <div
           className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
-          style={{ background: "var(--azul-egm-light, #eef2ff)", color: "var(--azul-egm)" }}
+          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
         >
-          {beneficio.iconoUrl ? (
-            <img src={beneficio.iconoUrl} alt="" className="w-7 h-7 object-contain rounded" />
-          ) : (
-            <IconoDefault />
-          )}
+          {getIconoBeneficio(beneficio.iconoUrl) ?? <IconoDefault />}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -204,38 +234,129 @@ function BeneficioCard({
   );
 }
 
+// ── Tarjeta fantasma ──────────────────────────────────────────────────────────
+function GhostCard({ rotate = 0, opacity = 0.45, blur = 1.5, translateY = 0 }: {
+  rotate?:     number;
+  opacity?:    number;
+  blur?:       number;
+  translateY?: number;
+}) {
+  return (
+    <div
+      className="rounded-2xl shrink-0 overflow-hidden"
+      style={{
+        width:      "240px",
+        background: "#ffffff",
+        border:     "1px solid rgba(0,0,0,0.11)",
+        boxShadow:  "0 4px 20px rgba(0,0,0,0.09)",
+        opacity,
+        filter:     `blur(${blur}px)`,
+        transform:  `rotate(${rotate}deg) translateY(${translateY}px)`,
+        pointerEvents: "none",
+        userSelect: "none",
+      }}
+    >
+      {/* Cabecera */}
+      <div className="flex items-start gap-3 px-4 pt-4 pb-3">
+        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#e0e7ff", flexShrink: 0 }} />
+        <div className="flex-1 flex flex-col gap-2 pt-1">
+          <div style={{ height: "11px", borderRadius: "6px", background: "#d1d5db", width: "65%" }} />
+          <div style={{ height: "9px",  borderRadius: "6px", background: "#e5e7eb", width: "40%" }} />
+        </div>
+      </div>
+      <div style={{ height: "1px", background: "rgba(0,0,0,0.08)", margin: "0 16px" }} />
+      {/* Cuerpo */}
+      <div className="px-4 py-3 flex flex-col gap-2">
+        <div style={{ height: "9px",  borderRadius: "6px", background: "#e5e7eb", width: "100%" }} />
+        <div style={{ height: "9px",  borderRadius: "6px", background: "#e5e7eb", width: "80%"  }} />
+        <div style={{ height: "9px",  borderRadius: "6px", background: "#e5e7eb", width: "55%"  }} />
+      </div>
+      {/* Footer */}
+      <div className="px-4 pb-4 pt-1">
+        <div style={{ height: "9px", borderRadius: "6px", background: "#e0e7ff", width: "35%" }} />
+      </div>
+    </div>
+  );
+}
+
 // ── Estado vacío ──────────────────────────────────────────────────────────────
 function EstadoVacio({ esSuperAdmin, onNuevo }: { esSuperAdmin: boolean; onNuevo: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+    <div className="relative flex flex-col items-center justify-center overflow-hidden" style={{ minHeight: "400px", padding: "0 40px" }}>
+
+      {/* Tarjetas fantasma — fondo */}
+      <div className="absolute inset-0 flex items-center justify-center gap-5 pointer-events-none">
+        <GhostCard rotate={-5} opacity={0.5}  blur={1.5} translateY={20} />
+        <GhostCard rotate={0}  opacity={0.75} blur={0}   translateY={0}  />
+        <GhostCard rotate={5}  opacity={0.5}  blur={1.5} translateY={20} />
+      </div>
+
+      {/* Gradiente radial — desvanece bordes suavemente */}
       <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{ background: "var(--azul-egm-light, #eef2ff)", color: "var(--azul-egm)" }}
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 40%, var(--gris-pagina) 92%)" }}
+      />
+
+      {/* Mensaje centrado */}
+      <div
+        className="relative z-10 flex flex-col items-center text-center px-8 py-7 rounded-3xl"
+        style={{
+          gap:                  "16px",
+          background:           "rgba(245,246,248,0.88)",
+          backdropFilter:       "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          border:               "1px solid rgba(0,0,0,0.06)",
+          boxShadow:            "0 2px 16px rgba(0,0,0,0.04)",
+        }}
       >
-        <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-        </svg>
+
+        {/* Icono con anillos */}
+        <div className="relative flex items-center justify-center" style={{ marginBottom: "4px" }}>
+          {/* Anillo exterior */}
+          <div style={{
+            position:     "absolute",
+            width:        "84px",
+            height:       "84px",
+            borderRadius: "50%",
+            border:       "1.5px solid rgba(27,63,126,0.18)",
+          }} />
+          {/* Círculo interior */}
+          <div style={{
+            width:          "64px",
+            height:         "64px",
+            borderRadius:   "50%",
+            background:     "var(--azul-egm-light)",
+            color:          "var(--azul-egm)",
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+          }}>
+            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="font-bold" style={{ fontSize: "1.05rem", color: "#111827" }}>
+            Sin ventajas publicadas
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: "#6b7280", maxWidth: "300px" }}>
+            {esSuperAdmin
+              ? "Publica la primera ventaja para los empleados del área"
+              : "Pronto habrá ventajas disponibles para ti."}
+          </p>
+        </div>
+
+        {esSuperAdmin && (
+          <Button onClick={onNuevo} className="mt-1">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva ventaja
+          </Button>
+        )}
       </div>
-      <div>
-        <p className="font-semibold text-sm" style={{ color: "#111827" }}>Sin ventajas publicadas</p>
-        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
-          {esSuperAdmin ? "Crea la primera ventaja para los empleados del área." : "Pronto habrá ventajas disponibles."}
-        </p>
-      </div>
-      {esSuperAdmin && (
-        <button
-          onClick={onNuevo}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-          style={{ background: "var(--azul-egm)", transition: "opacity 0.15s ease" }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-        >
-          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nueva ventaja
-        </button>
-      )}
     </div>
   );
 }
@@ -315,6 +436,7 @@ export default function VentajasPage() {
   return (
     <div style={{ background: "var(--gris-pagina)", minHeight: "100vh" }}>
       <DashboardHero
+        prefijo="Tus"
         titulo="Ventajas"
         imagenFondo="/bg-ventajas.webp"
         objectPosition="center 40%"
@@ -323,40 +445,22 @@ export default function VentajasPage() {
 
       <div className="px-5 sm:px-9 lg:px-14 py-8 sm:py-12">
 
-        {/* Breadcrumb */}
-        <Link
-          href="/dashboard/comunidad"
-          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 sm:mb-8"
-          style={{ color: "#9ca3af", transition: "color 0.15s ease" }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--azul-egm)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#9ca3af"; }}
-        >
-          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Comunidad
-        </Link>
+        {/* Barra navegación/acción */}
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
 
-        {/* Cabecera — título + botón nuevo (solo SuperAdmin) */}
-        {esSuperAdmin && (
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <p className="text-sm" style={{ color: "#6b7280" }}>
-              {cargando ? "" : `${beneficios.length} ventaja${beneficios.length !== 1 ? "s" : ""} publicada${beneficios.length !== 1 ? "s" : ""}`}
-            </p>
-            <button
-              onClick={abrirNuevo}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-              style={{ background: "var(--azul-egm)", transition: "opacity 0.15s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-            >
+          {/* ← Comunidad */}
+          <BreadcrumbBack href="/dashboard/comunidad" label="Comunidad" />
+
+          {/* Nueva ventaja — solo SuperAdmin */}
+          {esSuperAdmin && (
+            <Button size="lg" onClick={abrirNuevo}>
               <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Nueva ventaja
-            </button>
-          </div>
-        )}
+            </Button>
+          )}
+        </div>
 
         {/* Contenido */}
         {cargando ? (
