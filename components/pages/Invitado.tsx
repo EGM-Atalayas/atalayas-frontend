@@ -130,6 +130,13 @@ export default function Invitado() {
   const carruselTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const carruselNoAnim = useRef(false);
   const carruselInitialized = useRef(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Slides del carrusel: primero noticias EGM (empresaId null), luego comunicados
   const slidesCarrusel: ItemLista[] = useMemo(() => {
@@ -214,25 +221,41 @@ export default function Invitado() {
         <div className="absolute inset-0 z-1" style={{ background: "rgba(0,0,0,0.52)" }} />
 
         {/* ── Navigation ─────────────────────────────────────────────── */}
-        <nav className="relative z-20 w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
-          {/* Logo */}
-          <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
-          <div className="hidden md:flex items-center justify-center gap-8">
-            <span className="text-2xl font-medium text-white cursor-default transition-colors">Inicio</span>
-            <Link href="/noticias" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Noticias</Link>
-            <a href="#comunidad" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Comunidad</a>
-            <a href="#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</a>
+        <nav className="fixed top-0 left-0 right-0 z-50 w-full px-8 py-5 hidden md:grid md:grid-cols-3 items-center transition-all duration-300" style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}>
+          {/* Izquierda: Inicio + Noticias */}
+          <div className="flex items-center justify-end gap-8 pr-10">
+            <span className="text-lg font-medium text-white cursor-default transition-colors">Inicio</span>
+            <a href="#colaboradores" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Colaboradores</a>
           </div>
 
-          {/* Mobile hamburger / close */}
+          {/* Centro: Logo */}
+          <div className="flex justify-center">
+            <Link href="/">
+              <Image src={logo} alt="Atalayas EGM" className="h-12 w-auto brightness-0 invert" />
+            </Link>
+          </div>
+
+          {/* Derecha: Comunidad + Noticias */}
+          <div className="flex items-center justify-start gap-8 pl-10">
+            <a href="#comunidad" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Comunidad</a>
+            <Link href="/noticias" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Noticias</Link>
+          </div>
+        </nav>
+
+        {/* Mobile nav */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-50 w-full px-6 py-5 flex items-center justify-between transition-all duration-300" style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}>
+          <Link href="/">
+            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto brightness-0 invert" />
+          </Link>
+          {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 flex items-center justify-center outline-none focus:outline-none"
+            className="p-2 flex items-center justify-center outline-none focus:outline-none"
             onClick={() => setMenuAbierto(prev => !prev)}
             onMouseDown={(e) => e.preventDefault()}
             aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
           >
             {menuAbierto ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -244,7 +267,7 @@ export default function Invitado() {
               </svg>
             )}
           </button>
-        </nav>
+        </div>
 
         {/* Mobile menu */}
         {menuAbierto && (
@@ -256,9 +279,9 @@ export default function Invitado() {
           </div>
         )}
 
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-16 pb-40">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-40 pb-40">
           <h1
-            className="text-7xl sm:text-[9rem] md:text-[12rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
+            className="text-7xl sm:text-[6rem] md:text-[10rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
           >
             Atalayas Área Empresarial.
