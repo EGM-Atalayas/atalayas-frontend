@@ -529,7 +529,14 @@ export default function NoticiasPublicasPage() {
   const [search,        setSearch]        = useState("");
   const [mobileMenuOpen,  setMobileMenuOpen]  = useState(false);
   const [selectedItem,    setSelectedItem]    = useState<UnifiedItem | null>(null);
+  const [scrolled,        setScrolled]        = useState(false);
   const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -598,44 +605,53 @@ export default function NoticiasPublicasPage() {
         {/* Dark overlay */}
         <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.55)" }} />
 
-        {/* Nav — flotante sobre la imagen, sin borde */}
-        <nav className="relative z-[60] w-full px-8 py-6 flex flex-row items-center justify-between md:grid md:grid-cols-3">
-          <Link href="/">
-            <Image src={logo} alt="Atalayas EGM" className="h-14 w-auto brightness-0 invert" />
-          </Link>
-
-          <div className="hidden md:flex items-center justify-center gap-8">
-            <Link href="/" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Inicio</Link>
-            <span className="text-2xl font-medium text-white cursor-default">Noticias</span>
-            <Link href="/#comunidad" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Comunidad</Link>
-            <Link href="/#colaboradores" className="text-2xl font-medium text-white/50 hover:text-white transition-colors">Colaboradores</Link>
+        {/* Nav desktop — fixed, transparente en top, blur al scroll */}
+        <nav
+          className="fixed top-0 left-0 right-0 z-[60] w-full px-8 py-5 hidden md:grid md:grid-cols-3 items-center transition-all duration-300"
+          style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}
+        >
+          {/* Izquierda: Inicio + Colaboradores */}
+          <div className="flex items-center justify-end gap-8 pr-10">
+            <Link href="/" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Inicio</Link>
+            <Link href="/#colaboradores" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Colaboradores</Link>
           </div>
 
-          <div className="hidden md:flex items-center justify-end">
-            <Link
-              href="/login"
-              className="liquid-glass rounded-full px-6 py-2.5 text-base font-semibold text-white hover:scale-[1.03] transition-transform inline-flex items-center justify-center"
-              style={{ background: "rgba(59, 130, 246, 0.25)" }}
-            >
-              Iniciar sesión
+          {/* Centro: Logo */}
+          <div className="flex justify-center">
+            <Link href="/">
+              <Image src={logo} alt="Atalayas EGM" className="h-12 w-auto brightness-0 invert" />
             </Link>
           </div>
 
-          {/* Hamburguesa móvil */}
+          {/* Derecha: Comunidad + Noticias */}
+          <div className="flex items-center justify-start gap-8 pl-10">
+            <Link href="/#comunidad" className="text-lg font-medium text-white/50 hover:text-white transition-colors">Comunidad</Link>
+            <span className="text-lg font-medium text-white cursor-default">Noticias</span>
+          </div>
+        </nav>
+
+        {/* Mobile nav */}
+        <div
+          className="md:hidden fixed top-0 left-0 right-0 z-[60] w-full px-6 py-5 flex items-center justify-between transition-all duration-300"
+          style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}
+        >
+          <Link href="/">
+            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto brightness-0 invert" />
+          </Link>
           <button
-            className="md:hidden flex flex-col justify-center items-center gap-[5px] p-2 ml-auto"
+            className="flex flex-col justify-center items-center gap-[5px] p-2"
             onClick={() => { staggeredMenuRef.current?.toggle(); setMobileMenuOpen((v) => !v); }}
             aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={mobileMenuOpen}
           >
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[7px] bg-black" : "bg-white"}`} />
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "opacity-0 bg-black" : "bg-white"}`} />
-            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[7px] bg-black" : "bg-white"}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[7px] bg-white" : "bg-white"}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "opacity-0 bg-white" : "bg-white"}`} />
+            <span className={`block w-6 h-0.5 rounded transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[7px] bg-white" : "bg-white"}`} />
           </button>
-        </nav>
+        </div>
 
         {/* Hero text */}
-        <div className="relative z-20 flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 pb-20 pt-10">
+        <div className="relative z-20 flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 pb-20 pt-40">
           <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-4">
             Blog · Noticias · Eventos · Comunicados
           </p>
