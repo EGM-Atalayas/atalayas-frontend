@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 interface HubItem {
@@ -26,7 +27,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     titulo:      "Ventajas",
-    descripcion: "Descuentos y ventajas exclusivas para empleados del área",
+    descripcion: "Descuentos en comercios, servicios y ocio del área empresarial",
     imagen:      "/bg-ventajas.webp",
     href:        "/dashboard/ventajas",
   },
@@ -37,30 +38,36 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
   const router = useRouter();
 
   return (
-    <div
+    <button
       onClick={() => router.push(item.href)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="relative overflow-hidden cursor-pointer h-[300px] sm:h-[380px] lg:h-[420px]"
+      className="relative overflow-hidden cursor-pointer w-full text-left border-none p-0 bg-transparent"
       style={{
-        borderRadius: "18px",
+        height:       "clamp(280px, 38vw, 420px)",
+        borderRadius: "16px",
         boxShadow:    hovered
-          ? "0 20px 56px rgba(0,0,0,0.32)"
+          ? "0 20px 56px rgba(0,0,0,0.28)"
           : "0 4px 18px rgba(0,0,0,0.12)",
         transform:    hovered ? "translateY(-6px)" : "translateY(0)",
         transition:   "box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.20, 0.64, 1)",
-        animation:    `heroFadeUp 0.55s ease ${index * 0.15}s both`,
+        animation:    `heroFadeUp 0.55s ease ${index * 0.18}s both`,
+        outline:      "none",
       }}
+      onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 3px var(--verde-oliva-hover)"; }}
+      onBlur={(e)  => { e.currentTarget.style.boxShadow = "0 4px 18px rgba(0,0,0,0.12)"; }}
     >
       {/* Imagen de fondo */}
-      <img
+      <Image
         src={item.imagen}
         alt={item.titulo}
-        className="absolute inset-0 w-full h-full object-cover"
+        fill
+        className="object-cover"
         style={{
-          transform:  hovered ? "scale(1.06)" : "scale(1)",
-          transition: "transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform:  hovered ? "scale(1.08)" : "scale(1)",
+          transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
       />
 
       {/* Overlay base — se oscurece en hover */}
@@ -73,7 +80,7 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
           transition: "background 0.4s ease",
         }}
       />
-      {/* Overlay móvil — vignette en la parte baja para legibilidad */}
+      {/* Overlay móvil */}
       <div
         className="absolute inset-0 sm:hidden"
         style={{
@@ -81,7 +88,7 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
         }}
       />
 
-      {/* Texto flotante móvil — título + descripción con text-shadow, sin panel */}
+      {/* Texto flotante móvil */}
       <div
         className="absolute left-0 right-0 px-6 sm:hidden"
         style={{ bottom: "24px", pointerEvents: "none" }}
@@ -90,7 +97,7 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
           style={{
             fontFamily:    "var(--font-poppins), sans-serif",
             fontSize:      "1.5rem",
-            fontWeight:    800,
+            fontWeight:    700,
             lineHeight:    1.15,
             letterSpacing: "-0.02em",
             color:         "#ffffff",
@@ -105,7 +112,7 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
             fontSize:   "0.85rem",
             lineHeight: 1.5,
             color:      "rgba(255,255,255,0.92)",
-            textShadow: "0 1px 6px rgba(0,0,0,1), 0 3px 16px rgba(0,0,0,0.95), 0 6px 32px rgba(0,0,0,0.85)",
+            textShadow: "0 1px 6px rgba(0,0,0,1), 0 3px 16px rgba(0,0,0,0.95)",
           }}
         >
           {item.descripcion}
@@ -124,11 +131,11 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
         }}
       >
         <h2
-          className="text-white font-bold"
+          className="text-white"
           style={{
             fontFamily:    "var(--font-poppins), sans-serif",
             fontSize:      "clamp(1.75rem, 2.6vw, 2.15rem)",
-            fontWeight:    800,
+            fontWeight:    700,
             lineHeight:    1.1,
             letterSpacing: "-0.03em",
             textShadow:    "0 2px 20px rgba(0,0,0,0.60)",
@@ -140,18 +147,15 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
 
       {/* Panel hover — solo desktop */}
       <div
-        className="absolute bottom-0 left-0 right-0 panel-card hidden sm:block"
+        className="absolute bottom-0 left-0 right-0 hidden sm:block"
         style={{
-          background:           "linear-gradient(to top, rgba(6,13,28,0.96) 0%, rgba(6,13,28,0.80) 55%, rgba(6,13,28,0.0) 100%)",
-          backdropFilter:       "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          opacity:              hovered ? 1 : 0,
-          transform:            hovered ? "translateY(0)" : "translateY(16px)",
-          transition:           "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.40s cubic-bezier(0.34, 1.10, 0.64, 1)",
-          padding:              "48px 22px 22px",
+          background: "linear-gradient(to top, rgba(6,13,28,0.96) 0%, rgba(6,13,28,0.80) 55%, rgba(6,13,28,0.0) 100%)",
+          opacity:    hovered ? 1 : 0,
+          transform:  hovered ? "translateY(0)" : "translateY(16px)",
+          transition: "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.40s cubic-bezier(0.34, 1.10, 0.64, 1)",
+          padding:    "48px 22px 22px",
         }}
       >
-        {/* Título dentro del panel */}
         <h2
           style={{
             fontFamily:    "var(--font-poppins), sans-serif",
@@ -167,7 +171,6 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
           {item.titulo}
         </h2>
 
-        {/* Descripción */}
         <p
           style={{
             fontSize:     "0.875rem",
@@ -179,18 +182,16 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
           {item.descripcion}
         </p>
 
-        {/* CTA — texto + flecha juntos */}
-        <div className="cta-row flex items-center gap-2.5">
+        {/* CTA */}
+        <div className="flex items-center gap-2.5">
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
             style={{
               border:     "1px solid rgba(255,255,255,0.18)",
               background: "rgba(255,255,255,0.10)",
-              boxShadow:  "none",
             }}
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
-              stroke="white" strokeWidth={2}>
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#ffffff" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </div>
@@ -207,7 +208,7 @@ function HubCard({ item, index }: { item: HubItem; index: number }) {
           </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -221,8 +222,8 @@ export default function ComunidadPage() {
         objectPosition="center 55%"
       />
 
-      <div className="px-5 sm:px-9 lg:px-14 py-8 sm:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-10">
+      <div className="px-5 sm:px-9 lg:px-14 pt-14 sm:pt-20 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-9 lg:gap-14">
           {HUB_ITEMS.map((item, index) => (
             <HubCard key={item.href} item={item} index={index} />
           ))}

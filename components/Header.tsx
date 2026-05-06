@@ -22,6 +22,7 @@ const SUPERADMIN_LINKS = [
   { label: "Inicio",         path: "/superadmin" },
   { label: "Administración", path: "/superadmin/administracion" },
   { label: "Comunicados",    path: "/superadmin/comunicados" },
+  { label: "Comunidad",      path: "/dashboard/comunidad" },
 ];
 
 export default function Header() {
