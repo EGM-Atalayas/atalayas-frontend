@@ -68,18 +68,6 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ── Separador de sección ─────────────────────────────────────────────────────
-function Separador({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3" style={{ marginTop: "4px" }}>
-      <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: "#9ca3af" }}>
-        {label}
-      </span>
-      <div style={{ flex: 1, height: "1px", background: "rgba(0,0,0,0.07)" }} />
-    </div>
-  );
-}
-
 // ── Selector de icono predefinido (dropdown) ─────────────────────────────────
 function IconoPicker({ value, onChange }: { value: string; onChange: (key: string) => void }) {
   const [open, setOpen]   = useState(false);
@@ -238,7 +226,6 @@ function Campo({
   onChange,
   placeholder,
   required,
-  opcional,
   type = "text",
   multiline,
   rows = 3,
@@ -254,7 +241,6 @@ function Campo({
   onChange:     (val: string) => void;
   placeholder?: string;
   required?:    boolean;
-  opcional?:    boolean;
   type?:        string;
   multiline?:   boolean;
   rows?:        number;
@@ -607,7 +593,6 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
             placeholder="Breve descripción de la ventaja"
             multiline
             rows={2}
-            opcional
           />
 
           <Campo
@@ -618,7 +603,6 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
             placeholder="Ej: Presenta tu tarjeta de empleado en recepción"
             multiline
             rows={2}
-            opcional
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

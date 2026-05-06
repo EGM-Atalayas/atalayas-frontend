@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link          from "next/link";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { Button }    from "@/components/ui/Button";
@@ -73,8 +74,79 @@ function BadgeCaducidad({ fechaFin }: { fechaFin: string }) {
       />
       {dias <= 0
         ? "Caducada"
-        : `Hasta ${fecha.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`}
+        : `Hasta ${fecha.toLocaleDateString("es-ES", {
+            day: "numeric", month: "short",
+            year: fecha.getFullYear() !== hoy.getFullYear() ? "numeric" : undefined,
+          })}`}
     </span>
+  );
+}
+
+// ── Ítem de menú contextual (estilo ActionItem de UserMenu) ──────────────────
+function CardMenuItem({
+  label,
+  icon,
+  danger = false,
+  onClick,
+}: {
+  label:   string;
+  icon:    React.ReactNode;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  const [hov, setHov] = useState(false);
+  const dangerBg  = "rgba(239,68,68,0.07)";
+  const normalBg  = "rgba(0,0,0,0.045)";
+  const iconBg    = danger ? "rgba(239,68,68,0.07)" : "rgba(0,0,0,0.05)";
+  const iconColor = danger ? "#ef4444" : "#374151";
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display:        "flex",
+        alignItems:     "center",
+        gap:            "12px",
+        width:          "100%",
+        padding:        "7px 10px",
+        borderRadius:   "10px",
+        border:         "none",
+        cursor:         "pointer",
+        background:     hov ? (danger ? dangerBg : normalBg) : "transparent",
+        transition:     "background 0.15s ease",
+        textAlign:      "left",
+      }}
+    >
+      {/* Icono en contenedor cuadrado */}
+      <span
+        style={{
+          width:          "28px",
+          height:         "28px",
+          borderRadius:   "8px",
+          background:     iconBg,
+          color:          iconColor,
+          display:        "flex",
+          alignItems:     "center",
+          justifyContent: "center",
+          flexShrink:     0,
+        }}
+      >
+        {icon}
+      </span>
+
+      {/* Label */}
+      <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: danger ? "#ef4444" : "#111827" }}>
+        {label}
+      </span>
+
+      {/* Chevron */}
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}
+        style={{ color: danger ? "#ef4444" : "#9ca3af", flexShrink: 0 }}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
   );
 }
 
@@ -91,129 +163,157 @@ function BeneficioCard({
   onDesactivar: (b: Beneficio) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered,  setHovered]  = useState(false);
+  const menuRef                 = useRef<HTMLDivElement>(null);
+
+  // Cerrar menú al clicar fuera
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onOut(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onOut);
+    return () => document.removeEventListener("mousedown", onOut);
+  }, [menuOpen]);
+
+  const iconoNode = getIconoBeneficio(beneficio.iconoUrl);
+  const tieneCuerpo = !!(beneficio.descripcion || beneficio.comoAcceder);
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl overflow-hidden"
+      className="relative flex flex-col rounded-2xl"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         background:  "#ffffff",
         border:      "1px solid rgba(0,0,0,0.07)",
-        boxShadow:   "0 2px 12px rgba(0,0,0,0.06)",
+        boxShadow:   hovered ? "0 8px 28px rgba(0,0,0,0.11)" : "0 2px 12px rgba(0,0,0,0.06)",
+        transform:   hovered ? "translateY(-3px)" : "translateY(0)",
+        transition:  "box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.20,0.64,1)",
         animation:   "heroFadeUp 0.45s ease both",
       }}
     >
       {/* Cabecera — icono + título */}
       <div className="flex items-start gap-3 px-5 pt-5 pb-3">
+
+        {/* Icono */}
         <div
-          className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
-          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+          className="shrink-0 rounded-xl flex items-center justify-center"
+          style={{
+            width: "46px", height: "46px",
+            background: "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
+            color:      "var(--azul-egm)",
+            overflow:   "hidden",
+            position:   "relative",
+            boxShadow:  "inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 4px rgba(27,63,126,0.10)",
+          }}
         >
-          {getIconoBeneficio(beneficio.iconoUrl) ?? <IconoDefault />}
+          {iconoNode ? (
+            <span style={{
+              position: "absolute", top: "50%", left: "50%",
+              transform: "translate(-50%, -50%) scale(0.61)",
+              display: "flex",
+            }}>
+              {iconoNode}
+            </span>
+          ) : (
+            <IconoDefault />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <h3
-            className="font-semibold leading-snug"
-            style={{ fontSize: "0.95rem", color: "#111827" }}
-          >
+          <h3 className="font-semibold leading-snug" style={{ fontSize: "0.95rem", color: "#111827" }}>
             {beneficio.titulo}
           </h3>
           {beneficio.fechaFin && (
-            <div className="mt-1">
-              <BadgeCaducidad fechaFin={beneficio.fechaFin} />
-            </div>
+            <div className="mt-1"><BadgeCaducidad fechaFin={beneficio.fechaFin} /></div>
           )}
         </div>
 
         {/* Menú acciones — solo SuperAdmin */}
         {esSuperAdmin && (
-          <div className="relative shrink-0">
+          <div ref={menuRef} className="shrink-0" style={{ position: "relative" }}>
             <button
               onClick={() => setMenuOpen(p => !p)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              className="flex items-center justify-center rounded-lg"
               style={{
+                width: "32px", height: "32px",
                 background: menuOpen ? "rgba(0,0,0,0.06)" : "transparent",
                 color:      "#9ca3af",
+                border:     "none",
+                cursor:     "pointer",
                 transition: "background 0.15s ease",
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
               onMouseLeave={(e) => { if (!menuOpen) e.currentTarget.style.background = "transparent"; }}
             >
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5"  r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+                <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
               </svg>
             </button>
 
             {menuOpen && (
               <div
-                className="absolute right-0 top-full mt-1 z-10 rounded-xl overflow-hidden"
                 style={{
-                  width:     "148px",
+                  position: "absolute", right: 0, top: "calc(100% + 6px)",
+                  width: "200px", zIndex: 20,
                   background: "#ffffff",
-                  border:    "1px solid rgba(0,0,0,0.08)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                  border:     "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: "16px",
+                  boxShadow:  "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                  overflow:   "hidden",
+                  padding:    "6px",
                 }}
               >
-                <button
+                <CardMenuItem
+                  label="Editar"
+                  danger={false}
+                  icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
                   onClick={() => { setMenuOpen(false); onEditar(beneficio); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left"
-                  style={{ color: "#374151", transition: "background 0.12s ease" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Editar
-                </button>
-                <button
+                />
+                <CardMenuItem
+                  label="Desactivar"
+                  danger
+                  icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>}
                   onClick={() => { setMenuOpen(false); onDesactivar(beneficio); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left"
-                  style={{ color: "#dc2626", transition: "background 0.12s ease" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.05)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                  Desactivar
-                </button>
+                />
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Separador */}
-      <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 20px" }} />
-
-      {/* Cuerpo */}
-      <div className="px-5 py-4 flex flex-col gap-3 flex-1">
-        {beneficio.descripcion && (
-          <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>
-            {beneficio.descripcion}
-          </p>
-        )}
-
-        {beneficio.comoAcceder && (
-          <div
-            className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
-            style={{ background: "rgba(var(--azul-egm-rgb, 22,50,105),0.05)" }}
-          >
-            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-              style={{ color: "var(--azul-egm)", flexShrink: 0, marginTop: "1px" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-xs leading-relaxed" style={{ color: "var(--azul-egm)" }}>
-              {beneficio.comoAcceder}
-            </p>
+      {/* Separador + cuerpo — solo si hay contenido */}
+      {tieneCuerpo && (
+        <>
+          <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 20px" }} />
+          <div className="px-5 py-4 flex flex-col gap-3 flex-1">
+            {beneficio.descripcion && (
+              <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>
+                {beneficio.descripcion}
+              </p>
+            )}
+            {beneficio.comoAcceder && (
+              <div
+                className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
+                style={{ background: "rgba(27,63,126,0.05)" }}
+              >
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  style={{ color: "var(--azul-egm)", flexShrink: 0, marginTop: "1px" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--azul-egm)" }}>
+                  {beneficio.comoAcceder}
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Footer — enlace externo */}
       {beneficio.urlInfo && (
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-4 mt-auto">
           <a
             href={beneficio.urlInfo}
             target="_blank"
@@ -225,7 +325,7 @@ function BeneficioCard({
           >
             Más información
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
             </svg>
           </a>
         </div>
@@ -243,9 +343,9 @@ function GhostCard({ rotate = 0, opacity = 0.45, blur = 1.5, translateY = 0 }: {
 }) {
   return (
     <div
-      className="rounded-2xl shrink-0 overflow-hidden"
+      className="rounded-2xl overflow-hidden"
       style={{
-        width:      "240px",
+        width:      "clamp(140px, 28vw, 240px)",
         background: "#ffffff",
         border:     "1px solid rgba(0,0,0,0.11)",
         boxShadow:  "0 4px 20px rgba(0,0,0,0.09)",
@@ -285,10 +385,10 @@ function EstadoVacio({ esSuperAdmin, onNuevo }: { esSuperAdmin: boolean; onNuevo
     <div className="relative flex flex-col items-center justify-center overflow-hidden" style={{ minHeight: "400px", padding: "0 40px" }}>
 
       {/* Tarjetas fantasma — fondo */}
-      <div className="absolute inset-0 flex items-center justify-center gap-5 pointer-events-none">
-        <GhostCard rotate={-5} opacity={0.5}  blur={1.5} translateY={20} />
-        <GhostCard rotate={0}  opacity={0.75} blur={0}   translateY={0}  />
-        <GhostCard rotate={5}  opacity={0.5}  blur={1.5} translateY={20} />
+      <div className="absolute inset-0 flex items-center justify-center gap-5 pointer-events-none px-4">
+        <GhostCard rotate={-5} opacity={0.45} blur={1.5} translateY={20} />
+        <GhostCard rotate={0}  opacity={0.70} blur={0}   translateY={0}  />
+        <GhostCard rotate={5}  opacity={0.45} blur={1.5} translateY={20} />
       </div>
 
       {/* Gradiente radial — desvanece bordes suavemente */}
@@ -344,7 +444,7 @@ function EstadoVacio({ esSuperAdmin, onNuevo }: { esSuperAdmin: boolean; onNuevo
           <p className="text-sm leading-relaxed" style={{ color: "#6b7280", maxWidth: "300px" }}>
             {esSuperAdmin
               ? "Publica la primera ventaja para los empleados del área"
-              : "Pronto habrá ventajas disponibles para ti."}
+              : "Pronto habrá ventajas disponibles para ti"}
           </p>
         </div>
 
@@ -364,24 +464,34 @@ function EstadoVacio({ esSuperAdmin, onNuevo }: { esSuperAdmin: boolean; onNuevo
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 function Skeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {[0, 1, 2].map(i => (
-        <div key={i} className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.07)" }}>
-          <div className="px-5 pt-5 pb-3 flex items-start gap-3">
-            <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#f3f4f6", flexShrink: 0 }} />
-            <div className="flex-1 flex flex-col gap-2">
-              <div style={{ height: "14px", borderRadius: "6px", background: "#f3f4f6", width: "60%" }} />
-              <div style={{ height: "10px", borderRadius: "6px", background: "#f3f4f6", width: "35%" }} />
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0%   { background-position: -400px 0 }
+          100% { background-position:  400px 0 }
+        }
+        .sk { background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%); background-size: 800px 100%; animation: shimmer 1.4s ease infinite; }
+      `}</style>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.07)" }}>
+            <div className="px-5 pt-5 pb-3 flex items-start gap-3">
+              <div className="sk" style={{ width: "44px", height: "44px", borderRadius: "12px", flexShrink: 0 }} />
+              <div className="flex-1 flex flex-col gap-2 pt-1">
+                <div className="sk" style={{ height: "13px", borderRadius: "6px", width: "60%" }} />
+                <div className="sk" style={{ height: "10px", borderRadius: "6px", width: "35%" }} />
+              </div>
+            </div>
+            <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 20px" }} />
+            <div className="px-5 py-4 flex flex-col gap-2">
+              <div className="sk" style={{ height: "10px", borderRadius: "6px", width: "100%" }} />
+              <div className="sk" style={{ height: "10px", borderRadius: "6px", width: "75%" }} />
+              <div className="sk" style={{ height: "10px", borderRadius: "6px", width: "50%" }} />
             </div>
           </div>
-          <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 20px" }} />
-          <div className="px-5 py-4 flex flex-col gap-2">
-            <div style={{ height: "10px", borderRadius: "6px", background: "#f3f4f6", width: "100%" }} />
-            <div style={{ height: "10px", borderRadius: "6px", background: "#f3f4f6", width: "75%" }} />
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -390,11 +500,12 @@ export default function VentajasPage() {
   const { usuario } = useAuth();
   const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
 
-  const [beneficios, setBeneficios]     = useState<Beneficio[]>([]);
-  const [cargando, setCargando]         = useState(true);
-  const [modalOpen, setModalOpen]         = useState(false);
-  const [editando, setEditando]           = useState<Beneficio | null>(null);
-  const [confirmando, setConfirmando]     = useState<Beneficio | null>(null);
+  const [beneficios,  setBeneficios]  = useState<Beneficio[]>([]);
+  const [cargando,    setCargando]    = useState(true);
+  const [modalOpen,   setModalOpen]   = useState(false);
+  const [editando,    setEditando]    = useState<Beneficio | null>(null);
+  const [confirmando, setConfirmando] = useState<Beneficio | null>(null);
+  const [toast,       setToast]       = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -418,7 +529,7 @@ export default function VentajasPage() {
     } else {
       await crearBeneficio(data);
     }
-    setModalOpen(false);
+    // El modal gestiona su propio cierre (toast → onCerrar). Solo recargamos.
     cargar();
   }
 
@@ -426,11 +537,23 @@ export default function VentajasPage() {
     setConfirmando(b);
   }
 
+  function mostrarToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2200);
+  }
+
   async function confirmarDesactivar() {
     if (!confirmando) return;
-    await desactivarBeneficio(confirmando.beneficioId);
-    setConfirmando(null);
-    cargar();
+    const titulo = confirmando.titulo;
+    try {
+      await desactivarBeneficio(confirmando.beneficioId);
+      setConfirmando(null);
+      cargar();
+      mostrarToast(`"${titulo}" desactivada`);
+    } catch {
+      setConfirmando(null);
+      mostrarToast("Error al desactivar. Inténtalo de nuevo.");
+    }
   }
 
   return (
@@ -453,12 +576,30 @@ export default function VentajasPage() {
 
           {/* Nueva ventaja — solo SuperAdmin */}
           {esSuperAdmin && (
-            <Button size="lg" onClick={abrirNuevo}>
-              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Nueva ventaja
-            </Button>
+            <>
+              {/* Móvil: solo icono */}
+              <button
+                onClick={abrirNuevo}
+                className="sm:hidden flex items-center justify-center rounded-xl"
+                style={{
+                  width: "40px", height: "40px",
+                  background: "var(--azul-egm)", color: "#fff",
+                  border: "none", cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(27,63,126,0.25)",
+                }}
+              >
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+              {/* Tablet+: botón completo */}
+              <Button size="lg" onClick={abrirNuevo} className="hidden sm:inline-flex">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Nueva ventaja
+              </Button>
+            </>
           )}
         </div>
 
@@ -468,7 +609,7 @@ export default function VentajasPage() {
         ) : beneficios.length === 0 ? (
           <EstadoVacio esSuperAdmin={esSuperAdmin} onNuevo={abrirNuevo} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {beneficios.map(b => (
               <BeneficioCard
                 key={b.beneficioId}
@@ -501,6 +642,27 @@ export default function VentajasPage() {
           onOk={confirmarDesactivar}
           onCerrar={() => setConfirmando(null)}
         />
+      )}
+
+      {/* Toast global */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "max(28px, env(safe-area-inset-bottom, 28px))", left: "50%",
+          transform: "translateX(-50%)", zIndex: 99999,
+          background: "#111827", color: "#ffffff",
+          borderRadius: "14px", padding: "12px 20px",
+          fontSize: "0.875rem", fontWeight: 600,
+          display: "flex", alignItems: "center", gap: "10px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+          animation: "toast-in 0.25s cubic-bezier(0.34,1.20,0.64,1) both",
+          whiteSpace: "nowrap",
+        }}>
+          <style>{`@keyframes toast-in { from { opacity:0; transform:translateX(-50%) translateY(12px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }`}</style>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          {toast}
+        </div>
       )}
     </div>
   );
