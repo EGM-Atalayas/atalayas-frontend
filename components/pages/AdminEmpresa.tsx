@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
-import { getActividadReciente } from "@/lib/api/progreso";
+import { getActividadReciente, getProgresoEmpresa } from "@/lib/api/progreso";
 
-import { getModulos, getMiProgreso } from "@/lib/api/modulos";
-import type { ActividadItem } from "@/lib/types/progreso";
+import { getModulos } from "@/lib/api/modulos";
+import type { ActividadItem, ProgresoEmpleado } from "@/lib/types/progreso";
 // Widget simplificado de servicios (pantalla inicio, no la página /servicios)
 type Servicio = { servicioId: string; nombre: string; descripcion: string | null; url: string | null; activo: boolean; icono: string | null; orden: number; };
-import type { Modulo, ProgresoItem } from "@/lib/types/modulos";
+import type { Modulo } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 interface ResumenAdmin {
@@ -162,14 +162,19 @@ export default function AdminEmpresa() {
   useEffect(() => {
     async function cargarDatos() {
       try {
+        const empresaId = usuario?.empresaId;
         const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           apiFetch(`${API_URL}/anuncios`),
           getActividadReciente(5).catch(() => [] as ActividadItem[]),
           getModulos().catch(() => [] as Modulo[]),
-          getMiProgreso().catch(() => [] as ProgresoItem[]),
+          empresaId ? getProgresoEmpresa(empresaId).catch(() => [] as ProgresoEmpleado[]) : Promise.resolve([] as ProgresoEmpleado[]),
         ]);
-        if (resRes.ok) setResumen(await resRes.json());
+        let resumenData = null;
+        if (resRes.ok) {
+          resumenData = await resRes.json();
+          setResumen(resumenData);
+        }
         if (anunciosRes.ok) {
           const data = await anunciosRes.json();
           setAnuncios(data.filter((a: Anuncio) => a.activo).slice(0, 4));
@@ -179,12 +184,18 @@ export default function AdminEmpresa() {
 
         // Calcular estadísticas reales de módulos
         const modulos = modulosData.filter((m: Modulo) => m.activo);
+        const totalEmpleados = (resumenData?.usuariosActivos ?? 0) + (resumenData?.usuariosInactivos ?? 0);
         if (modulos.length > 0 && progresoData.length > 0) {
           const stats: ModuloStats[] = modulos.map((modulo: Modulo) => {
-            const registros = progresoData;
-            const totalEmpleados = (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0);
-            const completados = registros.filter((r: ProgresoItem) => r.completado).length;
-            const enProgreso = registros.filter((r: ProgresoItem) => r.tiempoSegundos > 0 && !r.completado).length;
+            let completados = 0;
+            let enProgreso = 0;
+            for (const emp of progresoData) {
+              const mp = emp.modulos.find(m => m.moduloId === modulo.moduloId);
+              if (mp) {
+                if (mp.porcentaje >= 100) completados++;
+                else if (mp.porcentaje > 0) enProgreso++;
+              }
+            }
             const pendientes = Math.max(0, totalEmpleados - completados - enProgreso);
             return {
               moduloId: modulo.moduloId,
@@ -198,9 +209,10 @@ export default function AdminEmpresa() {
           setModulosStats(stats);
 
           // Calcular progreso medio real
-          const totalContenidos = progresoData.length;
-          const completadosTotal = progresoData.filter((r: ProgresoItem) => r.completado).length;
-          const pct = totalContenidos > 0 ? Math.round((completadosTotal / totalContenidos) * 100) : 0;
+          const porcentajes = progresoData.flatMap(emp => emp.modulos.map(m => m.porcentaje));
+          const pct = porcentajes.length > 0
+            ? Math.round(porcentajes.reduce((a, b) => a + b, 0) / porcentajes.length)
+            : 0;
           setProgresoMedio(pct);
         } else if (modulos.length > 0) {
           setModulosStats(modulos.map((m: Modulo) => ({
@@ -208,8 +220,8 @@ export default function AdminEmpresa() {
             nombre: m.nombre,
             completados: 0,
             enProgreso: 0,
-            pendientes: (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0),
-            total: (resumen?.usuariosActivos ?? 0) + (resumen?.usuariosInactivos ?? 0),
+            pendientes: totalEmpleados,
+            total: totalEmpleados || 1,
           })));
         }
       } catch { }

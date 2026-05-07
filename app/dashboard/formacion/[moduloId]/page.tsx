@@ -138,9 +138,60 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   const items: Contenido[] = [];
   let idx = 1;
 
-  // Documentación: si hay markdown, un ítem por sección ##
+  // Intentar parsear contenidoMarkdown como JSON array de páginas (admin)
+  let paginasJson: any[] | null = null;
+  if (moduloApi.contenidoMarkdown) {
+    try {
+      const parsed = JSON.parse(moduloApi.contenidoMarkdown);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].tipo) {
+        paginasJson = parsed;
+      }
+    } catch { /* no es JSON, es markdown normal */ }
+  }
+
+  // Documentación: páginas desde JSON o markdown por secciones ##
   if (tipos.includes("documentacion")) {
-    if (moduloApi.contenidoMarkdown) {
+    if (paginasJson) {
+      // Separar primera página, tests, y resto de páginas de texto
+      const primeraPag = paginasJson.length > 0 ? paginasJson[0] : null;
+      const paginasTest = paginasJson.filter((p) => p.tipo === "test");
+      const paginasTextoResto = paginasJson.slice(1).filter((p) => p.tipo !== "test");
+
+      // 1. Primera página (introducción)
+      if (primeraPag) {
+        items.push({
+          id: `c${idx++}`, titulo: primeraPag.titulo || "Introducción", tipo: "texto",
+          duracion: estimarDuracion(primeraPag.contenido || ""), completado: false, bloqueado: false, seccionIdx: 0,
+        });
+      }
+
+      // 2. Podcast después de la introducción
+      if (tipos.includes("podcast") && moduloApi.scriptPodcast) {
+        items.push({
+          id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast",
+          duracion: "5–10 min", completado: false, bloqueado: items.length > 0,
+          seccionIdx: -1,
+        });
+      }
+
+      // 3. Resto de páginas de texto
+      paginasTextoResto.forEach((pag, i) => {
+        items.push({
+          id: `c${idx++}`, titulo: pag.titulo || `Página ${i + 2}`, tipo: "texto",
+          duracion: estimarDuracion(pag.contenido || ""), completado: false, bloqueado: false,
+          seccionIdx: paginasJson.indexOf(pag),
+        });
+      });
+
+      // 4. Test al final
+      paginasTest.forEach((pag) => {
+        items.push({
+          id: `c${idx++}`, titulo: pag.titulo || "Evaluación", tipo: "quiz",
+          duracion: "10–15 min", completado: false, bloqueado: items.length > 0,
+          seccionIdx: paginasJson.indexOf(pag),
+        });
+      });
+    } else if (moduloApi.contenidoMarkdown) {
       const secciones = parsearSecciones(moduloApi.contenidoMarkdown);
       if (secciones.length > 0) {
         secciones.forEach((s, i) => {
@@ -162,7 +213,8 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
     }
   }
 
-  if (tipos.includes("podcast") && moduloApi.scriptPodcast) {
+  // Podcast para markdown normal (para JSON ya se insertó arriba)
+  if (!paginasJson && tipos.includes("podcast") && moduloApi.scriptPodcast) {
     items.push({ id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
   }
   if (tipos.includes("video") && moduloApi.scriptVideo) {
@@ -264,6 +316,15 @@ export default function Page() {
   const secciones = React.useMemo<SeccionMarkdown[]>(() => {
     if (!moduloApi?.contenidoMarkdown) return [];
     return parsearSecciones(moduloApi.contenidoMarkdown);
+  }, [moduloApi]);
+
+  // Páginas desde JSON array (cuando el admin crea páginas estructuradas)
+  const paginasJson = React.useMemo<any[] | null>(() => {
+    if (!moduloApi?.contenidoMarkdown) return null;
+    try {
+      const parsed = JSON.parse(moduloApi.contenidoMarkdown);
+      return Array.isArray(parsed) && parsed.length > 0 && parsed[0].tipo ? parsed : null;
+    } catch { return null; }
   }, [moduloApi]);
 
   // Reset verificado cada vez que el usuario cambia de ítem
@@ -599,20 +660,34 @@ export default function Page() {
             {/* Cuerpo según tipo */}
             <div className={activo.tipo === "pdf" ? "px-6 py-5" : "px-8 py-7"}>
               {activo.tipo === "texto" && (() => {
-                // Si el ítem tiene seccionIdx, mostrar solo esa sección; si no, el markdown completo
-                const seccion = activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                // Si el ítem viene de JSON (admin), mostrar el contenido de esa página
+                const desdeJson = paginasJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                  ? paginasJson[activo.seccionIdx] ?? null
+                  : null;
+                // Si no, buscar sección desde markdown con ##
+                const seccion = !desdeJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
                   ? secciones[activo.seccionIdx] ?? null
                   : null;
-                const contenidoFinal = seccion
-                  ? seccion.contenido
-                  : (moduloApi?.contenidoMarkdown ?? null);
+                const contenidoFinal = desdeJson
+                  ? desdeJson.contenido
+                  : seccion
+                    ? seccion.contenido
+                    : (moduloApi?.contenidoMarkdown ?? null);
                 return <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={contenidoFinal} onVerificado={() => setVerificado(true)} />;
               })()}
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
+              {activo.tipo === "quiz" && (() => {
+                const desdeJson = paginasJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                  ? paginasJson[activo.seccionIdx] ?? null
+                  : null;
+                const preguntasJson = desdeJson?.preguntas
+                  ? JSON.stringify(desdeJson.preguntas)
+                  : (moduloApi?.testPreguntas ?? null);
+                return <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={preguntasJson} />;
+              })()}
             </div>
 
             {/* Footer — no aparece en quiz (tiene su propio CTA) */}
@@ -827,6 +902,7 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
     if (!audioRef.current) return;
     audioRef.current.play();
     setReproduciendo(true); setPausado(false);
+    onVerificado?.();
   };
   const pausarAudio = () => {
     if (!audioRef.current) return;
@@ -845,9 +921,10 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(script);
     utterance.lang = "es-ES"; utterance.rate = 0.95; utterance.pitch = 1;
-    utterance.onend = () => { setReproduciendo(false); setPausado(false); onVerificado?.(); };
+    utterance.onend = () => { setReproduciendo(false); setPausado(false); };
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
+    onVerificado?.();
   };
   const pausarSpeech = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
@@ -869,7 +946,7 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
         <audio
           ref={audioRef}
           src={audioUrl}
-          onEnded={() => { setReproduciendo(false); setPausado(false); onVerificado?.(); }}
+          onEnded={() => { setReproduciendo(false); setPausado(false); }}
           onPlay={() => { setReproduciendo(true); setPausado(false); }}
           onPause={() => setPausado(true)}
           preload="metadata"

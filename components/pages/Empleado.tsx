@@ -96,6 +96,19 @@ function applyProgress(base: FormacionLocal[], map: Record<string, number>): For
   });
 }
 
+// Lee el progreso guardado desde la página de detalle del módulo (egm_modulo_{id})
+function leerProgresoModulo(moduloId: string): { completados: number; total: number } | null {
+  try {
+    const raw = localStorage.getItem(`egm_modulo_${moduloId}`);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data && typeof data.total === "number" && Array.isArray(data.completados)) {
+      return { completados: data.completados.length, total: data.total };
+    }
+  } catch { /* noop */ }
+  return null;
+}
+
 const ICONO_MAP: Record<string, React.ReactNode> = {
   coche_compartido: (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -179,8 +192,20 @@ export default function Empleado() {
   };
 
   // Usa datos reales si existen, si no los mocks con localStorage
+  // El progreso real (completados/totalItems) se lee desde egm_modulo_{id}
+  // guardado por la página de detalle del módulo
   const formDisplay: FormacionLocal[] = formaciones.length > 0
-    ? formaciones.map((f) => ({ ...f, totalItems: 0, completadosLocal: 0 }))
+    ? formaciones.map((f) => {
+        const ls = leerProgresoModulo(f.moduloId);
+        const completadosLocal = ls?.completados ?? 0;
+        const totalItems = ls?.total ?? 0;
+        const st: FormacionLocal["status"] = totalItems > 0 && completadosLocal >= totalItems
+          ? "completado"
+          : completadosLocal > 0
+            ? "en progreso"
+            : f.status;
+        return { ...f, totalItems, completadosLocal, status: st };
+      })
     : formacionesLocal;
 
   const completados = formDisplay.filter((m) => m.status === "completado").length;
