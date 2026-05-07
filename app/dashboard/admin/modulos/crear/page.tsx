@@ -330,11 +330,11 @@ export default function CrearModuloPage() {
 
       const body = usarGenerateContent
         ? {
-            prompt: prompts[tipo],
-            systemPrompt: tipo === "test"
-              ? "Eres un asistente que genera preguntas de test. Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown. Ejemplo: [{\"texto\":\"Pregunta\",\"opciones\":[\"A\",\"B\",\"C\",\"D\"],\"correcta\":0}]"
-              : undefined,
-          }
+          prompt: prompts[tipo],
+          systemPrompt: tipo === "test"
+            ? "Eres un asistente que genera preguntas de test. Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown. Ejemplo: [{\"texto\":\"Pregunta\",\"opciones\":[\"A\",\"B\",\"C\",\"D\"],\"correcta\":0}]"
+            : undefined,
+        }
         : { messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} };
 
       const res = await fetch(endpoint, {
