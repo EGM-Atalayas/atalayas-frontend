@@ -92,6 +92,7 @@ export default function NoticiaDetallePage() {
   const id = params?.id as string;
 
   const [item, setItem] = useState<UnifiedItem | null>(null);
+  const [recientes, setRecientes] = useState<UnifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -110,6 +111,24 @@ export default function NoticiaDetallePage() {
       fetch(`${API_URL}/anuncios`).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/comunicados`).then((r) => r.ok ? r.json() : []),
     ]).then(([noticias, comunicados]: [Noticia[], Comunicado[]]) => {
+      // Noticias recientes (excluye la actual, siempre se ejecuta)
+      const allItems: UnifiedItem[] = [
+        ...noticias.filter((n) => n.activo !== false && n.estado !== "borrador" && n.anuncioId !== id).map((n) => ({
+          id: n.anuncioId, titulo: n.titulo, contenido: n.contenido,
+          imagenUrl: n.imagenUrl, fecha: n.creadoEn, categoria: n.categoria ?? "Noticia",
+          destacado: n.fijado, enlaceUrl: n.enlaceUrl, enlaceTexto: n.enlaceTexto,
+          videoUrl: n.videoUrl, adjuntoUrl: n.adjuntoUrl, adjuntoNombre: n.adjuntoNombre,
+        })),
+        ...comunicados.filter((c) => c.activo !== false && c.estado !== "borrador" && c.comunicadoId !== id).map((c) => ({
+          id: c.comunicadoId, titulo: c.titulo, contenido: c.mensaje,
+          imagenUrl: c.imagenUrl, fecha: c.fechaPublicacion ?? c.actualizadoEn ?? new Date().toISOString(),
+          categoria: c.categoria ?? "Comunicado", destacado: c.destacado,
+          enlaceUrl: c.enlaceUrl, enlaceTexto: c.enlaceTexto,
+          videoUrl: c.videoUrl, adjuntoUrl: c.adjuntoUrl, adjuntoNombre: c.adjuntoNombre,
+        })),
+      ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).slice(0, 3);
+      setRecientes(allItems);
+
       const noticia = noticias.find((n) => n.anuncioId === id);
       if (noticia) {
         setItem({
@@ -147,6 +166,7 @@ export default function NoticiaDetallePage() {
         return;
       }
       setNotFound(true);
+
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
@@ -231,7 +251,7 @@ export default function NoticiaDetallePage() {
 
             {/* Imagen */}
             {item.imagenUrl && (
-              <div className="w-full rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "16/9" }}>
+              <div className="w-full rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "21/9" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
               </div>
@@ -293,25 +313,53 @@ export default function NoticiaDetallePage() {
               </div>
             )}
 
-            {/* Volver */}
-            <div className="mt-12">
-              <Link href="/noticias"
-                className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity hover:opacity-80"
-                style={{ background: "#1B3F7E", color: "white" }}>
-                ← Volver a noticias
-              </Link>
-            </div>
           </main>
         </>
       )}
 
 
+      {/* ── Noticias recientes ── */}
+      {recientes.length > 0 && (
+        <section className="w-full px-6 sm:px-12 lg:px-16 py-16" style={{ background: "#f9fafb", borderTop: "1px solid #e5e7eb" }}>
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-2xl font-bold mb-8" style={{ color: "#111827" }}>Noticias recientes</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recientes.map((r) => {
+                return (
+                  <Link key={r.id} href={`/noticias/${r.id}`} style={{ textDecoration: "none" }}>
+                    <article
+                      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: "4/3", background: "#1a1a2e", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 16px 40px rgba(0,0,0,0.2)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                    >
+                      {/* Imagen de fondo */}
+                      {r.imagenUrl && (
+                        <img src={r.imagenUrl} alt={r.titulo}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          style={{ opacity: 0.85 }} />
+                      )}
+                      {/* Gradiente inferior */}
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)" }} />
+                      {/* Texto */}
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <h3 className="font-bold text-base leading-snug text-white">{r.titulo}</h3>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Footer */}
       <footer className="w-full px-6 sm:px-12 py-10 mt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
         style={{ borderColor: "#e5e7eb", background: "white" }}>
-        <p className="text-sm" style={{ color: "#6b7280" }}>© {new Date().getFullYear()} EGM Atalayas Ciudad Empresarial</p>
+        <p className="text-sm" style={{ color: "#6b7280" }}>&copy; {new Date().getFullYear()} EGM Atalayas Ciudad Empresarial</p>
         <div className="flex items-center gap-6">
-          <Link href="/login" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Iniciar sesión</Link>
+          <Link href="/login" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Iniciar sesi&oacute;n</Link>
           <Link href="/privacidad" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Privacidad</Link>
         </div>
       </footer>
