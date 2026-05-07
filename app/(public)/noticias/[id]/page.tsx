@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef } from "react";
+import { gsap } from "gsap";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import logo from "@/public/logo.webp";
 import type { Noticia, Comunicado } from "@/lib/types/noticias";
-import StaggeredMenu from "@/components/ui/StaggeredMenu";
-import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -92,11 +91,37 @@ export default function NoticiaDetallePage() {
   const id = params?.id as string;
 
   const [item, setItem] = useState<UnifiedItem | null>(null);
+  const [recientes, setRecientes] = useState<UnifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const staggeredMenuRef = useRef<StaggeredMenuHandle>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const menuOverlayRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (menuPanelRef.current) gsap.set(menuPanelRef.current, { xPercent: 100 });
+    if (menuOverlayRef.current) gsap.set(menuOverlayRef.current, { opacity: 0, pointerEvents: "none" });
+  }, []);
+
+  const abrirMenu = () => {
+    setMobileMenuOpen(true);
+    const panel = menuPanelRef.current;
+    const overlay = menuOverlayRef.current;
+    if (!panel || !overlay) return;
+    gsap.set(overlay, { pointerEvents: "auto" });
+    gsap.to(overlay, { opacity: 1, duration: 0.3, ease: "power2.out" });
+    gsap.to(panel, { xPercent: 0, duration: 0.45, ease: "power4.out" });
+  };
+
+  const cerrarMenu = () => {
+    const panel = menuPanelRef.current;
+    const overlay = menuOverlayRef.current;
+    if (!panel || !overlay) return;
+    const tl = gsap.timeline({ onComplete: () => setMobileMenuOpen(false) });
+    tl.to(panel, { xPercent: 100, duration: 0.35, ease: "power3.in" });
+    tl.to(overlay, { opacity: 0, duration: 0.25, ease: "power2.in", onComplete: () => { gsap.set(overlay, { pointerEvents: "none" }); } }, 0);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -110,6 +135,24 @@ export default function NoticiaDetallePage() {
       fetch(`${API_URL}/anuncios`).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/comunicados`).then((r) => r.ok ? r.json() : []),
     ]).then(([noticias, comunicados]: [Noticia[], Comunicado[]]) => {
+      // Noticias recientes (excluye la actual, siempre se ejecuta)
+      const allItems: UnifiedItem[] = [
+        ...noticias.filter((n) => n.activo !== false && n.estado !== "borrador" && n.anuncioId !== id).map((n) => ({
+          id: n.anuncioId, titulo: n.titulo, contenido: n.contenido,
+          imagenUrl: n.imagenUrl, fecha: n.creadoEn, categoria: n.categoria ?? "Noticia",
+          destacado: n.fijado, enlaceUrl: n.enlaceUrl, enlaceTexto: n.enlaceTexto,
+          videoUrl: n.videoUrl, adjuntoUrl: n.adjuntoUrl, adjuntoNombre: n.adjuntoNombre,
+        })),
+        ...comunicados.filter((c) => c.activo !== false && c.estado !== "borrador" && c.comunicadoId !== id).map((c) => ({
+          id: c.comunicadoId, titulo: c.titulo, contenido: c.mensaje,
+          imagenUrl: c.imagenUrl, fecha: c.fechaPublicacion ?? c.actualizadoEn ?? new Date().toISOString(),
+          categoria: c.categoria ?? "Comunicado", destacado: c.destacado,
+          enlaceUrl: c.enlaceUrl, enlaceTexto: c.enlaceTexto,
+          videoUrl: c.videoUrl, adjuntoUrl: c.adjuntoUrl, adjuntoNombre: c.adjuntoNombre,
+        })),
+      ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).slice(0, 3);
+      setRecientes(allItems);
+
       const noticia = noticias.find((n) => n.anuncioId === id);
       if (noticia) {
         setItem({
@@ -147,6 +190,7 @@ export default function NoticiaDetallePage() {
         return;
       }
       setNotFound(true);
+
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
@@ -181,33 +225,34 @@ export default function NoticiaDetallePage() {
         style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(12px)" }}
       >
         <Link href="/"><Image src={logo} alt="Atalayas EGM" className="h-10 w-auto brightness-0 invert" /></Link>
-        <button
-          className="flex flex-col justify-center items-center gap-[5px] p-2"
-          onClick={() => { staggeredMenuRef.current?.toggle(); setMobileMenuOpen((v) => !v); }}
-          aria-label="Menú"
-        >
-          <span className="block w-6 h-0.5 rounded bg-white transition-all duration-300" />
-          <span className="block w-6 h-0.5 rounded bg-white transition-all duration-300" />
-          <span className="block w-6 h-0.5 rounded bg-white transition-all duration-300" />
+        <button className="p-1 flex items-center justify-center" onClick={abrirMenu} aria-label="Abrir menú">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
       </div>
 
-      <StaggeredMenu
-        ref={staggeredMenuRef}
-        position="right"
-        colors={["#1B3F7E", "#0d1b2e"]}
-        accentColor="#A3B535"
-        displayItemNumbering={true}
-        closeOnClickAway={true}
-        onMenuClose={() => setMobileMenuOpen(false)}
-        items={[
-          { label: "Inicio",        ariaLabel: "Ir al inicio",       link: "/" },
-          { label: "Noticias",      ariaLabel: "Noticias",           link: "/noticias" },
-          { label: "Comunidad",     ariaLabel: "Ir a Comunidad",     link: "/#comunidad" },
-          { label: "Colaboradores", ariaLabel: "Ir a Colaboradores", link: "/#colaboradores" },
-          { label: "Entrar",        ariaLabel: "Iniciar sesión",     link: "/login" },
-        ]}
-      />
+      {/* Mobile menu panel */}
+      <div className="md:hidden">
+        <div ref={menuOverlayRef} onClick={cerrarMenu} className="fixed inset-0 z-[57]" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} />
+        <div ref={menuPanelRef} className="fixed top-0 right-0 h-full z-[58] flex flex-col" style={{ width: "100%", background: "#fff" }}>
+          <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto" />
+            <button onClick={cerrarMenu} aria-label="Cerrar menú" className="p-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex flex-col px-6 py-8 gap-1">
+            <Link href="/" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Inicio</Link>
+            <Link href="/noticias" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Noticias</Link>
+            <a href="/#comunidad" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Comunidad</a>
+            <a href="/#colaboradores" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Colaboradores</a>
+            <Link href="/login" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3 mt-2" style={{ color: "var(--azul-egm)" }}>Entrar →</Link>
+          </div>
+        </div>
+      </div>
 
       {/* ── Contenido ── */}
       {loading && (
@@ -231,7 +276,7 @@ export default function NoticiaDetallePage() {
 
             {/* Imagen */}
             {item.imagenUrl && (
-              <div className="w-full rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "16/9" }}>
+              <div className="w-full rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "21/9" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
               </div>
@@ -293,25 +338,53 @@ export default function NoticiaDetallePage() {
               </div>
             )}
 
-            {/* Volver */}
-            <div className="mt-12">
-              <Link href="/noticias"
-                className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity hover:opacity-80"
-                style={{ background: "#1B3F7E", color: "white" }}>
-                ← Volver a noticias
-              </Link>
-            </div>
           </main>
         </>
       )}
 
 
+      {/* ── Noticias recientes ── */}
+      {recientes.length > 0 && (
+        <section className="w-full px-6 sm:px-12 lg:px-16 py-16" style={{ background: "#f9fafb", borderTop: "1px solid #e5e7eb" }}>
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-2xl font-bold mb-8" style={{ color: "#111827" }}>Noticias recientes</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recientes.map((r) => {
+                return (
+                  <Link key={r.id} href={`/noticias/${r.id}`} style={{ textDecoration: "none" }}>
+                    <article
+                      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: "4/3", background: "#1a1a2e", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 16px 40px rgba(0,0,0,0.2)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                    >
+                      {/* Imagen de fondo */}
+                      {r.imagenUrl && (
+                        <img src={r.imagenUrl} alt={r.titulo}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          style={{ opacity: 0.85 }} />
+                      )}
+                      {/* Gradiente inferior */}
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)" }} />
+                      {/* Texto */}
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <h3 className="font-bold text-base leading-snug text-white">{r.titulo}</h3>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Footer */}
       <footer className="w-full px-6 sm:px-12 py-10 mt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
         style={{ borderColor: "#e5e7eb", background: "white" }}>
-        <p className="text-sm" style={{ color: "#6b7280" }}>© {new Date().getFullYear()} EGM Atalayas Ciudad Empresarial</p>
+        <p className="text-sm" style={{ color: "#6b7280" }}>&copy; {new Date().getFullYear()} EGM Atalayas Ciudad Empresarial</p>
         <div className="flex items-center gap-6">
-          <Link href="/login" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Iniciar sesión</Link>
+          <Link href="/login" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Iniciar sesi&oacute;n</Link>
           <Link href="/privacidad" className="text-sm hover:underline" style={{ color: "#6b7280" }}>Privacidad</Link>
         </div>
       </footer>
