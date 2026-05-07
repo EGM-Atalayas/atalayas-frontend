@@ -155,6 +155,42 @@ function PdfUpload({ file, onFile, onRemove }: {
   );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function generarSVGPortada(nombre: string, categoria: string, prompt?: string): string {
+  const gradient = categoria === "ESPECIALIZADO" ? "#7c3aed,#a855f7"
+    : categoria === "CUMPLIMIENTO" ? "#2563eb,#1d4ed8"
+      : "#0f766e,#14b8a6";
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${gradient.split(",")[0]}"/><stop offset="100%" stop-color="${gradient.split(",")[1]}"/></linearGradient></defs>
+    <rect width="1200" height="630" fill="url(#g)"/>
+    <text x="60" y="315" font-family="system-ui,sans-serif" font-size="48" font-weight="700" fill="white">${nombre.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</text>
+    <text x="60" y="380" font-family="system-ui,sans-serif" font-size="24" fill="rgba(255,255,255,0.7)">${categoria}</text>
+    ${prompt ? `<text x="60" y="440" font-family="system-ui,sans-serif" font-size="16" fill="rgba(255,255,255,0.4)">${prompt.slice(0, 100).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</text>` : ""}
+  </svg>`;
+}
+
+async function svgToPngFile(svg: string, name: string): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = 630;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, 1200, 630);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((b) => {
+        if (b) resolve(new window.File([b], `${name}.png`, { type: "image/png" }));
+        else reject(new Error("Error al convertir SVG a PNG"));
+      }, "image/png");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Error al cargar SVG")); };
+    img.src = url;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CrearModuloPage() {
   const router = useRouter();
@@ -179,8 +215,9 @@ export default function CrearModuloPage() {
   const [pdfPreview, setPdfPreview] = useState<string>("");
   const [activo, setActivo] = useState(true);
 
-  // ── Podcast ───────────────────────────────────────────────────────────────
+  // ── Podcast / Video ──────────────────────────────────────────────────────
   const [scriptPodcast, setScriptPodcast] = useState("");
+  const [scriptVideo, setScriptVideo] = useState("");
   const [tiposSalida, setTiposSalida] = useState("documentacion");
 
   // ── Páginas del módulo ────────────────────────────────────────────────────
@@ -196,6 +233,10 @@ export default function CrearModuloPage() {
   const [aiLoading, setAiLoading] = useState<"descripcion" | "contenido" | "test" | "podcast" | "video" | "documento" | null>(null);
   const [aiError, setAiError] = useState("");
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [mostrarIA, setMostrarIA] = useState(false);
+  const [promptIA, setPromptIA] = useState("");
+  const [generandoIA, setGenerandoIA] = useState(false);
+  const [errorIA, setErrorIA] = useState("");
 
   const inputArchivoRef = useRef<HTMLInputElement>(null);
 
@@ -277,8 +318,8 @@ export default function CrearModuloPage() {
         descripcion: `Genera una descripción corta y profesional (máximo 150 caracteres) para un módulo de formación llamado "${nombre}". Devuelve SOLO la descripción.`,
         contenido: `Genera contenido educativo claro y estructurado para una página titulada "${paginaActiva?.titulo}" en un módulo sobre "${nombre}". ${contenidoExistente ? `Amplía o mejora este contenido existente: ${contenidoExistente}` : ""} Usa ## para títulos y - para listas. Máximo 600 palabras. Devuelve SOLO el contenido en formato markdown.`,
         test: `Crea 5 preguntas de test de opción múltiple (4 opciones cada una) basadas en el módulo "${nombre}". ${contenidoExistente ? `Contexto adicional: ${contenidoExistente}` : ""} Devuelve el resultado estrictamente en formato JSON: [{"texto":"pregunta","opciones":["op1","op2","op3","op4"],"correcta":0}] sin texto adicional.`,
-        podcast: `Crea un guion de podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 800 palabras. Devuelve SOLO el guion.`,
-        video: `Crea un guion para un vídeo educativo de 3-5 minutos sobre "${nombre}". Estructura: introducción enganchadora, desarrollo con 3-4 puntos clave, cierre con call-to-action. Incluye indicaciones visuales entre corchetes [ej: mostrar gráfico]. Máximo 600 palabras. Devuelve SOLO el guion.`,
+        podcast: `Crea un podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 500 palabras. Devuelve SOLO el guion en español, listo para ser narrado en voz alta.`,
+        video: `Genera un array JSON de slides para un vídeo educativo sobre "${nombre}". Cada slide debe tener: numero (entero), titulo (string), contenido (string con viñetas separadas por \\n), notas (string opcional). Máximo 8 slides. Estructura: 1 slide intro, 4-5 slides de contenido, 1 slide resumen, 1 slide cierre. Devuelve SOLO el JSON, sin formato adicional. Ejemplo: [{"numero":1,"titulo":"Introducción","contenido":"Punto 1\\nPunto 2","notas":"Hablar pausado"}].`,
         documento: `Crea un documento de formación completo y estructurado sobre "${nombre}". Incluye: resumen ejecutivo, introducción, 3-4 secciones con subtítulos (##), conclusiones y recursos adicionales. Usa viñetas (-) donde sea útil. Máximo 1000 palabras. Devuelve SOLO el documento en markdown.`,
       };
 
@@ -288,7 +329,12 @@ export default function CrearModuloPage() {
       const endpoint = usarGenerateContent ? "/api/chat/generate-content" : "/api/chat";
 
       const body = usarGenerateContent
-        ? { prompt: prompts[tipo] }
+        ? {
+            prompt: prompts[tipo],
+            systemPrompt: tipo === "test"
+              ? "Eres un asistente que genera preguntas de test. Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown. Ejemplo: [{\"texto\":\"Pregunta\",\"opciones\":[\"A\",\"B\",\"C\",\"D\"],\"correcta\":0}]"
+              : undefined,
+          }
         : { messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} };
 
       const res = await fetch(endpoint, {
@@ -310,8 +356,6 @@ export default function CrearModuloPage() {
         const data = await res.json();
         if (tipo === "descripcion" && data.descripcion) {
           textoLimpio = data.descripcion;
-        } else if (tipo === "test" && data.error) {
-          throw new Error(data.error);
         } else {
           textoLimpio = JSON.stringify(data);
         }
@@ -345,7 +389,7 @@ export default function CrearModuloPage() {
               opciones: Array.isArray(p.opciones || p.options) ? (p.opciones || p.options) : ["", "", "", ""],
               correcta: typeof p.correcta === "number" ? p.correcta : typeof p.correct === "number" ? p.correct : 0,
             }));
-            setPaginas((p) => p.map((pg) => pg.id !== paginaActiva.id ? pg : { ...pg, preguntas: preguntasFormateadas }));
+            setPaginas((p) => p.map((pg) => pg.id !== paginaActiva.id ? pg : { ...pg, tipo: "test", preguntas: preguntasFormateadas }));
           } else {
             throw new Error("Formato incorrecto");
           }
@@ -353,12 +397,11 @@ export default function CrearModuloPage() {
           console.error("[IA] Error parseando test:", e);
           setAiError("Error al procesar el test generado. Intenta de nuevo.");
         }
-      } else if (tipo === "podcast" || tipo === "video" || tipo === "documento") {
-        const tituloMap: Record<string, string> = { podcast: "Podcast: ", video: "Vídeo: ", documento: "Documento: " };
+      } else if (tipo === "documento") {
         const nuevaPagina: PaginaModulo = {
           id: newId(),
           tipo: "texto",
-          titulo: `${tituloMap[tipo]}${paginaActiva?.titulo || "Nueva página"}`,
+          titulo: `Documento: ${paginaActiva?.titulo || "Nueva página"}`,
           contenido: textoLimpio,
           archivoUrl: null,
           archivoNombre: null,
@@ -367,6 +410,45 @@ export default function CrearModuloPage() {
         };
         setPaginas((p) => [...p, nuevaPagina]);
         setPaginaActivaId(nuevaPagina.id);
+      } else if (tipo === "podcast") {
+        setScriptPodcast(textoLimpio);
+        setTiposSalida((prev) => prev.includes("podcast") ? prev : [prev, "podcast"].filter(Boolean).join(","));
+        const nuevaPagina: PaginaModulo = {
+          id: newId(),
+          tipo: "texto",
+          titulo: `Podcast: ${paginaActiva?.titulo || "Nueva página"}`,
+          contenido: textoLimpio,
+          archivoUrl: null,
+          archivoNombre: null,
+          archivoFile: null,
+          preguntas: [],
+        };
+        setPaginas((p) => [...p, nuevaPagina]);
+        setPaginaActivaId(nuevaPagina.id);
+      } else if (tipo === "video") {
+        try {
+          const slides = JSON.parse(textoLimpio);
+          if (Array.isArray(slides) && slides.length > 0) {
+            setScriptVideo(textoLimpio);
+            setTiposSalida((prev) => prev.includes("video") ? prev : [prev, "video"].filter(Boolean).join(","));
+            const nuevaPagina: PaginaModulo = {
+              id: newId(),
+              tipo: "texto",
+              titulo: `Vídeo: ${paginaActiva?.titulo || "Nueva página"}`,
+              contenido: textoLimpio,
+              archivoUrl: null,
+              archivoNombre: null,
+              archivoFile: null,
+              preguntas: [],
+            };
+            setPaginas((p) => [...p, nuevaPagina]);
+            setPaginaActivaId(nuevaPagina.id);
+          } else {
+            throw new Error("Formato inválido");
+          }
+        } catch {
+          setAiError("Error al procesar los slides generados. Intenta de nuevo.");
+        }
       }
     } catch (err) {
       console.error("[IA] Error:", err);
@@ -495,6 +577,7 @@ export default function CrearModuloPage() {
           imagenPortadaUrl,
           testPreguntas: null,
           scriptPodcast: scriptPodcast || null,
+          scriptVideo: scriptVideo || null,
           tiposSalida,
         }),
       });
@@ -505,7 +588,7 @@ export default function CrearModuloPage() {
     } finally { setGuardando(false); }
   };
 
-  const generarConIA = async () => {
+  const generarModuloConIA = async () => {
     if (!promptIA.trim()) { setErrorIA("Describe el módulo que quieres crear"); return; }
     setGenerandoIA(true); setErrorIA("");
     try {
@@ -849,8 +932,8 @@ export default function CrearModuloPage() {
                         {aiLoading === "podcast" ? <Loader className="w-4 h-4 animate-spin" /> : "🎙️"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Guion de Podcast</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un guion de podcast de 5-7 minutos</p>
+                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Podcast</p>
+                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un podcast de 5-7 minutos</p>
                       </div>
                     </button>
 
@@ -862,8 +945,8 @@ export default function CrearModuloPage() {
                         {aiLoading === "video" ? <Loader className="w-4 h-4 animate-spin" /> : "🎬"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Guion de Vídeo</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un guion para vídeo educativo de 3-5 min</p>
+                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Vídeo</p>
+                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un vídeo educativo de 3-5 min</p>
                       </div>
                     </button>
 
@@ -1207,7 +1290,7 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                    <IconX />
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
                 {/* Body */}
@@ -1252,7 +1335,7 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}>
                     Cancelar
                   </button>
-                  <button type="button" onClick={generarConIA} disabled={generandoIA || !promptIA.trim()}
+                  <button type="button" onClick={generarModuloConIA} disabled={generandoIA || !promptIA.trim()}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all"
                     style={{
                       background: generandoIA ? "var(--gris-superficie)" : "linear-gradient(135deg,#7c3aed,#a855f7)",
@@ -1307,41 +1390,40 @@ export default function CrearModuloPage() {
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
           style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
           onClick={() => setMostrarSelectorTipo(false)}>
-          <div className="w-full md:max-w-md rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden fade-up md:mt-0"
+          <div className="w-full max-w-xs md:max-w-xs rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden fade-up md:mt-0"
             style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4"
+            <div className="flex items-center justify-between px-4 py-3"
               style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
               <div>
-                <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Añadir nueva página</h2>
-                <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Elige el tipo de contenido</p>
+                <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Añadir página</h2>
               </div>
               <button type="button" onClick={() => setMostrarSelectorTipo(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-full transition-colors"
+                className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
                 style={{ color: "var(--texto-muted)" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                <X />
+                <X size={14} />
               </button>
             </div>
             {/* Opciones */}
-            <div className="px-4 md:px-6 py-4 md:py-5 flex flex-col gap-2 md:gap-3">
+            <div className="p-3 flex flex-col gap-1.5">
               {TIPOS_PAGINA.map((tipo) => (
                 <button key={tipo.key} type="button" onClick={() => nuevaPagina(tipo.key)}
-                  className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl text-left transition-all w-full"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all w-full"
                   style={{ border: `1.5px solid var(--gris-borde)`, background: "var(--gris-pagina)" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = tipo.accent; e.currentTarget.style.background = tipo.bg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0" style={{ background: tipo.bg, color: tipo.accent }}>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tipo.bg, color: tipo.accent }}>
                     {tipo.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate" style={{ color: "var(--texto-primario)" }}>{tipo.label}</p>
-                    <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>{tipo.desc}</p>
+                    <p className="text-xs font-bold truncate" style={{ color: "var(--texto-primario)" }}>{tipo.label}</p>
+                    <p className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>{tipo.desc}</p>
                   </div>
-                  <div className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid var(--gris-borde)", color: "transparent" }}>
-                    <svg viewBox="0 0 24 24" className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid var(--gris-borde)" }}>
+                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "transparent" }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                   </div>
                 </button>
               ))}
