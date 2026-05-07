@@ -319,33 +319,6 @@ export default function Empleado() {
       </div>
 
       {/* ════════════════════════════════════════════
-          BARRA DE ACCESO RÁPIDO — INCIDENCIA
-      ════════════════════════════════════════════ */}
-      <div className="px-10 lg:px-16 pt-8">
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setShowIncidencia(true); }}
-          className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-200 cursor-pointer"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--error)"; (e.currentTarget as HTMLElement).style.background = "#fef2f2"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)"; (e.currentTarget as HTMLElement).style.background = "var(--blanco)"; }}
-        >
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#fee2e2", color: "#dc2626" }}>
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <div className="text-left">
-            <p className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>¿Algo no funciona? Reporta una incidencia</p>
-            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tu administrador y el equipo de soporte recibirán tu aviso inmediatamente.</p>
-          </div>
-          <svg className="w-5 h-5 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* ════════════════════════════════════════════
           CONTENIDO
       ════════════════════════════════════════════ */}
       <div className="px-10 lg:px-16 pt-14 pb-16 flex flex-col gap-16">
