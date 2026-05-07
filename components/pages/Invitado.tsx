@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
-import type { StaggeredMenuHandle } from "@/components/ui/StaggeredMenu";
+import { useEffect, useState, useRef, useMemo, useLayoutEffect } from "react";
+import { gsap } from "gsap";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -9,7 +9,6 @@ import { API_URL } from "@/lib/api";
 import { Playfair_Display } from "next/font/google";
 import LogoLoop from "@/components/ui/LogoLoop";
 import FooterCTA from "@/components/ui/FooterCTA";
-import StaggeredMenu from "@/components/ui/StaggeredMenu";
 import {
   GraduationCap, BookOpen, Network,
   FlaskConical, Sprout, Building2,
@@ -119,9 +118,41 @@ const comunidadItems = [
 
 
 export default function Invitado() {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const menuOverlayRef = useRef<HTMLDivElement>(null);
+  const menuItemsRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (menuPanelRef.current) gsap.set(menuPanelRef.current, { xPercent: 100 });
+    if (menuOverlayRef.current) gsap.set(menuOverlayRef.current, { opacity: 0, pointerEvents: "none" });
+  }, []);
+
+  const abrirMenu = () => {
+    setMenuAbierto(true);
+    const panel = menuPanelRef.current;
+    const overlay = menuOverlayRef.current;
+    const items = menuItemsRef.current ? Array.from(menuItemsRef.current.children) as HTMLElement[] : [];
+    if (!panel || !overlay) return;
+    gsap.set(items, { xPercent: 40, opacity: 0 });
+    gsap.set(overlay, { pointerEvents: "auto" });
+    const tl = gsap.timeline();
+    tl.to(overlay, { opacity: 1, duration: 0.3, ease: "power2.out" });
+    tl.to(panel, { xPercent: 0, duration: 0.45, ease: "power4.out" }, 0);
+    tl.to(items, { xPercent: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.07 }, 0.2);
+  };
+
+  const cerrarMenu = () => {
+    const panel = menuPanelRef.current;
+    const overlay = menuOverlayRef.current;
+    if (!panel || !overlay) return;
+    const tl = gsap.timeline({ onComplete: () => setMenuAbierto(false) });
+    tl.to(panel, { xPercent: 100, duration: 0.35, ease: "power3.in" });
+    tl.to(overlay, { opacity: 0, duration: 0.25, ease: "power2.in", onComplete: () => { gsap.set(overlay, { pointerEvents: "none" }); } }, 0);
+  };
+
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const [todosLosComunicados, setTodosLosComunicados] = useState<Comunicado[]>([]);
   const [todosLosAnuncios, setTodosLosAnuncios] = useState<Noticia[]>([]);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
@@ -246,45 +277,21 @@ export default function Invitado() {
         </nav>
 
         {/* Mobile nav */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-50 w-full px-6 py-5 flex items-center justify-between transition-all duration-300" style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}>
+        <div className="md:hidden fixed top-0 left-0 right-0 z-[56] w-full px-6 py-5 flex items-center justify-between transition-all duration-300" style={{ background: scrolled ? "rgba(0,0,0,0.45)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none" }}>
           <Link href="/">
             <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto brightness-0 invert" />
           </Link>
-          {/* Mobile hamburger */}
-          <button
-            className="p-2 flex items-center justify-center outline-none focus:outline-none"
-            onClick={() => setMenuAbierto(prev => !prev)}
-            onMouseDown={(e) => e.preventDefault()}
-            aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
-          >
-            {menuAbierto ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            )}
+          <button onClick={abrirMenu} aria-label="Abrir menú" className="p-1 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
 
-        {/* Mobile menu */}
-        {menuAbierto && (
-          <div className="md:hidden relative z-20 px-6 pb-6 flex flex-col" style={{ background: "rgba(0,0,0,0.85)" }}>
-            <Link href="/noticias" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Noticias</Link>
-            <a href="#comunidad" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Comunidad</a>
-            <a href="#colaboradores" onClick={() => setMenuAbierto(false)} className="text-sm py-3 text-white/80" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>Colaboradores</a>
-            <Link href="/login" onClick={() => setMenuAbierto(false)} className="text-sm font-semibold py-3 text-white">Entrar</Link>
-          </div>
-        )}
 
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-40 pb-40">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-24 sm:pt-40 pb-20 sm:pb-40">
           <h1
-            className="text-7xl sm:text-[6rem] md:text-[10rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
+            className="text-4xl sm:text-6xl md:text-[7rem] lg:text-[10rem] text-white leading-[0.9] max-w-7xl font-normal animate-fade-rise"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2.46px" }}
           >
             Atalayas Área Empresarial.
@@ -294,10 +301,10 @@ export default function Invitado() {
           </p>
           <Link
             href="/login"
-            className="liquid-glass rounded-full px-14 py-5 text-xl text-white mt-12 hover:scale-[1.03] transition-transform animate-fade-rise-delay-2 inline-flex items-center justify-center"
+            className="liquid-glass rounded-full px-8 sm:px-14 py-3 sm:py-5 text-base sm:text-xl text-white mt-8 sm:mt-12 hover:scale-[1.03] transition-transform animate-fade-rise-delay-2 inline-flex items-center justify-center"
             style={{ background: "rgba(59, 130, 246, 0.25)" }}
           >
-            Iniciar Sesión
+            Iniciar sesión
           </Link>
         </div>
       </section>
@@ -524,9 +531,9 @@ export default function Invitado() {
         </div>
 
         {/* Layout: lista centrada con margen */}
-        <div className="relative w-full px-6 sm:px-20 lg:px-36 xl:px-48">
+        <div className="relative w-full px-6 sm:px-16 lg:px-36 xl:px-48">
           {/* Título */}
-          <h2 className="text-4xl sm:text-5xl font-bold mb-10 text-center" style={{ color: "#111827", maxWidth: 800 }}>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 sm:mb-10 text-center" style={{ color: "#111827", maxWidth: 800 }}>
             Nuestra Comunidad
           </h2>
           {/* Lista en dos columnas */}
@@ -571,6 +578,41 @@ export default function Invitado() {
 
       <Colaboradores />
       <FooterCTA />
+
+      {/* Mobile menu panel */}
+      <div className="md:hidden">
+        {/* Overlay */}
+        <div
+          ref={menuOverlayRef}
+          onClick={cerrarMenu}
+          className="fixed inset-0 z-[57]"
+          style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+        />
+        {/* Panel */}
+        <div
+          ref={menuPanelRef}
+          className="fixed top-0 right-0 h-full z-[58] flex flex-col"
+          style={{ width: "100%", background: "#fff" }}
+        >
+          {/* Cabecera del panel */}
+          <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto" />
+            <button onClick={cerrarMenu} aria-label="Cerrar menú" className="p-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          {/* Items */}
+          <div ref={menuItemsRef} className="flex flex-col px-6 py-8 gap-1">
+            <Link href="/" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Inicio</Link>
+            <Link href="/noticias" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Noticias</Link>
+            <a href="#comunidad" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Comunidad</a>
+            <a href="#colaboradores" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3" style={{ color: "#111", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>Colaboradores</a>
+            <Link href="/login" onClick={cerrarMenu} className="text-3xl font-bold uppercase tracking-tight py-3 mt-2" style={{ color: "var(--azul-egm)" }}>Entrar →</Link>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
