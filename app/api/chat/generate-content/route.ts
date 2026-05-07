@@ -89,9 +89,10 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdo
       )
     } catch (error) {
       console.error("[/api/chat/generate-content] Error del proveedor IA:", error)
+      const mensaje = error instanceof Error ? error.message : "Error desconocido"
       return new Response(
         JSON.stringify({
-          error: "Error al conectar con el servicio de IA. Verifica tu configuración.",
+          error: `Error de IA: ${mensaje}`,
         }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       )
@@ -129,8 +130,9 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdo
       )
     }
 
+    const mensaje = error instanceof Error ? error.message : "Error interno del servidor."
     return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
+      JSON.stringify({ error: mensaje }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     )
   }

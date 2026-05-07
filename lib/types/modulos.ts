@@ -17,21 +17,27 @@ export type ModuloTipo =
   | "LIDERAZGO"
   | "TECNICO"
   | "SOFT_SKILLS"
-  | "ONBOARDING";
+  | "ONBOARDING"
+  | "GENERAL"
+  | "ESPECIALIZADO"
+  | "ESPECIALIZADO_IA";
 
 // Etiqueta legible para el frontend por cada tipo
 export const MODULO_TIPO_LABEL: Record<ModuloTipo, string> = {
-  IDENTIDAD:    "Identidad Corporativa",
-  BASICA:       "Formación Básica",
-  ESPECIFICA:   "Formación Específica",
-  DESARROLLO:   "Desarrollo Profesional",
-  RECOMPENSAS:  "Recompensas y Ventajas",
-  COMUNIDAD:    "Comunidad",
-  CUMPLIMIENTO: "Cumplimiento",
-  LIDERAZGO:    "Liderazgo",
-  TECNICO:      "Técnico",
-  SOFT_SKILLS:  "Soft Skills",
-  ONBOARDING:   "Onboarding",
+  IDENTIDAD:        "Identidad Corporativa",
+  BASICA:           "Formación Básica",
+  ESPECIFICA:       "Formación Específica",
+  DESARROLLO:       "Desarrollo Profesional",
+  RECOMPENSAS:      "Recompensas y Ventajas",
+  COMUNIDAD:        "Comunidad",
+  CUMPLIMIENTO:     "Cumplimiento",
+  LIDERAZGO:        "Liderazgo",
+  TECNICO:          "Técnico",
+  SOFT_SKILLS:      "Soft Skills",
+  ONBOARDING:       "Onboarding",
+  GENERAL:          "General",
+  ESPECIALIZADO:    "Especializado",
+  ESPECIALIZADO_IA: "Especializado IA",
 };
 
 // Respuesta de GET /api/v1/modulos
