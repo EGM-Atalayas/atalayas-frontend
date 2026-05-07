@@ -17,6 +17,9 @@ function formatFecha(iso: string) {
 // ── TIPOS Y MOCK FORMACIONES ──────────────────────────────────────────────────
 type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal: number };
 
+// Tipo local para el widget de servicios del parque (desacoplado del tipo global)
+type Servicio = { servicioId: string; label: string; desc: string | null; href: string | null; activo: boolean; icono: string | null; orden: number; };
+
 const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
   { moduloId: "mock-1", nombre: "Incorporación y Bienvenida a Atalayas",
     descripcion: "Conoce la empresa, sus valores y los procedimientos de incorporación al área.",
@@ -122,11 +125,11 @@ const ICONO_MAP: Record<string, React.ReactNode> = {
 };
 
 const SERVICIOS_MOCK: Servicio[] = [
-  { servicioId: "m1", nombre: "Coche compartido", descripcion: "Ahorra hasta 2.500€/año compartiendo ruta.", url: "https://www.lokinn.com/compartir-coche/atalayas", activo: true, icono: "coche_compartido", orden: 1 },
-  { servicioId: "m2", nombre: "Autobús lanzadera", descripcion: "Línea 7P con horarios laborales.", url: "https://atalayas.com/autobus-lanzadera/", activo: true, icono: "autobus", orden: 2 },
-  { servicioId: "m3", nombre: "Aparcamiento VAO", descripcion: "Plazas para grupos que comparten vehículo.", url: "https://atalayas.com/aparcamientovao/", activo: true, icono: "aparcamiento", orden: 3 },
-  { servicioId: "m4", nombre: "Guardería", descripcion: "Conciliación familiar en el área.", url: "https://atalayas.com/servicios/", activo: true, icono: "guarderia", orden: 4 },
-  { servicioId: "m5", nombre: "Descuentos y ventajas", descripcion: "Beneficios para trabajadores del parque.", url: "https://atalayas.com/servicios-a-los-trabajadores/", activo: true, icono: "descuentos", orden: 5 },
+  { servicioId: "m1", label: "Coche compartido", desc: "Ahorra hasta 2.500€/año compartiendo ruta.", href: "https://www.lokinn.com/compartir-coche/atalayas", activo: true, icono: "coche_compartido", orden: 1 },
+  { servicioId: "m2", label: "Autobús lanzadera", desc: "Línea 7P con horarios laborales.", href: "https://atalayas.com/autobus-lanzadera/", activo: true, icono: "autobus", orden: 2 },
+  { servicioId: "m3", label: "Aparcamiento VAO", desc: "Plazas para grupos que comparten vehículo.", href: "https://atalayas.com/aparcamientovao/", activo: true, icono: "aparcamiento", orden: 3 },
+  { servicioId: "m4", label: "Guardería", desc: "Conciliación familiar en el área.", href: "https://atalayas.com/servicios/", activo: true, icono: "guarderia", orden: 4 },
+  { servicioId: "m5", label: "Descuentos y ventajas", desc: "Beneficios para trabajadores del parque.", href: "https://atalayas.com/servicios-a-los-trabajadores/", activo: true, icono: "descuentos", orden: 5 },
 ];
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
@@ -480,12 +483,12 @@ export default function Empleado() {
                   </p>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                     style={{ background: "rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                    {SERVICIOS.filter(s => s.activo).length} / {SERVICIOS.length} activos
+                    {SERVICIOS_MOCK.filter(s => s.activo).length} / {SERVICIOS_MOCK.length} activos
                   </span>
                 </div>
 
                 <div className="relative p-4 flex flex-col gap-2">
-                  {SERVICIOS.filter((s, i) => s.activo || i < 4).map((s) => {
+                  {SERVICIOS_MOCK.filter((s, i) => s.activo || i < 4).map((s) => {
                     const content = (
                       <div
                         className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
