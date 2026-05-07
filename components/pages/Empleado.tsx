@@ -9,6 +9,7 @@ import { getModulosConProgreso } from "@/lib/api/modulos";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import DashboardHero from "@/components/ui/DashboardHero";
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -244,85 +245,27 @@ export default function Empleado() {
     );
   }
 
+  const nombreCorto = usuario?.nombre?.split(" ")[0] ?? "Empleado";
+
   return (
     <div>
       {/* ════════════════════════════════════════════
-          BANDA HERO
+          HERO
       ════════════════════════════════════════════ */}
-      <div
-        className="relative overflow-hidden flex items-center"
-        style={{ minHeight: "320px", boxShadow: "0 6px 32px rgba(0,0,0,0.22)" }}
-      >
-        <img src={usuario?.bannerUrl ?? "/background-dashboard.jpg"} alt="" aria-hidden
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: "center 40%" }} />
-        <div className="absolute inset-0"
-          style={{ background: "rgba(10,20,40,0.60)" }} />
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(to right, rgba(13,27,46,0.92) 0%, rgba(13,27,46,0.50) 45%, transparent 100%)" }} />
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, rgba(13,27,46,0.60) 0%, transparent 35%)" }} />
+      <DashboardHero
+        variante="inicio"
+        prefijo="Hola,"
+        titulo={nombreCorto}
+        imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
+        objectPosition="center 40%"
+      />
 
-        <div className="relative z-10 w-full px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-            <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4 sm:mb-5 truncate"
-              style={{ color: "var(--verde-oliva-hover)", maxWidth: "90vw" }}>
-              {usuario?.nombreEmpresa ?? "Mi empresa"}
-              <span style={{ color: "rgba(255,255,255,0.2)" }}> · </span>
-              {new Date().toLocaleDateString("es-ES", {
-                weekday: "long", day: "numeric", month: "long",
-              }).replace(/^\w/, (c) => c.toUpperCase())}
-            </p>
-
-            <div className="leading-none flex flex-wrap items-center gap-x-3">
-              <span
-                className="text-white"
-                style={{
-                  fontSize:      "clamp(2.6rem, 7vw, 4.5rem)",
-                  fontFamily:    "var(--font-poppins), sans-serif",
-                  fontWeight:    300,
-                  letterSpacing: "-0.03em",
-                  animation:     "heroFadeUp 0.8s ease both",
-                }}
-              >
-                Hola,
-              </span>
-              <span
-                style={{
-                  fontSize:        "clamp(2.6rem, 7vw, 6rem)",
-                  fontFamily:      "'Instrument Serif', serif",
-                  fontStyle:       "italic",
-                  fontWeight:      400,
-                  letterSpacing:   "-0.01em",
-                  lineHeight:      1,
-                  background:      "linear-gradient(90deg, #A3B535, #ffffff, #A3B535)",
-                  backgroundSize:  "300% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  animation:       "heroFadeUp 0.8s ease 0.15s both, gradientShift 8s ease infinite",
-                }}
-              >
-                {usuario?.nombre?.split(" ")[0] ?? "Empleado"}
-              </span>
-            </div>
-            <style>{`
-              @keyframes heroFadeUp {
-                from { opacity: 0; transform: translateY(24px); }
-                to   { opacity: 1; transform: translateY(0); }
-              }
-              @keyframes gradientShift {
-                0%, 100% { background-position: 0% 50%; }
-                50%       { background-position: 100% 50%; }
-              }
-            `}</style>
-        </div>
-      </div>
 
       {/* ════════════════════════════════════════════
           ACCESOS RÁPIDOS
       ════════════════════════════════════════════ */}
-      <div className="px-5 sm:px-8 lg:px-16 pt-6 sm:pt-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+      <div className="px-5 sm:px-8 lg:px-16 pt-5 sm:pt-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           {[
             {
               label: "Comunicación",
@@ -356,20 +299,28 @@ export default function Empleado() {
             <button
               key={item.label}
               onClick={() => router.push(item.href)}
-              className="flex sm:flex-col items-center gap-3 sm:gap-2 py-3 sm:py-4 px-4 sm:px-3 rounded-xl sm:rounded-2xl transition-all duration-150 w-full"
+              className="flex flex-col items-center gap-2.5 py-4 px-3 rounded-2xl transition-all duration-150 w-full"
               style={{
                 background: "var(--blanco)",
                 border:     "1px solid var(--gris-borde)",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = item.color; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${item.color}22`; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = item.color;
+                (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${item.color}22`;
+                (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              }}
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center" style={{ background: item.bg, color: item.color }}>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: item.bg, color: item.color }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
               </div>
-              <span className="text-xs font-semibold text-left sm:text-center leading-tight" style={{ color: "var(--texto-primario)" }}>{item.label}</span>
+              <span className="text-xs font-semibold text-center leading-tight" style={{ color: "var(--texto-primario)" }}>{item.label}</span>
             </button>
           ))}
         </div>
@@ -442,15 +393,15 @@ export default function Empleado() {
       {/* ════════════════════════════════════════════
           CONTENIDO
       ════════════════════════════════════════════ */}
-      <div className="px-5 sm:px-8 lg:px-16 pt-8 sm:pt-10 pb-16 flex flex-col gap-10 sm:gap-16">
+      <div className="px-5 sm:px-8 lg:px-16 pt-8 sm:pt-10 pb-16 flex flex-col gap-10 sm:gap-14">
 
         {/* ── FILA 1: COMUNICACIONES (2/3) + SERVICIOS (1/3) ── */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8 items-stretch">
 
             {/* COMUNICACIONES — 2/3 */}
-            <div className="lg:col-span-2 flex flex-col">
-              <div className="mb-6"><TituloSeccion noMargin letras>Comunicaciones</TituloSeccion></div>
+            <div className="xl:col-span-2 flex flex-col">
+              <div className="mb-5"><TituloSeccion noMargin>Comunicaciones</TituloSeccion></div>
               <ComunicadosCarousel
                 items={carouselItems}
                 autoplay
@@ -462,7 +413,7 @@ export default function Empleado() {
 
             {/* SERVICIOS DEL PARQUE — 1/3 */}
             <div className="flex flex-col">
-              <div className="mb-6"><TituloSeccion noMargin letras>Servicios</TituloSeccion></div>
+              <div className="mb-5"><TituloSeccion noMargin>Servicios del parque</TituloSeccion></div>
               <div
                 className="rounded-2xl overflow-hidden relative"
                 style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
@@ -511,7 +462,11 @@ export default function Empleado() {
                             color:                s.activo ? "white" : "rgba(255,255,255,0.2)",
                           }}
                         >
-                          {s.icono}
+                          {ICONO_MAP[s.icono ?? ""] ?? (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
                         </div>
 
                         {/* Texto */}
@@ -579,7 +534,7 @@ export default function Empleado() {
             <Link href="/dashboard/comunicacion"
               className="text-sm font-semibold hover:underline"
               style={{ color: "var(--azul-egm)" }}>
-              Ver todas →
+              Ver todas las comunicaciones →
             </Link>
           </div>
         </section>
@@ -587,11 +542,11 @@ export default function Empleado() {
 
         {/* ── RUTA DE APRENDIZAJE ── */}
         <section>
-          <div className="flex items-start justify-between mb-6 gap-4">
+          <div className="flex items-start justify-between mb-5 gap-4">
             <div>
               <TituloSeccion noMargin>Mi formación</TituloSeccion>
               {hayModulos && (
-                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
                   {completados === 0
                     ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
                     : completados === formDisplay.length
@@ -601,11 +556,11 @@ export default function Empleado() {
               )}
             </div>
             {hayModulos && (
-              <button onClick={() => router.push("/dashboard/formacion")}
-                className="text-sm font-semibold shrink-0 hover:underline"
+              <Link href="/dashboard/formacion"
+                className="text-sm font-semibold shrink-0 hover:underline mt-1"
                 style={{ color: "var(--azul-egm)" }}>
                 Ver todo →
-              </button>
+              </Link>
             )}
           </div>
 
@@ -643,16 +598,16 @@ export default function Empleado() {
 
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex items-start justify-between mb-5 gap-4">
             <div>
               <TituloSeccion noMargin>Comunidad</TituloSeccion>
-              <p className="text-xs mt-1 font-medium" style={{ color: "var(--texto-muted)" }}>Parque empresarial EGM Atalayas</p>
+              <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
             </div>
-            <button onClick={() => router.push("/dashboard/comunidad")}
-              className="text-sm font-semibold shrink-0 hover:underline"
+            <Link href="/dashboard/comunidad"
+              className="text-sm font-semibold shrink-0 hover:underline mt-1"
               style={{ color: "var(--azul-egm)" }}>
               Ver todo →
-            </button>
+            </Link>
           </div>
 
           {/* Evento destacado + iniciativas */}
@@ -704,12 +659,16 @@ export default function Empleado() {
                   </div>
                 </div>
 
-                <button
-                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80"
-                  style={{ background: "#A3B535", color: "#fff" }}
+                <Link
+                  href="/dashboard/eventos"
+                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
+                  style={{ background: "#A3B535", color: "#fff", textDecoration: "none" }}
                 >
-                  Ver detalles e inscribirme
-                </button>
+                  Ver evento
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               </div>
             </div>
 
@@ -746,10 +705,17 @@ export default function Empleado() {
               ].map((ini) => (
                 <div
                   key={ini.label}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-colors"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)"; }}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+                  onClick={() => router.push("/dashboard/comunidad")}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = ini.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gris-borde)";
+                  }}
                 >
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ini.bg, color: ini.color }}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -769,31 +735,75 @@ export default function Empleado() {
             </div>
           </div>
 
-          {/* Tablón de la comunidad */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}
-          >
-            <div
-              className="px-5 py-3.5 flex items-center justify-between"
-              style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}
-            >
-              <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Tablón de la comunidad</p>
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>Próximamente</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "var(--gris-borde)" }}>
-              {[
-                { emoji: "💬", titulo: "Foro del parque",         desc: "Comparte ideas y preguntas con el resto de empresas y empleados." },
-                { emoji: "📌", titulo: "Anuncios de comunidad",   desc: "Comunicados transversales del parque empresarial EGM." },
-                { emoji: "🤝", titulo: "Directorio de empresas",  desc: "Conoce las empresas y equipos que comparten espacio contigo." },
-              ].map((item, i) => (
-                <div key={i} className="px-5 py-4 flex flex-col gap-2">
-                  <span className="text-2xl leading-none">{item.emoji}</span>
-                  <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{item.titulo}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>{item.desc}</p>
+          {/* Accesos comunidad */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                titulo: "Noticias del parque",
+                desc:   "Comunicados y avisos del área empresarial EGM.",
+                href:   "/dashboard/comunicacion",
+                color:  "var(--azul-egm)",
+                bg:     "var(--azul-egm-light)",
+                icon:   "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
+              },
+              {
+                titulo: "Eventos del área",
+                desc:   "Jornadas, actividades y encuentros empresariales.",
+                href:   "/dashboard/eventos",
+                color:  "#7c3aed",
+                bg:     "#ede9fe",
+                icon:   "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+              },
+              {
+                titulo: "Actividad de empresa",
+                desc:   "Iniciativas y eventos internos de tu empresa.",
+                href:   "/dashboard/comunidad",
+                color:  "var(--verde-oliva)",
+                bg:     "var(--verde-oliva-light)",
+                icon:   "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+              },
+            ].map((item) => (
+              <Link
+                key={item.titulo}
+                href={item.href}
+                className="flex items-start gap-3.5 px-4 py-4 rounded-2xl transition-all duration-150 group"
+                style={{
+                  background:  "var(--blanco)",
+                  border:      "1px solid var(--gris-borde)",
+                  textDecoration: "none",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = item.color;
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${item.color}18`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                }}
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ background: item.bg, color: item.color }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
                 </div>
-              ))}
-            </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold leading-tight mb-1" style={{ color: "var(--texto-primario)" }}>
+                    {item.titulo}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>
+                    {item.desc}
+                  </p>
+                </div>
+                <svg className="w-4 h-4 shrink-0 mt-0.5 opacity-30 group-hover:opacity-60 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: item.color }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -804,20 +814,20 @@ export default function Empleado() {
 }
 
 // ── TÍTULO DE SECCIÓN ─────────────────────────────────────────────────────────
-function TituloSeccion({ children, noMargin, letras }: {
+function TituloSeccion({ children, noMargin }: {
   children: React.ReactNode;
   noMargin?: boolean;
-  letras?:  boolean;
 }) {
   return (
     <h2
-      className={noMargin ? "" : "mb-6"}
+      className={noMargin ? "" : "mb-5"}
       style={{
-        fontSize:      "clamp(1.6rem, 2.8vw, 2.8rem)",
-        fontFamily:    "'Instrument Serif', serif",
-        fontWeight:    400,
+        fontSize:      "clamp(1.15rem, 1.6vw, 1.4rem)",
+        fontFamily:    "var(--font-poppins), sans-serif",
+        fontWeight:    700,
         color:         "var(--texto-primario)",
-        letterSpacing: letras ? "0.04em" : "-0.02em",
+        letterSpacing: "-0.01em",
+        lineHeight:    1.25,
       }}
     >
       {children}
