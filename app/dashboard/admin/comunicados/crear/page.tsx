@@ -180,7 +180,7 @@ export default function CrearComunicadoPage() {
 
   return (
     <>
-      <DashboardHero prefijo="Crear " titulo="Comunicado" imagenFondo="/background-comunicacion-empleado.webp" />
+      <DashboardHero prefijo="Crear " titulo="Comunicado" imagenFondo="/hero-comunicacion.webp" />
 
       <div className="px-6 md:px-10 lg:px-16 pt-10 pb-16">
         <div className="max-w-3xl mx-auto">
