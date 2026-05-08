@@ -138,9 +138,60 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   const items: Contenido[] = [];
   let idx = 1;
 
-  // Documentación: si hay markdown, un ítem por sección ##
+  // Intentar parsear contenidoMarkdown como JSON array de páginas (admin)
+  let paginasJson: any[] | null = null;
+  if (moduloApi.contenidoMarkdown) {
+    try {
+      const parsed = JSON.parse(moduloApi.contenidoMarkdown);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].tipo) {
+        paginasJson = parsed;
+      }
+    } catch { /* no es JSON, es markdown normal */ }
+  }
+
+  // Documentación: páginas desde JSON o markdown por secciones ##
   if (tipos.includes("documentacion")) {
-    if (moduloApi.contenidoMarkdown) {
+    if (paginasJson) {
+      // Separar primera página, tests, y resto de páginas de texto
+      const primeraPag = paginasJson.length > 0 ? paginasJson[0] : null;
+      const paginasTest = paginasJson.filter((p) => p.tipo === "test");
+      const paginasTextoResto = paginasJson.slice(1).filter((p) => p.tipo !== "test");
+
+      // 1. Primera página (introducción)
+      if (primeraPag) {
+        items.push({
+          id: `c${idx++}`, titulo: primeraPag.titulo || "Introducción", tipo: "texto",
+          duracion: estimarDuracion(primeraPag.contenido || ""), completado: false, bloqueado: false, seccionIdx: 0,
+        });
+      }
+
+      // 2. Podcast después de la introducción
+      if (tipos.includes("podcast") && moduloApi.scriptPodcast) {
+        items.push({
+          id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast",
+          duracion: "5–10 min", completado: false, bloqueado: items.length > 0,
+          seccionIdx: -1,
+        });
+      }
+
+      // 3. Resto de páginas de texto
+      paginasTextoResto.forEach((pag, i) => {
+        items.push({
+          id: `c${idx++}`, titulo: pag.titulo || `Página ${i + 2}`, tipo: "texto",
+          duracion: estimarDuracion(pag.contenido || ""), completado: false, bloqueado: false,
+          seccionIdx: paginasJson.indexOf(pag),
+        });
+      });
+
+      // 4. Test al final
+      paginasTest.forEach((pag) => {
+        items.push({
+          id: `c${idx++}`, titulo: pag.titulo || "Evaluación", tipo: "quiz",
+          duracion: "10–15 min", completado: false, bloqueado: items.length > 0,
+          seccionIdx: paginasJson.indexOf(pag),
+        });
+      });
+    } else if (moduloApi.contenidoMarkdown) {
       const secciones = parsearSecciones(moduloApi.contenidoMarkdown);
       if (secciones.length > 0) {
         secciones.forEach((s, i) => {
@@ -162,7 +213,8 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
     }
   }
 
-  if (tipos.includes("podcast") && moduloApi.scriptPodcast) {
+  // Podcast para markdown normal (para JSON ya se insertó arriba)
+  if (!paginasJson && tipos.includes("podcast") && moduloApi.scriptPodcast) {
     items.push({ id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
   }
   if (tipos.includes("video") && moduloApi.scriptVideo) {
@@ -264,6 +316,15 @@ export default function Page() {
   const secciones = React.useMemo<SeccionMarkdown[]>(() => {
     if (!moduloApi?.contenidoMarkdown) return [];
     return parsearSecciones(moduloApi.contenidoMarkdown);
+  }, [moduloApi]);
+
+  // Páginas desde JSON array (cuando el admin crea páginas estructuradas)
+  const paginasJson = React.useMemo<any[] | null>(() => {
+    if (!moduloApi?.contenidoMarkdown) return null;
+    try {
+      const parsed = JSON.parse(moduloApi.contenidoMarkdown);
+      return Array.isArray(parsed) && parsed.length > 0 && parsed[0].tipo ? parsed : null;
+    } catch { return null; }
   }, [moduloApi]);
 
   // Reset verificado cada vez que el usuario cambia de ítem
@@ -599,20 +660,34 @@ export default function Page() {
             {/* Cuerpo según tipo */}
             <div className={activo.tipo === "pdf" ? "px-6 py-5" : "px-8 py-7"}>
               {activo.tipo === "texto" && (() => {
-                // Si el ítem tiene seccionIdx, mostrar solo esa sección; si no, el markdown completo
-                const seccion = activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                // Si el ítem viene de JSON (admin), mostrar el contenido de esa página
+                const desdeJson = paginasJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                  ? paginasJson[activo.seccionIdx] ?? null
+                  : null;
+                // Si no, buscar sección desde markdown con ##
+                const seccion = !desdeJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
                   ? secciones[activo.seccionIdx] ?? null
                   : null;
-                const contenidoFinal = seccion
-                  ? seccion.contenido
-                  : (moduloApi?.contenidoMarkdown ?? null);
+                const contenidoFinal = desdeJson
+                  ? desdeJson.contenido
+                  : seccion
+                    ? seccion.contenido
+                    : (moduloApi?.contenidoMarkdown ?? null);
                 return <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={contenidoFinal} onVerificado={() => setVerificado(true)} />;
               })()}
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "quiz" && <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={moduloApi?.testPreguntas ?? null} />}
+              {activo.tipo === "quiz" && (() => {
+                const desdeJson = paginasJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
+                  ? paginasJson[activo.seccionIdx] ?? null
+                  : null;
+                const preguntasJson = desdeJson?.preguntas
+                  ? JSON.stringify(desdeJson.preguntas)
+                  : (moduloApi?.testPreguntas ?? null);
+                return <ContenidoQuiz onCompletar={marcarCompletado} testPreguntasJson={preguntasJson} />;
+              })()}
             </div>
 
             {/* Footer — no aparece en quiz (tiene su propio CTA) */}
@@ -816,17 +891,25 @@ function ContenidoVideo({ onVerificado }: { onVerificado?: () => void }) {
 
 // ── PODCAST ──────────────────────────────────────────────────────────────────
 function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; audioUrl?: string; onVerificado?: () => void }) {
-  // Si hay URL de audio real (ElevenLabs MP3), usamos <audio>; si no, Web Speech API como fallback
   const tieneAudioReal = !!audioUrl;
   const audioRef = React.useRef<HTMLAudioElement>(null);
   const [reproduciendo, setReproduciendo] = React.useState(false);
   const [pausado, setPausado] = React.useState(false);
+  const [progreso, setProgreso] = React.useState(0);
+  const [duracion, setDuracion] = React.useState(0);
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const seg = Math.floor(s % 60);
+    return `${m}:${seg.toString().padStart(2, "0")}`;
+  };
 
   // ── Controles para <audio> nativo ─────────────────────────────────────────
   const iniciarAudio = () => {
     if (!audioRef.current) return;
     audioRef.current.play();
     setReproduciendo(true); setPausado(false);
+    onVerificado?.();
   };
   const pausarAudio = () => {
     if (!audioRef.current) return;
@@ -837,39 +920,89 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
     if (!audioRef.current) return;
     audioRef.current.pause(); audioRef.current.currentTime = 0;
     setReproduciendo(false); setPausado(false);
+    setProgreso(0);
+  };
+  const actualizarProgreso = () => {
+    if (audioRef.current) {
+      setProgreso(audioRef.current.currentTime);
+      setDuracion(audioRef.current.duration || 0);
+    }
   };
 
   // ── Controles para Web Speech API (fallback) ───────────────────────────────
+  const utteranceRef = React.useRef<SpeechSynthesisUtterance | null>(null);
+  const progresoIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
   const iniciarSpeech = () => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(script);
     utterance.lang = "es-ES"; utterance.rate = 0.95; utterance.pitch = 1;
-    utterance.onend = () => { setReproduciendo(false); setPausado(false); onVerificado?.(); };
+    utterance.onend = () => {
+      setReproduciendo(false); setPausado(false);
+      setProgreso(1);
+      if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+    };
+    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
+    setDuracion(1);
+    // Estimar progreso: el Speech API no expone tiempo, simulamos con un intervalo
+    const palabras = script.split(/\s+/).length;
+    const estimadoSeg = (palabras / 150) * 60;
+    const inicio = Date.now();
+    if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+    progresoIntervalRef.current = setInterval(() => {
+      const transcurrido = (Date.now() - inicio) / 1000;
+      setProgreso(Math.min(transcurrido / estimadoSeg, 0.98));
+    }, 250);
+    onVerificado?.();
   };
   const pausarSpeech = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
       window.speechSynthesis.pause(); setPausado(true);
+      if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
     } else if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume(); setPausado(false);
+      // Reanudar intervalo
+      if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+      const palabras = script.split(/\s+/).length;
+      const estimadoSeg = (palabras / 150) * 60;
+      const restante = (1 - progreso) * estimadoSeg;
+      const reanudado = Date.now();
+      progresoIntervalRef.current = setInterval(() => {
+        const transcurrido = (Date.now() - reanudado) / 1000;
+        setProgreso((p) => Math.min(p + transcurrido / restante * 0.05, 0.98));
+      }, 250);
     }
   };
-  const detenerSpeech = () => { window.speechSynthesis.cancel(); setReproduciendo(false); setPausado(false); };
+  const detenerSpeech = () => {
+    window.speechSynthesis.cancel();
+    setReproduciendo(false); setPausado(false);
+    setProgreso(0);
+    if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+  };
+
+  React.useEffect(() => () => {
+    if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+  }, []);
 
   const iniciar = tieneAudioReal ? iniciarAudio : iniciarSpeech;
   const pausar = tieneAudioReal ? pausarAudio : pausarSpeech;
   const detener = tieneAudioReal ? detenerAudio : detenerSpeech;
+  const pct = tieneAudioReal && duracion > 0 ? progreso / duracion : progreso;
+  const tiempoActual = tieneAudioReal ? formatTime(progreso) : "";
+  const tiempoTotal = tieneAudioReal ? formatTime(duracion) : "";
 
   return (
     <div>
-      {/* Audio element oculto para reproducción MP3 */}
       {tieneAudioReal && (
         <audio
           ref={audioRef}
           src={audioUrl}
-          onEnded={() => { setReproduciendo(false); setPausado(false); onVerificado?.(); }}
+          onTimeUpdate={actualizarProgreso}
+          onLoadedMetadata={actualizarProgreso}
+          onEnded={() => { setReproduciendo(false); setPausado(false); setProgreso(0); }}
           onPlay={() => { setReproduciendo(true); setPausado(false); }}
           onPause={() => setPausado(true)}
           preload="metadata"
@@ -886,7 +1019,7 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
           <div>
             <p className="text-sm font-bold text-white">Podcast del módulo</p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              {tieneAudioReal ? "Narrado por IA con ElevenLabs · ~5 min" : "Narrado por IA · ~5 min"}
+              {tieneAudioReal ? "Narrado por IA con ElevenLabs" : "Narrado por IA"}
             </p>
           </div>
         </div>
@@ -922,6 +1055,21 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
             </div>
           )}
         </div>
+        {/* Barra de progreso (solo visual, sin interacción) */}
+        {(reproduciendo || pausado) && (
+          <div className="w-full">
+            <div className="relative w-full h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.15)", pointerEvents: "none" }}>
+              <div className="absolute top-0 left-0 h-full rounded-full transition-all duration-200"
+                style={{ width: `${Math.min(pct * 100, 100)}%`, background: "linear-gradient(90deg,#818cf8,#6366f1)" }} />
+            </div>
+            {tieneAudioReal && (
+              <div className="flex justify-between mt-1">
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{tiempoActual}</span>
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{tiempoTotal}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="rounded-xl p-5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
         <p className="text-xs font-semibold mb-3" style={{ color: "var(--texto-muted)" }}>TRANSCRIPCIÓN</p>

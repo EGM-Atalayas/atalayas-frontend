@@ -8,33 +8,31 @@ interface ChatMessage {
   content: string
 }
 
-// --- Parsear JSON del texto ---
+// --- Extraer JSON de un texto (objeto o array) ---
+function extraerJson(text: string): unknown {
+  let cleaned = text.trim()
+  const jsonMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (jsonMatch) cleaned = jsonMatch[1].trim()
+  const arrayMatch = cleaned.match(/\[[\s\S]*\]/)
+  const objectMatch = cleaned.match(/\{[\s\S]*\}/)
+  if (arrayMatch && (!objectMatch || cleaned.indexOf("[") < cleaned.indexOf("{"))) {
+    cleaned = arrayMatch[0]
+  } else if (objectMatch) {
+    cleaned = objectMatch[0]
+  }
+  return JSON.parse(cleaned)
+}
+
+// --- Parsear contenido de descripción ---
 function parseGeneratedContent(text: string): {
   titulo: string
   descripcion: string
   resumen: string
   etiquetas: string[]
 } | null {
-  // Intentar extraer JSON del texto (puede venir con markdown ```json ... ```)
-  let jsonStr = text.trim()
-
-  // Si viene envuelto en markdown, extraer solo el JSON
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim()
-  }
-
-  // También buscar si hay un objeto JSON en el texto
-  const objectMatch = jsonStr.match(/\{[\s\S]*\}/)
-  if (objectMatch) {
-    jsonStr = objectMatch[0]
-  }
-
   try {
-    const parsed = JSON.parse(jsonStr)
-
-    // Validar que tenga los campos mínimos
-    if (parsed.titulo || parsed.title) {
+    const parsed = extraerJson(text) as any
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && (parsed.titulo || parsed.title)) {
       return {
         titulo: parsed.titulo || parsed.title || "",
         descripcion: parsed.descripcion || parsed.description || "",
@@ -48,7 +46,6 @@ function parseGeneratedContent(text: string): {
     console.error("Error parseando JSON:", e)
     console.log("Texto recibido:", text.substring(0, 500))
   }
-
   return null
 }
 
@@ -89,9 +86,10 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdo
       )
     } catch (error) {
       console.error("[/api/chat/generate-content] Error del proveedor IA:", error)
+      const mensaje = error instanceof Error ? error.message : "Error desconocido"
       return new Response(
         JSON.stringify({
-          error: "Error al conectar con el servicio de IA. Verifica tu configuración.",
+          error: `Error de IA: ${mensaje}`,
         }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       )
@@ -99,23 +97,32 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdo
 
     console.log("Texto acumulado:", fullText.substring(0, 200) + "...")
 
-    // Parsear el JSON del texto acumulado
+    // Intentar parsear como objeto de descripción primero
     const parsed = parseGeneratedContent(fullText)
 
-    if (!parsed) {
-      console.error("No se pudo parsear el contenido generado")
-      return new Response(
-        JSON.stringify({
-          error: "La IA no devolvió el formato esperado. Intenta con un prompt diferente.",
-        }),
-        { status: 422, headers: { "Content-Type": "application/json" } }
-      )
+    if (parsed) {
+      return new Response(JSON.stringify(parsed), {
+        headers: { "Content-Type": "application/json" },
+      })
     }
 
-    // Devolver el JSON estructurado al frontend
-    return new Response(JSON.stringify(parsed), {
-      headers: { "Content-Type": "application/json" },
-    })
+    // Si no es objeto, intentar como array (test, preguntas, etc.)
+    try {
+      const raw = extraerJson(fullText)
+      if (Array.isArray(raw)) {
+        return new Response(JSON.stringify(raw), {
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+    } catch { /* ignora */ }
+
+    console.error("No se pudo parsear el contenido generado")
+    return new Response(
+      JSON.stringify({
+        error: "La IA no devolvió el formato esperado. Intenta con un prompt diferente.",
+      }),
+      { status: 422, headers: { "Content-Type": "application/json" } }
+    )
   } catch (error: any) {
     console.error("[/api/chat/generate-content] Error:", error)
 
@@ -129,8 +136,9 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdo
       )
     }
 
+    const mensaje = error instanceof Error ? error.message : "Error interno del servidor."
     return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
+      JSON.stringify({ error: mensaje }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     )
   }

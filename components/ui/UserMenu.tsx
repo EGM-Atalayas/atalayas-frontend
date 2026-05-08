@@ -12,6 +12,7 @@ interface UserMenuProps {
   onPerfil: () => void;
   onConfiguracion: () => void;
   onCerrarSesion: () => void;
+  onIncidencias?: () => void;
 }
 
 const ACCIONES = [
@@ -36,6 +37,16 @@ const ACCIONES = [
       </svg>
     ),
   },
+  {
+    key:    "incidencias" as const,
+    label:  "Incidencias",
+    danger: true,
+    icon: (
+      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+  },
 ];
 
 const ICONO_LOGOUT = (
@@ -52,6 +63,7 @@ export default function UserMenu({
   onPerfil,
   onConfiguracion,
   onCerrarSesion,
+  onIncidencias,
 }: UserMenuProps) {
   const [open, setOpen]       = useState(false);
   const [visible, setVisible] = useState(false);
@@ -91,10 +103,11 @@ export default function UserMenu({
   }
   function toggle() { open ? closeMenu() : openMenu(); }
 
-  function handleAccion(key: "perfil" | "configuracion") {
+  function handleAccion(key: "perfil" | "configuracion" | "incidencias") {
     closeMenu();
     if (key === "perfil") onPerfil();
-    else                  onConfiguracion();
+    else if (key === "configuracion") onConfiguracion();
+    else if (key === "incidencias" && onIncidencias) onIncidencias();
   }
 
   return (
@@ -210,14 +223,14 @@ export default function UserMenu({
             {/* Separador */}
             <div style={{ height: "1px", background: "rgba(0,0,0,0.07)", margin: "0 16px" }} />
 
-            {/* ── Mi perfil + Configuración ── */}
+            {/* ── Mi perfil + Configuración + Incidencias ── */}
             <div className="py-2 px-2 flex flex-col gap-0.5">
               {ACCIONES.map((accion, idx) => (
                 <ActionItem
                   key={accion.key}
                   label={accion.label}
                   icon={accion.icon}
-                  danger={false}
+                  danger={accion.danger}
                   refFn={(el) => { if (el) cardsRef.current[idx] = el; }}
                   onClick={() => handleAccion(accion.key)}
                 />
