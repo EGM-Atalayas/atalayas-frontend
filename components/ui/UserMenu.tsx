@@ -12,7 +12,6 @@ interface UserMenuProps {
   onPerfil: () => void;
   onConfiguracion: () => void;
   onCerrarSesion: () => void;
-  onIncidencias?: () => void;
 }
 
 const ACCIONES = [
@@ -37,16 +36,6 @@ const ACCIONES = [
       </svg>
     ),
   },
-  {
-    key:    "incidencias" as const,
-    label:  "Incidencias",
-    danger: true,
-    icon: (
-      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-  },
 ];
 
 const ICONO_LOGOUT = (
@@ -63,7 +52,6 @@ export default function UserMenu({
   onPerfil,
   onConfiguracion,
   onCerrarSesion,
-  onIncidencias,
 }: UserMenuProps) {
   const [open, setOpen]       = useState(false);
   const [visible, setVisible] = useState(false);
@@ -103,11 +91,10 @@ export default function UserMenu({
   }
   function toggle() { open ? closeMenu() : openMenu(); }
 
-  function handleAccion(key: "perfil" | "configuracion" | "incidencias") {
+  function handleAccion(key: "perfil" | "configuracion") {
     closeMenu();
     if (key === "perfil") onPerfil();
     else if (key === "configuracion") onConfiguracion();
-    else if (key === "incidencias" && onIncidencias) onIncidencias();
   }
 
   return (
@@ -182,12 +169,12 @@ export default function UserMenu({
         >
           {/* Caret */}
           <div style={{ position: "absolute", top: "-6px", right: "22px", width: "12px", height: "6px", overflow: "hidden" }}>
-            <div style={{ width: "10px", height: "10px", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", transform: "rotate(45deg) translate(1px, 3px)", boxShadow: "-2px -2px 4px rgba(0,0,0,0.04)" }} />
+            <div style={{ width: "10px", height: "10px", background: "var(--blanco)", border: "1px solid var(--surface-border)", transform: "rotate(45deg) translate(1px, 3px)", boxShadow: "-2px -2px 4px rgba(0,0,0,0.04)" }} />
           </div>
 
           <div
             className="rounded-2xl overflow-hidden"
-            style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}
+            style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}
           >
             {/* ── Info — solo lectura ── */}
             <div className="px-4 py-4 flex items-center gap-3">
@@ -209,11 +196,11 @@ export default function UserMenu({
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-semibold truncate" style={{ color: "#111827", lineHeight: 1.3 }}>
+                <p className="text-[15px] font-semibold truncate" style={{ color: "var(--texto-primario)", lineHeight: 1.3 }}>
                   {nombreMostrado}
                 </p>
                 {email && (
-                  <p className="text-xs truncate mt-0.5" style={{ color: "#9ca3af" }} title={email}>
+                  <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }} title={email}>
                     {email}
                   </p>
                 )}
@@ -246,7 +233,7 @@ export default function UserMenu({
                 label="Cerrar sesión"
                 icon={ICONO_LOGOUT}
                 danger
-                refFn={(el) => { if (el) cardsRef.current[2] = el; }}
+                refFn={(el) => { if (el) cardsRef.current[ACCIONES.length] = el; }}
                 onClick={() => { closeMenu(); onCerrarSesion(); }}
               />
             </div>
@@ -284,7 +271,7 @@ function ActionItem({
         background: hov
           ? (danger ? "rgba(239,68,68,0.07)" : "rgba(0,0,0,0.045)")
           : "transparent",
-        color:      danger ? "#e11d48" : "#374151",
+        color:      danger ? "var(--error)" : "var(--texto-label)",
         transition: "background 0.15s ease",
       }}
     >
@@ -292,9 +279,9 @@ function ActionItem({
         className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
         style={{
           background: hov
-            ? (danger ? "rgba(239,68,68,0.12)" : "rgba(0,0,0,0.07)")
-            : (danger ? "rgba(239,68,68,0.07)" : "rgba(0,0,0,0.05)"),
-          color:      danger ? "#e11d48" : "#6b7280",
+            ? (danger ? "var(--error-light)" : "rgba(0,0,0,0.07)")
+            : (danger ? "rgba(192,57,43,0.06)" : "rgba(0,0,0,0.05)"),
+          color:      danger ? "var(--error)" : "var(--texto-muted)",
           transition: "background 0.15s ease",
         }}
       >
@@ -307,7 +294,7 @@ function ActionItem({
         width="14" height="14" fill="none" viewBox="0 0 24 24"
         stroke="currentColor" strokeWidth={2.5}
         style={{
-          color:      danger ? "rgba(225,29,72,0.35)" : "rgba(0,0,0,0.18)",
+          color:      danger ? "rgba(192,57,43,0.35)" : "rgba(0,0,0,0.18)",
           opacity:    hov ? 1 : 0.5,
           transition: "opacity 0.15s ease",
         }}
