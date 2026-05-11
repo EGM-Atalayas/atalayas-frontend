@@ -573,7 +573,7 @@ export default function PerfilPage() {
                     fontWeight:           700,
                     fontSize:             "clamp(2.2rem, 5vw, 3.5rem)",
                     lineHeight:           1.05,
-                    backgroundImage:      "linear-gradient(90deg, #ffffff, #A3B535, #ffffff)",
+                    backgroundImage:      "linear-gradient(90deg, #ffffff, var(--verde-oliva-hover), #ffffff)",
                     backgroundSize:       "300% auto",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor:  "transparent",
@@ -906,7 +906,7 @@ export default function PerfilPage() {
               <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
                 <path fill="none" strokeWidth="2.5" stroke="rgba(255,255,255,0.12)"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path fill="none" strokeWidth="2.5" stroke="#A3B535" strokeLinecap="round"
+                <path fill="none" strokeWidth="2.5" stroke="var(--verde-oliva-hover)" strokeLinecap="round"
                   strokeDasharray={`${pctOnboarding}, 100`}
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
