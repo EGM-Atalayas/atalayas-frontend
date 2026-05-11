@@ -143,8 +143,14 @@ function AdminContent() {
         setEmpleados((prev) => prev.map((e) => e.usuarioId === updated.usuarioId ? updated : e));
         setEmpleadoSeleccionado(updated);
         setEditandoEmpleado(false);
+        setToast("Empleado actualizado correctamente");
+      } else {
+        const err = await res.json().catch(() => ({ message: "Error al guardar" }));
+        setToast(err.message ?? "Error al guardar los cambios");
       }
-    } catch {}
+    } catch {
+      setToast("Error de red al guardar los cambios");
+    }
     setGuardandoEditEmpleado(false);
   };
 
