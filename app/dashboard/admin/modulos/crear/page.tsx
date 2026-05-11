@@ -11,6 +11,7 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { PresentationCreator } from "@/components/presentation/PresentationCreator";
 import type { Slide } from "@/components/presentation/slides/SlideRenderers";
+import { BienvenidaTemplatePanel } from "@/components/bienvenida/BienvenidaTemplatePanel";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoPagina = "texto" | "archivo" | "test";
@@ -863,6 +864,18 @@ export default function CrearModuloPage() {
               </div>
             )}
           </div>
+
+          {/* ══ PANEL PLANTILLA BIENVENIDA (solo Onboarding) ══ */}
+          {categoria === "ONBOARDING" && (
+            <BienvenidaTemplatePanel
+              nombreEmpresa={usuario?.nombreEmpresa || ""}
+              newId={newId}
+              onAplicar={(nuevasPaginas) => {
+                setPaginas(nuevasPaginas);
+                setPaginaActivaId(nuevasPaginas[0]?.id ?? null);
+              }}
+            />
+          )}
 
           {/* ══ PANEL IA ══ */}
           <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
