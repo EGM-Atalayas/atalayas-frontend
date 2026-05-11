@@ -367,9 +367,10 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
           </div>
           <div className="text-left">
             <p className="text-sm font-bold" style={{ color: "#15803d" }}>Plantilla de Bienvenida</p>
-            <p className="text-xs" style={{ color: "#22c55e" }}>
+            <p className="text-xs flex items-center gap-1" style={{ color: "#22c55e" }}>
+              {aplicado && <Check className="w-3 h-3 shrink-0" />}
               {aplicado
-                ? "✓ Plantilla aplicada — puedes editar el contenido en las páginas"
+                ? "Plantilla aplicada — puedes editar el contenido en las páginas"
                 : "Genera el manual de incorporación en segundos con secciones predefinidas"}
             </p>
           </div>

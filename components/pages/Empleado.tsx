@@ -550,7 +550,7 @@ export default function Empleado() {
                   {completados === 0
                     ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
                     : completados === formDisplay.length
-                    ? "🎉 ¡Has completado toda tu formación!"
+                    ? "¡Has completado toda tu formación!"
                     : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
                 </p>
               )}

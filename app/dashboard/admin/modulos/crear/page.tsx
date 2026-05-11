@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -782,8 +782,9 @@ export default function CrearModuloPage() {
                           <option value="ONBOARDING">Onboarding</option>
                         </select>
                         {editId && moduloEditando?.tipoModulo && !["GENERAL", "ESPECIALIZADO", "ESPECIALIZADO_IA", "CUMPLIMIENTO", "ONBOARDING"].includes(moduloEditando.tipoModulo) && (
-                          <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
-                            ⚠️ Este módulo tiene un tipo antiguo ("{moduloEditando.tipoModulo}"). Elíge uno de los valores válidos arriba.
+                          <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "#dc2626" }}>
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            Este módulo tiene un tipo antiguo ("{moduloEditando.tipoModulo}"). Elige uno de los valores válidos arriba.
                           </p>
                         )}
                       </div>
@@ -838,7 +839,7 @@ export default function CrearModuloPage() {
                                   background: sel ? "#fffbeb" : "var(--blanco)",
                                   color: sel ? "#d97706" : "var(--texto-muted)",
                                 }}>
-                                {sel && "✓ "}{d.label}
+                                {sel && <Check className="w-3 h-3 shrink-0" />}{d.label}
                               </button>
                             );
                           })}
@@ -883,7 +884,7 @@ export default function CrearModuloPage() {
               className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
               style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderBottom: aiPanelOpen ? "1px solid #bfdbfe" : "none" }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563eb", color: "#fff" }}>✨</div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563eb", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
                 <div className="text-left">
                   <p className="text-sm font-bold" style={{ color: "#1e40af" }}>Asistente IA</p>
                   <p className="text-xs" style={{ color: "#3b82f6" }}>Genera contenido basado en el título: "{nombre || '...'}"</p>
@@ -995,12 +996,12 @@ export default function CrearModuloPage() {
               className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
               style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: presentacionPanelOpen ? "1px solid #ddd6fe" : "none" }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed", color: "#fff" }}>🖼️</div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
                 <div className="text-left">
                   <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Presentación con IA</p>
                   <p className="text-xs" style={{ color: "#7c3aed" }}>
                     {presentacionGuardada
-                      ? `✓ Presentación lista — ${presentacionGuardada.slides.length} slides`
+                      ? `Presentación lista — ${presentacionGuardada.slides.length} slides`
                       : "Genera slides automáticamente desde un PDF"}
                   </p>
                 </div>
@@ -1028,7 +1029,7 @@ export default function CrearModuloPage() {
             <div className="mb-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
               <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
               <span className="flex-1">{aiError}</span>
-              <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}>✕</button>
+              <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
             </div>
           )}
 

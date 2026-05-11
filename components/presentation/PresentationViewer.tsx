@@ -10,6 +10,7 @@
 // ============================================================
 
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import { SlideRenderer, Slide } from './slides/SlideRenderers';
 import { THEMES, SLIDE_TYPES } from '../constants/presentation';
 import styles from './PresentationViewer.module.css';
@@ -85,7 +86,7 @@ export function PresentationViewer({ slides = [], themeId = 'green', onFinish, o
                 fontFamily: 'inherit', fontWeight: 500,
               }}
             >
-              ✕ Eliminar slide
+              <X style={{ width: '11px', height: '11px' }} /> Eliminar slide
             </button>
           )}
           <span className={styles.counter}>{current + 1} / {total}</span>
