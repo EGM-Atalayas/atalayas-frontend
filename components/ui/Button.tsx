@@ -54,7 +54,7 @@ const HOVER: Record<string, React.CSSProperties> = {
   },
   secondary: {
     background: "rgba(0,0,0,0.06)",
-    color:      "#111827",
+    color:      "var(--texto-primario)",
     border:     "1px solid rgba(0,0,0,0.25)",
     boxShadow:  "0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)",
   },
@@ -83,7 +83,7 @@ const PRESSED: Record<string, React.CSSProperties> = {
   },
   secondary: {
     background: "rgba(0,0,0,0.10)",
-    color:      "#111827",
+    color:      "var(--texto-primario)",
     border:     "1px solid rgba(0,0,0,0.25)",
     boxShadow:  "none",
   },
