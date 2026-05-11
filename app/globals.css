@@ -16,65 +16,103 @@ body::-webkit-scrollbar,
 }
 
 :root {
-  /* ── Azul EGM ── */
+  /* ════════════════════════════════════════════
+     MARCA PRINCIPAL
+  ════════════════════════════════════════════ */
+
+  /* Azul EGM */
   --azul-egm:         #1B3F7E;
   --azul-egm-hover:   #2A5298;
-  --azul-egm-profundo:#1040a0;
+  --azul-egm-profundo:#1040A0;
   --azul-egm-light:   #E8EEF8;
 
-  /* ── Azul acción (tabs, noticias, formularios) ── */
+  /* Azul acción (tabs, formularios, noticias) */
   --azul-accion:      #2563EB;
   --azul-accion-hover:#1D4ED8;
   --azul-accion-light:#EFF6FF;
 
-  /* ── Verde oliva ── */
+  /* Lima — color de acento de marca (badges, eyebrow, highlights) */
+  --lima:             #9DC429;
+  --lima-hover:       #B8C94A;
+  --lima-light:       #EEF2D0;
+
+  /* Verde oliva — formaciones, módulos, comunicados */
   --verde-oliva:      #8B9A2D;
   --verde-oliva-hover:#A3B535;
   --verde-oliva-light:#EEF2D0;
 
-  /* ── Marino ── */
+  /* Marino oscuro */
   --marino:           #0D1B2E;
 
-  /* ── Blancos y grises de superficie ── */
+  /* ════════════════════════════════════════════
+     SUPERFICIES
+  ════════════════════════════════════════════ */
   --blanco:           #FFFFFF;
-  --gris-panel:       #f9fafb;
-  --gris-pagina:      #F5F6F8;
+  --gris-pagina:      #F4F5F7;
+  --gris-panel:       #F9FAFB;
   --gris-superficie:  #EDEEF1;
-  --gris-borde:       #C8CDD8;
+  --gris-borde:       #C8CDD8;               /* border visible — inputs, forms, cards */
+  --surface-border:   rgba(0, 0, 0, 0.08);   /* border sutil — dividers, secciones   */
 
-  /* ── Texto ── */
+  /* ════════════════════════════════════════════
+     TEXTO
+  ════════════════════════════════════════════ */
   --texto-primario:   #0F1923;
   --texto-secundario: #3D4A5C;
   --texto-muted:      #6B7A8D;
   --texto-label:      #374151;
-  --texto-placeholder:#9ca3af;
+  --texto-placeholder:#9CA3AF;
 
-  /* ── Estados ── */
-  --exito:            #2D7D4E;
-  --exito-light:      #D4EDDA;
-  --error:            #C84B31;
+  /* ════════════════════════════════════════════
+     ESTADOS SEMÁNTICOS
+  ════════════════════════════════════════════ */
+  --exito:            #2D8653;
+  --exito-light:      #E8F5EE;
+  --error:            #C0392B;
   --error-light:      #FDECEA;
-  --advertencia:      #B07D1A;
-  --advertencia-light:#FFF3CD;
-  --info:             #5B7FA6;
-  --info-light:       #E3ECF5;
+  --advertencia:      #D97706;
+  --advertencia-light:#FEF3E2;
+  --info:             #1B3F7E;
+  --info-light:       #E8EEF8;
 
-  /* ── Overlay ── */
+  /* ════════════════════════════════════════════
+     IA (índigo)
+  ════════════════════════════════════════════ */
+  --ia:               #4F46E5;
+  --ia-hover:         #4338CA;
+  --ia-light:         #EEF2FF;
+  --ia-glow:          rgba(79, 70, 229, 0.18);
+  --ia-usuario:       #1E40AF;
+
+  /* ════════════════════════════════════════════
+     OVERLAY
+  ════════════════════════════════════════════ */
   --overlay:          rgba(0, 0, 0, 0.45);
 
-  /* ── Radios ── */
-  --radius-btn:       12px;
-  --radius-card:      16px;
-  --radius-modal:     24px;
+  /* ════════════════════════════════════════════
+     RADIOS DE BORDE
+  ════════════════════════════════════════════ */
+  --radius-sm:        8px;    /* badges, inputs, tooltips        */
+  --radius-md:        12px;   /* botones, items de lista         */
+  --radius-lg:        16px;   /* cards, paneles                  */
+  --radius-xl:        24px;   /* modales                         */
+  --radius-full:      50%;    /* avatares, dots                  */
 
-  /* ── IA (índigo) ── */
-  --ia:           #4F46E5;
-  --ia-hover:     #4338CA;
-  --ia-light:     #EEF2FF;
-  --ia-glow:      rgba(79, 70, 229, 0.18);
-  --ia-usuario:   #1E40AF;
+  /* Aliases semánticos (compatibilidad interna) */
+  --radius-btn:       var(--radius-md);
+  --radius-card:      var(--radius-lg);
+  --radius-modal:     var(--radius-xl);
 
-  /* ── Easings ── */
+  /* ════════════════════════════════════════════
+     DURACIONES
+  ════════════════════════════════════════════ */
+  --dur-fast:         150ms;
+  --dur-medium:       250ms;
+  --dur-slow:         400ms;
+
+  /* ════════════════════════════════════════════
+     EASINGS
+  ════════════════════════════════════════════ */
   --ease-spring:      cubic-bezier(0.34, 1.20, 0.64, 1);
   --ease-out:         cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -83,7 +121,7 @@ body::-webkit-scrollbar,
 .card {
   background:    var(--blanco);
   border-radius: var(--radius-card);
-  border:        1px solid var(--gris-borde);
+  border:        1px solid var(--surface-border);
   box-shadow:    0 1px 4px rgba(0, 0, 0, 0.06);
 }
 

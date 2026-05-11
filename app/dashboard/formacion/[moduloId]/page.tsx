@@ -438,7 +438,7 @@ export default function Page() {
                 <button
                   onClick={() => router.push("/dashboard/formacion")}
                   className="w-full py-3 rounded-xl text-sm font-bold transition-all"
-                  style={{ background: "linear-gradient(135deg,var(--azul-egm),#A3B535)", color: "#fff", boxShadow: "0 4px 12px rgba(0,82,204,0.3)" }}>
+                  style={{ background: "linear-gradient(135deg,var(--azul-egm),var(--verde-oliva-hover))", color: "#fff", boxShadow: "0 4px 12px rgba(0,82,204,0.3)" }}>
                   Volver a mis formaciones
                 </button>
                 <button

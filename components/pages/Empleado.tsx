@@ -354,7 +354,7 @@ export default function Empleado() {
 
           {/* Texto + barra */}
           <div className="flex-1 min-w-0 relative z-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5" style={{ color: "#A3B535" }}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5" style={{ color: "var(--verde-oliva-hover)" }}>
               Proceso de incorporación
             </p>
             <p className="text-sm sm:text-base font-semibold text-white mb-2">
@@ -363,7 +363,7 @@ export default function Empleado() {
             <div className="flex items-center gap-3">
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: "35%", background: "linear-gradient(90deg, var(--azul-egm) 0%, #A3B535 100%)" }} />
+                  style={{ width: "35%", background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva-hover) 100%)" }} />
               </div>
               <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "rgba(255,255,255,0.5)" }}>
                 35%
@@ -374,7 +374,7 @@ export default function Empleado() {
           {/* CTA desktop */}
           <div
             className="shrink-0 hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl relative z-10"
-            style={{ background: "#A3B535", color: "#fff" }}
+            style={{ background: "var(--verde-oliva-hover)", color: "#fff" }}
           >
             <span className="text-sm font-semibold">Continuar</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -627,7 +627,7 @@ export default function Empleado() {
 
               <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
                 <div className="flex items-start justify-between mb-auto">
-                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "#A3B535" }}>
+                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "var(--verde-oliva-hover)" }}>
                     Próximo evento
                   </span>
                   <div className="text-right">
@@ -662,7 +662,7 @@ export default function Empleado() {
                 <Link
                   href="/dashboard/eventos"
                   className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
-                  style={{ background: "#A3B535", color: "#fff", textDecoration: "none" }}
+                  style={{ background: "var(--verde-oliva-hover)", color: "#fff", textDecoration: "none" }}
                 >
                   Ver evento
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
