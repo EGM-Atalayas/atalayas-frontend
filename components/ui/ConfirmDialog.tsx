@@ -52,22 +52,22 @@ export default function ConfirmDialog({
       ref={overlayRef}
       onClick={onOverlay}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.40)", backdropFilter: "blur(2px)" }}
+      style={{ background: "var(--overlay)", backdropFilter: "blur(2px)" }}
     >
       <div
         ref={panelRef}
         className="w-full max-w-sm rounded-2xl overflow-hidden"
         style={{
-          background: "#ffffff",
+          background: "var(--blanco)",
           boxShadow:  "0 20px 48px rgba(0,0,0,0.16)",
         }}
       >
         {/* Cabecera */}
         <div className="px-5 pt-5 pb-3">
-          <h3 className="text-base font-semibold" style={{ color: "#111827" }}>
+          <h3 className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
             {titulo}
           </h3>
-          <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "#6b7280" }}>
+          <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--texto-muted)" }}>
             {mensaje}
           </p>
         </div>

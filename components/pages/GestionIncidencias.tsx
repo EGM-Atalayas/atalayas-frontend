@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getIncidencias, cambiarEstadoIncidencia } from "@/lib/api/incidencias";
 import type { Incidencia } from "@/lib/types/incidencias";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const ESTADOS = [
   { value: "ABIERTA", label: "Abierta", color: "#dc2626", bg: "#fee2e2" },
@@ -87,8 +88,17 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
           <button onClick={cargar} className="text-xs font-semibold mt-4 px-4 py-2 rounded-xl" style={{ background: "var(--error)", color: "white" }}>Reintentar</button>
         </div>
       ) : filtradas.length === 0 ? (
-        <div className="rounded-2xl flex flex-col items-center justify-center py-16 text-center" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--texto-muted)" }}>No hay incidencias con este filtro</p>
+        <div className="card">
+          <EmptyState
+            size="sm"
+            title="No hay incidencias con este filtro"
+            description="Prueba a cambiar el estado seleccionado."
+            icon={
+              <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            }
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-3">

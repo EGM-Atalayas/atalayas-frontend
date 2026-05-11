@@ -8,15 +8,15 @@ import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
-  gradientUser:   "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
-  chipBg:         "rgba(21,128,61,0.08)",
-  chipBorder:     "rgba(21,128,61,0.22)",
-  chipText:       "#15803d",
-  chipHoverBg:    "rgba(21,128,61,0.16)",
-  pulse:          "rgba(34,197,94,0.45)",
-  shadow:         "rgba(21,128,61,0.35)",
-  accent:         "#22c55e",
+  gradientFab:    "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
+  gradientUser:   "linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%)",
+  chipBg:         "rgba(79,70,229,0.08)",
+  chipBorder:     "rgba(79,70,229,0.22)",
+  chipText:       "#4F46E5",
+  chipHoverBg:    "rgba(79,70,229,0.16)",
+  pulse:          "rgba(79,70,229,0.45)",
+  shadow:         "rgba(79,70,229,0.35)",
+  accent:         "#4F46E5",
 } as const
 
 const C = COLORS
@@ -795,7 +795,7 @@ export default function ChatbotIA() {
         }
         .chatbot-cursor {
           display: inline-block; width: 2px; height: 13px;
-          background: #1e293b; border-radius: 1px;
+          background: #4F46E5; border-radius: 1px;
           animation: chatbotCursor 0.65s ease-in-out infinite;
           vertical-align: middle; margin-left: 2px;
         }
@@ -804,7 +804,7 @@ export default function ChatbotIA() {
         .chatbot-fab-drag { cursor: grab !important; }
         .chatbot-fab-drag:active { cursor: grabbing !important; }
         .chatbot-send { transition: background 0.2s, filter 0.15s, box-shadow 0.15s; }
-        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(240,132,90,0.4); }
+        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(79,70,229,0.25); }
         .chatbot-send:hover:not(:disabled) svg { transform: scale(1.18); transition: transform 0.15s; }
         .chatbot-send:active:not(:disabled) { filter: brightness(0.95); }
         .chatbot-send:active:not(:disabled) svg { transform: scale(0.9); }
@@ -813,7 +813,7 @@ export default function ChatbotIA() {
         }
         .chatbot-chip:hover {
           background: ${C.chipHoverBg} !important;
-          border-color: rgba(27,63,126,0.4) !important;
+          border-color: rgba(79,70,229,0.40) !important;
           transform: translateY(-1px);
         }
         .chatbot-close { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
@@ -821,8 +821,8 @@ export default function ChatbotIA() {
         .chatbot-close:active { transform: scale(0.95); }
         .chatbot-messages::-webkit-scrollbar { width: 4px; }
         .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
-        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(240,132,90,0.35); border-radius: 4px; }
-        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(240,132,90,0.6); }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.20); border-radius: 4px; }
+        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.40); }
         .chatbot-input:focus { outline: none; }
         .chatbot-input::placeholder { color: #b0bac7; }
         .chatbot-suggestions { animation: msgFadeIn 0.3s ease 0.1s both; }
@@ -920,7 +920,7 @@ src="/logo-chatbot.webp"
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          background: "#1b3f7e",
+          background: "#4F46E5",
           animation: isDragging.current ? "none" : isMobile
             ? isClosing ? "chatbotSlideDown 0.28s ease forwards" : "chatbotSlideUp 0.3s ease forwards"
             : isClosing ? "chatbotFadeOut 0.15s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
@@ -928,11 +928,11 @@ src="/logo-chatbot.webp"
         }}>
 
           {/* Header */}
-          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#1b3f7e" }}>
+          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#4F46E5" }}>
             <Grainient
-              color1="#2563eb"
-              color2="#60a5fa"
-              color3="#1b3f7e"
+              color1="#6366f1"
+              color2="#818cf8"
+              color3="#4338CA"
               timeSpeed={0.12}
               warpSpeed={0.8}
               warpStrength={1.0}
