@@ -36,13 +36,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [verificando, usuario]);
 
-  // Redirigimos al invitado a la landing — no tiene acceso al dashboard
-  useEffect(() => {
-    if (!verificando && usuario?.codigoRol === "INVITADO") {
-      router.replace("/");
-    }
-  }, [verificando, usuario]);
-
   // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
     return (
@@ -66,8 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Mientras redirige al invitado no renderizamos nada
-  if (!usuario || usuario.codigoRol === "INVITADO") return null;
+  if (!usuario) return null;
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
