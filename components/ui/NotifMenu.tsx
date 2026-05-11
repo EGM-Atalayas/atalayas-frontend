@@ -12,22 +12,9 @@ interface NotifMenuProps {
 
 const POR_PAGINA = 3;
 
-/** Páginas con elipsis — más agresiva en pantallas estrechas */
-function getPaginasMostradas(actual: number, total: number, estrecho = false): (number | "...")[] {
+/** Páginas con elipsis */
+function getPaginasMostradas(actual: number, total: number): (number | "...")[] {
   if (total <= 5) return Array.from({ length: total }, (_, i) => i);
-
-  // En móvil solo mostramos actual ± 1 + primera + última
-  if (estrecho) {
-    const result: (number | "...")[] = [0];
-    if (actual <= 1) {
-      result.push(1, "...", total - 1);
-    } else if (actual >= total - 2) {
-      result.push("...", total - 2, total - 1);
-    } else {
-      result.push("...", actual, "...", total - 1);
-    }
-    return result;
-  }
 
   const result: (number | "...")[] = [0];
   if (actual <= 2) {
@@ -47,7 +34,6 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [cargando, setCargando]             = useState(false);
   const [paginaActual, setPaginaActual]     = useState(0);
-  const [estrecho, setEstrecho]             = useState(false);
   const [panelPos, setPanelPos]             = useState<{ top: number; right: number; caretRight: number; isMobile: boolean }>({ top: 60, right: 16, caretRight: 21, isMobile: false });
   const containerRef  = useRef<HTMLDivElement>(null);
   const dropdownRef   = useRef<HTMLDivElement>(null);
@@ -60,16 +46,6 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   // ── Contador sincronizado con el polling del Header ──
   const [contadorNotifs, setContadorNotifs] = useState(noLeidas);
   useEffect(() => { setContadorNotifs(noLeidas); }, [noLeidas]);
-
-  // ── Detectar ancho de pantalla ──
-  useEffect(() => {
-    function checkWidth() {
-      setEstrecho(window.innerWidth < 360);
-    }
-    checkWidth();
-    window.addEventListener("resize", checkWidth);
-    return () => window.removeEventListener("resize", checkWidth);
-  }, []);
 
   // ── Calcular posición del panel (reutilizable en open y en resize) ──
   const calcularPosicion = useCallback(() => {
@@ -260,8 +236,9 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
   const notifsPagina  = notificaciones.slice(paginaActual * POR_PAGINA, (paginaActual + 1) * POR_PAGINA);
   const hayPaginacion = totalPaginas > 1;
 
-  // Tamaño de botones de paginación: más pequeños en pantallas estrechas
-  const btnSize = estrecho ? "w-6 h-6" : "w-7 h-7";
+  // Tamaño de botones de paginación: táctil (44px) en móvil, compacto en desktop
+  const paginBtnPx = panelPos.isMobile ? 44 : 28;
+  const paginArrPx = panelPos.isMobile ? 16 : 12;
 
   return (
     <div className="relative flex items-center h-full px-1" ref={containerRef}>
@@ -314,12 +291,12 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
             </div>
           )}
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}>
 
             {/* ── Cabecera ── */}
             <div className="px-4 py-3.5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <h3 className="text-[15px] font-bold shrink-0" style={{ color: "#111827" }}>Notificaciones</h3>
+                <h3 className="text-[15px] font-bold shrink-0" style={{ color: "var(--texto-primario)" }}>Notificaciones</h3>
                 {contadorNotifs > 0 && (
                   <span className="min-w-[18px] h-[18px] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none shrink-0" style={{ background: "#ef4444" }}>
                     {contadorNotifs > 99 ? "99+" : contadorNotifs}
@@ -330,7 +307,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                 <button
                   onClick={handleMarcarTodas}
                   className="text-xs font-semibold shrink-0"
-                  style={{ color: "var(--azul-egm)", opacity: 0.75, transition: "opacity 0.15s ease" }}
+                  style={{ color: "var(--azul-egm)", opacity: 0.75, cursor: "pointer", transition: "opacity 0.15s ease" }}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
                 >
@@ -348,11 +325,11 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                 <div className="flex flex-col gap-1 px-1 py-1">
                   {[0, 1, 2].map(i => (
                     <div key={i} className="flex items-center gap-3 px-2 py-2.5 rounded-xl">
-                      <div style={{ width: "3px", borderRadius: "2px", background: "#e5e7eb", minHeight: "36px", flexShrink: 0 }} />
-                      <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "#f3f4f6", flexShrink: 0 }} />
+                      <div style={{ width: "3px", borderRadius: "2px", background: "var(--gris-borde)", minHeight: "36px", flexShrink: 0 }} />
+                      <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "var(--gris-superficie)", flexShrink: 0 }} />
                       <div className="flex-1 flex flex-col gap-1.5">
-                        <div style={{ height: "12px", borderRadius: "6px", background: "#f3f4f6", width: `${75 - i * 10}%` }} />
-                        <div style={{ height: "10px", borderRadius: "6px", background: "#f3f4f6", width: "40%" }} />
+                        <div style={{ height: "12px", borderRadius: "6px", background: "var(--gris-superficie)", width: `${75 - i * 10}%` }} />
+                        <div style={{ height: "10px", borderRadius: "6px", background: "var(--gris-superficie)", width: "40%" }} />
                       </div>
                     </div>
                   ))}
@@ -368,8 +345,8 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "#111827" }}>Todo al día</p>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "#9ca3af" }}>Te avisaremos cuando tengas novedades</p>
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Todo al día</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--texto-muted)" }}>Te avisaremos cuando tengas novedades</p>
                   </div>
                 </div>
 
@@ -381,7 +358,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                       key={notif.notificacionId}
                       ref={(el) => { if (el) cardsRef.current[idx] = el; }}
                       onClick={() => handleClickNotificacion(notif)}
-                      className="flex items-center gap-3 py-2.5 px-2 rounded-xl cursor-pointer"
+                      className="flex items-center gap-3 py-2.5 px-2 rounded-xl cursor-pointer active:bg-black/[0.05]"
                       style={{ transition: "background 0.12s ease" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.03)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -395,10 +372,10 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold leading-snug mb-0.5 line-clamp-2" style={{ color: "#1f2937" }}>
+                        <p className="text-sm font-semibold leading-snug mb-0.5 line-clamp-2" style={{ color: "var(--texto-primario)" }}>
                           {notif.mensaje}
                         </p>
-                        <p className="text-[11px]" style={{ color: "#9ca3af" }}>
+                        <p className="text-[11px]" style={{ color: "var(--texto-muted)" }}>
                           {new Date(notif.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
@@ -420,35 +397,43 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                 <button
                   onClick={() => cambiarPagina(paginaActual - 1)}
                   disabled={paginaActual === 0}
-                  className={`${btnSize} flex items-center justify-center rounded-lg`}
+                  className="flex items-center justify-center rounded-lg"
                   style={{
-                    color:      paginaActual === 0 ? "#d1d5db" : "#6b7280",
+                    width: `${paginBtnPx}px`, height: `${paginBtnPx}px`,
+                    color:      paginaActual === 0 ? "var(--gris-borde)" : "var(--texto-muted)",
                     background: "transparent",
                     cursor:     paginaActual === 0 ? "not-allowed" : "pointer",
                     transition: "background 0.12s ease",
+                    flexShrink: 0,
                   }}
                   onMouseEnter={(e) => { if (paginaActual > 0) e.currentTarget.style.background = "rgba(0,0,0,0.05)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg width={paginArrPx} height={paginArrPx} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
 
                 {/* Números de página */}
-                {getPaginasMostradas(paginaActual, totalPaginas, estrecho).map((p, i) =>
+                {getPaginasMostradas(paginaActual, totalPaginas).map((p, i) =>
                   p === "..." ? (
-                    <span key={`e-${i}`} className={`${btnSize} flex items-center justify-center text-xs`} style={{ color: "#9ca3af" }}>…</span>
+                    <span
+                      key={`e-${i}`}
+                      className="flex items-center justify-center text-xs"
+                      style={{ width: `${paginBtnPx}px`, height: `${paginBtnPx}px`, color: "var(--texto-muted)", flexShrink: 0 }}
+                    >…</span>
                   ) : (
                     <button
                       key={p}
                       onClick={() => cambiarPagina(p as number)}
-                      className={`${btnSize} flex items-center justify-center rounded-lg text-xs font-semibold`}
+                      className="flex items-center justify-center rounded-lg text-xs font-semibold"
                       style={{
+                        width: `${paginBtnPx}px`, height: `${paginBtnPx}px`,
                         background: p === paginaActual ? "var(--azul-egm)" : "transparent",
-                        color:      p === paginaActual ? "#ffffff" : "#6b7280",
+                        color:      p === paginaActual ? "#ffffff" : "var(--texto-muted)",
                         cursor:     "pointer",
                         transition: "background 0.12s ease",
+                        flexShrink: 0,
                       }}
                       onMouseEnter={(e) => { if (p !== paginaActual) e.currentTarget.style.background = "rgba(0,0,0,0.05)"; }}
                       onMouseLeave={(e) => { if (p !== paginaActual) e.currentTarget.style.background = "transparent"; }}
@@ -462,17 +447,19 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                 <button
                   onClick={() => cambiarPagina(paginaActual + 1)}
                   disabled={paginaActual === totalPaginas - 1}
-                  className={`${btnSize} flex items-center justify-center rounded-lg`}
+                  className="flex items-center justify-center rounded-lg"
                   style={{
-                    color:      paginaActual === totalPaginas - 1 ? "#d1d5db" : "#6b7280",
+                    width: `${paginBtnPx}px`, height: `${paginBtnPx}px`,
+                    color:      paginaActual === totalPaginas - 1 ? "var(--gris-borde)" : "var(--texto-muted)",
                     background: "transparent",
                     cursor:     paginaActual === totalPaginas - 1 ? "not-allowed" : "pointer",
                     transition: "background 0.12s ease",
+                    flexShrink: 0,
                   }}
                   onMouseEnter={(e) => { if (paginaActual < totalPaginas - 1) e.currentTarget.style.background = "rgba(0,0,0,0.05)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg width={paginArrPx} height={paginArrPx} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
