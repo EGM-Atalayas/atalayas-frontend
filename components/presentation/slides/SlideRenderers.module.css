@@ -1,0 +1,259 @@
+/* ============================================================
+   EGM Atalayas — SlideRenderers.module.css
+   Estilos para los 4 temas de presentación
+   ============================================================ */
+
+/* BASE */
+.slide {
+  width: 100%;
+  height: 100%;
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   TEMA 1: VERDE CORPORATIVO
+   ============================================================ */
+.t1Cover  { background: #0F6E56; position: relative; overflow: hidden; }
+.t1Content { background: #ffffff; }
+.t1Closing { background: #1D9E75; align-items: center; text-align: center; }
+
+.t1Deco1 {
+  position: absolute; right: -20px; bottom: -20px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(255,255,255,0.05); pointer-events: none;
+}
+.t1Deco2 {
+  position: absolute; right: 60px; bottom: 40px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(255,255,255,0.04); pointer-events: none;
+}
+.t1Eyebrow {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: #9FE1CB; margin-bottom: 0.6rem; font-weight: 500; z-index: 1;
+}
+.t1Title {
+  font-size: clamp(1rem, 2.8vw, 1.7rem); font-weight: 500;
+  color: #E1F5EE; line-height: 1.3; margin-bottom: 0.4rem; z-index: 1;
+}
+.t1Sub { font-size: 0.72rem; color: #5DCAA5; z-index: 1; }
+.t1H2 {
+  font-size: clamp(0.8rem, 2vw, 1.1rem); font-weight: 500;
+  color: #111; margin-bottom: 1rem; padding-bottom: 0.5rem;
+  border-bottom: 2px solid #1D9E75;
+}
+.t1List { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.t1ListItem {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  font-size: clamp(0.68rem, 1.5vw, 0.82rem); color: #222; line-height: 1.5;
+}
+.t1Dot {
+  width: 16px; height: 16px; min-width: 16px; border-radius: 50%;
+  background: #E1F5EE; display: flex; align-items: center;
+  justify-content: center; margin-top: 2px; font-size: 9px; color: #0F6E56;
+}
+.t1StatGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.t1StatCard { background: #f5faf8; border-radius: 8px; padding: 0.85rem; }
+.t1StatNum { font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 500; color: #0F6E56; margin-bottom: 0.2rem; }
+.t1StatDesc { font-size: 0.65rem; color: #555; line-height: 1.4; }
+.t1Steps { display: flex; flex-direction: column; gap: 0.6rem; }
+.t1StepItem { display: flex; align-items: flex-start; gap: 0.75rem; }
+.t1StepNum {
+  width: 24px; height: 24px; min-width: 24px; border-radius: 50%;
+  background: #0F6E56; color: #E1F5EE; font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+.t1StepTitle { font-size: 0.78rem; font-weight: 500; color: #111; margin-bottom: 2px; }
+.t1StepDesc { font-size: 0.7rem; color: #555; line-height: 1.5; }
+.t1TwoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+.t1ColCard { background: #f5faf8; border-radius: 8px; padding: 0.85rem; }
+.t1ColH3 { font-size: 0.65rem; font-weight: 500; color: #0F6E56; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.t1ColP { font-size: 0.7rem; color: #333; line-height: 1.5; }
+.t1Circle {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); display: flex; align-items: center;
+  justify-content: center; margin-bottom: 0.85rem; font-size: 1.2rem; color: #fff;
+}
+.t1ClosingTitle { font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 500; color: #fff; margin-bottom: 0.4rem; }
+.t1ClosingBody { font-size: 0.72rem; color: #9FE1CB; margin-bottom: 1rem; }
+.t1Cta {
+  background: #fff; color: #0F6E56; border: none; border-radius: 8px;
+  padding: 0.45rem 1.1rem; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+
+/* ============================================================
+   TEMA 2: OSCURO ELEGANTE
+   ============================================================ */
+.t2Cover  { background: #1a1a2e; position: relative; overflow: hidden; }
+.t2Content { background: #111827; }
+.t2Closing { background: #0d0d1a; align-items: center; text-align: center; }
+
+.t2Deco {
+  position: absolute; top: 0; right: 0; width: 45%; height: 100%;
+  background: linear-gradient(135deg, #26215C 0%, transparent 70%);
+  opacity: 0.5; pointer-events: none;
+}
+.t2Eyebrow { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; color: #7F77DD; margin-bottom: 0.85rem; font-weight: 500; z-index: 1; }
+.t2Title { font-size: clamp(1rem, 2.8vw, 1.7rem); font-weight: 500; color: #fff; line-height: 1.25; margin-bottom: 0.6rem; z-index: 1; }
+.t2Line { width: 32px; height: 2px; background: #7F77DD; margin-bottom: 0.6rem; z-index: 1; }
+.t2Sub { font-size: 0.72rem; color: #888; z-index: 1; }
+.t2Tag {
+  display: inline-block; background: #26215C; color: #AFA9EC;
+  font-size: 0.6rem; font-weight: 500; padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.t2H2 { font-size: clamp(0.8rem, 2vw, 1.1rem); font-weight: 500; color: #fff; margin-bottom: 1rem; }
+.t2List { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.t2ListItem {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  font-size: clamp(0.68rem, 1.5vw, 0.82rem); color: #ccc; line-height: 1.5;
+}
+.t2ListItem::before { content: ''; width: 3px; height: 3px; min-width: 3px; border-radius: 50%; background: #7F77DD; margin-top: 8px; }
+.t2StatGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.t2StatCard { border: 0.5px solid #26215C; border-radius: 8px; padding: 0.85rem; }
+.t2StatNum { font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 500; color: #AFA9EC; margin-bottom: 0.2rem; }
+.t2StatDesc { font-size: 0.65rem; color: #777; line-height: 1.4; }
+.t2Steps { display: flex; flex-direction: column; gap: 0.6rem; }
+.t2StepItem { display: flex; align-items: flex-start; gap: 0.75rem; }
+.t2StepNum {
+  width: 24px; height: 24px; min-width: 24px; border-radius: 50%;
+  background: #26215C; color: #AFA9EC; font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+.t2StepTitle { font-size: 0.78rem; font-weight: 500; color: #fff; margin-bottom: 2px; }
+.t2StepDesc { font-size: 0.7rem; color: #888; line-height: 1.5; }
+.t2TwoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+.t2ColCard { border: 0.5px solid #26215C; border-radius: 8px; padding: 0.85rem; }
+.t2ColH3 { font-size: 0.65rem; font-weight: 500; color: #7F77DD; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.t2ColP { font-size: 0.7rem; color: #aaa; line-height: 1.5; }
+.t2Badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #26215C; color: #AFA9EC; font-size: 0.7rem;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 1rem;
+}
+.t2ClosingTitle { font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 500; color: #fff; margin-bottom: 0.4rem; }
+.t2ClosingBody { font-size: 0.72rem; color: #777; margin-bottom: 1rem; }
+.t2Cta {
+  background: #534AB7; color: #fff; border: none; border-radius: 8px;
+  padding: 0.45rem 1.1rem; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+
+/* ============================================================
+   TEMA 3: MINIMALISTA CLARO
+   ============================================================ */
+.t3Cover  { background: #fff; border-left: 5px solid #378ADD; position: relative; overflow: hidden; }
+.t3Content { background: #fafafa; }
+.t3Closing { background: #fff; align-items: flex-start; justify-content: flex-end; border-left: 5px solid #378ADD; position: relative; overflow: hidden; }
+
+.t3BgNum {
+  position: absolute; right: 1.5rem; bottom: 0.5rem;
+  font-size: clamp(3rem, 8vw, 5rem); font-weight: 600; color: #E6F1FB; line-height: 1; z-index: 0;
+}
+.t3BgCheck {
+  position: absolute; right: 1.5rem; top: 1rem;
+  font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 600; color: #E6F1FB; line-height: 1;
+}
+.t3Eyebrow { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; color: #378ADD; margin-bottom: 0.85rem; font-weight: 500; z-index: 1; }
+.t3Title { font-size: clamp(1rem, 2.8vw, 1.7rem); font-weight: 500; color: #111; line-height: 1.3; margin-bottom: 0.4rem; max-width: 70%; z-index: 1; }
+.t3Sub { font-size: 0.72rem; color: #999; z-index: 1; }
+.t3Label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: #378ADD; font-weight: 500; margin-bottom: 0.4rem; }
+.t3H2 { font-size: clamp(0.8rem, 2vw, 1.1rem); font-weight: 500; color: #111; margin-bottom: 1rem; }
+.t3List { list-style: none; display: flex; flex-direction: column; }
+.t3ListItem {
+  display: flex; align-items: flex-start; gap: 0.85rem;
+  font-size: clamp(0.68rem, 1.5vw, 0.82rem); color: #333; line-height: 1.5;
+  padding: 0.45rem 0; border-bottom: 0.5px solid #eee;
+}
+.t3ListItem:last-child { border-bottom: none; }
+.t3Num { font-size: 0.65rem; font-weight: 500; color: #378ADD; min-width: 18px; margin-top: 3px; }
+.t3StatGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.t3StatCard {
+  background: #fff; border: 0.5px solid #eee;
+  border-top: 3px solid #378ADD; border-radius: 0 0 8px 8px; padding: 0.85rem;
+}
+.t3StatNum { font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 500; color: #185FA5; margin-bottom: 0.2rem; }
+.t3StatDesc { font-size: 0.65rem; color: #888; line-height: 1.4; }
+.t3Steps { display: flex; flex-direction: column; }
+.t3StepItem {
+  display: flex; align-items: flex-start; gap: 0.85rem;
+  padding: 0.45rem 0; border-bottom: 0.5px solid #eee;
+}
+.t3StepItem:last-child { border-bottom: none; }
+.t3StepTitle { font-size: 0.78rem; font-weight: 500; color: #111; margin-bottom: 2px; }
+.t3StepDesc { font-size: 0.7rem; color: #666; line-height: 1.5; }
+.t3TwoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+.t3ColCard { background: #fff; border: 0.5px solid #eee; border-top: 2px solid #378ADD; border-radius: 0 0 8px 8px; padding: 0.85rem; }
+.t3ColH3 { font-size: 0.65rem; font-weight: 500; color: #378ADD; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.t3ColP { font-size: 0.7rem; color: #444; line-height: 1.5; }
+.t3ClosingTitle { font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 500; color: #111; margin-bottom: 0.4rem; z-index: 1; }
+.t3ClosingBody { font-size: 0.72rem; color: #888; margin-bottom: 1rem; max-width: 70%; z-index: 1; }
+.t3Cta {
+  background: #378ADD; color: #fff; border: none; border-radius: 8px;
+  padding: 0.45rem 1.1rem; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; font-family: inherit; z-index: 1;
+}
+
+/* ============================================================
+   TEMA 4: CÁLIDO AMBER
+   ============================================================ */
+.t4Cover  { background: #2d1a00; position: relative; overflow: hidden; }
+.t4Content { background: #fffaf4; }
+.t4Closing { background: #EF9F27; align-items: center; text-align: center; }
+
+.t4Deco {
+  position: absolute; right: 0; top: 0; width: 50%; height: 100%;
+  background: radial-gradient(circle at 80% 30%, rgba(239,159,39,0.15) 0%, transparent 65%);
+  pointer-events: none;
+}
+.t4PillTag {
+  display: inline-block; background: #412402; color: #FAC775;
+  font-size: 0.6rem; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-bottom: 0.75rem; z-index: 1;
+}
+.t4Title { font-size: clamp(1rem, 2.8vw, 1.7rem); font-weight: 500; color: #FAEEDA; line-height: 1.3; margin-bottom: 0.4rem; z-index: 1; }
+.t4Sub { font-size: 0.72rem; color: #854F0B; z-index: 1; }
+.t4Accent { display: inline-block; width: 24px; height: 2.5px; background: #EF9F27; border-radius: 2px; margin-bottom: 0.6rem; }
+.t4H2 { font-size: clamp(0.8rem, 2vw, 1.1rem); font-weight: 500; color: #2d1a00; margin-bottom: 1rem; }
+.t4List { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.t4ListItem {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  font-size: clamp(0.68rem, 1.5vw, 0.82rem); color: #3d2400; line-height: 1.5;
+}
+.t4Icon {
+  width: 20px; height: 20px; min-width: 20px; border-radius: 6px;
+  background: #FAEEDA; display: flex; align-items: center; justify-content: center;
+  margin-top: 1px; font-size: 10px; color: #854F0B;
+}
+.t4StatGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.t4StatCard { background: #fff; border: 0.5px solid #FAC775; border-radius: 8px; padding: 0.85rem; }
+.t4StatNum { font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 500; color: #854F0B; margin-bottom: 0.2rem; }
+.t4StatDesc { font-size: 0.65rem; color: #633806; line-height: 1.4; }
+.t4Steps { display: flex; flex-direction: column; gap: 0.6rem; }
+.t4StepItem { display: flex; align-items: flex-start; gap: 0.75rem; }
+.t4StepNum {
+  width: 24px; height: 24px; min-width: 24px; border-radius: 50%;
+  background: #EF9F27; color: #2d1a00; font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+.t4StepTitle { font-size: 0.78rem; font-weight: 500; color: #2d1a00; margin-bottom: 2px; }
+.t4StepDesc { font-size: 0.7rem; color: #633806; line-height: 1.5; }
+.t4TwoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+.t4ColCard { background: #fff; border: 0.5px solid #FAC775; border-radius: 8px; padding: 0.85rem; }
+.t4ColH3 { font-size: 0.65rem; font-weight: 500; color: #854F0B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.t4ColP { font-size: 0.7rem; color: #3d2400; line-height: 1.5; }
+.t4Star { font-size: 2rem; margin-bottom: 0.75rem; }
+.t4ClosingTitle { font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 500; color: #2d1a00; margin-bottom: 0.4rem; }
+.t4ClosingBody { font-size: 0.72rem; color: #633806; margin-bottom: 1rem; }
+.t4Cta {
+  background: #2d1a00; color: #FAEEDA; border: none; border-radius: 8px;
+  padding: 0.45rem 1.1rem; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}

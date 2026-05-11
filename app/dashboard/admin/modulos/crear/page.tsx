@@ -9,6 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { PresentationCreator } from "@/components/presentation/PresentationCreator";
+import type { Slide } from "@/components/presentation/slides/SlideRenderers";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoPagina = "texto" | "archivo" | "test";
@@ -233,6 +235,8 @@ export default function CrearModuloPage() {
   const [aiLoading, setAiLoading] = useState<"descripcion" | "contenido" | "test" | "podcast" | "video" | "documento" | null>(null);
   const [aiError, setAiError] = useState("");
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [presentacionPanelOpen, setPresentacionPanelOpen] = useState(false);
+  const [presentacionGuardada, setPresentacionGuardada] = useState<{ slides: Slide[]; themeId: string } | null>(null);
   const [mostrarIA, setMostrarIA] = useState(false);
   const [promptIA, setPromptIA] = useState("");
   const [generandoIA, setGenerandoIA] = useState(false);
@@ -577,8 +581,12 @@ export default function CrearModuloPage() {
           imagenPortadaUrl,
           testPreguntas: null,
           scriptPodcast: scriptPodcast || null,
-          scriptVideo: scriptVideo || null,
-          tiposSalida,
+          scriptVideo: presentacionGuardada
+            ? JSON.stringify({ type: "presentation", themeId: presentacionGuardada.themeId, slides: presentacionGuardada.slides })
+            : scriptVideo || null,
+          tiposSalida: presentacionGuardada
+            ? (tiposSalida.includes("video") ? tiposSalida : tiposSalida + ",video")
+            : tiposSalida,
         }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Error al guardar"); }
@@ -964,6 +972,40 @@ export default function CrearModuloPage() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* ══ PANEL PRESENTACIÓN IA ══ */}
+          <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+            <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: presentacionPanelOpen ? "1px solid #ddd6fe" : "none" }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed", color: "#fff" }}>🖼️</div>
+                <div className="text-left">
+                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Presentación con IA</p>
+                  <p className="text-xs" style={{ color: "#7c3aed" }}>
+                    {presentacionGuardada
+                      ? `✓ Presentación lista — ${presentacionGuardada.slides.length} slides`
+                      : "Genera slides automáticamente desde un PDF"}
+                  </p>
+                </div>
+              </div>
+              <div className="transition-transform" style={{ transform: presentacionPanelOpen ? "rotate(0)" : "rotate(-90deg)" }}>
+                <ChevronDown style={{ color: "#7c3aed" }} />
+              </div>
+            </button>
+
+            {presentacionPanelOpen && (
+              <div className="px-6 py-5 fade-up">
+                <PresentationCreator
+                  moduleTitle={nombre}
+                  onSave={(slides, themeId) => {
+                    setPresentacionGuardada({ slides, themeId });
+                    setPresentacionPanelOpen(false);
+                  }}
+                />
               </div>
             )}
           </div>

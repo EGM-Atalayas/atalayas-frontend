@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { apiFetch, API_URL } from "@/lib/api";
+import { PresentationViewer } from "@/components/presentation/PresentationViewer";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -217,7 +218,7 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   if (!paginasJson && tipos.includes("podcast") && moduloApi.scriptPodcast) {
     items.push({ id: `c${idx++}`, titulo: "Podcast — Narración de audio", tipo: "video", subtipo: "podcast", duracion: "5–10 min", completado: false, bloqueado: items.length > 0 });
   }
-  if (tipos.includes("video") && moduloApi.scriptVideo) {
+  if (moduloApi.scriptVideo) {
     items.push({ id: `c${idx++}`, titulo: "Video — Presentación de slides", tipo: "video", subtipo: "slides", duracion: "8–12 min", completado: false, bloqueado: items.length > 0 });
   }
   if (items.length === 0) {
@@ -676,7 +677,21 @@ export default function Page() {
                 return <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={contenidoFinal} onVerificado={() => setVerificado(true)} />;
               })()}
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && (() => {
+                try {
+                  const parsed = JSON.parse(moduloApi.scriptVideo!);
+                  if (parsed?.type === "presentation" && Array.isArray(parsed.slides)) {
+                    return (
+                      <PresentationViewer
+                        slides={parsed.slides}
+                        themeId={parsed.themeId ?? "green"}
+                        onFinish={() => setVerificado(true)}
+                      />
+                    );
+                  }
+                } catch { /* formato antiguo */ }
+                return <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo!} onVerificado={() => setVerificado(true)} />;
+              })()}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && (() => {
