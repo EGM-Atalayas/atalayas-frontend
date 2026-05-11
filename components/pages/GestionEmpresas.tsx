@@ -114,7 +114,7 @@ const GestionEmpresas: React.FC = () => {
 
       {/* KPI CARDS (Resumen estadístico) */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="card card-hover p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <FaBuilding size={20} />
           </div>
@@ -123,7 +123,7 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.total}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="card card-hover p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
             <FaCheckCircle size={20} />
           </div>
@@ -132,7 +132,7 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.activas}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="card card-hover p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-500">
             <FaBan size={20} />
           </div>
@@ -141,7 +141,7 @@ const GestionEmpresas: React.FC = () => {
             <p className="text-2xl font-bold text-slate-800">{isLoading ? "-" : stats.inactivas}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="card card-hover p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
             <FaClock size={20} />
           </div>

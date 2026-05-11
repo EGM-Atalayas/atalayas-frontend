@@ -67,9 +67,33 @@ body::-webkit-scrollbar,
   --radius-card:      16px;
   --radius-modal:     24px;
 
+  /* ── IA (índigo) ── */
+  --ia:           #4F46E5;
+  --ia-hover:     #4338CA;
+  --ia-light:     #EEF2FF;
+  --ia-glow:      rgba(79, 70, 229, 0.18);
+  --ia-usuario:   #1E40AF;
+
   /* ── Easings ── */
   --ease-spring:      cubic-bezier(0.34, 1.20, 0.64, 1);
   --ease-out:         cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Card base ────────────────────────────────────────────────────────────── */
+.card {
+  background:    var(--blanco);
+  border-radius: var(--radius-card);
+  border:        1px solid var(--gris-borde);
+  box-shadow:    0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card-hover {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.card-hover:hover {
+  box-shadow:   0 4px 16px rgba(0, 0, 0, 0.10);
+  border-color: var(--gris-superficie);
 }
 
 /* ── Disponibilidad dropdown ──────────────────────────────────────────────── */

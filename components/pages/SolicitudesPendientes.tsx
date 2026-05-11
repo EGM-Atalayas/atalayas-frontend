@@ -131,7 +131,7 @@ const SolicitudesPendientes: React.FC = () => {
           <p>Cargando solicitudes...</p>
         </div>
       ) : solicitudes.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm flex flex-col items-center">
+        <div className="card p-12 text-center flex flex-col items-center">
           <div className="bg-slate-50 p-6 rounded-full mb-4">
             <FaCheck className="text-4xl text-slate-300" />
           </div>
@@ -141,7 +141,7 @@ const SolicitudesPendientes: React.FC = () => {
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[3000px]">
           {solicitudes.map((solicitud) => (
-            <div key={solicitud.empresaId} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div key={solicitud.empresaId} className="card card-hover overflow-hidden flex flex-col">
               
               <div className="flex justify-between items-center p-5 border-b border-slate-50 bg-slate-50/50">
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">

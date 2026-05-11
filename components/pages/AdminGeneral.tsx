@@ -239,7 +239,7 @@ const AdminGeneral: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {stats.map((stat, i) => (
           <div key={i}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+            className="card card-hover p-5 flex items-center gap-4">
             <div className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
               {stat.icon}
             </div>
@@ -387,7 +387,7 @@ const AdminGeneral: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <div className="card p-6">
             <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
               <FaFileAlt size={18} />
             </div>
@@ -402,7 +402,7 @@ const AdminGeneral: React.FC = () => {
           </div>
 
           {/* Actividad reciente */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <div className="card p-6">
             <h2 className="text-base font-bold text-slate-800 mb-4">Actividad reciente</h2>
             <div className="flex flex-col gap-4">
               {!data?.actividadReciente || data.actividadReciente.length === 0 ? (

@@ -226,7 +226,7 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-            <Button type="button" variant="ghost" onClick={onCancel}>
+            <Button type="button" variant="secondary" onClick={onCancel}>
               Cancelar
             </Button>
             <Button type="submit" disabled={submitting}>
