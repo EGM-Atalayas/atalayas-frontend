@@ -167,9 +167,9 @@ const LoginPage: React.FC = () => {
             <button
               onClick={() => router.push("/")}
               className="flex items-center gap-1.5 text-sm transition-colors cursor-pointer"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+              style={{ color: "var(--azul-egm)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
             >
               <FiChevronLeft size={15} /> Volver
             </button>
@@ -178,7 +178,7 @@ const LoginPage: React.FC = () => {
           {/* Título del formulario */}
           <h2
             className="text-4xl sm:text-5xl font-bold mb-5 text-center"
-            style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}
+            style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}
           >
             Iniciar sesión
           </h2>
@@ -212,7 +212,7 @@ const LoginPage: React.FC = () => {
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.borderColor = "var(--azul-egm)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
@@ -249,7 +249,7 @@ const LoginPage: React.FC = () => {
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.borderColor = "var(--azul-egm)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
@@ -277,9 +277,9 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex items-center gap-2 text-sm font-medium transition-colors self-start"
-                style={{ color: "#1B3F7E" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+                style={{ color: "var(--azul-egm)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
               >
                 <FiChevronRight
                   size={16}
@@ -307,7 +307,7 @@ const LoginPage: React.FC = () => {
                         color: "#0f1923",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "#1B3F7E";
+                        e.target.style.borderColor = "var(--azul-egm)";
                         e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)";
                       }}
                       onBlur={(e) => {
@@ -327,8 +327,8 @@ const LoginPage: React.FC = () => {
                     onChange={(e) => setRememberEmail(e.target.checked)}
                     className="w-4 h-4 rounded cursor-pointer appearance-none outline-none transition-all"
                     style={{
-                      border: rememberEmail ? "1px solid #1B3F7E" : "1px solid #C8CDD8",
-                      background: rememberEmail ? "#1B3F7E" : "#f5f6f8",
+                      border: rememberEmail ? "1px solid var(--azul-egm)" : "1px solid #C8CDD8",
+                      background: rememberEmail ? "var(--azul-egm)" : "#f5f6f8",
                     }}
                   />
                   {rememberEmail && (
@@ -388,9 +388,9 @@ const LoginPage: React.FC = () => {
               type="button"
               onClick={() => { setShowForgotModal(true); setForgotEmail(email); setForgotSent(false); }}
               className="text-sm transition-colors cursor-pointer"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+              style={{ color: "var(--azul-egm)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -445,7 +445,7 @@ const LoginPage: React.FC = () => {
       {showForgotModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          style={{ background: "var(--overlay)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowForgotModal(false); }}
         >
           <div
@@ -455,7 +455,7 @@ const LoginPage: React.FC = () => {
             {!forgotSent ? (
               <>
                 {/* Header */}
-                <div style={{ background: "#1B3F7E", padding: "24px 32px 20px" }}>
+                <div style={{ background: "var(--azul-egm)", padding: "24px 32px 20px" }}>
                   <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
                     Recuperar contraseña
                   </h3>
@@ -478,7 +478,7 @@ const LoginPage: React.FC = () => {
                         placeholder="tu@empresa.com"
                         className="w-full pl-11 pr-4 py-3 text-sm rounded-lg outline-none transition-all"
                         style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.22)", color: "#0f1923" }}
-                        onFocus={(e) => { e.target.style.borderColor = "#1B3F7E"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
+                        onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
                         onBlur={(e) => { e.target.style.borderColor = "rgba(27,63,126,0.22)"; e.target.style.boxShadow = "none"; }}
                         onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
                       />
@@ -504,9 +504,9 @@ const LoginPage: React.FC = () => {
                       onClick={handleForgotPassword}
                       disabled={!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail) || forgotLoading}
                       className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "#1B3F7E", color: "#ffffff" }}
-                      onMouseEnter={(e) => { if (!forgotLoading) e.currentTarget.style.background = "#2A5298"; }}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
+                      style={{ background: "var(--azul-egm)", color: "#ffffff" }}
+                      onMouseEnter={(e) => { if (!forgotLoading) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
                     >
                       {forgotLoading ? (
                         <span className="flex items-center justify-center gap-2">
@@ -525,7 +525,7 @@ const LoginPage: React.FC = () => {
               <>
                 <div className="p-8 flex flex-col items-center text-center gap-5">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#e8f0fe" }}>
-                    <FiMail size={28} style={{ color: "#1B3F7E" }} />
+                    <FiMail size={28} style={{ color: "var(--azul-egm)" }} />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-2" style={{ color: "#0f1923" }}>¡Correo enviado!</h3>
@@ -550,7 +550,7 @@ const LoginPage: React.FC = () => {
                     <button
                       onClick={() => { setForgotSent(false); setForgotEmail(""); }}
                       className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
-                      style={{ color: "#1B3F7E", borderColor: "#1B3F7E", background: "transparent" }}
+                      style={{ color: "var(--azul-egm)", borderColor: "var(--azul-egm)", background: "transparent" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
@@ -559,9 +559,9 @@ const LoginPage: React.FC = () => {
                     <button
                       onClick={() => setShowForgotModal(false)}
                       className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all"
-                      style={{ background: "#1B3F7E", color: "#ffffff" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#2A5298")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
+                      style={{ background: "var(--azul-egm)", color: "#ffffff" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
                     >
                       Cerrar
                     </button>

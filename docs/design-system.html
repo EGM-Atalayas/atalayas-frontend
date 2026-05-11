@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGM Atalayas — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CSS VARIABLES — EGM ATALAYAS DESIGN SYSTEM
+  ============================================================ */
+  :root {
+    /* Brand */
+    --color-primary:       #1B3F7E;
+    --color-primary-hover: #2A5298;
+    --color-primary-light: #E8EEF8;
+    --color-lima:          #9DC429;
+    --color-lima-hover:    #B8C94A;
+    --color-lima-light:    #EEF2D0;
+    --color-marino:        #0D1B2E;
+
+    /* States */
+    --color-success:       #2D8653;
+    --color-success-light: #E8F5EE;
+    --color-error:         #C0392B;
+    --color-error-light:   #FDECEA;
+    --color-warning:       #D97706;
+    --color-warning-light: #FEF3E2;
+    --color-info:          #1B3F7E;
+    --color-info-light:    #E8EEF8;
+
+    /* Text */
+    --text-primary:   #0F1923;
+    --text-secondary: #3D4A5C;
+    --text-muted:     #6B7A8D;
+
+    /* Surfaces */
+    --surface-page:   #F4F5F7;
+    --surface-white:  #FFFFFF;
+    --surface-border: rgba(0,0,0,0.08);
+
+    /* Typography */
+    --font-functional: 'Poppins', sans-serif;
+    --font-editorial:  'Instrument Serif', serif;
+
+    /* Spacing */
+    --space-xs:  4px;
+    --space-sm:  8px;
+    --space-md:  12px;
+    --space-lg:  16px;
+    --space-xl:  24px;
+    --space-2xl: 32px;
+    --space-3xl: 48px;
+    --space-4xl: 64px;
+
+    /* Radii */
+    --radius-sm:  8px;
+    --radius-md:  12px;
+    --radius-lg:  16px;
+    --radius-full: 50%;
+
+    /* Durations */
+    --dur-fast:   150ms;
+    --dur-medium: 250ms;
+    --dur-slow:   400ms;
+
+    /* Easings */
+    --ease-spring: cubic-bezier(0.34, 1.20, 0.64, 1);
+  }
+
+  /* ============================================================
+     RESET & BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-functional);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     LAYOUT
+  ============================================================ */
+  .ds-page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  @media (min-width: 768px)  { .ds-page { padding: 32px; } }
+  @media (min-width: 1024px) { .ds-page { padding: 64px; } }
+
+  .ds-section {
+    margin-bottom: var(--space-3xl);
+  }
+
+  .ds-section-title {
+    font-family: var(--font-functional);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--surface-border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .ds-section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--color-primary);
+    border-radius: 2px;
+  }
+
+  .ds-grid {
+    display: grid;
+    gap: var(--space-lg);
+  }
+  .ds-grid-2 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .ds-grid-3 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .ds-grid-4 { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .ds-row { display: flex; flex-wrap: wrap; gap: var(--space-lg); align-items: flex-start; }
+
+  /* ============================================================
+     PAGE HEADER (Grainient)
+  ============================================================ */
+  .ds-header {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-marino) 0%, var(--color-primary) 55%, var(--color-primary-hover) 100%);
+    background-size: 300% 300%;
+    animation: grainient-move 8s ease infinite;
+    border-radius: var(--radius-lg);
+    padding: var(--space-3xl) var(--space-3xl);
+    margin-bottom: var(--space-3xl);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .ds-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .ds-header-content { position: relative; z-index: 1; }
+
+  .ds-header-eyebrow {
+    font-family: var(--font-functional);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-lima);
+    margin-bottom: var(--space-md);
+  }
+
+  .ds-header h1 {
+    font-family: var(--font-editorial);
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 400;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: var(--space-lg);
+  }
+
+  .ds-header p {
+    font-family: var(--font-functional);
+    font-size: 1rem;
+    color: rgba(255,255,255,0.65);
+    max-width: 480px;
+  }
+
+  .ds-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-lg);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: var(--space-xl);
+  }
+
+  .ds-header-badge span {
+    width: 6px; height: 6px;
+    background: var(--color-lima);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  /* ============================================================
+     GRAINIENT ANIMATION
+  ============================================================ */
+  @keyframes grainient-move {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ============================================================
+     CARD SURFACES
+  ============================================================ */
+  .card-flat {
+    background: var(--surface-page);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .card {
+    background: var(--surface-white);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .card-elevated {
+    background: var(--surface-white);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  /* ============================================================
+     COLOR SWATCHES
+  ============================================================ */
+  .swatch-group-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .swatch-row { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xl); }
+
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-width: 100px;
+  }
+  .swatch-color {
+    width: 100%;
+    height: 64px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .swatch-name { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+  .swatch-hex  { font-size: 0.6875rem; color: var(--text-muted); font-family: monospace; }
+
+  /* ============================================================
+     TYPOGRAPHY SCALE
+  ============================================================ */
+  .typo-row {
+    padding: var(--space-xl) 0;
+    border-bottom: 1px solid var(--surface-border);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xl);
+  }
+  .typo-row:last-child { border-bottom: none; }
+  .typo-meta { min-width: 120px; flex-shrink: 0; }
+  .typo-meta-name { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .typo-meta-spec { font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+  .typo-sample { flex: 1; }
+
+  .t-display { font-family: var(--font-editorial); font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; font-style: italic; letter-spacing: -0.02em; line-height: 1.05; color: var(--text-primary); }
+  .t-h1      { font-family: var(--font-functional); font-size: clamp(2rem, 3vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--text-primary); }
+  .t-h2      { font-family: var(--font-functional); font-size: clamp(1.4rem, 2vw, 1.8rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; color: var(--text-primary); }
+  .t-h3      { font-family: var(--font-functional); font-size: clamp(1.1rem, 1.5vw, 1.3rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; color: var(--text-primary); }
+  .t-body    { font-family: var(--font-functional); font-size: 1rem; font-weight: 400; line-height: 1.6; color: var(--text-primary); }
+  .t-small   { font-family: var(--font-functional); font-size: 0.75rem; font-weight: 400; line-height: 1.5; color: var(--text-secondary); }
+  .t-label   { font-family: var(--font-functional); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+  /* ============================================================
+     SPACING SCALE
+  ============================================================ */
+  .space-item  { display: flex; align-items: center; gap: var(--space-lg); padding: var(--space-sm) 0; }
+  .space-block { background: var(--color-primary); opacity: 0.7; height: 16px; border-radius: 3px; flex-shrink: 0; }
+  .space-info  { display: flex; gap: var(--space-xl); align-items: center; }
+  .space-name  { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); min-width: 40px; }
+  .space-value { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; min-width: 40px; }
+  .space-desc  { font-size: 0.6875rem; color: var(--text-muted); }
+
+  /* ============================================================
+     BORDER RADII
+  ============================================================ */
+  .radius-example {
+    background: var(--color-primary-light);
+    border: 2px solid var(--color-primary);
+    width: 80px; height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6875rem; font-weight: 700; color: var(--color-primary);
+    text-align: center; line-height: 1.3; flex-shrink: 0;
+  }
+  .radius-item  { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); text-align: center; }
+  .radius-label { font-size: 0.6875rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .radius-sub   { font-size: 0.6875rem; color: var(--text-muted); font-family: monospace; }
+
+  /* ============================================================
+     SURFACES
+  ============================================================ */
+  .surfaces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-xl);
+  }
+  .surface-demo       { padding: var(--space-xl); min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; }
+  .surface-demo-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-sm); }
+  .surface-demo-desc  { font-size: 0.6875rem; line-height: 1.5; color: var(--text-muted); }
+
+  .surface-dark-bg {
+    background: var(--color-marino);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 180px;
+  }
+  .surface-glass {
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl);
+    transition: background var(--dur-fast) ease;
+    width: 100%; max-width: 240px;
+  }
+  .surface-glass:hover     { background: rgba(255,255,255,0.18); }
+  .surface-glass-title     { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.85); margin-bottom: 4px; }
+  .surface-glass-desc      { font-size: 0.6875rem; color: rgba(255,255,255,0.5); line-height: 1.5; }
+
+  /* ============================================================
+     GLASS ICON BUTTON (Demo A)
+     Estados controlados exclusivamente vía JS — no añadir :hover/:active aquí
+  ============================================================ */
+  .glass-icon-btn {
+    -webkit-appearance: none; appearance: none; outline: none;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    border: 1px solid rgba(255,255,255,0.28);
+    cursor: pointer;
+    background: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.90);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    /* Sin backdrop-filter: fondo marino sólido, blur no tiene efecto */
+    will-change: transform;
+    transform: scale(1);
+    transition: background 0.15s ease,
+                box-shadow 0.18s cubic-bezier(0.34,1.20,0.64,1),
+                transform 0.18s cubic-bezier(0.34,1.20,0.64,1);
+  }
+
+  /* ============================================================
+     BUTTONS
+  ============================================================ */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--space-sm);
+    padding: 10px var(--space-xl);
+    border-radius: var(--radius-md);
+    font-family: var(--font-functional); font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; border: none; outline: none;
+    text-decoration: none; position: relative;
+    transition: filter var(--dur-fast) ease,
+                box-shadow var(--dur-fast) ease,
+                background-color var(--dur-fast) ease,
+                border-color var(--dur-fast) ease,
+                color var(--dur-fast) ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--color-marino) 0%, var(--color-primary) 55%, var(--color-primary-hover) 100%);
+    background-size: 250% 250%;
+    animation: grainient-move 6s ease infinite;
+    color: #fff; border: none;
+    filter: brightness(1);
+    box-shadow: 0 2px 8px rgba(27,63,126,0.20);
+    transition: filter 0.18s ease,
+                box-shadow 0.22s cubic-bezier(0.34,1.20,0.64,1);
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 120px 120px; opacity: 0.4; pointer-events: none;
+  }
+
+  .btn-secondary {
+    background: transparent; border: 1.5px solid rgba(0,0,0,0.15); color: #374151;
+    box-shadow: none;
+    transition: background 0.15s ease, box-shadow 0.22s cubic-bezier(0.34,1.20,0.64,1), border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-ghost {
+    background: transparent; border: 1.5px solid rgba(27,63,126,0.20); color: var(--color-primary);
+    box-shadow: none;
+    transition: background 0.15s ease, box-shadow 0.22s cubic-bezier(0.34,1.20,0.64,1), border-color 0.15s ease;
+  }
+
+  .btn-danger {
+    background: transparent; border: 1.5px solid #dc2626; color: #dc2626;
+    box-shadow: none;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.22s cubic-bezier(0.34,1.20,0.64,1), border-color 0.15s ease;
+  }
+
+  .btn-row {
+    display: flex; flex-wrap: wrap; gap: var(--space-md);
+    align-items: center; justify-content: flex-start;
+    padding: var(--space-xl);
+    background: var(--surface-white); border: 1px solid var(--surface-border);
+    border-radius: var(--radius-lg); margin-bottom: var(--space-md);
+  }
+
+  /* ============================================================
+     SKELETON
+  ============================================================ */
+  @keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position:  400px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #E8EBF0 25%, #F4F5F7 50%, #E8EBF0 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .skel-avatar     { width: 40px; height: 40px; border-radius: var(--radius-full); }
+  .skel-header-row { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm); }
+  .skel-text       { height: 14px; border-radius: var(--radius-sm); }
+  .skel-title      { height: 20px; border-radius: var(--radius-sm); width: 70%; }
+  .skel-img        { height: 120px; border-radius: var(--radius-md); }
+  .skel-name       { height: 12px; border-radius: var(--radius-sm); width: 100px; }
+
+  /* ============================================================
+     EMPTY STATE
+  ============================================================ */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: var(--space-3xl) var(--space-xl); max-width: 340px; margin: 0 auto;
+  }
+  .empty-icon-wrap {
+    width: 72px; height: 72px; background: var(--color-primary-light);
+    border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;
+    margin-bottom: var(--space-xl);
+  }
+  .empty-title    { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-sm); }
+  .empty-subtitle { font-size: 0.875rem; color: var(--text-muted); line-height: 1.55; margin-bottom: var(--space-xl); }
+
+  /* ============================================================
+     BADGES
+  ============================================================ */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .badge-success { background: var(--color-success-light); color: var(--color-success); }
+  .badge-error   { background: var(--color-error-light);   color: var(--color-error);   }
+  .badge-warning { background: var(--color-warning-light); color: var(--color-warning); }
+  .badge-info    { background: var(--color-info-light);    color: var(--color-info);    }
+  .badge-lima    { background: var(--color-lima-light);    color: #5a7a00;              }
+
+  /* ============================================================
+     MISC
+  ============================================================ */
+  .code-pill {
+    font-family: monospace; font-size: 0.75rem;
+    background: var(--color-primary-light); color: var(--color-primary);
+    border-radius: var(--radius-sm); padding: 2px 8px;
+  }
+
+  /* ============================================================
+     NAV SIDEBAR
+  ============================================================ */
+  .ds-layout { display: flex; gap: var(--space-3xl); align-items: flex-start; }
+  .ds-nav    { position: sticky; top: 32px; flex-shrink: 0; width: 200px; display: none; }
+  @media (min-width: 1100px) { .ds-nav { display: block; } }
+  .ds-nav-title { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: var(--space-md); }
+  .ds-nav a { display: block; padding: 6px var(--space-sm); border-radius: var(--radius-sm); font-size: 0.8125rem; color: var(--text-secondary); text-decoration: none; transition: background var(--dur-fast) ease, color var(--dur-fast) ease; }
+  .ds-nav a:hover { background: var(--color-primary-light); color: var(--color-primary); }
+  .ds-main { flex: 1; min-width: 0; }
+
+  /* ============================================================
+     SPINNER
+  ============================================================ */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    display: inline-block; vertical-align: middle;
+  }
+  .spinner-danger {
+    border-color: transparent;
+    border-top-color: currentColor;
+  }
+</style>
+</head>
+<body>
+
+<div class="ds-page">
+
+  <header class="ds-header">
+    <div class="ds-header-content">
+      <div class="ds-header-eyebrow">Design System · v1.0</div>
+      <h1>EGM Atalayas</h1>
+      <p>Guía de referencia visual completa: colores, tipografía, espaciado, componentes y patrones de interacción.</p>
+      <div class="ds-header-badge">
+        <span></span>
+        Actualizado · Mayo 2026
+      </div>
+    </div>
+  </header>
+
+  <div class="ds-layout">
+
+    <nav class="ds-nav">
+      <div class="ds-nav-title">Secciones</div>
+      <a href="#colores">Colores</a>
+      <a href="#tipografia">Tipografía</a>
+      <a href="#espaciado">Espaciado</a>
+      <a href="#radios">Radios de borde</a>
+      <a href="#superficies">Superficies</a>
+      <a href="#botones">Botones</a>
+      <a href="#estados">Estados / Badges</a>
+      <a href="#skeleton">Skeleton</a>
+      <a href="#empty">Empty State</a>
+    </nav>
+
+    <main class="ds-main">
+
+      <!-- 1. COLORES -->
+      <section class="ds-section" id="colores">
+        <div class="ds-section-title">Colores</div>
+
+        <div class="swatch-group-label">Marca principal</div>
+        <div class="swatch-row">
+          <div class="swatch"><div class="swatch-color" style="background:#1B3F7E;"></div><div class="swatch-name">Azul primario</div><div class="swatch-hex">#1B3F7E</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#2A5298;"></div><div class="swatch-name">Azul hover</div><div class="swatch-hex">#2A5298</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E8EEF8; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Azul light</div><div class="swatch-hex">#E8EEF8</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#9DC429;"></div><div class="swatch-name">Verde lima</div><div class="swatch-hex">#9DC429</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#B8C94A;"></div><div class="swatch-name">Lima hover</div><div class="swatch-hex">#B8C94A</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#EEF2D0; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Lima light</div><div class="swatch-hex">#EEF2D0</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#0D1B2E;"></div><div class="swatch-name">Marino oscuro</div><div class="swatch-hex">#0D1B2E</div></div>
+        </div>
+
+        <div class="swatch-group-label">Estados semánticos</div>
+        <div class="swatch-row">
+          <div class="swatch"><div class="swatch-color" style="background:#2D8653;"></div><div class="swatch-name">Éxito</div><div class="swatch-hex">#2D8653</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E8F5EE; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Éxito light</div><div class="swatch-hex">#E8F5EE</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#C0392B;"></div><div class="swatch-name">Error</div><div class="swatch-hex">#C0392B</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#FDECEA; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Error light</div><div class="swatch-hex">#FDECEA</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#D97706;"></div><div class="swatch-name">Warning</div><div class="swatch-hex">#D97706</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#FEF3E2; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Warning light</div><div class="swatch-hex">#FEF3E2</div></div>
+        </div>
+
+        <div class="swatch-group-label">Texto y superficies</div>
+        <div class="swatch-row">
+          <div class="swatch"><div class="swatch-color" style="background:#0F1923;"></div><div class="swatch-name">Texto primario</div><div class="swatch-hex">#0F1923</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#3D4A5C;"></div><div class="swatch-name">Texto secundario</div><div class="swatch-hex">#3D4A5C</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#6B7A8D;"></div><div class="swatch-name">Texto muted</div><div class="swatch-hex">#6B7A8D</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#F4F5F7; border:1px solid rgba(0,0,0,0.06);"></div><div class="swatch-name">Página</div><div class="swatch-hex">#F4F5F7</div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#FFFFFF; border:1px solid rgba(0,0,0,0.08);"></div><div class="swatch-name">Blanco</div><div class="swatch-hex">#FFFFFF</div></div>
+        </div>
+
+        <div style="display:flex; gap:var(--space-md); flex-wrap:wrap; margin-top:var(--space-sm);">
+          <div style="background:#1B3F7E; color:#fff; padding:10px 20px; border-radius:var(--radius-md); font-size:0.875rem; font-weight:600;">Texto blanco sobre azul ✓</div>
+          <div style="background:#9DC429; color:#0F1923; padding:10px 20px; border-radius:var(--radius-md); font-size:0.875rem; font-weight:600;">Texto oscuro sobre lima ✓</div>
+          <div style="background:#1B3F7E; color:#9DC429; padding:10px 20px; border-radius:var(--radius-md); font-size:0.875rem; font-weight:600; opacity:0.5; position:relative;">Lima sobre azul <span style="position:absolute;top:-6px;right:-4px;font-size:0.6875rem;background:#C0392B;color:#fff;padding:1px 5px;border-radius:4px;">✗ NUNCA</span></div>
+        </div>
+      </section>
+
+      <!-- 2. TIPOGRAFÍA -->
+      <section class="ds-section" id="tipografia">
+        <div class="ds-section-title">Tipografía</div>
+        <div class="card" style="margin-bottom:var(--space-lg);">
+          <div style="display:flex;gap:var(--space-2xl);flex-wrap:wrap;margin-bottom:var(--space-xl);">
+            <div>
+              <div class="t-label" style="margin-bottom:6px;">Fuente funcional</div>
+              <div style="font-family:'Poppins',sans-serif; font-size:1.5rem; font-weight:600;">Poppins</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Aa Bb Cc 0123456789</div>
+            </div>
+            <div>
+              <div class="t-label" style="margin-bottom:6px;">Fuente editorial</div>
+              <div style="font-family:'Instrument Serif',serif; font-size:1.5rem; font-style:italic;">Instrument Serif</div>
+              <div style="font-family:'Instrument Serif',serif; font-size:0.75rem; color:var(--text-muted); font-style:italic;">Aa Bb Cc 0123456789</div>
+            </div>
+          </div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">Display</div><div class="typo-meta-spec">clamp(3–5rem)<br>400 italic<br>Instrument Serif<br>ls: −0.02em</div></div><div class="typo-sample"><div class="t-display">Atalayas</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">H1</div><div class="typo-meta-spec">clamp(2–2.8rem)<br>700 · Poppins<br>ls: −0.02em</div></div><div class="typo-sample"><div class="t-h1">Título de página principal</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">H2</div><div class="typo-meta-spec">clamp(1.4–1.8rem)<br>600 · Poppins<br>ls: −0.01em</div></div><div class="typo-sample"><div class="t-h2">Título de sección</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">H3</div><div class="typo-meta-spec">clamp(1.1–1.3rem)<br>600 · Poppins<br>ls: −0.01em</div></div><div class="typo-sample"><div class="t-h3">Cabecera de tarjeta</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">Body</div><div class="typo-meta-spec">1rem · 400 · Poppins</div></div><div class="typo-sample"><div class="t-body">El sistema de atalayas proporciona una visión panorámica del territorio, permitiendo anticipar y responder con precisión a cada cambio en el entorno.</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">Small</div><div class="typo-meta-spec">0.75rem · 400–500<br>Poppins</div></div><div class="typo-sample"><div class="t-small">Descripción secundaria o metadato. Usar para información complementaria.</div></div></div>
+          <div class="typo-row"><div class="typo-meta"><div class="typo-meta-name">Label</div><div class="typo-meta-spec">0.6875rem · 700<br>UPPERCASE · ls: 0.08em</div></div><div class="typo-sample"><div class="t-label">Etiqueta de badge · Categoría · Estado</div></div></div>
+        </div>
+      </section>
+
+      <!-- 3. ESPACIADO -->
+      <section class="ds-section" id="espaciado">
+        <div class="ds-section-title">Espaciado</div>
+        <div class="card">
+          <div class="space-item"><div class="space-block" style="width:4px;"></div><div class="space-info"><div class="space-name">xs</div><div class="space-value">4px</div><div class="space-desc">Detalles mínimos</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:8px; opacity:0.75;"></div><div class="space-info"><div class="space-name">sm</div><div class="space-value">8px</div><div class="space-desc">Badges, labels</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:12px; opacity:0.80;"></div><div class="space-info"><div class="space-name">md</div><div class="space-value">12px</div><div class="space-desc">Grupos de elementos</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:16px;"></div><div class="space-info"><div class="space-name">lg</div><div class="space-value">16px</div><div class="space-desc">Cards pequeñas</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:24px;"></div><div class="space-info"><div class="space-name">xl</div><div class="space-value">24px</div><div class="space-desc">Cards normales</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:32px;"></div><div class="space-info"><div class="space-name">2xl</div><div class="space-value">32px</div><div class="space-desc">Entre componentes</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:48px;"></div><div class="space-info"><div class="space-name">3xl</div><div class="space-value">48px</div><div class="space-desc">Entre secciones</div></div></div>
+          <div class="space-item"><div class="space-block" style="width:64px;"></div><div class="space-info"><div class="space-name">4xl</div><div class="space-value">64px</div><div class="space-desc">Padding página desktop</div></div></div>
+        </div>
+        <div style="margin-top:var(--space-lg);">
+          <div class="card" style="padding:var(--space-md); display:inline-block;">
+            <div class="t-label" style="margin-bottom:4px;">Padding página</div>
+            <div class="t-small">Móvil: 20px · Tablet: 32px · Desktop: 64px</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. RADIOS -->
+      <section class="ds-section" id="radios">
+        <div class="ds-section-title">Radios de borde</div>
+        <div class="ds-row">
+          <div class="radius-item"><div class="radius-example" style="border-radius:8px;">8px</div><div class="radius-label">Pequeño</div><div class="radius-sub">--radius-sm</div><div class="t-small" style="color:var(--text-muted);max-width:100px;">Badges, inputs, tooltips</div></div>
+          <div class="radius-item"><div class="radius-example" style="border-radius:12px;">12px</div><div class="radius-label">Medio</div><div class="radius-sub">--radius-md</div><div class="t-small" style="color:var(--text-muted);max-width:100px;">Botones, items de lista</div></div>
+          <div class="radius-item"><div class="radius-example" style="border-radius:16px;">16px</div><div class="radius-label">Grande</div><div class="radius-sub">--radius-lg</div><div class="t-small" style="color:var(--text-muted);max-width:100px;">Cards, paneles, modales</div></div>
+          <div class="radius-item"><div class="radius-example" style="border-radius:50%;">50%</div><div class="radius-label">Circular</div><div class="radius-sub">--radius-full</div><div class="t-small" style="color:var(--text-muted);max-width:100px;">Avatares, dots</div></div>
+        </div>
+      </section>
+
+      <!-- 5. SUPERFICIES -->
+      <section class="ds-section" id="superficies">
+        <div class="ds-section-title">Superficies y sombras</div>
+
+        <div class="surfaces-grid">
+          <div><div class="t-label" style="margin-bottom:var(--space-sm);">01 · Plano</div><div class="surface-demo card-flat" style="border:2px dashed rgba(0,0,0,0.10);"><div class="surface-demo-title" style="color:var(--text-muted);">Fondo de página</div><div class="surface-demo-desc">Sin sombra ni borde. Fondo base de la aplicación.</div><div class="code-pill" style="margin-top:var(--space-md); display:inline-block;">#F4F5F7</div></div></div>
+          <div><div class="t-label" style="margin-bottom:var(--space-sm);">02 · Card</div><div class="surface-demo card"><div class="surface-demo-title">Tarjeta</div><div class="surface-demo-desc">Fondo blanco, borde sutil. Sin sombra. El nivel más común.</div><div class="code-pill" style="margin-top:var(--space-md); display:inline-block;">border + radius 16px</div></div></div>
+          <div><div class="t-label" style="margin-bottom:var(--space-sm);">03 · Elevado</div><div class="surface-demo card-elevated"><div class="surface-demo-title">Modal / Dropdown</div><div class="surface-demo-desc">Sombra en dos capas. Para elementos flotantes sobre el contenido.</div><div class="code-pill" style="margin-top:var(--space-md); display:inline-block;">8px + 32px shadow</div></div></div>
+          <div><div class="t-label" style="margin-bottom:var(--space-sm);">04 · Liquid Glass</div><div class="surface-dark-bg"><div class="surface-glass"><div class="surface-glass-title">Liquid Glass</div><div class="surface-glass-desc">Solo sobre fondos oscuros. Header, botones flotantes, paneles sobre marino.</div></div></div></div>
+        </div>
+
+        <!-- Demos interactivas -->
+        <div style="margin-top:var(--space-xl);">
+          <div class="t-label" style="margin-bottom:var(--space-md);">Demos interactivas · Prueba el hover</div>
+          <div style="background:var(--color-marino); border-radius:var(--radius-lg); padding:var(--space-3xl); display:flex; gap:var(--space-3xl); flex-wrap:wrap; align-items:center; justify-content:center;">
+
+            <!-- Demo A — Botón X -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:var(--space-md);">
+              <button class="glass-icon-btn" aria-label="Cerrar">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.4);">Demo A — Botón X</div>
+              <div style="font-size:0.6875rem; color:rgba(255,255,255,0.3); text-align:center; max-width:110px;">scale(1.10) spring · pressed scale(0.88)</div>
+            </div>
+
+            <!-- Demo B — Panel glass -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:var(--space-md);">
+              <div
+                onmouseenter="this.style.background='rgba(255,255,255,0.18)'; this.style.boxShadow='0 8px 32px rgba(0,0,0,0.25)';"
+                onmouseleave="this.style.background='rgba(255,255,255,0.10)'; this.style.boxShadow='none';"
+                style="width:260px; background:rgba(255,255,255,0.10); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.18); border-radius:16px; padding:var(--space-lg) var(--space-xl); cursor:default; transition:background 0.2s ease, box-shadow 0.22s ease;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-sm);">
+                  <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.80);">Panel de notificaciones</div>
+                  <div style="background:var(--color-lima); color:#0F1923; font-size:0.6875rem; font-weight:700; padding:1px 7px; border-radius:999px;">3</div>
+                </div>
+                <div style="font-size:0.8125rem; color:rgba(255,255,255,0.50);">3 nuevas notificaciones</div>
+              </div>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.4);">Demo B — Panel glass</div>
+              <div style="font-size:0.6875rem; color:rgba(255,255,255,0.3); text-align:center; max-width:120px;">hover → aclara fondo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Demo C — Comparativa -->
+        <div style="margin-top:var(--space-xl);">
+          <div class="t-label" style="margin-bottom:var(--space-md);">Demo C — Uso correcto vs incorrecto</div>
+          <div style="display:flex; gap:var(--space-lg); flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+              <div style="background:var(--color-marino); border-radius:var(--radius-lg); padding:var(--space-xl); display:flex; align-items:center; justify-content:center; min-height:120px; margin-bottom:var(--space-sm);">
+                <div style="background:rgba(255,255,255,0.12); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.18); border-radius:var(--radius-md); padding:var(--space-md) var(--space-xl); font-size:0.75rem; font-weight:600; color:rgba(255,255,255,0.85);">Glass sobre marino</div>
+              </div>
+              <div style="display:inline-flex; align-items:center; gap:5px; background:var(--color-success-light); color:var(--color-success); font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:3px 10px; border-radius:var(--radius-sm);">✓ Sobre fondo oscuro</div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <div style="background:#FFFFFF; border:1px solid var(--surface-border); border-radius:var(--radius-lg); padding:var(--space-xl); display:flex; align-items:center; justify-content:center; min-height:120px; margin-bottom:var(--space-sm);">
+                <div style="background:rgba(255,255,255,0.12); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.18); border-radius:var(--radius-md); padding:var(--space-md) var(--space-xl); font-size:0.75rem; font-weight:600; color:rgba(0,0,0,0.20);">Glass sobre blanco</div>
+              </div>
+              <div style="display:inline-flex; align-items:center; gap:5px; background:var(--color-error-light); color:var(--color-error); font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:3px 10px; border-radius:var(--radius-sm);">✗ Sobre fondo claro — invisible</div>
+            </div>
+          </div>
+          <div style="margin-top:var(--space-lg); padding:var(--space-md) var(--space-lg); background:var(--color-marino); border-radius:var(--radius-md);">
+            <div style="font-size:0.8125rem; color:rgba(255,255,255,0.60); line-height:1.6;">El liquid glass solo funciona sobre fondos oscuros, imágenes o gradientes. Nunca sobre superficies blancas o muy claras.</div>
+          </div>
+        </div>
+
+        <!-- Reglas -->
+        <div class="card" style="margin-top:var(--space-xl); padding:var(--space-lg);">
+          <div class="t-label" style="margin-bottom:var(--space-sm);">Regla Liquid Glass</div>
+          <div style="display:flex; gap:var(--space-xl); flex-wrap:wrap;">
+            <div><div style="color:var(--color-success); font-weight:600; font-size:0.875rem; margin-bottom:4px;">✓ Aplicar en</div><div class="t-small">Header principal · Botones flotantes · Cierre de modales · Paneles sobre marino oscuro</div></div>
+            <div><div style="color:var(--color-error); font-weight:600; font-size:0.875rem; margin-bottom:4px;">✗ No usar en</div><div class="t-small">Inputs · Tablas · Fondos blancos o grises</div></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:var(--space-md); padding:var(--space-lg);">
+          <div class="t-label" style="margin-bottom:var(--space-lg);">Comportamiento en hover</div>
+          <div style="display:flex; gap:var(--space-xl); flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+              <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:var(--space-sm);">Botones icono pequeños</div>
+              <div class="t-small" style="margin-bottom:var(--space-sm);">X de modal · Notificaciones · Perfil sobre oscuro</div>
+              <div style="background:var(--color-marino); border-radius:var(--radius-sm); padding:var(--space-sm) var(--space-md); display:inline-flex; align-items:center; gap:var(--space-sm);">
+                <code style="font-family:monospace; font-size:0.6875rem; color:rgba(255,255,255,0.7);">hover → rgba(0,0,0,0.20)</code>
+                <span style="font-size:0.6875rem; color:rgba(255,255,255,0.4);">oscurece</span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:var(--space-sm);">Paneles y superficies glass</div>
+              <div class="t-small" style="margin-bottom:var(--space-sm);">Cards glass · Paneles flotantes</div>
+              <div style="background:var(--color-marino); border-radius:var(--radius-sm); padding:var(--space-sm) var(--space-md); display:inline-flex; align-items:center; gap:var(--space-sm);">
+                <code style="font-family:monospace; font-size:0.6875rem; color:rgba(255,255,255,0.7);">hover → rgba(255,255,255,0.18)</code>
+                <span style="font-size:0.6875rem; color:rgba(255,255,255,0.4);">aclara</span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:200px; border-left:2px solid var(--surface-border); padding-left:var(--space-xl);">
+              <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:var(--space-sm);">Frecuencia de uso</div>
+              <div class="t-small">La mayoría de la página <strong>no usa</strong> liquid glass. Máximo 1–2 superficies glass simultáneas por pantalla.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. BOTONES -->
+      <section class="ds-section" id="botones">
+        <div class="ds-section-title">Botones</div>
+
+        <div class="t-label" style="margin-bottom:var(--space-sm);">Primario — Grainient animado</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onmouseenter="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';" onmouseleave="this.style.filter='brightness(1)'; this.style.boxShadow='0 2px 8px rgba(27,63,126,0.20)';" onmousedown="this.style.filter='brightness(0.92)'; this.style.boxShadow='0 2px 6px rgba(27,63,126,0.18)';" onmouseup="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';">Guardar cambios</button>
+          <button class="btn btn-primary" onmouseenter="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';" onmouseleave="this.style.filter='brightness(1)'; this.style.boxShadow='0 2px 8px rgba(27,63,126,0.20)';" onmousedown="this.style.filter='brightness(0.92)'; this.style.boxShadow='0 2px 6px rgba(27,63,126,0.18)';" onmouseup="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';"><span class="btn-spinner"></span>Guardando…</button>
+          <button class="btn btn-primary" style="opacity:0.5; cursor:not-allowed; animation:none; background:linear-gradient(135deg,#0D1B2E,#1B3F7E);">Deshabilitado</button>
+        </div>
+
+        <div class="t-label" style="margin-bottom:var(--space-sm);">Secundario</div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onmouseenter="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';" onmouseleave="this.style.background='transparent'; this.style.borderColor='rgba(0,0,0,0.15)'; this.style.color='#374151'; this.style.boxShadow='none';" onmousedown="this.style.background='rgba(0,0,0,0.10)'; this.style.borderColor='rgba(0,0,0,0.20)'; this.style.color='#111827'; this.style.boxShadow='none';" onmouseup="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';">Ver detalles</button>
+          <button class="btn btn-secondary" onmouseenter="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';" onmouseleave="this.style.background='transparent'; this.style.borderColor='rgba(0,0,0,0.15)'; this.style.color='#374151'; this.style.boxShadow='none';" onmousedown="this.style.background='rgba(0,0,0,0.10)'; this.style.borderColor='rgba(0,0,0,0.20)'; this.style.color='#111827'; this.style.boxShadow='none';" onmouseup="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';">Exportar</button>
+          <button class="btn btn-secondary" style="opacity:0.45; cursor:not-allowed;">Deshabilitado</button>
+        </div>
+
+        <div class="t-label" style="margin-bottom:var(--space-sm);">Ghost</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onmouseenter="this.style.background='rgba(27,63,126,0.07)'; this.style.borderColor='rgba(27,63,126,0.35)'; this.style.boxShadow='0 4px 14px rgba(27,63,126,0.12), 0 0 0 3px rgba(27,63,126,0.08)';" onmouseleave="this.style.background='transparent'; this.style.borderColor='rgba(27,63,126,0.20)'; this.style.boxShadow='none';" onmousedown="this.style.background='rgba(27,63,126,0.12)'; this.style.borderColor='rgba(27,63,126,0.30)'; this.style.boxShadow='none';" onmouseup="this.style.background='rgba(27,63,126,0.07)'; this.style.borderColor='rgba(27,63,126,0.35)'; this.style.boxShadow='0 4px 14px rgba(27,63,126,0.12), 0 0 0 3px rgba(27,63,126,0.08)';">Cancelar</button>
+          <button class="btn btn-ghost" onmouseenter="this.style.background='rgba(27,63,126,0.07)'; this.style.borderColor='rgba(27,63,126,0.35)'; this.style.boxShadow='0 4px 14px rgba(27,63,126,0.12), 0 0 0 3px rgba(27,63,126,0.08)';" onmouseleave="this.style.background='transparent'; this.style.borderColor='rgba(27,63,126,0.20)'; this.style.boxShadow='none';" onmousedown="this.style.background='rgba(27,63,126,0.12)'; this.style.borderColor='rgba(27,63,126,0.30)'; this.style.boxShadow='none';" onmouseup="this.style.background='rgba(27,63,126,0.07)'; this.style.borderColor='rgba(27,63,126,0.35)'; this.style.boxShadow='0 4px 14px rgba(27,63,126,0.12), 0 0 0 3px rgba(27,63,126,0.08)';">Más información</button>
+        </div>
+
+        <div class="t-label" style="margin-bottom:var(--space-sm);">Danger</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onmouseenter="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';" onmouseleave="this.style.background='transparent'; this.style.color='#dc2626'; this.style.borderColor='#dc2626'; this.style.boxShadow='none';" onmousedown="this.style.background='#b91c1c'; this.style.color='#ffffff'; this.style.borderColor='#b91c1c'; this.style.boxShadow='none';" onmouseup="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';">Eliminar registro</button>
+          <button class="btn btn-danger" onmouseenter="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';" onmouseleave="this.style.background='transparent'; this.style.color='#dc2626'; this.style.borderColor='#dc2626'; this.style.boxShadow='none';" onmousedown="this.style.background='#b91c1c'; this.style.color='#ffffff'; this.style.borderColor='#b91c1c'; this.style.boxShadow='none';" onmouseup="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';"><span class="btn-spinner spinner-danger"></span>Eliminando…</button>
+        </div>
+
+        <div class="card" style="margin-top:var(--space-lg); padding:var(--space-lg);">
+          <div class="t-label" style="margin-bottom:var(--space-sm);">Animaciones · Referencia</div>
+          <div style="display:flex; gap:var(--space-2xl); flex-wrap:wrap; font-size:0.8125rem; color:var(--text-secondary); margin-bottom:var(--space-md);">
+            <div><strong>Hover texto:</strong> brightness(1.18) + sombra + anillo · 0.18s ease</div>
+            <div><strong>Hover icono:</strong> scale(1.10) + oscurece fondo · spring 0.18s</div>
+            <div><strong>Press texto:</strong> brightness(0.92) · sin scale</div>
+            <div><strong>Press icono:</strong> scale(0.88) · spring easing</div>
+            <div><strong>Spinner:</strong> solo en acciones puntuales dentro del botón</div>
+          </div>
+          <div style="background:var(--color-primary-light); border-left:3px solid var(--color-primary); border-radius:var(--radius-sm); padding:10px var(--space-lg); font-size:0.8125rem; color:var(--color-primary);">
+            Los botones de texto usan <strong>brightness</strong> en hover. Los botones de icono usan <strong>scale + brightness</strong>.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:var(--space-md); padding:var(--space-lg);">
+          <div class="t-label" style="margin-bottom:var(--space-md);">Comparativa de easing · Prueba hover y click</div>
+          <div style="display:flex; gap:var(--space-xl); flex-wrap:wrap; align-items:flex-start;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:var(--space-sm);">
+              <button style="display:inline-flex; align-items:center; justify-content:center; padding:10px 20px; border-radius:12px; font-family:var(--font-functional); font-size:0.875rem; font-weight:600; cursor:pointer; border:1.5px solid var(--color-primary); background:var(--surface-white); color:var(--color-primary); transition:transform 150ms ease, background-color 150ms ease, filter 150ms ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.08)'; this.style.background='var(--color-primary-light)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'; this.style.background='var(--surface-white)';" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform='scale(1.05)'">Sin spring</button>
+              <div class="t-label" style="color:var(--text-muted);">ease</div>
+              <div class="t-small" style="text-align:center; max-width:120px; color:var(--text-muted);">Hover suave, lineal. Sin rebote.</div>
+            </div>
+            <div style="display:flex; align-items:center; padding-top:8px;"><div style="width:1px; height:48px; background:var(--surface-border);"></div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:var(--space-sm);">
+              <button style="display:inline-flex; align-items:center; justify-content:center; padding:10px 20px; border-radius:12px; font-family:var(--font-functional); font-size:0.875rem; font-weight:600; cursor:pointer; border:1.5px solid var(--color-primary); background:var(--surface-white); color:var(--color-primary); transition:transform 150ms cubic-bezier(0.34,1.20,0.64,1), background-color 150ms ease, filter 150ms ease;" onmouseover="this.style.transform='scale(1.10)'; this.style.filter='brightness(1.08)'; this.style.background='var(--color-primary-light)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'; this.style.background='var(--surface-white)';" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1.10)'">Con spring</button>
+              <div class="t-label" style="color:var(--color-primary);">cubic-bezier(0.34, 1.20, 0.64, 1)</div>
+              <div class="t-small" style="text-align:center; max-width:160px; color:var(--text-muted);">Hover con rebote elástico. Overshoots ligeramente el destino y regresa.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. ESTADOS / BADGES -->
+      <section class="ds-section" id="estados">
+        <div class="ds-section-title">Estados semánticos · Badges</div>
+        <div class="card">
+          <div style="display:flex; flex-wrap:wrap; gap:var(--space-md); margin-bottom:var(--space-xl);">
+            <span class="badge badge-success">Éxito</span>
+            <span class="badge badge-error">Error</span>
+            <span class="badge badge-warning">Advertencia</span>
+            <span class="badge badge-info">Info</span>
+            <span class="badge badge-lima">Activo</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-sm);">
+            <div style="background:var(--color-success-light); border-left:3px solid var(--color-success); border-radius:var(--radius-sm); padding:12px var(--space-lg); font-size:0.875rem; color:var(--color-success);"><strong>Operación completada.</strong> Los datos se han guardado correctamente.</div>
+            <div style="background:var(--color-error-light); border-left:3px solid var(--color-error); border-radius:var(--radius-sm); padding:12px var(--space-lg); font-size:0.875rem; color:var(--color-error);"><strong>Error de validación.</strong> Revisa los campos obligatorios antes de continuar.</div>
+            <div style="background:var(--color-warning-light); border-left:3px solid var(--color-warning); border-radius:var(--radius-sm); padding:12px var(--space-lg); font-size:0.875rem; color:var(--color-warning);"><strong>Atención.</strong> Esta acción no se puede deshacer una vez confirmada.</div>
+            <div style="background:var(--color-info-light); border-left:3px solid var(--color-primary); border-radius:var(--radius-sm); padding:12px var(--space-lg); font-size:0.875rem; color:var(--color-primary);"><strong>Información.</strong> El sistema procesará los datos en segundo plano.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. SKELETON -->
+      <section class="ds-section" id="skeleton">
+        <div class="ds-section-title">Skeleton · Estado de carga</div>
+        <div class="ds-row">
+          <div class="card" style="max-width:340px; flex:1; min-width:240px;">
+            <div class="t-label" style="margin-bottom:var(--space-xl);">Card cargando</div>
+            <div class="skel-header-row"><div class="skeleton skel-avatar"></div><div style="flex:1;"><div class="skeleton skel-name" style="margin-bottom:6px;"></div><div class="skeleton skel-text" style="width:60%;"></div></div></div>
+            <div class="skeleton skel-img" style="margin-bottom:var(--space-md);"></div>
+            <div class="skeleton skel-title" style="margin-bottom:var(--space-sm);"></div>
+            <div class="skeleton skel-text" style="width:100%; margin-bottom:6px;"></div>
+            <div class="skeleton skel-text" style="width:85%; margin-bottom:6px;"></div>
+            <div class="skeleton skel-text" style="width:60%;"></div>
+          </div>
+          <div class="card" style="max-width:340px; flex:1; min-width:240px;">
+            <div class="t-label" style="margin-bottom:var(--space-xl);">Lista cargando</div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-lg);">
+              <div class="skel-header-row" style="margin:0;"><div class="skeleton skel-avatar" style="width:36px;height:36px;border-radius:var(--radius-sm);"></div><div style="flex:1;"><div class="skeleton skel-title" style="width:80%; margin-bottom:6px;"></div><div class="skeleton skel-text" style="width:50%;"></div></div></div>
+              <div class="skel-header-row" style="margin:0;"><div class="skeleton skel-avatar" style="width:36px;height:36px;border-radius:var(--radius-sm);"></div><div style="flex:1;"><div class="skeleton skel-title" style="width:65%; margin-bottom:6px;"></div><div class="skeleton skel-text" style="width:40%;"></div></div></div>
+              <div class="skel-header-row" style="margin:0;"><div class="skeleton skel-avatar" style="width:36px;height:36px;border-radius:var(--radius-sm);"></div><div style="flex:1;"><div class="skeleton skel-title" style="width:75%; margin-bottom:6px;"></div><div class="skeleton skel-text" style="width:55%;"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:var(--space-lg); padding:var(--space-lg);">
+          <div class="t-label" style="margin-bottom:var(--space-sm);">Reglas de uso</div>
+          <div style="display:flex; gap:var(--space-2xl); flex-wrap:wrap; font-size:0.8125rem; color:var(--text-secondary);">
+            <div><strong>Color base:</strong> #E8EBF0 → brillo #F4F5F7</div>
+            <div><strong>Duración:</strong> 1.4s ease-in-out en bucle</div>
+            <div><strong>Radio:</strong> igual que el componente real</div>
+            <div><strong>Uso:</strong> página cargando. Spinner solo en botones.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. EMPTY STATE -->
+      <section class="ds-section" id="empty">
+        <div class="ds-section-title">Empty State</div>
+        <div class="ds-row">
+          <div class="card" style="flex:1; min-width:280px; max-width:380px;">
+            <div class="empty-state">
+              <div class="empty-icon-wrap"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="8" width="24" height="18" rx="3" stroke="#1B3F7E" stroke-width="1.8" fill="none"/><path d="M10 14h12M10 18h8" stroke="#1B3F7E" stroke-width="1.8" stroke-linecap="round"/><circle cx="22" cy="7" r="4" fill="#E8EEF8" stroke="#1B3F7E" stroke-width="1.5"/><path d="M22 5.5v3M20.5 7h3" stroke="#1B3F7E" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+              <div class="empty-title">No hay registros todavía</div>
+              <div class="empty-subtitle">Aún no has creado ningún elemento. Empieza añadiendo el primero para ver la información aquí.</div>
+              <button class="btn btn-primary" onmouseenter="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';" onmouseleave="this.style.filter='brightness(1)'; this.style.boxShadow='0 2px 8px rgba(27,63,126,0.20)';" onmousedown="this.style.filter='brightness(0.92)'; this.style.boxShadow='0 2px 6px rgba(27,63,126,0.18)';" onmouseup="this.style.filter='brightness(1.18)'; this.style.boxShadow='0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)';">Crear primer registro</button>
+            </div>
+          </div>
+          <div class="card" style="flex:1; min-width:280px; max-width:380px;">
+            <div class="empty-state">
+              <div class="empty-icon-wrap"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="14" cy="14" r="9" stroke="#1B3F7E" stroke-width="1.8" fill="none"/><path d="M21 21l6 6" stroke="#1B3F7E" stroke-width="1.8" stroke-linecap="round"/><path d="M11 14h6M14 11v6" stroke="#9DC429" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+              <div class="empty-title">Sin resultados de búsqueda</div>
+              <div class="empty-subtitle">No encontramos elementos que coincidan con tu consulta. Prueba con otros términos o amplía los filtros.</div>
+              <button class="btn btn-secondary" onmouseenter="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';" onmouseleave="this.style.background='transparent'; this.style.borderColor='rgba(0,0,0,0.15)'; this.style.color='#374151'; this.style.boxShadow='none';" onmousedown="this.style.background='rgba(0,0,0,0.10)'; this.style.borderColor='rgba(0,0,0,0.20)'; this.style.color='#111827'; this.style.boxShadow='none';" onmouseup="this.style.background='rgba(0,0,0,0.06)'; this.style.borderColor='rgba(0,0,0,0.25)'; this.style.color='#111827'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.10), 0 0 0 3px rgba(0,0,0,0.06)';">Limpiar filtros</button>
+            </div>
+          </div>
+          <div class="card" style="flex:1; min-width:280px; max-width:380px;">
+            <div class="empty-state">
+              <div class="empty-icon-wrap" style="background:var(--color-error-light);"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4l13 23H3L16 4z" stroke="#C0392B" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M16 13v7" stroke="#C0392B" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="23" r="1.2" fill="#C0392B"/></svg></div>
+              <div class="empty-title">Error de conexión</div>
+              <div class="empty-subtitle">No se pudo cargar la información. Comprueba tu conexión e inténtalo de nuevo.</div>
+              <button class="btn btn-danger" onmouseenter="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';" onmouseleave="this.style.background='transparent'; this.style.color='#dc2626'; this.style.borderColor='#dc2626'; this.style.boxShadow='none';" onmousedown="this.style.background='#b91c1c'; this.style.color='#ffffff'; this.style.borderColor='#b91c1c'; this.style.boxShadow='none';" onmouseup="this.style.background='#dc2626'; this.style.color='#ffffff'; this.style.borderColor='#dc2626'; this.style.boxShadow='0 8px 24px rgba(220,38,38,0.38), 0 0 0 3px rgba(220,38,38,0.22)';">Reintentar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer style="border-top:1px solid var(--surface-border); padding-top:var(--space-2xl); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-md);">
+        <div>
+          <div style="font-family:var(--font-editorial); font-style:italic; font-size:1.1rem; color:var(--text-primary); margin-bottom:2px;">EGM Atalayas</div>
+          <div class="t-small">Design System · v1.0 · Mayo 2026</div>
+        </div>
+        <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+          <span class="badge badge-info">Poppins</span>
+          <span class="badge badge-lima">Instrument Serif</span>
+          <span class="badge badge-success">Accesible</span>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.glass-icon-btn').forEach(function(btn) {
+    btn.addEventListener('mouseenter', function() {
+      btn.style.background = 'rgba(0,0,0,0.20)';
+      btn.style.boxShadow  = '0 4px 14px rgba(0,0,0,0.30), 0 0 0 3px rgba(0,0,0,0.12)';
+      btn.style.transform  = 'scale(1.10)';
+      btn.style.color      = 'rgba(255,255,255,0.90)';
+    });
+    btn.addEventListener('mouseleave', function() {
+      btn.style.background = 'rgba(255,255,255,0.14)';
+      btn.style.boxShadow  = '0 2px 6px rgba(0,0,0,0.18)';
+      btn.style.transform  = 'scale(1)';
+      btn.style.color      = 'rgba(255,255,255,0.90)';
+    });
+    btn.addEventListener('mousedown', function() {
+      btn.style.background = 'rgba(0,0,0,0.28)';
+      btn.style.boxShadow  = '0 2px 6px rgba(0,0,0,0.18)';
+      btn.style.transform  = 'scale(0.88)';
+      btn.style.color      = 'rgba(255,255,255,1.0)';
+    });
+    btn.addEventListener('mouseup', function() {
+      btn.style.background = 'rgba(0,0,0,0.20)';
+      btn.style.boxShadow  = '0 4px 14px rgba(0,0,0,0.30), 0 0 0 3px rgba(0,0,0,0.12)';
+      btn.style.transform  = 'scale(1.10)';
+      btn.style.color      = 'rgba(255,255,255,0.90)';
+    });
+  });
+</script>
+
+</body>
+</html>

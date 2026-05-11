@@ -416,7 +416,7 @@ export default function Empleado() {
               <div className="mb-5"><TituloSeccion noMargin>Servicios del parque</TituloSeccion></div>
               <div
                 className="rounded-2xl overflow-hidden relative"
-                style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
+                style={{ background: "linear-gradient(160deg, var(--azul-egm) 0%, var(--marino) 100%)" }}
               >
                 {/* Glow decorativo */}
                 <div className="absolute pointer-events-none" style={{
