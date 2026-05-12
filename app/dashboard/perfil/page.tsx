@@ -147,11 +147,14 @@ export default function PerfilPage() {
   const [modulos, setModulos] = useState<ModuloItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
+
   const [editando, setEditando] = useState(false);
   const [formNombre, setFormNombre] = useState("");
   const [formApellidos, setFormApellidos] = useState("");
   const [formPuesto, setFormPuesto] = useState("");
   const [formTelefono, setFormTelefono] = useState("");
+  const [formEmail, setFormEmail] = useState("");
   const [formDisponibilidad, setFormDisponibilidad] = useState<Disponibilidad>("DISPONIBLE");
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -242,6 +245,7 @@ export default function PerfilPage() {
     setFormPuesto(data.puestoTrabajo ?? "");
     // Guardar solo los dígitos sin el prefijo +34 para evitar duplicados al guardar
     setFormTelefono((data.telefono ?? "").replace(/^\+34\s?/, ""));
+    setFormEmail(data.email ?? "");
     setFormDisponibilidad(data.disponibilidad ?? "DISPONIBLE");
   };
 
@@ -304,24 +308,34 @@ export default function PerfilPage() {
       return;
     }
 
+    const emailFinal = formEmail.trim();
+
     // Sin cambios reales → no llamar al backend
-    const sinCambios =
-      nombreFinal        === (perfil?.nombre        ?? "")      &&
-      apellidosFinal     === (perfil?.apellidos      ?? "")      &&
-      puestoFinal        === (perfil?.puestoTrabajo  ?? "")      &&
-      formTelefono.trim() === telefonoOriginal                    &&
-      formDisponibilidad  === (perfil?.disponibilidad ?? "DISPONIBLE");
+    const sinCambios = esAdmin
+      ? (nombreFinal        === (perfil?.nombre        ?? "")      &&
+         apellidosFinal     === (perfil?.apellidos      ?? "")      &&
+         puestoFinal        === (perfil?.puestoTrabajo  ?? "")      &&
+         formTelefono.trim() === telefonoOriginal                    &&
+         formDisponibilidad  === (perfil?.disponibilidad ?? "DISPONIBLE"))
+      : (emailFinal         === (perfil?.email          ?? "")      &&
+         formTelefono.trim() === telefonoOriginal);
 
     if (sinCambios) { setEditando(false); return; }
 
     setSaving(true);
-    const ok = await patchPerfil({
-      nombre:         nombreFinal,
-      apellidos:      apellidosFinal,
-      puestoTrabajo:  puestoFinal,
-      telefono:       telefonoFinal,
-      disponibilidad: formDisponibilidad,
-    });
+    const payload: Record<string, unknown> = esAdmin
+      ? {
+          nombre:         nombreFinal,
+          apellidos:      apellidosFinal,
+          puestoTrabajo:  puestoFinal,
+          telefono:       telefonoFinal,
+          disponibilidad: formDisponibilidad,
+        }
+      : {
+          email:          emailFinal,
+          telefono:       telefonoFinal,
+        };
+    const ok = await patchPerfil(payload);
     setSaving(false);
     if (ok) { setErrores({}); setEditando(false); }
   };
@@ -672,7 +686,7 @@ export default function PerfilPage() {
             {/* Nombre */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre</p>
-              {editando ? (
+              {editando && esAdmin ? (
                 <div className="flex flex-col gap-1">
                   <input
                     value={formNombre}
@@ -693,7 +707,7 @@ export default function PerfilPage() {
             {/* Apellidos */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Apellidos</p>
-              {editando ? (
+              {editando && esAdmin ? (
                 <div className="flex flex-col gap-1">
                   <input
                     value={formApellidos}
@@ -714,7 +728,7 @@ export default function PerfilPage() {
             {/* Puesto */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto de trabajo</p>
-              {editando ? (
+              {editando && esAdmin ? (
                 <div className="flex flex-col gap-1">
                   <input
                     value={formPuesto}
@@ -779,10 +793,20 @@ export default function PerfilPage() {
               )}
             </div>
 
-            {/* Email — siempre solo lectura */}
+            {/* Email — editable solo para empleados */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email</p>
-              {editando ? (
+              {editando && !esAdmin ? (
+                <input
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  type="email"
+                  className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                  style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                />
+              ) : editando && esAdmin ? (
                 <input value={perfil?.email ?? ""} readOnly
                   className="w-full px-3 py-2.5 text-base rounded-xl border cursor-not-allowed select-none"
                   style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)", background: "#e8eaed", outline: "none" }}
@@ -821,7 +845,7 @@ export default function PerfilPage() {
             {/* Disponibilidad */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Disponibilidad</p>
-              {editando ? (
+              {editando && esAdmin ? (
                 <div ref={dispRef} className="relative w-full">
                   {/* Trigger */}
                   <button

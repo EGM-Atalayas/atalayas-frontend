@@ -114,6 +114,45 @@ function AdminContent() {
   const [guardandoEmpleado, setGuardandoEmpleado] = useState(false);
   const [errorEmpleado, setErrorEmpleado] = useState<string | null>(null);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Usuario | null>(null);
+  const [editandoEmpleado, setEditandoEmpleado] = useState(false);
+  const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
+  const [editEmpleadoForm, setEditEmpleadoForm] = useState({ nombre: "", apellidos: "", email: "", puestoTrabajo: "", departamento: "" });
+
+  const iniciarEditEmpleado = () => {
+    if (!empleadoSeleccionado) return;
+    setEditEmpleadoForm({
+      nombre: empleadoSeleccionado.nombre,
+      apellidos: empleadoSeleccionado.apellidos,
+      email: empleadoSeleccionado.email,
+      puestoTrabajo: empleadoSeleccionado.puestoTrabajo ?? "",
+      departamento: empleadoSeleccionado.departamento ?? "",
+    });
+    setEditandoEmpleado(true);
+  };
+
+  const handleGuardarEditEmpleado = async () => {
+    if (!empleadoSeleccionado) return;
+    setGuardandoEditEmpleado(true);
+    try {
+      const res = await apiFetch(`${API_URL}/users/${empleadoSeleccionado.usuarioId}`, {
+        method: "PATCH",
+        body: JSON.stringify(editEmpleadoForm),
+      });
+      if (res.ok) {
+        const updated: Usuario = await res.json();
+        setEmpleados((prev) => prev.map((e) => e.usuarioId === updated.usuarioId ? updated : e));
+        setEmpleadoSeleccionado(updated);
+        setEditandoEmpleado(false);
+        setToast("Empleado actualizado correctamente");
+      } else {
+        const err = await res.json().catch(() => ({ message: "Error al guardar" }));
+        setToast(err.message ?? "Error al guardar los cambios");
+      }
+    } catch {
+      setToast("Error de red al guardar los cambios");
+    }
+    setGuardandoEditEmpleado(false);
+  };
 
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
@@ -806,43 +845,102 @@ function AdminContent() {
                   style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Perfil del empleado</h3>
-                    <button onClick={() => setEmpleadoSeleccionado(null)}
+                    <button onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
                       className="w-7 h-7 flex items-center justify-center rounded-lg text-lg leading-none transition-colors"
                       style={{ color: "var(--texto-muted)", background: "var(--gris-pagina)" }}>×</button>
                   </div>
-                  <div className="flex items-center gap-4 p-4 rounded-xl"
-                    style={{ background: "var(--gris-pagina)" }}>
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
-                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                      {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
+                  {editandoEmpleado ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Nombre</label>
+                        <input value={editEmpleadoForm.nombre} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, nombre: e.target.value }))}
+                          className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Apellidos</label>
+                        <input value={editEmpleadoForm.apellidos} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, apellidos: e.target.value }))}
+                          className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Email</label>
+                        <input value={editEmpleadoForm.email} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, email: e.target.value }))}
+                          className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Puesto</label>
+                        <input value={editEmpleadoForm.puestoTrabajo} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, puestoTrabajo: e.target.value }))}
+                          className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Departamento</label>
+                        <select value={editEmpleadoForm.departamento} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, departamento: e.target.value }))}
+                          className="w-full px-3 py-2.5 text-sm rounded-xl border outline-none"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}>
+                          <option value="">Sin departamento</option>
+                          {DEPARTAMENTOS.map((d) => (
+                            <option key={d.id} value={d.id}>{d.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2 pt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                        <button onClick={() => setEditandoEmpleado(false)}
+                          className="flex-1 text-sm font-semibold py-2 rounded-xl border"
+                          style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
+                          Cancelar
+                        </button>
+                        <button onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}
+                          className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity"
+                          style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: guardandoEditEmpleado ? 0.7 : 1 }}>
+                          {guardandoEditEmpleado ? "Guardando…" : "Guardar"}
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
-                        {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                        {empleadoSeleccionado.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3 pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                    <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
-                    <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
-                    <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
-                    <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
-                    <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
-                  </div>
-                  <div className="pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                    <button
-                      onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
-                      className="w-full text-sm font-semibold py-2.5 rounded-xl transition-colors"
-                      style={empleadoSeleccionado.activo
-                        ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }
-                        : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
-                    >
-                      {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4 p-4 rounded-xl"
+                        style={{ background: "var(--gris-pagina)" }}>
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
+                          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                          {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
+                            {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                            {empleadoSeleccionado.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3 pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                        <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
+                        <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
+                        <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
+                        <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
+                        <DrawerRow label="Alta" value={formatFecha(empleadoSeleccionado.fechaRegistro)} />
+                      </div>
+                      <div className="flex flex-col gap-2 pt-1" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                        <button onClick={iniciarEditEmpleado}
+                          className="w-full text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                          style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                          Editar empleado
+                        </button>
+                        <button
+                          onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
+                          className="w-full text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                          style={empleadoSeleccionado.activo
+                            ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" }
+                            : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
+                        >
+                          {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -857,35 +955,94 @@ function AdminContent() {
                 }}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Perfil del empleado</h3>
-                  <button onClick={() => setEmpleadoSeleccionado(null)}
+                  <button onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-lg leading-none"
                     style={{ color: "var(--texto-muted)", background: "var(--gris-pagina)" }}>×</button>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                    {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
+                {editandoEmpleado ? (
+                  <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Nombre</label>
+                      <input value={editEmpleadoForm.nombre} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, nombre: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Apellidos</label>
+                      <input value={editEmpleadoForm.apellidos} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, apellidos: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Email</label>
+                      <input value={editEmpleadoForm.email} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, email: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Puesto</label>
+                      <input value={editEmpleadoForm.puestoTrabajo} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, puestoTrabajo: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm rounded-xl border outline-none"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }} />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold" style={{ color: "var(--texto-muted)" }}>Departamento</label>
+                      <select value={editEmpleadoForm.departamento} onChange={(e) => setEditEmpleadoForm((f) => ({ ...f, departamento: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm rounded-xl border outline-none"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}>
+                        <option value="">Sin departamento</option>
+                        {DEPARTAMENTOS.map((d) => (
+                          <option key={d.id} value={d.id}>{d.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={() => setEditandoEmpleado(false)}
+                        className="flex-1 text-sm font-semibold py-2 rounded-xl border"
+                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
+                        Cancelar
+                      </button>
+                      <button onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}
+                        className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity"
+                        style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: guardandoEditEmpleado ? 0.7 : 1 }}>
+                        {guardandoEditEmpleado ? "Guardando…" : "Guardar"}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
-                      {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
-                    </p>
-                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{empleadoSeleccionado.email}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "12px" }}>
-                  <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
-                  <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
-                  <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
-                  <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
-                </div>
-                <button
-                  onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
-                  className="w-full text-sm font-semibold py-3 rounded-xl"
-                  style={empleadoSeleccionado.activo ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" } : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
-                >
-                  {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
-                </button>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                        {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
+                          {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
+                        </p>
+                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{empleadoSeleccionado.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "12px" }}>
+                      <DrawerRow label="Puesto" value={empleadoSeleccionado.puestoTrabajo ?? "—"} />
+                      <DrawerRow label="Departamento" value={DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? "—"} />
+                      <DrawerRow label="Rol" value={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"} />
+                      <DrawerRow label="Estado" value={empleadoSeleccionado.activo ? "Activo" : "Inactivo"} />
+                    </div>
+                    <button onClick={iniciarEditEmpleado}
+                      className="w-full text-sm font-semibold py-3 rounded-xl transition-colors"
+                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                      Editar empleado
+                    </button>
+                    <button
+                      onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}
+                      className="w-full text-sm font-semibold py-3 rounded-xl"
+                      style={empleadoSeleccionado.activo ? { background: "var(--error-light)", color: "var(--error)", border: "1px solid var(--error)" } : { background: "var(--exito-light)", color: "var(--exito)", border: "1px solid var(--exito)" }}
+                    >
+                      {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -6,10 +6,11 @@
  * Archivo: app/dashboard/formacion/[moduloId]/page.tsx
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { apiFetch, API_URL } from "@/lib/api";
 import { PresentationViewer } from "@/components/presentation/PresentationViewer";
+import { getBestSpanishVoice } from "@/lib/speech";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -312,6 +313,7 @@ export default function Page() {
   const [completando, setCompletando] = useState(false);
   const [moduloCompletado, setModuloCompletado] = useState(false);
   const [verificado, setVerificado] = useState(false);
+
 
   // Secciones del markdown (calculadas una vez al cargar el módulo)
   const secciones = React.useMemo<SeccionMarkdown[]>(() => {
@@ -676,22 +678,8 @@ export default function Page() {
                     : (moduloApi?.contenidoMarkdown ?? null);
                 return <ContenidoTexto descripcion={moduloApi?.descripcion ?? modulo.descripcion} contenidoMarkdown={contenidoFinal} onVerificado={() => setVerificado(true)} />;
               })()}
-              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} audioUrl={moduloApi.podcastAudioUrl ?? undefined} onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && (() => {
-                try {
-                  const parsed = JSON.parse(moduloApi.scriptVideo!);
-                  if (parsed?.type === "presentation" && Array.isArray(parsed.slides)) {
-                    return (
-                      <PresentationViewer
-                        slides={parsed.slides}
-                        themeId={parsed.themeId ?? "green"}
-                        onFinish={() => setVerificado(true)}
-                      />
-                    );
-                  }
-                } catch { /* formato antiguo */ }
-                return <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo!} onVerificado={() => setVerificado(true)} />;
-              })()}
+              {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && (() => {
@@ -718,9 +706,9 @@ export default function Page() {
                         ? "Contenido revisado. Puedes marcarlo como completado."
                         : activo.tipo === "texto" ? "Lee el contenido completo para poder completarlo"
                           : activo.subtipo === "podcast" ? "Escucha el podcast completo para poder completarlo"
-                          : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
-                          : activo.tipo === "pdf" ? "Confirma que has leído el documento para poder completarlo"
-                          : "Revisa el contenido para poder completarlo"}
+                            : activo.subtipo === "slides" ? "Llega a la última diapositiva para poder completarlo"
+                              : activo.tipo === "pdf" ? "Confirma que has leído el documento para poder completarlo"
+                                : "Revisa el contenido para poder completarlo"}
                 </p>
                 {progPct < 100 && (
                   <button
@@ -905,93 +893,69 @@ function ContenidoVideo({ onVerificado }: { onVerificado?: () => void }) {
 }
 
 // ── PODCAST ──────────────────────────────────────────────────────────────────
-function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; audioUrl?: string; onVerificado?: () => void }) {
-  const tieneAudioReal = !!audioUrl;
-  const audioRef = React.useRef<HTMLAudioElement>(null);
+function ContenidoPodcast({ script, onVerificado }: { script: string; onVerificado?: () => void }) {
   const [reproduciendo, setReproduciendo] = React.useState(false);
   const [pausado, setPausado] = React.useState(false);
   const [progreso, setProgreso] = React.useState(0);
-  const [duracion, setDuracion] = React.useState(0);
+  const [voiceName, setVoiceName] = React.useState("");
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const seg = Math.floor(s % 60);
-    return `${m}:${seg.toString().padStart(2, "0")}`;
-  };
+  React.useEffect(() => {
+    getBestSpanishVoice().then((v) => {
+      setVoiceName(v ? `${v.name}` : "Voz por defecto");
+    });
+  }, []);
 
-  // ── Controles para <audio> nativo ─────────────────────────────────────────
-  const iniciarAudio = () => {
-    if (!audioRef.current) return;
-    audioRef.current.play();
-    setReproduciendo(true); setPausado(false);
-    onVerificado?.();
-  };
-  const pausarAudio = () => {
-    if (!audioRef.current) return;
-    if (!audioRef.current.paused) { audioRef.current.pause(); setPausado(true); }
-    else { audioRef.current.play(); setPausado(false); }
-  };
-  const detenerAudio = () => {
-    if (!audioRef.current) return;
-    audioRef.current.pause(); audioRef.current.currentTime = 0;
-    setReproduciendo(false); setPausado(false);
-    setProgreso(0);
-  };
-  const actualizarProgreso = () => {
-    if (audioRef.current) {
-      setProgreso(audioRef.current.currentTime);
-      setDuracion(audioRef.current.duration || 0);
-    }
-  };
-
-  // ── Controles para Web Speech API (fallback) ───────────────────────────────
-  const utteranceRef = React.useRef<SpeechSynthesisUtterance | null>(null);
   const progresoIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedRef = React.useRef(0);
+  const lastTickRef = React.useRef(0);
+  const SPEECH_RATE = 0.9;
 
-  const iniciarSpeech = () => {
+  const arrancarIntervalo = () => {
+    lastTickRef.current = Date.now();
+    if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+    const palabras = script.split(/\s+/).length;
+    const duracionEstimada = (palabras / 150) * 60 / SPEECH_RATE;
+    progresoIntervalRef.current = setInterval(() => {
+      const ahora = Date.now();
+      elapsedRef.current += (ahora - lastTickRef.current) / 1000;
+      lastTickRef.current = ahora;
+      const raw = elapsedRef.current / duracionEstimada;
+      const eased = 1 - Math.pow(1 - Math.min(raw, 1), 1.5);
+      setProgreso(Math.min(eased, 0.99));
+    }, 250);
+  };
+
+  const iniciar = async () => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
+    const voice = await getBestSpanishVoice();
     const utterance = new SpeechSynthesisUtterance(script);
-    utterance.lang = "es-ES"; utterance.rate = 0.95; utterance.pitch = 1;
+    utterance.lang = "es-ES";
+    utterance.rate = SPEECH_RATE;
+    utterance.pitch = 1.0;
+    if (voice) utterance.voice = voice;
     utterance.onend = () => {
       setReproduciendo(false); setPausado(false);
       setProgreso(1);
       if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
     };
-    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
     setReproduciendo(true); setPausado(false);
-    setDuracion(1);
-    // Estimar progreso: el Speech API no expone tiempo, simulamos con un intervalo
-    const palabras = script.split(/\s+/).length;
-    const estimadoSeg = (palabras / 150) * 60;
-    const inicio = Date.now();
-    if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
-    progresoIntervalRef.current = setInterval(() => {
-      const transcurrido = (Date.now() - inicio) / 1000;
-      setProgreso(Math.min(transcurrido / estimadoSeg, 0.98));
-    }, 250);
+    elapsedRef.current = 0;
+    arrancarIntervalo();
     onVerificado?.();
   };
-  const pausarSpeech = () => {
+  const pausar = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-      window.speechSynthesis.pause(); setPausado(true);
       if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
+      elapsedRef.current += (Date.now() - lastTickRef.current) / 1000;
+      window.speechSynthesis.pause(); setPausado(true);
     } else if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume(); setPausado(false);
-      // Reanudar intervalo
-      if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
-      const palabras = script.split(/\s+/).length;
-      const estimadoSeg = (palabras / 150) * 60;
-      const restante = (1 - progreso) * estimadoSeg;
-      const reanudado = Date.now();
-      progresoIntervalRef.current = setInterval(() => {
-        const transcurrido = (Date.now() - reanudado) / 1000;
-        setProgreso((p) => Math.min(p + transcurrido / restante * 0.05, 0.98));
-      }, 250);
+      arrancarIntervalo();
     }
   };
-  const detenerSpeech = () => {
+  const detener = () => {
     window.speechSynthesis.cancel();
     setReproduciendo(false); setPausado(false);
     setProgreso(0);
@@ -1002,40 +966,25 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
     if (progresoIntervalRef.current) clearInterval(progresoIntervalRef.current);
   }, []);
 
-  const iniciar = tieneAudioReal ? iniciarAudio : iniciarSpeech;
-  const pausar = tieneAudioReal ? pausarAudio : pausarSpeech;
-  const detener = tieneAudioReal ? detenerAudio : detenerSpeech;
-  const pct = tieneAudioReal && duracion > 0 ? progreso / duracion : progreso;
-  const tiempoActual = tieneAudioReal ? formatTime(progreso) : "";
-  const tiempoTotal = tieneAudioReal ? formatTime(duracion) : "";
+  const pct = progreso;
 
   return (
     <div>
-      {tieneAudioReal && (
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          onTimeUpdate={actualizarProgreso}
-          onLoadedMetadata={actualizarProgreso}
-          onEnded={() => { setReproduciendo(false); setPausado(false); setProgreso(0); }}
-          onPlay={() => { setReproduciendo(true); setPausado(false); }}
-          onPause={() => setPausado(true)}
-          preload="metadata"
-        />
-      )}
       <div className="rounded-2xl p-6 mb-6 flex flex-col gap-4"
         style={{ background: "linear-gradient(135deg,#1e1b4b 0%,#312e81 100%)", border: "1px solid #4338ca" }}>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
-            <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path d="M19 10v2a7 7 0 01-14 0v-2" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">Podcast del módulo</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              {tieneAudioReal ? "Narrado por IA con ElevenLabs" : "Narrado por IA"}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path d="M19 10v2a7 7 0 01-14 0v-2" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">Podcast del módulo</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Voz: {voiceName || "cargando..."}
+              </p>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1070,21 +1019,14 @@ function ContenidoPodcast({ script, audioUrl, onVerificado }: { script: string; 
             </div>
           )}
         </div>
-        {/* Barra de progreso (solo visual, sin interacción) */}
-        {(reproduciendo || pausado) && (
+        {reproduciendo || pausado ? (
           <div className="w-full">
             <div className="relative w-full h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.15)", pointerEvents: "none" }}>
               <div className="absolute top-0 left-0 h-full rounded-full transition-all duration-200"
                 style={{ width: `${Math.min(pct * 100, 100)}%`, background: "linear-gradient(90deg,#818cf8,#6366f1)" }} />
             </div>
-            {tieneAudioReal && (
-              <div className="flex justify-between mt-1">
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{tiempoActual}</span>
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{tiempoTotal}</span>
-              </div>
-            )}
           </div>
-        )}
+        ) : null}
       </div>
       <div className="rounded-xl p-5" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
         <p className="text-xs font-semibold mb-3" style={{ color: "var(--texto-muted)" }}>TRANSCRIPCIÓN</p>
@@ -1102,7 +1044,26 @@ function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: s
     try { return JSON.parse(scriptVideoJson) as Slide[]; } catch { return []; }
   }, [scriptVideoJson]);
   const [idx, setIdx] = React.useState(0);
+  const [narratingSlide, setNarratingSlide] = React.useState<number | null>(null);
   const verificadoRef = React.useRef(false);
+
+  const narrarSlideVoz = async (numero: number, texto: string) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    if (narratingSlide === numero) {
+      setNarratingSlide(null);
+      return;
+    }
+    setNarratingSlide(numero);
+    const voice = await getBestSpanishVoice();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = "es-ES";
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => setNarratingSlide(null);
+    window.speechSynthesis.speak(utterance);
+  };
 
   React.useEffect(() => {
     if (slides.length > 0 && idx === slides.length - 1 && !verificadoRef.current) {
@@ -1153,6 +1114,18 @@ function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: s
             <p className="text-xs" style={{ color: "var(--texto-muted)" }}><span className="font-semibold">Notas: </span>{slide.notas}</p>
           </div>
         )}
+        <div className="px-6 py-3 flex items-center gap-3 flex-wrap" style={{ background: "var(--gris-pagina)", borderTop: "1px solid var(--gris-borde)" }}>
+          <button onClick={() => narrarSlideVoz(slide.numero, `${slide.titulo}. ${String(slide.contenido).replace(/[\\n]/g, ". ")}`)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
+            style={{
+              background: narratingSlide === slide.numero ? "#ef4444" : "var(--blanco)",
+              color: narratingSlide === slide.numero ? "#fff" : "var(--texto-primario)",
+              border: narratingSlide === slide.numero ? "none" : "1px solid var(--gris-borde)",
+            }}>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path d="M19 10v2a7 7 0 01-14 0v-2" /></svg>
+            {narratingSlide === slide.numero ? "Detener" : "Narrar slide"}
+          </button>
+        </div>
       </div>
       <div className="flex items-center justify-between">
         <button onClick={() => setIdx((p) => Math.max(0, p - 1))} disabled={idx === 0}

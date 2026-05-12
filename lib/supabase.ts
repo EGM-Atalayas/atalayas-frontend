@@ -53,3 +53,22 @@ export async function subirAdjunto(file: File): Promise<{ url: string; nombre: s
   const { data } = client.storage.from("modulos").getPublicUrl(ruta);
   return { url: data.publicUrl, nombre: file.name };
 }
+
+/**
+ * Sube un archivo de audio (MP3) al bucket "modulos" de Supabase Storage
+ * y devuelve la URL pública.
+ */
+export async function subirAudioModulo(audioBlob: Blob): Promise<string> {
+  const client = getClient();
+  const nombre = `${crypto.randomUUID()}.mp3`;
+  const ruta   = `audios/${nombre}`;
+
+  const { error } = await client.storage
+    .from("modulos")
+    .upload(ruta, audioBlob, { contentType: "audio/mpeg", upsert: false });
+
+  if (error) throw new Error(`Error al subir audio: ${error.message}`);
+
+  const { data } = client.storage.from("modulos").getPublicUrl(ruta);
+  return data.publicUrl;
+}
