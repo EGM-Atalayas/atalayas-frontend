@@ -15,6 +15,11 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, LabelList,
+} from "recharts";
+import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse } from "@/lib/api/estadisticas";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import ExcelJS from "exceljs";
 
@@ -72,6 +77,7 @@ interface Usuario {
   departamento: string | null;
   activo: boolean;
   fechaRegistro: string;
+  fechaBaja?: string | null;
 }
 
 export interface NuevoEmpleadoForm {
@@ -105,7 +111,7 @@ function AdminContent() {
   const searchParams = useSearchParams();
   const { usuario } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias">("empleados");
+  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas">("empleados");
 
   const [empleados, setEmpleados] = useState<Usuario[]>([]);
   const [cargandoEmpleados, setCargandoEmpleados] = useState(true);
@@ -133,6 +139,9 @@ function AdminContent() {
   const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
   const [progresoEmpresa, setProgresoEmpresa] = useState<ProgresoEmpleado[]>([]);
   const [cargandoProgreso, setCargandoProgreso] = useState(true);
+
+  const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
+  const [cargandoStats, setCargandoStats] = useState(false);
   const cargarEmpleados = async () => {
     setCargandoEmpleados(true);
     try {
@@ -172,6 +181,7 @@ function AdminContent() {
     if (tab === "formaciones") setActiveTab("formaciones");
     if (tab === "anuncios") setActiveTab("anuncios");
     if (tab === "empleados") setActiveTab("empleados");
+    if (tab === "estadisticas") setActiveTab("estadisticas");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
@@ -181,6 +191,18 @@ function AdminContent() {
       }
     }
   }, [searchParams, formaciones, router]);
+
+  // Calcular estadísticas cuando se activa el tab o cambian los datos
+  useEffect(() => {
+    if (activeTab !== "estadisticas") return;
+    setCargandoStats(true);
+    try {
+      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa);
+      setStatsEmpresa(stats);
+    } finally {
+      setCargandoStats(false);
+    }
+  }, [activeTab, empleados, formaciones, progresoEmpresa]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -542,6 +564,17 @@ function AdminContent() {
         </svg>
       ),
     },
+    {
+      key: "estadisticas" as const,
+      label: "Estadísticas",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
   ];
 
   // Accent colors per modulo tipo for top strip
@@ -585,7 +618,7 @@ function AdminContent() {
         <div className="sm:hidden mb-8">
           <select
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias")}
+            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas")}
             className="w-full rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none"
             style={{
               border: "1px solid var(--gris-borde)",
@@ -596,6 +629,8 @@ function AdminContent() {
             <option value="empleados">Empleados</option>
             <option value="anuncios">Anuncios</option>
             <option value="formaciones">Módulos formativos</option>
+            <option value="incidencias">Incidencias</option>
+            <option value="estadisticas">Estadísticas</option>
           </select>
         </div>
 
@@ -1654,6 +1689,141 @@ function AdminContent() {
         {/* ── TAB INCIDENCIAS ── */}
         {activeTab === "incidencias" && (
           <GestionIncidencias empresaId={usuario?.empresaId} />
+        )}
+
+        {/* ── TAB ESTADÍSTICAS ── */}
+        {activeTab === "estadisticas" && (
+          <div className="animate-fadeIn">
+            {cargandoStats ? (
+              <div className="flex items-center justify-center py-32">
+                <div className="w-8 h-8 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+              </div>
+            ) : !statsEmpresa ? (
+              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
+                No hay datos disponibles aún.
+              </div>
+            ) : (
+              <>
+                {/* ── KPIs ── */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {[
+                    { label: "Total empleados",        value: String(statsEmpresa.kpis.totalEmpleados),          color: "text-blue-600"    },
+                    { label: "Altas este mes",          value: String(statsEmpresa.kpis.altasEsteMes),            color: "text-emerald-600" },
+                    { label: "Tasa de rotación anual",  value: `${statsEmpresa.kpis.tasaRotacion}%`,              color: "text-amber-600"   },
+                    { label: "Completitud formación",   value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`,      color: "text-violet-600"  },
+                    { label: "Sin iniciar formación",   value: String(statsEmpresa.empleadosSinFormacion),        color: "text-red-500"     },
+                    { label: "Formación completada",    value: String(statsEmpresa.empleadosCompletados),         color: "text-emerald-600" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+                      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Incorporaciones y salidas ── */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-1">Incorporaciones y salidas</h2>
+                  <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos 6 meses</p>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={statsEmpresa.movimientoMensual} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}   />
+                          </linearGradient>
+                          <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#F43F5E" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#F43F5E" stopOpacity={0}   />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} allowDecimals={false} />
+                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                        <Legend verticalAlign="top" height={36} iconType="circle" />
+                        <Area type="monotone" name="Altas"  dataKey="altas"  stroke="#3B82F6" strokeWidth={3} fill="url(#gradAltas)" />
+                        <Area type="monotone" name="Bajas"  dataKey="bajas"  stroke="#F43F5E" strokeWidth={3} fill="url(#gradBajas)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* ── Progreso de formación por módulo ── */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
+                  <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
+                  {statsEmpresa.progresoModulos.length === 0 ? (
+                    <p className="text-sm text-slate-400 text-center py-12">Sin módulos con datos de progreso</p>
+                  ) : (
+                    <div style={{ height: Math.max(240, statsEmpresa.progresoModulos.length * 48) }} className="w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsEmpresa.progresoModulos} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                          <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
+                          <YAxis type="category" dataKey="nombre" axisLine={false} tickLine={false}
+                            tick={{ fill: "#64748b", fontSize: 11 }} width={130}
+                            tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + "…" : v} />
+                          <RechartsTooltip
+                            cursor={{ fill: "#f8fafc" }}
+                            contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                            formatter={(v) => [`${v ?? 0}%`, "Completitud"]}
+                          />
+                          <Bar dataKey="porcentaje" radius={[0, 8, 8, 0]} barSize={24}>
+                            {statsEmpresa.progresoModulos.map((entry, i) => (
+                              <Cell
+                                key={`cell-${i}`}
+                                fill={entry.porcentaje >= 80 ? "#10B981" : entry.porcentaje >= 40 ? "#3B82F6" : "#F59E0B"}
+                              />
+                            ))}
+                            <LabelList dataKey="porcentaje" position="right"
+                              style={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                              formatter={(v: unknown) => `${v ?? 0}%`} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Estado de formación de la plantilla ── */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                  <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
+                  <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
+                  <div className="h-[220px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
+                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
+                          ].filter((d) => d.value > 0)}
+                          cx="50%" cy="50%"
+                          innerRadius={60} outerRadius={90}
+                          paddingAngle={4}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {[
+                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
+                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
+                          ].filter((d) => d.value > 0).map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
