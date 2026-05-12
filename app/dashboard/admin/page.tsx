@@ -114,6 +114,12 @@ function AdminContent() {
   const [guardandoEmpleado, setGuardandoEmpleado] = useState(false);
   const [errorEmpleado, setErrorEmpleado] = useState<string | null>(null);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Usuario | null>(null);
+  const [editandoEmpleado, setEditandoEmpleado] = useState(false);
+  const [editEmpleadoForm, setEditEmpleadoForm] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
+
+  const inputImportRef = useRef<HTMLInputElement>(null);
+  const [importando, setImportando] = useState(false);
+  const [importResult, setImportResult] = useState<{ ok: number; errors: string[] } | null>(null);
 
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
@@ -175,6 +181,46 @@ function AdminContent() {
       }
     }
   }, [searchParams, formaciones, router]);
+
+  const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
+
+  const iniciarEditEmpleado = () => {
+    if (!empleadoSeleccionado) return;
+    setEditEmpleadoForm({
+      nombre: empleadoSeleccionado.nombre,
+      apellidos: empleadoSeleccionado.apellidos,
+      email: empleadoSeleccionado.email,
+      password: "",
+      puestoTrabajo: empleadoSeleccionado.puestoTrabajo ?? "",
+      departamento: empleadoSeleccionado.departamento ?? "",
+    });
+    setEditandoEmpleado(true);
+  };
+
+  const handleGuardarEditEmpleado = async () => {
+    if (!empleadoSeleccionado) return;
+    setGuardandoEditEmpleado(true);
+    try {
+      const res = await apiFetch(`${API_URL}/users/${empleadoSeleccionado.usuarioId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: editEmpleadoForm.nombre.trim(),
+          apellidos: editEmpleadoForm.apellidos.trim(),
+          email: editEmpleadoForm.email.trim(),
+          puestoTrabajo: editEmpleadoForm.puestoTrabajo.trim() || null,
+          departamento: editEmpleadoForm.departamento || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? "Error al guardar el empleado");
+      }
+      await cargarEmpleados();
+      setEditandoEmpleado(false);
+    } catch { }
+    finally { setGuardandoEditEmpleado(false); }
+  };
 
   const handleCrearEmpleado = async () => {
     if (!formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()) {
