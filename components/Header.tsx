@@ -308,34 +308,41 @@ export default function Header() {
             <div className="flex-1" />
 
             {/* ── Sección usuario ── */}
-            <div className="px-5 pb-10 flex flex-col gap-1" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+            <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "0 20px" }} />
+            <div className="px-5 pb-10 flex flex-col gap-2">
 
               {/* Tarjeta usuario */}
               <button
                 onClick={() => { cerrarMenu(); router.push(linkPerfil); }}
-                className="w-full flex items-center gap-3 px-4 py-4 mt-4 rounded-2xl text-left"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)" }}
+                className="w-full flex items-center gap-3.5 px-4 py-4 mt-4 rounded-2xl text-left active:scale-[0.98]"
+                style={{
+                  background:   "rgba(255,255,255,0.08)",
+                  border:       "1px solid rgba(255,255,255,0.14)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  transition:   "background 0.15s ease",
+                }}
               >
                 <div className="shrink-0">
                   {usuario?.avatarUrl ? (
                     <img
                       src={usuario.avatarUrl} alt={nombreMostrado}
-                      style={{ width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.22)" }}
+                      style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.30)" }}
                     />
                   ) : (
-                    <div className="rounded-full flex items-center justify-center text-sm font-bold"
-                      style={{ width: "44px", height: "44px", background: "rgba(255,255,255,0.13)", color: "#fff", border: "2px solid rgba(255,255,255,0.22)" }}>
+                    <div className="rounded-full flex items-center justify-center font-bold"
+                      style={{ width: "48px", height: "48px", fontSize: "17px", background: "var(--azul-egm)", color: "#fff", border: "2px solid rgba(255,255,255,0.25)" }}>
                       {initials}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.92)" }}>{nombreMostrado}</p>
-                  <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.38)" }}>
+                  <p className="text-[15px] font-semibold truncate" style={{ color: "#fff" }}>{nombreMostrado}</p>
+                  <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>
                     {isSuperAdmin ? "Administración EGM" : usuario?.nombreEmpresa}
                   </p>
                 </div>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.28)" strokeWidth={2.5} style={{ flexShrink: 0 }}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.35)" strokeWidth={2.5} style={{ flexShrink: 0 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -343,28 +350,34 @@ export default function Header() {
               {/* Configuración */}
               <button
                 onClick={() => { cerrarMenu(); router.push(linkConfiguracion); }}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold uppercase"
-                style={{ color: "rgba(255,255,255,0.50)", borderBottom: "1px solid rgba(255,255,255,0.06)", letterSpacing: "0.07em" }}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl active:bg-white/10"
+                style={{ transition: "background 0.15s ease" }}
               >
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                Configuración
+                <div className="flex items-center justify-center rounded-xl shrink-0"
+                  style={{ width: "36px", height: "36px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                  <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.60)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                </div>
+                <span className="text-sm font-bold uppercase" style={{ color: "rgba(255,255,255,0.60)", letterSpacing: "0.07em" }}>Configuración</span>
               </button>
 
               {/* Cerrar sesión */}
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold uppercase"
-                style={{ color: "#f87171", letterSpacing: "0.07em" }}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl active:bg-red-500/10"
+                style={{ transition: "background 0.15s ease" }}
               >
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                Cerrar sesión
+                <div className="flex items-center justify-center rounded-xl shrink-0"
+                  style={{ width: "36px", height: "36px", background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                  <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#f87171" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                </div>
+                <span className="text-sm font-bold uppercase" style={{ color: "#f87171", letterSpacing: "0.07em" }}>Cerrar sesión</span>
               </button>
             </div>
           </div>
