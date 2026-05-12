@@ -308,7 +308,8 @@ export default function Header() {
             <div className="flex-1" />
 
             {/* ── Sección usuario ── */}
-            <div className="px-5 pb-10 flex flex-col gap-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+            <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "0 20px" }} />
+            <div className="px-5 pb-10 flex flex-col gap-2">
 
               {/* Tarjeta usuario */}
               <button
