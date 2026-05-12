@@ -9,9 +9,10 @@
 
 import { useState } from "react";
 import {
-  ChevronDown, Hand, Building2, Target, Users, Trophy,
-  ClipboardList, CheckSquare, FileText, Megaphone, Sparkles,
+  ChevronDown, Check, Hand, Building2, Target, Users, Trophy,
+  ClipboardList, CheckSquare, FileText, Megaphone,
 } from "lucide-react";
+import { IAButton } from "@/components/ui/IAButton";
 
 // ── Tipos mínimos que necesitamos (deben coincidir con los del padre) ─────────
 interface PreguntaPagina { texto: string; opciones: string[]; correcta: number; }
@@ -367,9 +368,10 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
           </div>
           <div className="text-left">
             <p className="text-sm font-bold" style={{ color: "#15803d" }}>Plantilla de Bienvenida</p>
-            <p className="text-xs" style={{ color: "#22c55e" }}>
+            <p className="text-xs flex items-center gap-1" style={{ color: "#22c55e" }}>
+              {aplicado && <Check className="w-3 h-3 shrink-0" />}
               {aplicado
-                ? "✓ Plantilla aplicada — puedes editar el contenido en las páginas"
+                ? "Plantilla aplicada — puedes editar el contenido en las páginas"
                 : "Genera el manual de incorporación en segundos con secciones predefinidas"}
             </p>
           </div>
@@ -491,17 +493,13 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
             <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
               Se crearán <strong>{seleccionadas.size}</strong> páginas con contenido listo para personalizar.
             </p>
-            <button
-              type="button"
+            <IAButton
+              size="md"
               onClick={handleAplicar}
               disabled={seleccionadas.size === 0}
-              className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-40"
-              style={{ background: "#16a34a", color: "#fff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#16a34a")}
             >
-              <Sparkles className="w-4 h-4" /> Aplicar plantilla
-            </button>
+              Aplicar plantilla
+            </IAButton>
           </div>
         </div>
       )}

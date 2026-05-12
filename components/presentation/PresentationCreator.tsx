@@ -10,6 +10,8 @@
 // ============================================================
 
 import React, { useState, useRef, useCallback } from 'react';
+import { Check, X, Sparkles, AlertTriangle } from 'lucide-react';
+import { IAButton } from '@/components/ui/IAButton';
 import { Slide } from './slides/SlideRenderers';
 import { PresentationViewer } from './PresentationViewer';
 import { useGeneratePresentation } from '../hooks/useGeneratePresentation';
@@ -27,7 +29,7 @@ function StepPills({ step }: { step: number }) {
           key={i}
           className={`${styles.pill} ${i < step ? styles.pillDone : ''} ${i === step ? styles.pillActive : ''}`}
         >
-          {i < step && <span>✓ </span>}
+          {i < step && <Check style={{ width: '10px', height: '10px', display: 'inline', marginRight: '3px' }} />}
           {label}
         </div>
       ))}
@@ -83,7 +85,7 @@ function UploadStep({ onFileReady }: { onFileReady: (file: File | null) => void 
             className={styles.fileChipRemove}
             onClick={(e) => { e.stopPropagation(); setAndNotify(null); }}
           >
-            ✕
+            <X style={{ width: '12px', height: '12px' }} />
           </button>
         </div>
       )}
@@ -124,7 +126,7 @@ function ThemeStep({ selected, onSelect }: { selected: string | null; onSelect: 
               className={`${styles.themeCheck} ${selected === t.id ? styles.themeCheckOn : ''}`}
               style={selected === t.id ? { background: t.color, borderColor: t.color } : {}}
             >
-              {selected === t.id && <span style={{ color: '#fff', fontSize: '10px' }}>✓</span>}
+              {selected === t.id && <Check style={{ width: '10px', height: '10px', color: '#fff' }} />}
             </div>
           </div>
         </div>
@@ -236,7 +238,7 @@ export function PresentationCreator({ moduleTitle = '', onSave }: PresentationCr
       {step === 2 && !loading && (
         <>
           <div className={styles.summary}>
-            <div className={styles.summaryIcon}>📄</div>
+            <div className={styles.summaryIcon}><Sparkles style={{ width: '20px', height: '20px' }} /></div>
             <div>
               <p className={styles.summaryTitle}>{file?.name}</p>
               <p className={styles.summarySub}>
@@ -262,11 +264,11 @@ export function PresentationCreator({ moduleTitle = '', onSave }: PresentationCr
             </div>
           </div>
 
-          {error && <div className={styles.errorMsg}>⚠️ {error}</div>}
+          {error && <div className={styles.errorMsg}><AlertTriangle style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />{error}</div>}
 
-          <button className={styles.btnGenerate} onClick={handleGenerate}>
-            ✨ Generar {numSlides} diapositivas con IA
-          </button>
+          <IAButton size="lg" onClick={handleGenerate} loading={loading} loadingLabel="Generando diapositivas…" style={{ width: '100%', justifyContent: 'center' }}>
+            Generar {numSlides} diapositivas con IA
+          </IAButton>
           <div className={styles.btnRow} style={{ marginTop: '0.75rem' }}>
             <button className={styles.btnSecondary} onClick={() => setStep(1)}>Cambiar estilo</button>
           </div>

@@ -8,6 +8,7 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { descargarCertificado } from "@/lib/certificado";
 import DashboardHero from "@/components/ui/DashboardHero";
+import { Trophy } from "lucide-react";
 
 // ── Helpers (mismo patrón que formacion/page.tsx) ─────────────────────────────
 const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
@@ -165,7 +166,7 @@ export default function OnboardingPage() {
               </p>
               <p className="text-base font-bold leading-snug" style={{ color: "var(--texto-primario)" }}>
                 {todoCompletado
-                  ? "¡Onboarding completado! 🎉"
+                  ? "¡Onboarding completado!"
                   : `${completados} de ${totalModulos} módulos completados`}
               </p>
               <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
@@ -227,7 +228,9 @@ export default function OnboardingPage() {
                 border: "1px solid var(--azul-egm)",
               }}
             >
-              <div className="text-5xl">🎉</div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                <Trophy className="w-8 h-8" />
+              </div>
               <div>
                 <h2 className="text-xl font-extrabold mb-1" style={{ color: "var(--texto-primario)", fontFamily: "var(--font-raleway), sans-serif" }}>
                   ¡Bienvenido/a al equipo!

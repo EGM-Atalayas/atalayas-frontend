@@ -5,6 +5,7 @@
 // ============================================================
 
 import React from 'react';
+import { Check, Star } from 'lucide-react';
 import styles from './SlideRenderers.module.css';
 
 interface Stat { number: string; description: string; }
@@ -47,7 +48,7 @@ export function SlideGreen({ slide }: { slide: Slide }) {
         <ul className={styles.t1List}>
           {(slide.points || []).map((p, i) => (
             <li key={i} className={styles.t1ListItem}>
-              <span className={styles.t1Dot}>✓</span>
+              <span className={styles.t1Dot}><Check className="w-3 h-3" /></span>
               {p}
             </li>
           ))}
@@ -108,7 +109,7 @@ export function SlideGreen({ slide }: { slide: Slide }) {
   if (slide.type === 'closing') {
     return (
       <div className={`${styles.slide} ${styles.t1Closing}`}>
-        <div className={styles.t1Circle}>✓</div>
+        <div className={styles.t1Circle}><Check className="w-8 h-8" /></div>
         <h2 className={styles.t1ClosingTitle}>{slide.title}</h2>
         <p className={styles.t1ClosingBody}>{slide.body}</p>
         <button className={styles.t1Cta}>{slide.cta}</button>
@@ -199,7 +200,7 @@ export function SlideDark({ slide }: { slide: Slide }) {
   if (slide.type === 'closing') {
     return (
       <div className={`${styles.slide} ${styles.t2Closing}`}>
-        <div className={styles.t2Badge}>✓ Completado</div>
+        <div className={styles.t2Badge}><Check className="w-3.5 h-3.5" style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />Completado</div>
         <h2 className={styles.t2ClosingTitle}>{slide.title}</h2>
         <p className={styles.t2ClosingBody}>{slide.body}</p>
         <button className={styles.t2Cta}>{slide.cta}</button>
@@ -295,7 +296,7 @@ export function SlideMinimal({ slide }: { slide: Slide }) {
   if (slide.type === 'closing') {
     return (
       <div className={`${styles.slide} ${styles.t3Closing}`}>
-        <div className={styles.t3BgCheck}>✓</div>
+        <div className={styles.t3BgCheck}><Check className="w-16 h-16" /></div>
         <h2 className={styles.t3ClosingTitle}>{slide.title}</h2>
         <p className={styles.t3ClosingBody}>{slide.body}</p>
         <button className={styles.t3Cta}>{slide.cta}</button>
@@ -327,7 +328,7 @@ export function SlideAmber({ slide }: { slide: Slide }) {
         <ul className={styles.t4List}>
           {(slide.points || []).map((p, i) => (
             <li key={i} className={styles.t4ListItem}>
-              <span className={styles.t4Icon}>✓</span>
+              <span className={styles.t4Icon}><Check className="w-3 h-3" /></span>
               {p}
             </li>
           ))}
@@ -391,7 +392,7 @@ export function SlideAmber({ slide }: { slide: Slide }) {
   if (slide.type === 'closing') {
     return (
       <div className={`${styles.slide} ${styles.t4Closing}`}>
-        <div className={styles.t4Star}>⭐</div>
+        <div className={styles.t4Star}><Star className="w-10 h-10" /></div>
         <h2 className={styles.t4ClosingTitle}>{slide.title}</h2>
         <p className={styles.t4ClosingBody}>{slide.body}</p>
         <button className={styles.t4Cta}>{slide.cta}</button>
