@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import {
-  ChevronDown, Hand, Building2, Target, Users, Trophy,
+  ChevronDown, Check, Hand, Building2, Target, Users, Trophy,
   ClipboardList, CheckSquare, FileText, Megaphone,
 } from "lucide-react";
 import { IAButton } from "@/components/ui/IAButton";
