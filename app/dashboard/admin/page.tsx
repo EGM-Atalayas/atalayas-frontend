@@ -368,18 +368,25 @@ function AdminContent() {
         body: JSON.stringify({
           nombre: editEmpleadoForm.nombre.trim(),
           apellidos: editEmpleadoForm.apellidos.trim(),
-          email: editEmpleadoForm.email.trim(),
+          email: editEmpleadoForm.email.trim() || undefined, // ← si está vacío no lo manda
           puestoTrabajo: editEmpleadoForm.puestoTrabajo.trim() || null,
           departamento: editEmpleadoForm.departamento || null,
         }),
       });
+
+      const data = await res.json();
+      console.log("Respuesta del servidor:", data); // ← ahora verás el error real
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? "Error al guardar el empleado");
+        throw new Error(data.message ?? "Error al guardar el empleado"); // ← usa data, no res.json()
       }
+
       await cargarEmpleados();
       setEditandoEmpleado(false);
-    } catch { }
+    } catch (err) {
+      console.error("Error al guardar empleado:", err); // ← AÑADE
+
+    }
     finally { setGuardandoEditEmpleado(false); }
   };
 
