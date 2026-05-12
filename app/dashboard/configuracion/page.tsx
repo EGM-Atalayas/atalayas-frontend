@@ -209,14 +209,14 @@ export default function ConfiguracionPage() {
 
                 {/* Contraseña actual */}
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <label className={`${labelClass} shrink-0`} style={{ color: "var(--texto-muted)" }}>Contraseña actual</label>
                     {!resetSent ? (
                       <button
                         type="button"
                         onClick={handleSolicitarReset}
                         disabled={resetLoading}
-                        className="text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer text-right"
+                        className="text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer text-right p-0 leading-none"
                         style={{ color: "var(--azul-egm)" }}
                       >
                         {resetLoading ? "Enviando…" : "Recuperar contraseña"}
@@ -325,10 +325,30 @@ export default function ConfiguracionPage() {
                 </p>
               </div>
               <div className="mx-6" style={{ borderBottom: "1px solid var(--gris-borde)" }} />
-              <ToggleRow label="Nuevo módulo disponible"  description="Cuando se publica un nuevo módulo de formación" checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
-              <ToggleRow label="Módulo completado"        description="Confirmación cuando terminas un módulo"         checked={prefs.notifModuloCompletado}  onChange={(v) => updatePref("notifModuloCompletado", v)} />
-              <ToggleRow label="Nuevos comunicados"       description="Cuando tu empresa publica un comunicado"        checked={prefs.notifComunicado}        onChange={(v) => updatePref("notifComunicado", v)} />
-              <ToggleRow label="Recordatorio pendientes"  description="Si tienes notificaciones sin leer"              checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+
+              {/* Superadmin */}
+              {usuario?.codigoRol === "ROLE_ADMIN" && (<>
+                <ToggleRow label="Nueva empresa registrada" description="Cuando una nueva empresa se une a la plataforma"  checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Suscripción por vencer"   description="Cuando la suscripción de una empresa está próxima a expirar" checked={prefs.notifModuloCompletado} onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Empresa inactiva"         description="Cuando una empresa lleva más de 30 días sin actividad" checked={prefs.notifComunicado}     onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Solicitudes pendientes"   description="Cuando hay solicitudes de empresas sin revisar"    checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
+
+              {/* Admin empresa */}
+              {usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" && (<>
+                <ToggleRow label="Nuevo módulo disponible"    description="Cuando se publica un nuevo módulo de formación"       checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Empleado completa módulo"   description="Cuando un empleado de tu empresa termina un módulo"   checked={prefs.notifModuloCompletado}  onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Nuevos comunicados"         description="Cuando recibes un comunicado de la plataforma"        checked={prefs.notifComunicado}        onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Recordatorio pendientes"    description="Si tienes notificaciones sin revisar"                 checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
+
+              {/* Empleado */}
+              {(!usuario?.codigoRol || usuario.codigoRol === "ROLE_EMPLEADO") && (<>
+                <ToggleRow label="Nuevo módulo disponible"  description="Cuando se publica un nuevo módulo de formación" checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Módulo completado"        description="Confirmación cuando terminas un módulo"         checked={prefs.notifModuloCompletado}  onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Nuevos comunicados"       description="Cuando tu empresa publica un comunicado"        checked={prefs.notifComunicado}        onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Recordatorio pendientes"  description="Si tienes notificaciones sin leer"              checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
             </div>
           </section>
         </div>

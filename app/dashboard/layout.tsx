@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
@@ -11,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { usuario, guardarUsuario } = useAuth();
   const [verificando, setVerificando] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   // Verificamos sesión activa contra el endpoint correcto
   useEffect(() => {
@@ -43,12 +44,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [verificando, usuario]);
 
-  // Redirigimos al superadmin a su propio panel — no al dashboard de empresas
+  // Redirigimos al superadmin al panel principal solo si está en la raíz del dashboard
   useEffect(() => {
-    if (!verificando && usuario?.codigoRol === "ROLE_ADMIN") {
+    if (!verificando && usuario?.codigoRol === "ROLE_ADMIN" && pathname === "/dashboard") {
       router.replace("/superadmin");
     }
-  }, [verificando, usuario]);
+  }, [verificando, usuario, pathname]);
 
   // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
@@ -74,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   // Mientras redirige no renderizamos nada
-  if (!usuario || usuario.codigoRol === "INVITADO" || usuario.codigoRol === "ROLE_ADMIN") return null;
+  if (!usuario || usuario.codigoRol === "INVITADO" || (usuario.codigoRol === "ROLE_ADMIN" && pathname === "/dashboard")) return null;
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>

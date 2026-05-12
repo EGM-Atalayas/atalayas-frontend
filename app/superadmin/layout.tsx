@@ -16,7 +16,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   // Solo ROLE_ADMIN puede acceder al panel de superadmin
   React.useEffect(() => {
-    if (usuario !== undefined && usuario?.codigoRol !== "ROLE_ADMIN") {
+    if (usuario !== undefined && usuario !== null && usuario.codigoRol !== "ROLE_ADMIN") {
       router.replace("/dashboard");
     }
   }, [usuario]);
