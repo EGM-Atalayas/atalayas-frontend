@@ -1,6 +1,30 @@
 // src/lib/api/estadisticas.ts
 import { API_URL, apiFetch } from "../api";
 
+// ─── Tipos para admin empresa ─────────────────────────────────────────────────
+
+export interface EstadisticasEmpresaResponse {
+  /** KPIs resumen */
+  kpis: {
+    totalEmpleados: number;
+    altasEsteMes: number;
+    bajasEsteMes: number;
+    tasaRotacion: number;          // % anualizado
+    modulosConProgreso: number;    // módulos con al menos 1 empleado con progreso
+    pctCompletitudGlobal: number;  // % medio de completitud de formación
+  };
+  /** Altas y bajas por mes — últimos 6 meses */
+  movimientoMensual: { mes: string; altas: number; bajas: number }[];
+  /** % de completitud por módulo (todos los empleados) */
+  progresoModulos: { nombre: string; porcentaje: number }[];
+  /** Empleados sin iniciar ningún módulo */
+  empleadosSinFormacion: number;
+  /** Empleados con formación incompleta (> 0 % y < 100 %) */
+  empleadosEnProgreso: number;
+  /** Empleados con toda la formación completada */
+  empleadosCompletados: number;
+}
+
 export interface EstadisticasResponse {
   crecimiento: { mes: string; empleados: number; empresas: number }[];
   sectores:    { nombre: string; valor: number; color: string }[];
@@ -101,5 +125,119 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     crecimiento: conteoCrecimiento,
     sectores: sectores.length ? sectores : [{ nombre: "Sin datos", valor: 1, color: "#CBD5E1" }],
     usuarios: usuariosPorRol.length ? usuariosPorRol : [{ rol: "Sin datos", cantidad: 0, color: "#CBD5E1" }],
+  };
+}
+
+// ─── Estadísticas para Admin Empresa ─────────────────────────────────────────
+// Enfocadas en: incorporaciones/salidas/rotación + progreso de formación
+
+export function getEstadisticasAdminEmpresa(
+  empleados: any[],
+  modulos: any[],
+  progresoEmpresa: import("../types/progreso").ProgresoEmpleado[],
+): EstadisticasEmpresaResponse {
+  const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const hoy   = new Date();
+
+  // ── Ventana de 6 meses ───────────────────────────────────────────────────────
+  const ventana: { anio: number; mes: number; label: string }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    ventana.push({ anio: d.getFullYear(), mes: d.getMonth(), label: MESES[d.getMonth()] });
+  }
+
+  // ── Altas y bajas por mes ────────────────────────────────────────────────────
+  // Altas: fechaRegistro del empleado.
+  // Bajas: campo fechaBaja del backend (se setea al desactivar al usuario).
+  const activos = empleados.filter((e) => e.activo !== false);
+
+  const movimientoMensual = ventana.map(({ anio, mes, label }) => {
+    const altas = empleados.filter((e) => {
+      const f = new Date(e.fechaRegistro ?? e.creadoEn ?? e.createdAt ?? 0);
+      return f.getFullYear() === anio && f.getMonth() === mes;
+    }).length;
+    const bajas = empleados.filter((e) => {
+      if (!e.fechaBaja) return false;
+      const f = new Date(e.fechaBaja);
+      return f.getFullYear() === anio && f.getMonth() === mes;
+    }).length;
+    return { mes: label, altas, bajas };
+  });
+
+  // ── KPIs de rotación ────────────────────────────────────────────────────────
+  const mesActual  = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+  const altasEsteMes = empleados.filter((e) => {
+    const f = new Date(e.fechaRegistro ?? e.creadoEn ?? e.createdAt ?? 0);
+    return f.getFullYear() === anioActual && f.getMonth() === mesActual;
+  }).length;
+  const bajasEsteMes = empleados.filter((e) => {
+    if (!e.fechaBaja) return false;
+    const f = new Date(e.fechaBaja);
+    return f.getFullYear() === anioActual && f.getMonth() === mesActual;
+  }).length;
+  const totalBase  = activos.length || 1;
+  // Tasa de rotación anualizada = (bajas últimos 6 meses / plantilla media) * 2 * 100
+  const bajasTotal = movimientoMensual.reduce((s, m) => s + m.bajas, 0);
+  const tasaRotacion = Math.round((bajasTotal / totalBase) * 2 * 100 * 10) / 10;
+
+  // ── Progreso de formación por módulo ────────────────────────────────────────
+  const totalEmpleados = activos.length || 1;
+
+  const progresoModulos = modulos.slice(0, 8).map((m) => {
+    const mid = m.moduloId ?? m.id ?? "";
+    // Buscamos en progresoEmpresa cuántos tienen ese módulo con porcentaje 100
+    let completados = 0;
+    let sumPct      = 0;
+    let conDatos    = 0;
+    for (const pe of progresoEmpresa) {
+      const pm = pe.modulos.find((x) => x.moduloId === mid);
+      if (pm) {
+        conDatos++;
+        sumPct += pm.porcentaje ?? 0;
+        if ((pm.porcentaje ?? 0) >= 100) completados++;
+      }
+    }
+    const porcentaje = conDatos > 0
+      ? Math.round(sumPct / totalEmpleados)
+      : 0;
+    return { nombre: m.titulo ?? m.nombre ?? "Módulo", porcentaje };
+  });
+
+  // ── Estado de formación de empleados ────────────────────────────────────────
+  let sinFormacion   = 0;
+  let enProgreso     = 0;
+  let completados100 = 0;
+
+  for (const pe of progresoEmpresa) {
+    if (!pe.modulos || pe.modulos.length === 0) { sinFormacion++; continue; }
+    const pctMedio = pe.modulos.reduce((s, m) => s + (m.porcentaje ?? 0), 0) / pe.modulos.length;
+    if (pctMedio === 0)        sinFormacion++;
+    else if (pctMedio >= 100)  completados100++;
+    else                       enProgreso++;
+  }
+  // Empleados sin ningún registro de progreso también cuentan como sin formación
+  const conRegistro = progresoEmpresa.length;
+  sinFormacion += Math.max(0, activos.length - conRegistro);
+
+  // ── KPI de completitud global ────────────────────────────────────────────────
+  const pctCompletitudGlobal = progresoModulos.length
+    ? Math.round(progresoModulos.reduce((s, m) => s + m.porcentaje, 0) / progresoModulos.length)
+    : 0;
+
+  return {
+    kpis: {
+      totalEmpleados:       empleados.length,
+      altasEsteMes,
+      bajasEsteMes,
+      tasaRotacion,
+      modulosConProgreso:   progresoModulos.filter((m) => m.porcentaje > 0).length,
+      pctCompletitudGlobal,
+    },
+    movimientoMensual,
+    progresoModulos,
+    empleadosSinFormacion:  sinFormacion,
+    empleadosEnProgreso:    enProgreso,
+    empleadosCompletados:   completados100,
   };
 }
