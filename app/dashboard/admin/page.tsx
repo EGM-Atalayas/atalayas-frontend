@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -115,44 +115,11 @@ function AdminContent() {
   const [errorEmpleado, setErrorEmpleado] = useState<string | null>(null);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Usuario | null>(null);
   const [editandoEmpleado, setEditandoEmpleado] = useState(false);
-  const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
-  const [editEmpleadoForm, setEditEmpleadoForm] = useState({ nombre: "", apellidos: "", email: "", puestoTrabajo: "", departamento: "" });
+  const [editEmpleadoForm, setEditEmpleadoForm] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
 
-  const iniciarEditEmpleado = () => {
-    if (!empleadoSeleccionado) return;
-    setEditEmpleadoForm({
-      nombre: empleadoSeleccionado.nombre,
-      apellidos: empleadoSeleccionado.apellidos,
-      email: empleadoSeleccionado.email,
-      puestoTrabajo: empleadoSeleccionado.puestoTrabajo ?? "",
-      departamento: empleadoSeleccionado.departamento ?? "",
-    });
-    setEditandoEmpleado(true);
-  };
-
-  const handleGuardarEditEmpleado = async () => {
-    if (!empleadoSeleccionado) return;
-    setGuardandoEditEmpleado(true);
-    try {
-      const res = await apiFetch(`${API_URL}/users/${empleadoSeleccionado.usuarioId}`, {
-        method: "PATCH",
-        body: JSON.stringify(editEmpleadoForm),
-      });
-      if (res.ok) {
-        const updated: Usuario = await res.json();
-        setEmpleados((prev) => prev.map((e) => e.usuarioId === updated.usuarioId ? updated : e));
-        setEmpleadoSeleccionado(updated);
-        setEditandoEmpleado(false);
-        setToast("Empleado actualizado correctamente");
-      } else {
-        const err = await res.json().catch(() => ({ message: "Error al guardar" }));
-        setToast(err.message ?? "Error al guardar los cambios");
-      }
-    } catch {
-      setToast("Error de red al guardar los cambios");
-    }
-    setGuardandoEditEmpleado(false);
-  };
+  const inputImportRef = useRef<HTMLInputElement>(null);
+  const [importando, setImportando] = useState(false);
+  const [importResult, setImportResult] = useState<{ ok: number; errors: string[] } | null>(null);
 
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
@@ -214,6 +181,46 @@ function AdminContent() {
       }
     }
   }, [searchParams, formaciones, router]);
+
+  const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
+
+  const iniciarEditEmpleado = () => {
+    if (!empleadoSeleccionado) return;
+    setEditEmpleadoForm({
+      nombre: empleadoSeleccionado.nombre,
+      apellidos: empleadoSeleccionado.apellidos,
+      email: empleadoSeleccionado.email,
+      password: "",
+      puestoTrabajo: empleadoSeleccionado.puestoTrabajo ?? "",
+      departamento: empleadoSeleccionado.departamento ?? "",
+    });
+    setEditandoEmpleado(true);
+  };
+
+  const handleGuardarEditEmpleado = async () => {
+    if (!empleadoSeleccionado) return;
+    setGuardandoEditEmpleado(true);
+    try {
+      const res = await apiFetch(`${API_URL}/users/${empleadoSeleccionado.usuarioId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: editEmpleadoForm.nombre.trim(),
+          apellidos: editEmpleadoForm.apellidos.trim(),
+          email: editEmpleadoForm.email.trim(),
+          puestoTrabajo: editEmpleadoForm.puestoTrabajo.trim() || null,
+          departamento: editEmpleadoForm.departamento || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? "Error al guardar el empleado");
+      }
+      await cargarEmpleados();
+      setEditandoEmpleado(false);
+    } catch { }
+    finally { setGuardandoEditEmpleado(false); }
+  };
 
   const handleCrearEmpleado = async () => {
     if (!formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()) {
@@ -445,6 +452,53 @@ function AdminContent() {
     window.URL.revokeObjectURL(url);
   };
 
+  const importarEmpleados = async (file: File) => {
+    setImportando(true);
+    setImportResult(null);
+    const errores: string[] = [];
+    let ok = 0;
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const buffer = await file.arrayBuffer();
+      await workbook.xlsx.load(buffer);
+      const worksheet = workbook.worksheets[0];
+      const filas: { rowNum: number; values: string[] }[] = [];
+      worksheet.eachRow((row, rowIdx) => {
+        if (rowIdx === 1) return;
+        const values = (row.values as any[]).slice(1).map((v) => String(v ?? "").trim());
+        if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
+      });
+      for (const { rowNum, values } of filas) {
+        const [nombre, apellidos, email, puesto, dept] = values;
+        if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
+        try {
+          const res = await apiFetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nombre,
+              apellidos: apellidos || "",
+              email,
+              password: "Atalayas123!",
+              empresaId: usuario?.empresaId,
+              rolId: ROL_EMPLEADO_ID,
+              puestoTrabajo: puesto || null,
+              departamento: dept ? DEPARTAMENTOS.find((d) => d.label.toUpperCase() === dept.toUpperCase())?.id ?? dept.toUpperCase() : null,
+            }),
+          });
+          if (res.ok) ok++;
+          else {
+            const err = await res.json().catch(() => ({}));
+            errores.push(`${email}: ${err.message ?? "Error del servidor"}`);
+          }
+        } catch { errores.push(`${email}: Error de conexión`); }
+      }
+    } catch { errores.push("El archivo no es un Excel válido"); }
+    setImportando(false);
+    setImportResult({ ok, errors: errores });
+    await cargarEmpleados();
+  };
+
   const tabs = [
     {
       key: "empleados" as const,
@@ -500,6 +554,7 @@ function AdminContent() {
 
   return (
     <>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .28s ease both}`}</style>
       <DashboardHero
         prefijo="Panel de "
         titulo="Administración"
@@ -558,6 +613,21 @@ function AdminContent() {
                 </p>
               </div>
               <div className="flex gap-3">
+                <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
+                <button
+                  onClick={() => inputImportRef.current?.click()}
+                  disabled={importando}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                  style={{ background: "var(--blanco)", color: "var(--azul-egm)", border: "1.5px solid var(--azul-egm)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--azul-egm-light)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  {importando ? "Importando..." : "Importar Excel"}
+                </button>
                 <button
                   onClick={exportarEmpleadosExcel}
                   disabled={empleados.length === 0}
@@ -1043,6 +1113,47 @@ function AdminContent() {
                     </button>
                   </>
                 )}
+              </div>
+            )}
+
+            {/* Import result notification */}
+            {importResult && (
+              <div className="mt-6 rounded-2xl overflow-hidden fade-up" style={{ border: `1.5px solid ${importResult.errors.length === 0 ? "var(--exito)" : "#fcd34d"}`, background: importResult.errors.length === 0 ? "#f0fdf4" : "#fffbeb" }}>
+                <div className="px-5 py-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
+                    {importResult.errors.length === 0 ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#d97706" }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e" }}>
+                      Importación completada
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#b45309" }}>
+                      {importResult.ok} empleado{importResult.ok !== 1 ? "s" : ""} importado{importResult.ok !== 1 ? "s" : ""} correctamente
+                      {importResult.errors.length > 0 && ` · ${importResult.errors.length} error${importResult.errors.length !== 1 ? "es" : ""}`}
+                    </p>
+                    {importResult.errors.length > 0 && (
+                      <div className="mt-3 flex flex-col gap-1 max-h-24 overflow-y-auto">
+                        {importResult.errors.map((err, i) => (
+                          <p key={i} className="text-xs" style={{ color: "#dc2626" }}>• {err}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => setImportResult(null)}
+                    className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors"
+                    style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e", background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
+                    ×
+                  </button>
+                </div>
               </div>
             )}
           </div>
