@@ -19,7 +19,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, LabelList,
 } from "recharts";
-import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse } from "@/lib/api/estadisticas";
+import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type FiltrosEstadisticas } from "@/lib/api/estadisticas";
+import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import ExcelJS from "exceljs";
 
@@ -142,6 +143,128 @@ function AdminContent() {
 
   const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
   const [cargandoStats, setCargandoStats] = useState(false);
+
+  // Filtros del tab de estadísticas
+  const [statsRango,    setStatsRango]    = useState<3 | 6 | 12>(6);
+  const [statsDpto,     setStatsDpto]     = useState<string | null>(null);
+  const [statsEstado,   setStatsEstado]   = useState<"activos" | "inactivos" | "todos">("activos");
+  const [statsTipoMod,  setStatsTipoMod]  = useState<string | null>(null);
+  // Drill-down: mes seleccionado en el gráfico de movimiento
+  const [drillMes, setDrillMes] = useState<string | null>(null);
+  // Export
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
+  // Visibilidad de secciones (configurable por el admin)
+  const [showKpis,          setShowKpis]          = useState(true);
+  const [showMovimiento,    setShowMovimiento]    = useState(true);
+  const [showProgreso,      setShowProgreso]      = useState(true);
+  const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
+  const [showPersonalizar,  setShowPersonalizar]  = useState(false);
+
+  // Cargar preferencias guardadas
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("egm_admin_stats_prefs");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.rango === 3 || p.rango === 6 || p.rango === 12) setStatsRango(p.rango);
+        if (typeof p.dpto === "string" || p.dpto === null) setStatsDpto(p.dpto);
+        if (p.estado === "activos" || p.estado === "inactivos" || p.estado === "todos") setStatsEstado(p.estado);
+        if (typeof p.tipoMod === "string" || p.tipoMod === null) setStatsTipoMod(p.tipoMod);
+        if (typeof p.showKpis === "boolean") setShowKpis(p.showKpis);
+        if (typeof p.showMovimiento === "boolean") setShowMovimiento(p.showMovimiento);
+        if (typeof p.showProgreso === "boolean") setShowProgreso(p.showProgreso);
+        if (typeof p.showEstadoFormacion === "boolean") setShowEstadoFormacion(p.showEstadoFormacion);
+      }
+    } catch { /* ignorar errores de localStorage */ }
+  }, []);
+
+  // Guardar preferencias cuando cambien
+  useEffect(() => {
+    try {
+      localStorage.setItem("egm_admin_stats_prefs", JSON.stringify({
+        rango: statsRango,
+        dpto: statsDpto,
+        estado: statsEstado,
+        tipoMod: statsTipoMod,
+        showKpis, showMovimiento, showProgreso, showEstadoFormacion,
+      }));
+    } catch { /* ignorar errores de localStorage */ }
+  }, [statsRango, statsDpto, statsEstado, statsTipoMod, showKpis, showMovimiento, showProgreso, showEstadoFormacion]);
+
+  const hayPersonalizacion =
+    !showKpis || !showMovimiento || !showProgreso || !showEstadoFormacion ||
+    statsRango !== 6 || statsDpto !== null || statsEstado !== "activos" || statsTipoMod !== null;
+
+  const resetVistaEstadisticas = () => {
+    setStatsRango(6);
+    setStatsDpto(null);
+    setStatsEstado("activos");
+    setStatsTipoMod(null);
+    setShowKpis(true);
+    setShowMovimiento(true);
+    setShowProgreso(true);
+    setShowEstadoFormacion(true);
+  };
+
+  const handleExportEstadisticas = () => {
+    if (!statsEmpresa) return;
+    const dptoLabel = statsDpto
+      ? (DEPARTAMENTOS.find((d) => d.id === statsDpto)?.label ?? statsDpto)
+      : "Todos";
+    const tipoLabel = statsTipoMod
+      ? ((MODULO_TIPO_LABEL as Record<string, string>)[statsTipoMod] ?? statsTipoMod)
+      : "Todos";
+    const estadoLabel = statsEstado.charAt(0).toUpperCase() + statsEstado.slice(1);
+
+    const sections: StatsSection[] = [
+      {
+        id: "kpis",
+        title: "KPIs resumen",
+        headers: ["Métrica", "Valor"],
+        rows: [
+          ["Total empleados",         statsEmpresa.kpis.totalEmpleados],
+          ["Altas este mes",          statsEmpresa.kpis.altasEsteMes],
+          ["Bajas este mes",          statsEmpresa.kpis.bajasEsteMes],
+          ["Tasa de rotación anual",  `${statsEmpresa.kpis.tasaRotacion}%`],
+          ["Completitud formación",   `${statsEmpresa.kpis.pctCompletitudGlobal}%`],
+          ["Módulos con progreso",    statsEmpresa.kpis.modulosConProgreso],
+          ["Sin iniciar formación",   statsEmpresa.empleadosSinFormacion],
+          ["En progreso formación",   statsEmpresa.empleadosEnProgreso],
+          ["Formación completada",    statsEmpresa.empleadosCompletados],
+        ],
+      },
+      {
+        id: "movimiento",
+        title: "Incorporaciones y salidas por mes",
+        headers: ["Mes", "Altas", "Bajas"],
+        rows: statsEmpresa.movimientoMensual.map((m) => [m.mes, m.altas, m.bajas]),
+      },
+      {
+        id: "progreso_modulos",
+        title: "Progreso por módulo formativo (%)",
+        headers: ["Módulo", "Completitud"],
+        rows: statsEmpresa.progresoModulos.map((m) => [m.nombre, `${m.porcentaje}%`]),
+      },
+      {
+        id: "estado_formacion",
+        title: "Estado de formación de la plantilla",
+        headers: ["Estado", "Empleados"],
+        rows: [
+          ["Sin iniciar", statsEmpresa.empleadosSinFormacion],
+          ["En progreso", statsEmpresa.empleadosEnProgreso],
+          ["Completada",  statsEmpresa.empleadosCompletados],
+        ],
+      },
+    ];
+
+    exportStats(exportFormat, {
+      title: "Estadísticas de Administración de Empresa",
+      subtitle: usuario?.nombreEmpresa ?? undefined,
+      filtros: `Rango: ${statsRango} meses · Dpto: ${dptoLabel} · Estado: ${estadoLabel} · Tipo módulo: ${tipoLabel}`,
+      fileName: `estadisticas-empresa-${new Date().toISOString().split("T")[0]}`,
+      sections,
+    });
+  };
   const cargarEmpleados = async () => {
     setCargandoEmpleados(true);
     try {
@@ -192,17 +315,33 @@ function AdminContent() {
     }
   }, [searchParams, formaciones, router]);
 
-  // Calcular estadísticas cuando se activa el tab o cambian los datos
+  // Calcular estadísticas cuando se activa el tab o cambian los datos / filtros
   useEffect(() => {
     if (activeTab !== "estadisticas") return;
+
+    // Si el dpto guardado ya no existe entre los empleados actuales, resetear
+    if (statsDpto && empleados.length > 0) {
+      const existe = empleados.some((e) => e.departamento === statsDpto);
+      if (!existe) {
+        setStatsDpto(null);
+        return; // el cambio dispara otro render
+      }
+    }
+
     setCargandoStats(true);
     try {
-      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa);
+      const filtros: FiltrosEstadisticas = {
+        rangoMeses:   statsRango,
+        departamento: statsDpto,
+        estado:       statsEstado,
+        tipoModulo:   statsTipoMod,
+      };
+      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
       setStatsEmpresa(stats);
     } finally {
       setCargandoStats(false);
     }
-  }, [activeTab, empleados, formaciones, progresoEmpresa]);
+  }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -1694,6 +1833,185 @@ function AdminContent() {
         {/* ── TAB ESTADÍSTICAS ── */}
         {activeTab === "estadisticas" && (
           <div className="animate-fadeIn">
+            {/* ── Barra de filtros y personalización ── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-3">
+              {/* Rango temporal */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rango</span>
+                <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
+                  {([3, 6, 12] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setStatsRango(n)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                      style={{
+                        background: statsRango === n ? "var(--azul-egm)" : "transparent",
+                        color:      statsRango === n ? "white" : "var(--texto-muted)",
+                      }}
+                    >
+                      {n} meses
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Departamento — opciones derivadas de empleados reales */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dpto.</span>
+                <select
+                  value={statsDpto ?? ""}
+                  onChange={(e) => setStatsDpto(e.target.value === "" ? null : e.target.value)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="">Todos</option>
+                  {(() => {
+                    const presentes = new Set(
+                      empleados.map((e) => e.departamento).filter((d): d is string => !!d)
+                    );
+                    return DEPARTAMENTOS
+                      .filter((d) => presentes.has(d.id))
+                      .map((d) => {
+                        const n = empleados.filter((e) => e.departamento === d.id).length;
+                        return (
+                          <option key={d.id} value={d.id}>
+                            {d.label} ({n})
+                          </option>
+                        );
+                      });
+                  })()}
+                </select>
+              </div>
+
+              {/* Estado del empleado */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
+                <select
+                  value={statsEstado}
+                  onChange={(e) => setStatsEstado(e.target.value as "activos" | "inactivos" | "todos")}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="activos">Activos</option>
+                  <option value="inactivos">Inactivos</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+
+              {/* Tipo de módulo — opciones derivadas de módulos reales */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo módulo</span>
+                <select
+                  value={statsTipoMod ?? ""}
+                  onChange={(e) => setStatsTipoMod(e.target.value === "" ? null : e.target.value)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="">Todos</option>
+                  {(() => {
+                    const tipos = new Set(
+                      formaciones.map((m: any) => m.tipoModulo).filter((t): t is string => !!t)
+                    );
+                    return Array.from(tipos).map((t) => {
+                      const n = formaciones.filter((m: any) => m.tipoModulo === t).length;
+                      const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
+                      return (
+                        <option key={t} value={t}>
+                          {label} ({n})
+                        </option>
+                      );
+                    });
+                  })()}
+                </select>
+              </div>
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Export */}
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                  aria-label="Formato de exportación"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="xml">XML</option>
+                </select>
+                <button
+                  onClick={handleExportEstadisticas}
+                  disabled={!statsEmpresa}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "var(--azul-egm)", color: "white" }}
+                  title="Descargar reporte"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Descargar
+                </button>
+              </div>
+
+              {/* Badge de personalización */}
+              {hayPersonalizacion && (
+                <button
+                  onClick={resetVistaEstadisticas}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  title="Restablecer vista por defecto"
+                >
+                  Restablecer
+                </button>
+              )}
+
+              {/* Botón personalizar */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowPersonalizar((v) => !v)}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{
+                    background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
+                    color:      showPersonalizar ? "white" : "var(--texto-primario)",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                  Personalizar
+                </button>
+
+                {/* Panel desplegable de personalización */}
+                {showPersonalizar && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Mostrar secciones</p>
+                    {[
+                      { label: "KPIs resumen",            value: showKpis,            set: setShowKpis },
+                      { label: "Incorporaciones y salidas", value: showMovimiento,    set: setShowMovimiento },
+                      { label: "Progreso por módulo",     value: showProgreso,        set: setShowProgreso },
+                      { label: "Estado de formación",     value: showEstadoFormacion, set: setShowEstadoFormacion },
+                    ].map(({ label, value, set }) => (
+                      <label key={label} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2">
+                        <input
+                          type="checkbox"
+                          checked={value}
+                          onChange={(e) => set(e.target.checked)}
+                          className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-700">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {cargandoStats ? (
               <div className="flex items-center justify-center py-32">
                 <div className="w-8 h-8 border-2 rounded-full animate-spin"
@@ -1703,9 +2021,21 @@ function AdminContent() {
               <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
                 No hay datos disponibles aún.
               </div>
+            ) : !showKpis && !showMovimiento && !showProgreso && !showEstadoFormacion ? (
+              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
+                <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
+                <button
+                  onClick={resetVistaEstadisticas}
+                  className="text-xs font-semibold px-4 py-2 rounded-lg"
+                  style={{ background: "var(--azul-egm)", color: "white" }}
+                >
+                  Restablecer vista
+                </button>
+              </div>
             ) : (
               <>
                 {/* ── KPIs ── */}
+                {showKpis && (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   {[
                     { label: "Total empleados",        value: String(statsEmpresa.kpis.totalEmpleados),          color: "text-blue-600"    },
@@ -1721,14 +2051,27 @@ function AdminContent() {
                     </div>
                   ))}
                 </div>
+                )}
 
                 {/* ── Incorporaciones y salidas ── */}
+                {showMovimiento && (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-                  <h2 className="text-lg font-bold text-slate-800 mb-1">Incorporaciones y salidas</h2>
-                  <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos 6 meses</p>
+                  <div className="flex items-start justify-between mb-1">
+                    <h2 className="text-lg font-bold text-slate-800">Incorporaciones y salidas</h2>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Clic en un mes para ver detalle</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos {statsRango} meses{statsDpto ? ` · Dpto. ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : ""}</p>
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={statsEmpresa.movimientoMensual} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <AreaChart
+                        data={statsEmpresa.movimientoMensual}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        onClick={(e: any) => {
+                          const label = e?.activeLabel as string | undefined;
+                          if (label) setDrillMes(label);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <defs>
                           <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
@@ -1750,8 +2093,10 @@ function AdminContent() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+                )}
 
                 {/* ── Progreso de formación por módulo ── */}
+                {showProgreso && (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
                   <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
                   <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
@@ -1787,8 +2132,10 @@ function AdminContent() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* ── Estado de formación de la plantilla ── */}
+                {showEstadoFormacion && (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                   <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
                   <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
@@ -1821,6 +2168,7 @@ function AdminContent() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+                )}
               </>
             )}
           </div>
@@ -1828,6 +2176,108 @@ function AdminContent() {
       </div>
 
 
+
+      {/* ── Modal de drill-down de mes ── */}
+      {drillMes && (() => {
+        const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+        const mesIdx = MESES.indexOf(drillMes);
+        // Recorremos la ventana ya construida para localizar año + mes
+        const hoy = new Date();
+        let anioMes = hoy.getFullYear();
+        for (let i = statsRango - 1; i >= 0; i--) {
+          const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+          if (MESES[d.getMonth()] === drillMes) {
+            anioMes = d.getFullYear();
+            break;
+          }
+        }
+        // Recolectar empleados con altas y bajas en ese mes (respetando filtros activos)
+        let empFiltrados = empleados;
+        if (statsEstado === "activos")  empFiltrados = empFiltrados.filter((e) => e.activo !== false);
+        if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
+        if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
+
+        const altasDelMes = empFiltrados.filter((e) => {
+          const f = new Date(e.fechaRegistro ?? 0);
+          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+        });
+        const bajasDelMes = empFiltrados.filter((e) => {
+          if (!e.fechaBaja) return false;
+          const f = new Date(e.fechaBaja);
+          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+        });
+
+        return (
+          <div
+            className="fixed inset-0 z-100 flex items-center justify-center p-4"
+            style={{ background: "rgba(15, 25, 35, 0.55)", backdropFilter: "blur(2px)" }}
+            onClick={() => setDrillMes(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            >
+              <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle del mes</p>
+                  <h3 className="text-xl font-bold text-slate-800">{drillMes} {anioMes}</h3>
+                </div>
+                <button
+                  onClick={() => setDrillMes(null)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
+                  aria-label="Cerrar"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-6 space-y-6">
+                {/* Altas */}
+                <div>
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h4 className="text-sm font-bold text-slate-800">Altas</h4>
+                    <span className="text-xs font-semibold text-blue-600">{altasDelMes.length}</span>
+                  </div>
+                  {altasDelMes.length === 0 ? (
+                    <p className="text-xs text-slate-400">Sin incorporaciones este mes</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {altasDelMes.map((e) => (
+                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-blue-50/50 text-sm">
+                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
+                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Bajas */}
+                <div>
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h4 className="text-sm font-bold text-slate-800">Bajas</h4>
+                    <span className="text-xs font-semibold text-rose-600">{bajasDelMes.length}</span>
+                  </div>
+                  {bajasDelMes.length === 0 ? (
+                    <p className="text-xs text-slate-400">Sin salidas este mes</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {bajasDelMes.map((e) => (
+                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-rose-50/50 text-sm">
+                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
+                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Toast */}
       {toast && (

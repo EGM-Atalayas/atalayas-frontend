@@ -131,17 +131,60 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
 // ─── Estadísticas para Admin Empresa ─────────────────────────────────────────
 // Enfocadas en: incorporaciones/salidas/rotación + progreso de formación
 
+export interface FiltrosEstadisticas {
+  /** Nº de meses a mostrar en gráficos de evolución (3, 6, 12) */
+  rangoMeses?: 3 | 6 | 12;
+  /** Filtrar empleados por departamento. null = todos */
+  departamento?: string | null;
+  /** Filtrar empleados por estado. "todos" por defecto */
+  estado?: "activos" | "inactivos" | "todos";
+  /** Filtrar módulos por tipo (ej: "ONBOARDING"). null = todos */
+  tipoModulo?: string | null;
+}
+
 export function getEstadisticasAdminEmpresa(
   empleados: any[],
   modulos: any[],
   progresoEmpresa: import("../types/progreso").ProgresoEmpleado[],
+  filtros: FiltrosEstadisticas = {},
 ): EstadisticasEmpresaResponse {
   const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const hoy   = new Date();
+  const rangoMeses = filtros.rangoMeses ?? 6;
 
-  // ── Ventana de 6 meses ───────────────────────────────────────────────────────
+  // Aplicar filtro de estado
+  if (filtros.estado === "activos") {
+    empleados = empleados.filter((e) => e.activo !== false);
+  } else if (filtros.estado === "inactivos") {
+    empleados = empleados.filter((e) => e.activo === false);
+  }
+  // (si es "todos" o undefined, no se filtra)
+
+  // Aplicar filtro de departamento
+  if (filtros.departamento) {
+    empleados = empleados.filter((e) => e.departamento === filtros.departamento);
+  }
+
+  // Sincronizar progresoEmpresa con los empleados filtrados
+  if (filtros.estado || filtros.departamento) {
+    const ids = new Set(empleados.map((e) => e.usuarioId));
+    progresoEmpresa = progresoEmpresa.filter((p) => ids.has(p.usuarioId));
+  }
+
+  // Aplicar filtro de tipo de módulo
+  if (filtros.tipoModulo) {
+    modulos = modulos.filter((m) => m.tipoModulo === filtros.tipoModulo);
+    // Filtrar el progreso de cada empleado para que solo cuente módulos del tipo
+    const idsModulos = new Set(modulos.map((m: any) => m.moduloId ?? m.id));
+    progresoEmpresa = progresoEmpresa.map((p) => ({
+      ...p,
+      modulos: (p.modulos ?? []).filter((m) => idsModulos.has(m.moduloId)),
+    }));
+  }
+
+  // ── Ventana temporal ────────────────────────────────────────────────────────
   const ventana: { anio: number; mes: number; label: string }[] = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = rangoMeses - 1; i >= 0; i--) {
     const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
     ventana.push({ anio: d.getFullYear(), mes: d.getMonth(), label: MESES[d.getMonth()] });
   }
@@ -177,9 +220,10 @@ export function getEstadisticasAdminEmpresa(
     return f.getFullYear() === anioActual && f.getMonth() === mesActual;
   }).length;
   const totalBase  = activos.length || 1;
-  // Tasa de rotación anualizada = (bajas últimos 6 meses / plantilla media) * 2 * 100
-  const bajasTotal = movimientoMensual.reduce((s, m) => s + m.bajas, 0);
-  const tasaRotacion = Math.round((bajasTotal / totalBase) * 2 * 100 * 10) / 10;
+  // Tasa de rotación anualizada en función del rango elegido
+  const bajasTotal   = movimientoMensual.reduce((s, m) => s + m.bajas, 0);
+  const factorAnual  = 12 / rangoMeses;
+  const tasaRotacion = Math.round((bajasTotal / totalBase) * factorAnual * 100 * 10) / 10;
 
   // ── Progreso de formación por módulo ────────────────────────────────────────
   const totalEmpleados = activos.length || 1;
