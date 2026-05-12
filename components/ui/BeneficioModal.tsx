@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Beneficio, BeneficioInput } from "@/lib/types/beneficios";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { ICONOS_BENEFICIO } from "@/lib/iconosBeneficio";
 import Grainient from "@/components/ui/Grainient";
 
@@ -22,51 +23,9 @@ const estiloInput = (foco: boolean) => ({
   borderColor:  foco ? "var(--azul-egm)"         : "rgba(0,0,0,0.12)",
   boxShadow:    foco ? "0 0 0 3px rgba(22,50,105,0.08)" : "none",
   background:   "#ffffff",
-  color:        "#111827",
+  color:        "var(--texto-primario)",
 });
 
-// ── Botón cerrar — fusión chatbot + notis ────────────────────────────────────
-function CloseButton({ onClick }: { onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setPressed(false); }}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      aria-label="Cerrar"
-      style={{
-        width:          "38px",
-        height:         "38px",
-        borderRadius:   "11px",
-        border:         "1px solid rgba(255,255,255,0.28)",
-        cursor:         "pointer",
-        display:        "flex",
-        alignItems:     "center",
-        justifyContent: "center",
-        background:     pressed
-          ? "rgba(0,0,0,0.28)"
-          : hovered
-          ? "rgba(0,0,0,0.20)"
-          : "rgba(255,255,255,0.14)",
-        color:          pressed ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.90)",
-        boxShadow:      hovered && !pressed
-          ? "0 4px 14px rgba(0,0,0,0.30), 0 0 0 3px rgba(0,0,0,0.12)"
-          : "0 2px 6px rgba(0,0,0,0.18)",
-        transform:      pressed ? "scale(0.88)" : hovered ? "scale(1.10)" : "scale(1)",
-        transition:     "background 0.15s ease, box-shadow 0.18s cubic-bezier(0.34,1.20,0.64,1), transform 0.18s cubic-bezier(0.34,1.20,0.64,1)",
-        flexShrink:     0,
-      }}
-    >
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  );
-}
 
 // ── Selector de icono predefinido (dropdown) ─────────────────────────────────
 function IconoPicker({ value, onChange }: { value: string; onChange: (key: string) => void }) {
@@ -101,12 +60,12 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
 
       {/* Label */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold" style={{ color: "#374151" }}>
+        <span className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
           Icono
         </span>
         {value && !open && (
           <button type="button" onClick={() => onChange("")}
-            className="text-[11px]" style={{ color: "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            className="text-[11px]" style={{ color: "var(--texto-placeholder)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             Quitar
           </button>
         )}
@@ -137,13 +96,13 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
                 {selected.svg}
               </span>
             </span>
-            <span className="flex-1 font-medium text-sm" style={{ color: "#111827" }}>{selected.label}</span>
+            <span className="flex-1 font-medium text-sm" style={{ color: "var(--texto-primario)" }}>{selected.label}</span>
           </>
         ) : (
-          <span className="flex-1 text-sm" style={{ color: "#9ca3af" }}>Seleccionar icono</span>
+          <span className="flex-1 text-sm" style={{ color: "var(--texto-placeholder)" }}>Seleccionar icono</span>
         )}
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}
-          style={{ color: "#9ca3af", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}>
+          style={{ color: "var(--texto-placeholder)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -182,12 +141,12 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
                     borderRadius:   "10px",
                     border:         sel ? "2px solid var(--azul-egm)" : "2px solid transparent",
                     background:     sel ? "var(--azul-egm-light)" : "transparent",
-                    color:          sel ? "var(--azul-egm)" : "#6b7280",
+                    color:          sel ? "var(--azul-egm)" : "var(--texto-muted)",
                     cursor:         "pointer",
                     transition:     "background 0.12s ease, color 0.12s ease, border-color 0.12s ease",
                   }}
                   onMouseEnter={(e) => { if (!sel) { e.currentTarget.style.background = "rgba(27,63,126,0.07)"; e.currentTarget.style.color = "var(--azul-egm)"; }}}
-                  onMouseLeave={(e) => { if (!sel) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6b7280"; }}}
+                  onMouseLeave={(e) => { if (!sel) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}}
                 >
                   {icono.svg}
                 </button>
@@ -282,7 +241,7 @@ function Campo({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <label htmlFor={name} className="text-sm font-semibold" style={{ color: "#374151" }}>
+        <label htmlFor={name} className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
           {label}
           {required && (
             <span title="Obligatorio" className="ml-0.5 cursor-default" style={{ color: "#ef4444" }}>*</span>
@@ -298,7 +257,7 @@ function Campo({
           {/* Botón limpiar */}
           {onClear && value && (
             <button type="button" onClick={onClear}
-              className="text-xs" style={{ color: "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+              className="text-xs" style={{ color: "var(--texto-placeholder)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               Quitar
             </button>
           )}
@@ -326,7 +285,7 @@ function Campo({
       )}
       {/* Hint bajo el campo */}
       {hint && (
-        <p className="text-xs" style={{ color: "#9ca3af" }}>{hint}</p>
+        <p className="text-xs" style={{ color: "var(--texto-placeholder)" }}>{hint}</p>
       )}
     </div>
   );
@@ -468,7 +427,7 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
           left:         "50%",
           transform:    "translateX(-50%)",
           zIndex:       99999,
-          background:   "#111827",
+          background:   "var(--texto-primario)",
           color:        "#ffffff",
           borderRadius: "14px",
           padding:      "12px 20px",
@@ -494,13 +453,13 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
       ref={overlayRef}
       onClick={onOverlayClick}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.45)" }}
+      style={{ background: "var(--overlay)" }}
     >
       <div
         ref={panelRef}
         className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
         style={{
-          background:  "#f9fafb",
+          background:  "var(--gris-panel)",
           maxHeight:   "92dvh",
           boxShadow:   "0 24px 56px rgba(0,0,0,0.18)",
         }}
@@ -533,7 +492,7 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
             {editando ? "Editar ventaja" : "Nueva ventaja"}
           </h2>
           <div style={{ position: "relative", zIndex: 1 }}>
-            <CloseButton onClick={confirmSalir ? onCerrar : cerrarSeguro} />
+            <IconButton onClick={confirmSalir ? onCerrar : cerrarSeguro} variant="glass" />
           </div>
         </div>
 

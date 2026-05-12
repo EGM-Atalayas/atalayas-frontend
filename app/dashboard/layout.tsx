@@ -43,6 +43,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [verificando, usuario]);
 
+  // Redirigimos al superadmin a su propio panel — no al dashboard de empresas
+  useEffect(() => {
+    if (!verificando && usuario?.codigoRol === "ROLE_ADMIN") {
+      router.replace("/superadmin");
+    }
+  }, [verificando, usuario]);
+
   // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
     return (
@@ -55,7 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="w-7 h-7 border-2 rounded-full animate-spin"
             style={{
               borderColor:    "var(--gris-borde)",
-              borderTopColor: "var(--verde-oliva)",
+              borderTopColor: "var(--lima)",
             }}
           />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -66,8 +73,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Mientras redirige al invitado no renderizamos nada
-  if (!usuario || usuario.codigoRol === "INVITADO") return null;
+  // Mientras redirige no renderizamos nada
+  if (!usuario || usuario.codigoRol === "INVITADO" || usuario.codigoRol === "ROLE_ADMIN") return null;
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>

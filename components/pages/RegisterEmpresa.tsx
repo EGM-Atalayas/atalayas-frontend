@@ -145,7 +145,7 @@ const RegisterEmpresa: React.FC = () => {
     color:      "#0f1923",
   };
   const inputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = "#1B3F7E";
+    e.target.style.borderColor = "var(--azul-egm)";
     e.target.style.boxShadow   = "0 0 0 3px rgba(27,63,126,0.08)";
   };
   const inputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -175,7 +175,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso1 = () => (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Tu empresa
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al área empresarial de Atalayas.</p>
@@ -258,7 +258,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso2 = () => (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Administrador
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Crea la cuenta con la que gestionarás tu empresa.</p>
@@ -311,7 +311,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso3 = () => (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Verifica tus datos
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Revisa la información antes de enviar la solicitud.</p>
@@ -319,7 +319,7 @@ const RegisterEmpresa: React.FC = () => {
 
       {/* Sección Empresa */}
       <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: "#1B3F7E" }}>Datos de la Empresa</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos de la Empresa</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p style={{ color: "#6B7A8D" }}>Nombre de empresa</p>
@@ -348,7 +348,7 @@ const RegisterEmpresa: React.FC = () => {
 
       {/* Sección Administrador */}
       <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: "#1B3F7E" }}>Datos del Administrador</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos del Administrador</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p style={{ color: "#6B7A8D" }}>Nombre</p>
@@ -374,10 +374,10 @@ const RegisterEmpresa: React.FC = () => {
             checked={aceptarTerminos}
             onChange={(e) => setAceptarTerminos(e.target.checked)}
             className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
-            style={{ accentColor: "#1B3F7E" }}
+            style={{ accentColor: "var(--azul-egm)" }}
           />
           <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarTerminos(!aceptarTerminos)}>
-            He leído y acepto los <Link href="/terminos" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "#1B3F7E", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Términos y Condiciones</Link> de uso de la plataforma Atalayas.
+            He leído y acepto los <Link href="/terminos" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Términos y Condiciones</Link> de uso de la plataforma Atalayas.
           </label>
         </div>
 
@@ -388,10 +388,10 @@ const RegisterEmpresa: React.FC = () => {
             checked={aceptarPrivacidad}
             onChange={(e) => setAceptarPrivacidad(e.target.checked)}
             className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
-            style={{ accentColor: "#1B3F7E" }}
+            style={{ accentColor: "var(--azul-egm)" }}
           />
           <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarPrivacidad(!aceptarPrivacidad)}>
-            He leído y acepto la <Link href="/privacidad" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "#1B3F7E", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Política de Privacidad</Link> relativa al tratamiento de mis datos personales.
+            He leído y acepto la <Link href="/privacidad" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Política de Privacidad</Link> relativa al tratamiento de mis datos personales.
           </label>
         </div>
       </div>
@@ -408,7 +408,7 @@ const RegisterEmpresa: React.FC = () => {
           style={{
             background: "rgba(27,63,126,0.1)",
             border: "1px solid rgba(27,63,126,0.22)",
-            color: "#1B3F7E",
+            color: "var(--azul-egm)",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.15)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.1)"; }}
@@ -440,10 +440,10 @@ const RegisterEmpresa: React.FC = () => {
     <div className="flex flex-col items-center justify-center gap-6 text-center py-10">
       <div className="w-20 h-20 rounded-full flex items-center justify-center"
         style={{ background: "rgba(27,63,126,0.08)" }}>
-        <FaCheckCircle className="text-4xl" style={{ color: "#1B3F7E" }} />
+        <FaCheckCircle className="text-4xl" style={{ color: "var(--azul-egm)" }} />
       </div>
       <div>
-        <h2 className="text-2xl font-bold mb-2" style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif" }}>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif" }}>
           ¡Solicitud enviada!
         </h2>
         <p className="text-sm max-w-sm leading-relaxed" style={{ color: "#6B7A8D" }}>
@@ -534,9 +534,9 @@ const RegisterEmpresa: React.FC = () => {
           {paso < 3 && (
             <button onClick={prevStep}
               className="flex items-center gap-1.5 text-sm mb-6 transition-colors cursor-pointer"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+              style={{ color: "var(--azul-egm)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
             >
               <FiChevronLeft size={15} />
               Volver
@@ -562,9 +562,9 @@ const RegisterEmpresa: React.FC = () => {
             <div className="text-center mt-4">
               <p className="text-sm" style={{ color: "#6B7A8D" }}>
                 ¿Ya tienes cuenta?{" "}
-                <Link href="/login" className="font-medium transition-colors" style={{ color: "#1B3F7E" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+                <Link href="/login" className="font-medium transition-colors" style={{ color: "var(--azul-egm)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
                 >
                   Iniciar sesión
                 </Link>

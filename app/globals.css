@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* ── IAButton — star border animations ──────────────────────────────────────── */
+@keyframes star-movement-bottom {
+  0%   { transform: translate(0%, 0%);     opacity: 1; }
+  80%  {                                   opacity: 1; }
+  100% { transform: translate(-100%, 0%);  opacity: 0; }
+}
+@keyframes star-movement-top {
+  0%   { transform: translate(0%, 0%);    opacity: 1; }
+  80%  {                                  opacity: 1; }
+  100% { transform: translate(100%, 0%);  opacity: 0; }
+}
+.animate-star-bottom {
+  animation: star-movement-bottom linear infinite;
+}
+.animate-star-top {
+  animation: star-movement-top linear infinite;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 /* Ocultar scrollbar nativo */
 html,
 body,
@@ -16,32 +35,122 @@ body::-webkit-scrollbar,
 }
 
 :root {
-  --azul-egm: #1B3F7E;
-  --azul-egm-hover: #2A5298;
-  --azul-egm-light: #E8EEF8;
-  --azul-accion: #2563EB;
-  --azul-accion-hover: #1D4ED8;
-  --azul-accion-light: #EFF6FF;
-  --verde-oliva: #8B9A2D;
-  --verde-oliva-hover: #A3B535;
-  --verde-oliva-light: #EEF2D0;
-  --marino: #0D1B2E;
-  --marino-hover: #152540;
-  --blanco: #FFFFFF;
-  --gris-pagina: #F5F6F8;
-  --gris-superficie: #EDEEF1;
-  --gris-borde: #C8CDD8;
-  --texto-primario: #0F1923;
+  /* ════════════════════════════════════════════
+     MARCA PRINCIPAL
+  ════════════════════════════════════════════ */
+
+  /* Azul EGM */
+  --azul-egm:         #1B3F7E;
+  --azul-egm-hover:   #2A5298;
+  --azul-egm-profundo:#1040A0;
+  --azul-egm-light:   #E8EEF8;
+
+  /* Azul acción (tabs, formularios, noticias) */
+  --azul-accion:      #2563EB;
+  --azul-accion-hover:#1D4ED8;
+  --azul-accion-light:#EFF6FF;
+
+  /* Lima — color de acento de marca (badges, eyebrow, highlights) */
+  --lima:             #9DC429;
+  --lima-hover:       #B8C94A;
+  --lima-light:       #EEF2D0;
+
+  /* Verde oliva — formaciones, módulos, comunicados */
+  --verde-oliva:      #8B9A2D;
+  --verde-oliva-hover:#A3B535;
+  --verde-oliva-light:#EEF2D0;
+
+  /* Marino oscuro */
+  --marino:           #0D1B2E;
+
+  /* ════════════════════════════════════════════
+     SUPERFICIES
+  ════════════════════════════════════════════ */
+  --blanco:           #FFFFFF;
+  --gris-pagina:      #F4F5F7;
+  --gris-panel:       #F9FAFB;
+  --gris-superficie:  #EDEEF1;
+  --gris-borde:       #C8CDD8;               /* border visible — inputs, forms, cards */
+  --surface-border:   rgba(0, 0, 0, 0.08);   /* border sutil — dividers, secciones   */
+
+  /* ════════════════════════════════════════════
+     TEXTO
+  ════════════════════════════════════════════ */
+  --texto-primario:   #0F1923;
   --texto-secundario: #3D4A5C;
-  --texto-muted: #6B7A8D;
-  --exito: #2D7D4E;
-  --exito-light: #D4EDDA;
-  --error: #C84B31;
-  --error-light: #FDECEA;
-  --advertencia: #B07D1A;
-  --advertencia-light: #FFF3CD;
-  --info: #5B7FA6;
-  --info-light: #E3ECF5;
+  --texto-muted:      #6B7A8D;
+  --texto-label:      #374151;
+  --texto-placeholder:#9CA3AF;
+
+  /* ════════════════════════════════════════════
+     ESTADOS SEMÁNTICOS
+  ════════════════════════════════════════════ */
+  --exito:            #2D8653;
+  --exito-light:      #E8F5EE;
+  --error:            #C0392B;
+  --error-light:      #FDECEA;
+  --advertencia:      #D97706;
+  --advertencia-light:#FEF3E2;
+  --info:             #1B3F7E;
+  --info-light:       #E8EEF8;
+
+  /* ════════════════════════════════════════════
+     IA (índigo)
+  ════════════════════════════════════════════ */
+  --ia:               #4F46E5;
+  --ia-hover:         #4338CA;
+  --ia-light:         #EEF2FF;
+  --ia-glow:          rgba(79, 70, 229, 0.18);
+  --ia-usuario:       #1E40AF;
+
+  /* ════════════════════════════════════════════
+     OVERLAY
+  ════════════════════════════════════════════ */
+  --overlay:          rgba(0, 0, 0, 0.45);
+
+  /* ════════════════════════════════════════════
+     RADIOS DE BORDE
+  ════════════════════════════════════════════ */
+  --radius-sm:        8px;    /* badges, inputs, tooltips        */
+  --radius-md:        12px;   /* botones, items de lista         */
+  --radius-lg:        16px;   /* cards, paneles                  */
+  --radius-xl:        24px;   /* modales                         */
+  --radius-full:      50%;    /* avatares, dots                  */
+
+  /* Aliases semánticos (compatibilidad interna) */
+  --radius-btn:       var(--radius-md);
+  --radius-card:      var(--radius-lg);
+  --radius-modal:     var(--radius-xl);
+
+  /* ════════════════════════════════════════════
+     DURACIONES
+  ════════════════════════════════════════════ */
+  --dur-fast:         150ms;
+  --dur-medium:       250ms;
+  --dur-slow:         400ms;
+
+  /* ════════════════════════════════════════════
+     EASINGS
+  ════════════════════════════════════════════ */
+  --ease-spring:      cubic-bezier(0.34, 1.20, 0.64, 1);
+  --ease-out:         cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Card base ────────────────────────────────────────────────────────────── */
+.card {
+  background:    var(--blanco);
+  border-radius: var(--radius-card);
+  border:        1px solid var(--surface-border);
+  box-shadow:    0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card-hover {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.card-hover:hover {
+  box-shadow:   0 4px 16px rgba(0, 0, 0, 0.10);
+  border-color: var(--gris-superficie);
 }
 
 /* ── Disponibilidad dropdown ──────────────────────────────────────────────── */
@@ -71,12 +180,11 @@ body::-webkit-scrollbar,
 
 /* ── Liquid Glass ─────────────────────────────────────────────────────────── */
 .liquid-glass {
-  background: rgba(255, 255, 255, 0.01);
-  background-blend-mode: luminosity;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18), 0 4px 24px rgba(0, 0, 0, 0.12);
   position: relative;
 }
 
@@ -151,17 +259,8 @@ body::-webkit-scrollbar,
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -169,12 +268,6 @@ body::-webkit-scrollbar,
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
-}
-
-/* ── Hero animations (compartidas entre DashboardHero, perfil, homes) ───────── */
-@keyframes heroFadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes gradientShift {

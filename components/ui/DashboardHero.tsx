@@ -151,7 +151,7 @@ export default function DashboardHero({
               fontWeight:    500,
               color:         "rgba(255,255,255,0.68)",
               letterSpacing: "0.02em",
-              animation:     "heroFadeUp 0.6s ease both",
+              animation:     "fade-rise 0.6s ease both",
             }}
           >
             <span
@@ -168,7 +168,7 @@ export default function DashboardHero({
         )}
 
         {/* Prefijo + Título */}
-        <div style={{ animation: "heroFadeUp 0.7s ease 0.1s both" }}>
+        <div style={{ animation: "fade-rise 0.7s ease 0.1s both" }}>
           <div className="leading-tight flex flex-wrap items-baseline gap-x-3 gap-y-1">
 
             {prefijo && (

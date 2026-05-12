@@ -371,7 +371,7 @@ export default function FormAnuncio({
   const [tab, setTab]         = useState<Tab>("contenido");
   const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<NoticiaInput>({ ...EMPTY_FORM, ...initialValues });
+  const [form, setForm]       = useState<NoticiaInput>({ ...EMPTY_FORM, ...initialValues, imagenUrl: initialValues.imagenUrl ?? null });
   const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
   const isDirty   = JSON.stringify(form) !== initialSnapshot.current;
   const canSubmit = form.titulo.trim().length > 0 && form.contenido.trim().length > 0;
@@ -675,7 +675,7 @@ export default function FormAnuncio({
               />
               {imagenModo === "url" ? (
                 <>
-                  <input type="url" value={form.imagenUrl || ""}
+                  <input type="url" value={form.imagenUrl ?? ""}
                     onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
                     placeholder="https://..."
                     className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
