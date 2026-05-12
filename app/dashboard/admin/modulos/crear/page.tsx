@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { IAButton } from "@/components/ui/IAButton";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -702,14 +703,9 @@ export default function CrearModuloPage() {
                   ← Volver
                 </Link>
                 {!editId && (
-                  <button type="button" onClick={() => setMostrarIA(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-                    style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", boxShadow: "0 2px 10px rgba(124,58,237,0.25)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9" }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1" }}>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>
+                  <IAButton size="sm" onClick={() => setMostrarIA(true)}>
                     Crear con IA
-                  </button>
+                  </IAButton>
                 )}
               </div>
               <div>
@@ -1391,20 +1387,15 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}>
                     Cancelar
                   </button>
-                  <button type="button" onClick={generarModuloConIA} disabled={generandoIA || !promptIA.trim()}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all"
-                    style={{
-                      background: generandoIA ? "var(--gris-superficie)" : "linear-gradient(135deg,#7c3aed,#a855f7)",
-                      color: generandoIA ? "var(--texto-muted)" : "#fff",
-                      cursor: generandoIA || !promptIA.trim() ? "not-allowed" : "pointer",
-                      boxShadow: generandoIA ? "none" : "0 4px 14px rgba(124,58,237,0.25)",
-                    }}>
-                    {generandoIA ? (
-                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando…</>
-                    ) : (
-                      <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>Generar módulo</>
-                    )}
-                  </button>
+                  <IAButton
+                    size="md"
+                    onClick={generarModuloConIA}
+                    disabled={!promptIA.trim()}
+                    loading={generandoIA}
+                    loadingLabel="Generando…"
+                  >
+                    Generar módulo
+                  </IAButton>
                 </div>
               </div>
             </div>
