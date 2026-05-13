@@ -8,15 +8,15 @@ import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
+  gradientFab:    "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
   gradientUser:   "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
-  chipBg:         "rgba(21,128,61,0.08)",
-  chipBorder:     "rgba(21,128,61,0.22)",
-  chipText:       "#15803d",
-  chipHoverBg:    "rgba(21,128,61,0.16)",
-  pulse:          "rgba(34,197,94,0.45)",
-  shadow:         "rgba(21,128,61,0.35)",
-  accent:         "#22c55e",
+  chipBg:         "rgba(79,70,229,0.08)",
+  chipBorder:     "rgba(79,70,229,0.22)",
+  chipText:       "#4F46E5",
+  chipHoverBg:    "rgba(79,70,229,0.16)",
+  pulse:          "rgba(79,70,229,0.45)",
+  shadow:         "rgba(67,56,202,0.35)",
+  accent:         "#4F46E5",
 } as const
 
 const C = COLORS
@@ -1140,7 +1140,7 @@ export default function ChatbotIA() {
           }}>
             {rateLimited && (
               <div style={{
-                fontSize: "11.5px", color: "#15803d", textAlign: "center",
+                fontSize: "11.5px", color: "#4F46E5", textAlign: "center",
                 marginBottom: "6px", fontWeight: 500,
               }}>
                 ⏳ Vas muy rápido, espera un momento antes de continuar
@@ -1186,7 +1186,7 @@ export default function ChatbotIA() {
                 {showCharWarning && (
                   <span style={{
                     fontSize: "11px", flexShrink: 0, marginLeft: "6px",
-                    color: charsLeft <= 20 ? "#15803d" : "#94a3b8",
+                    color: charsLeft <= 20 ? "#4F46E5" : "#94a3b8",
                     fontWeight: 500,
                   }}>
                     {charsLeft}
