@@ -101,7 +101,7 @@ const PRESSED: Record<string, React.CSSProperties> = {
 };
 
 const DISABLED: Record<string, React.CSSProperties> = {
-  primary:   { background: "linear-gradient(160deg, #3d6ec4 0%, #1b3f7e 100%)", color: "#ffffff",            border: "none" },
+  primary:   { background: "rgba(38,82,158,0.90)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" },
   secondary: { background: "transparent",                                        color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
   danger:    { background: "transparent",                                        color: "#dc2626",            border: "1.5px solid #dc2626" },
   ghost:     { background: "transparent",                                        color: "var(--azul-egm)",    border: "1px solid rgba(0,0,0,0.12)" },
