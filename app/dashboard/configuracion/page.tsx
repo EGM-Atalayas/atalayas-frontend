@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
-import { Key, Bell, Moon, LogOut, Check, Eye, EyeOff, ChevronLeft } from "lucide-react";
+import { LogOut, Check, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface NotifPrefs {
   notifNuevoModulo: boolean;
@@ -16,36 +17,58 @@ interface NotifPrefs {
 }
 
 function ToggleRow({
-  label, description, checked, onChange,
-}: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  label, description, checked, onChange, separator = true,
+}: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void; separator?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-5 border-b last:border-b-0"
-      style={{ borderColor: "var(--gris-borde)" }}>
-      <div className="flex-1 min-w-0 pr-8">
-        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{label}</p>
-        {description && (
-          <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{description}</p>
-        )}
-      </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className="relative shrink-0 transition-colors rounded-full"
-        style={{
-          width: "44px", height: "24px",
-          background: checked ? "var(--azul-egm)" : "var(--gris-borde)",
-        }}
-      >
-        <span
-          className="absolute top-0.5 rounded-full transition-transform"
+    <div>
+      <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex-1 min-w-0 pr-8">
+          <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>{label}</p>
+          {description && (
+            <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>{description}</p>
+          )}
+        </div>
+        <button
+          onClick={() => onChange(!checked)}
+          className="relative shrink-0 transition-colors rounded-full cursor-pointer"
           style={{
-            width: "20px", height: "20px",
-            background: "#fff",
-            left: "2px",
-            transform: checked ? "translateX(20px)" : "translateX(0)",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            width: "48px", height: "26px",
+            background: checked ? "var(--lima)" : "var(--gris-borde)",
           }}
-        />
-      </button>
+        >
+          <span
+            className="absolute top-0.5 rounded-full transition-transform"
+            style={{
+              width: "22px", height: "22px",
+              background: "#fff",
+              left: "2px",
+              transform: checked ? "translateX(22px)" : "translateX(0)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            }}
+          />
+        </button>
+      </div>
+      {separator && <div className="mx-6" style={{ borderBottom: "1px solid var(--gris-borde)" }} />}
+    </div>
+  );
+}
+
+/* ── Toast fijo — no desplaza el layout ── */
+function Toast({ visible, mensaje, variante = "ok" }: { visible: boolean; mensaje: string; variante?: "ok" | "error" }) {
+  return (
+    <div
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold pointer-events-none"
+      style={{
+        background:  variante === "error" ? "var(--error)" : "var(--azul-egm)",
+        color:       "#fff",
+        boxShadow:   "0 4px 20px rgba(0,0,0,0.18)",
+        opacity:     visible ? 1 : 0,
+        transform:   visible ? "translateY(0)" : "translateY(12px)",
+        transition:  "opacity 0.25s ease, transform 0.25s ease",
+      }}
+    >
+      <Check size={15} />
+      {mensaje}
     </div>
   );
 }
@@ -54,26 +77,32 @@ export default function ConfiguracionPage() {
   const { usuario, logout } = useAuth();
   const router = useRouter();
 
-  const [pwdActual, setPwdActual] = useState("");
-  const [pwdNueva, setPwdNueva] = useState("");
+  const [pwdActual, setPwdActual]     = useState("");
+  const [pwdNueva, setPwdNueva]       = useState("");
   const [pwdConfirmar, setPwdConfirmar] = useState("");
-  const [showPwd, setShowPwd] = useState(false);
-  const [pwdError, setPwdError] = useState("");
-  const [pwdSuccess, setPwdSuccess] = useState(false);
-  const [loadingPwd, setLoadingPwd] = useState(false);
+  const [showPwdActual, setShowPwdActual]       = useState(false);
+  const [showPwdNueva, setShowPwdNueva]         = useState(false);
+  const [showPwdConfirmar, setShowPwdConfirmar] = useState(false);
+  const [resetSent, setResetSent]               = useState(false);
+  const [resetLoading, setResetLoading]         = useState(false);
+  const [loadingPwd, setLoadingPwd]   = useState(false);
+  const [intentado, setIntentado]     = useState(false);
+  const [toast, setToast]             = useState<{ visible: boolean; mensaje: string; variante: "ok" | "error" }>({ visible: false, mensaje: "", variante: "ok" });
 
   const [prefs, setPrefs] = useState<NotifPrefs>({
-    notifNuevoModulo: true,
+    notifNuevoModulo:      true,
     notifModuloCompletado: true,
-    notifComunicado: true,
-    notifPendiente: true,
-    modoOscuro: false,
+    notifComunicado:       true,
+    notifPendiente:        true,
+    modoOscuro:            false,
   });
-  const [savedPrefs, setSavedPrefs] = useState(false);
 
-  useEffect(() => {
-    loadPrefs();
-  }, []);
+  const showToast = (mensaje: string, variante: "ok" | "error" = "ok") => {
+    setToast({ visible: true, mensaje, variante });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2800);
+  };
+
+  useEffect(() => { loadPrefs(); }, []);
 
   const loadPrefs = async () => {
     try {
@@ -81,30 +110,39 @@ export default function ConfiguracionPage() {
       if (res.ok) {
         const data = await res.json();
         setPrefs({
-          notifNuevoModulo: data.notifNuevoModulo ?? true,
+          notifNuevoModulo:      data.notifNuevoModulo      ?? true,
           notifModuloCompletado: data.notifModuloCompletado ?? true,
-          notifComunicado: data.notifComunicado ?? true,
-          notifPendiente: data.notifPendiente ?? true,
-          modoOscuro: data.modoOscuro ?? false,
+          notifComunicado:       data.notifComunicado       ?? true,
+          notifPendiente:        data.notifPendiente        ?? true,
+          modoOscuro:            data.modoOscuro            ?? false,
         });
       }
     } catch {}
   };
 
+  const handleSolicitarReset = async () => {
+    if (!usuario?.email) return;
+    setResetLoading(true);
+    try {
+      await apiFetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        body: JSON.stringify({ email: usuario.email }),
+      });
+      setResetSent(true);
+    } catch {}
+    finally { setResetLoading(false); }
+  };
+
   const handleCambiarPassword = async () => {
-    setPwdError("");
-    setPwdSuccess(false);
+    setIntentado(true);
     if (!pwdActual || !pwdNueva || !pwdConfirmar) {
-      setPwdError("Rellena todos los campos.");
-      return;
-    }
-    if (pwdNueva !== pwdConfirmar) {
-      setPwdError("Las contraseñas nuevas no coinciden.");
-      return;
+      showToast("Completa todos los campos.", "error"); return;
     }
     if (pwdNueva.length < 8) {
-      setPwdError("La nueva contraseña debe tener al menos 8 caracteres.");
-      return;
+      showToast("La contraseña debe tener al menos 8 caracteres.", "error"); return;
+    }
+    if (pwdNueva !== pwdConfirmar) {
+      showToast("Las contraseñas no coinciden.", "error"); return;
     }
     setLoadingPwd(true);
     try {
@@ -113,264 +151,246 @@ export default function ConfiguracionPage() {
         body: JSON.stringify({ passwordActual: pwdActual, passwordNueva: pwdNueva, passwordConfirmar: pwdConfirmar }),
       });
       if (res.ok) {
-        setPwdSuccess(true);
+        showToast("Contraseña actualizada correctamente.");
         setPwdActual(""); setPwdNueva(""); setPwdConfirmar("");
+        setIntentado(false);
       } else {
         const data = await res.json().catch(() => ({}));
-        setPwdError(data.message ?? "Error al cambiar la contraseña.");
+        showToast(data.message ?? "Error al cambiar la contraseña.", "error");
       }
-    } catch {
-      setPwdError("Error de conexión. Inténtalo de nuevo.");
-    } finally {
-      setLoadingPwd(false);
-    }
+    } catch { showToast("Error de conexión. Inténtalo de nuevo.", "error"); }
+    finally  { setLoadingPwd(false); }
   };
 
   const updatePref = async (key: keyof NotifPrefs, value: boolean) => {
-    const updated = { ...prefs, [key]: value };
-    setPrefs(updated);
-    setSavedPrefs(false);
+    setPrefs((prev) => ({ ...prev, [key]: value }));
     try {
       const res = await apiFetch(`${API_URL}/users/me`, {
         method: "PATCH",
         body: JSON.stringify({ [key]: value }),
       });
       if (res.ok) {
-        setSavedPrefs(true);
-        setTimeout(() => setSavedPrefs(false), 2500);
+        showToast("Preferencias guardadas.");
       }
     } catch {}
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
+  const handleLogout = async () => { await logout(); router.push("/login"); };
+
+  /* ── Estilos compartidos ── */
+  const sectionLabel = "text-sm font-semibold uppercase tracking-widest mb-4";
+  const inputClass   = "w-full px-4 py-3.5 text-base border outline-none transition-colors";
+  const inputStyle   = { background: "var(--gris-pagina)", borderColor: "var(--gris-borde)", color: "var(--texto-primario)" };
+  const labelClass   = "text-xs font-bold uppercase tracking-wider";
 
   return (
     <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
 
-      <DashboardHero prefijo="Mi " titulo="Configuración" variante="minima" />
+      <DashboardHero
+        prefijo="Mi "
+        titulo="Configuración"
+        variante="seccion"
+        imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
+      />
 
-      <div className="px-10 lg:px-16 pt-14 pb-16">
+      {/* Toast — posición fija, no afecta al layout */}
+      <Toast visible={toast.visible} mensaje={toast.mensaje} variante={toast.variante} />
 
-        {/* Cabecera con volver */}
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push("/dashboard/perfil")}
-              className="w-9 h-9 rounded-full flex items-center justify-center border transition-colors"
-              style={{ background: "var(--blanco)", borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--azul-egm)"}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--gris-borde)"}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--texto-primario)" }}>Configuración</h1>
-              <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{usuario?.nombre} {usuario?.apellidos}</p>
-            </div>
-          </div>
-          {savedPrefs && (
-            <span className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full"
-              style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-              <Check size={14} /> Guardado
-            </span>
-          )}
-        </div>
+      <div className="px-6 sm:px-10 lg:px-16 pt-14 lg:pt-16 pb-16">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ── Fila superior: Seguridad + Notificaciones ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 mb-14 lg:mb-16">
 
-          {/* Columna izquierda 2/3 */}
-          <div className="lg:col-span-2 flex flex-col gap-8">
+          {/* SEGURIDAD */}
+          <section className="flex flex-col">
+            <p className={sectionLabel} style={{ color: "var(--texto-muted)" }}>Seguridad</p>
+            <div className="rounded-2xl p-8 flex-1" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+              <div className="flex flex-col gap-5">
 
-            {/* Seguridad */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="flex items-center gap-3 px-8 py-5 border-b"
-                style={{ borderColor: "var(--gris-borde)", background: "rgba(245,246,248,0.6)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                  <Key size={16} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-lg" style={{ color: "var(--texto-primario)" }}>Contraseña</h2>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Mínimo 8 caracteres</p>
-                </div>
-              </div>
-
-              <div className="px-8 py-7">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-
-                  {/* Contraseña actual — ocupa fila completa */}
-                  <div className="sm:col-span-2 flex flex-col gap-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-                      Contraseña actual
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPwd ? "text" : "password"}
-                        value={pwdActual}
-                        onChange={(e) => setPwdActual(e.target.value)}
-                        placeholder="Tu contraseña actual"
-                        className="w-full px-4 py-3 pr-12 text-sm rounded-xl border outline-none transition-colors"
-                        style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
-                        onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                        onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
-                      />
-                      <button type="button" onClick={() => setShowPwd(!showPwd)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2"
-                        style={{ color: "var(--texto-muted)" }}>
-                        {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                {/* Contraseña actual */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <label className={`${labelClass} shrink-0`} style={{ color: "var(--texto-muted)" }}>Contraseña actual</label>
+                    {!resetSent ? (
+                      <button
+                        type="button"
+                        onClick={handleSolicitarReset}
+                        disabled={resetLoading}
+                        className="text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer text-right p-0 leading-none"
+                        style={{ color: "var(--azul-egm)" }}
+                      >
+                        {resetLoading ? "Enviando…" : "Recuperar contraseña"}
                       </button>
-                    </div>
+                    ) : (
+                      <span className="flex items-center justify-end gap-1 text-xs font-medium text-right" style={{ color: "var(--verde-oliva)" }}>
+                        <Check size={13} />
+                        Email enviado
+                      </span>
+                    )}
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-                      Nueva contraseña
-                    </label>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showPwdActual ? "text" : "password"}
+                      value={pwdActual}
+                      onChange={(e) => setPwdActual(e.target.value)}
+                      placeholder="Tu contraseña actual"
+                      className={`${inputClass} pr-12`}
+                      style={{ ...inputStyle, borderRadius: "var(--radius-sm)", borderColor: intentado && !pwdActual ? "var(--error)" : "var(--gris-borde)" }}
+                      onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
+                      onBlur={(e)  => e.target.style.borderColor = intentado && !pwdActual ? "var(--error)" : "var(--gris-borde)"}
+                    />
+                    <button type="button" onClick={() => setShowPwdActual(!showPwdActual)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"
+                      style={{ color: "var(--texto-muted)" }}>
+                      {showPwdActual ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nueva contraseña */}
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass} style={{ color: "var(--texto-muted)" }}>Nueva contraseña</label>
+                  <div className="relative">
+                    <input
+                      type={showPwdNueva ? "text" : "password"}
                       value={pwdNueva}
                       onChange={(e) => setPwdNueva(e.target.value)}
                       placeholder="Mínimo 8 caracteres"
-                      className="w-full px-4 py-3 text-sm rounded-xl border outline-none transition-colors"
-                      style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                      className={`${inputClass} pr-12`}
+                      style={{
+                        ...inputStyle,
+                        borderRadius: "var(--radius-sm)",
+                        borderColor: (intentado && !pwdNueva) || (pwdNueva && pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)",
+                      }}
                       onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                      onBlur={(e) => e.target.style.borderColor = "var(--gris-borde)"}
+                      onBlur={(e)  => e.target.style.borderColor = (intentado && !pwdNueva) || (pwdNueva && pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"}
                     />
+                    <button type="button" onClick={() => setShowPwdNueva(!showPwdNueva)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"
+                      style={{ color: "var(--texto-muted)" }}>
+                      {showPwdNueva ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
-                      Confirmar contraseña
-                    </label>
+                {/* Confirmar contraseña */}
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass} style={{ color: "var(--texto-muted)" }}>Confirmar contraseña</label>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showPwdConfirmar ? "text" : "password"}
                       value={pwdConfirmar}
                       onChange={(e) => setPwdConfirmar(e.target.value)}
                       placeholder="Repite la contraseña"
-                      className="w-full px-4 py-3 text-sm rounded-xl border outline-none transition-colors"
+                      className={`${inputClass} pr-12`}
                       style={{
-                        borderColor: pwdConfirmar && pwdNueva !== pwdConfirmar ? "#dc2626" : "var(--gris-borde)",
-                        color: "var(--texto-primario)",
+                        ...inputStyle,
+                        borderRadius: "var(--radius-sm)",
+                        borderColor: (intentado && !pwdConfirmar) || (pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)",
                       }}
                       onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                      onBlur={(e) => e.target.style.borderColor = pwdConfirmar && pwdNueva !== pwdConfirmar ? "#dc2626" : "var(--gris-borde)"}
+                      onBlur={(e)  => e.target.style.borderColor = (intentado && !pwdConfirmar) || (pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"}
                     />
+                    <button type="button" onClick={() => setShowPwdConfirmar(!showPwdConfirmar)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"
+                      style={{ color: "var(--texto-muted)" }}>
+                      {showPwdConfirmar ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
-
-                {pwdError && (
-                  <p className="text-sm font-medium mt-4" style={{ color: "#dc2626" }}>{pwdError}</p>
-                )}
-                {pwdSuccess && (
-                  <p className="text-sm font-medium mt-4 flex items-center gap-2" style={{ color: "var(--verde-oliva)" }}>
-                    <Check size={14} /> Contraseña actualizada correctamente
-                  </p>
-                )}
-
-                <div className="flex justify-end mt-6 pt-5 border-t" style={{ borderColor: "var(--gris-borde)" }}>
-                  <button
-                    onClick={handleCambiarPassword}
-                    disabled={loadingPwd}
-                    className="px-6 py-3 text-sm font-semibold rounded-xl transition-opacity"
-                    style={{ background: "var(--azul-egm)", color: "#fff", opacity: loadingPwd ? 0.7 : 1 }}
-                  >
-                    {loadingPwd ? "Actualizando…" : "Actualizar contraseña"}
-                  </button>
-                </div>
               </div>
-            </div>
 
-            {/* Notificaciones */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="flex items-center gap-3 px-8 py-5 border-b"
-                style={{ borderColor: "var(--gris-borde)", background: "rgba(245,246,248,0.6)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                  <Bell size={16} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-lg" style={{ color: "var(--texto-primario)" }}>Notificaciones por email</h2>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                    Enviadas a <strong style={{ color: "var(--texto-primario)" }}>{usuario?.email}</strong>
-                  </p>
-                </div>
-              </div>
-              <div className="px-8">
-                <ToggleRow
-                  label="Nuevo módulo disponible"
-                  description="Cuando se publica un nuevo módulo de formación para tu empresa"
-                  checked={prefs.notifNuevoModulo}
-                  onChange={(v) => updatePref("notifNuevoModulo", v)}
-                />
-                <ToggleRow
-                  label="Módulo completado"
-                  description="Confirmación cuando terminas un módulo de formación"
-                  checked={prefs.notifModuloCompletado}
-                  onChange={(v) => updatePref("notifModuloCompletado", v)}
-                />
-                <ToggleRow
-                  label="Nuevos comunicados"
-                  description="Cuando tu empresa publica un comunicado oficial"
-                  checked={prefs.notifComunicado}
-                  onChange={(v) => updatePref("notifComunicado", v)}
-                />
-                <ToggleRow
-                  label="Notificaciones sin leer"
-                  description="Recordatorio periódico si tienes notificaciones pendientes"
-                  checked={prefs.notifPendiente}
-                  onChange={(v) => updatePref("notifPendiente", v)}
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Columna derecha 1/3 */}
-          <div className="flex flex-col gap-8">
-
-            {/* Apariencia */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="flex items-center gap-3 px-6 py-5 border-b"
-                style={{ borderColor: "var(--gris-borde)", background: "rgba(245,246,248,0.6)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                  <Moon size={16} />
-                </div>
-                <h2 className="font-bold" style={{ color: "var(--texto-primario)" }}>Apariencia</h2>
-              </div>
-              <div className="px-6">
-                <ToggleRow
-                  label="Modo oscuro"
-                  description="Próximamente disponible"
-                  checked={prefs.modoOscuro}
-                  onChange={(v) => updatePref("modoOscuro", v)}
-                />
-              </div>
-            </div>
-
-            {/* Cerrar sesión */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-              <div className="px-6 py-5 border-b" style={{ borderColor: "var(--gris-borde)", background: "rgba(245,246,248,0.6)" }}>
-                <h2 className="font-bold" style={{ color: "var(--texto-primario)" }}>Cuenta</h2>
-              </div>
-              <div className="p-3">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-5 py-4 rounded-xl text-left transition-colors"
-                  style={{ color: "#dc2626" }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "#fff1f2"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              <div className="flex justify-center sm:justify-end mt-10">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  onClick={handleCambiarPassword}
+                  disabled={loadingPwd}
                 >
-                  <LogOut size={16} />
-                  <span className="text-sm font-semibold">Cerrar sesión</span>
-                </button>
+                  {loadingPwd ? "Actualizando…" : "Actualizar contraseña"}
+                </Button>
               </div>
             </div>
+          </section>
 
-          </div>
+          {/* NOTIFICACIONES */}
+          <section className="flex flex-col">
+            <p className={sectionLabel} style={{ color: "var(--texto-muted)" }}>Notificaciones</p>
+            <div className="rounded-2xl flex-1" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+              <div className="px-6 py-5">
+                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                  Notificaciones por email enviadas a{" "}
+                  <strong className="text-base break-all" style={{ color: "var(--texto-primario)", fontWeight: 600 }}>{usuario?.email}</strong>
+                </p>
+              </div>
+              <div className="mx-6" style={{ borderBottom: "1px solid var(--gris-borde)" }} />
+
+              {/* Superadmin */}
+              {usuario?.codigoRol === "ROLE_ADMIN" && (<>
+                <ToggleRow label="Nueva empresa registrada" description="Cuando una nueva empresa se une a la plataforma"  checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Suscripción por vencer"   description="Cuando la suscripción de una empresa está próxima a expirar" checked={prefs.notifModuloCompletado} onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Empresa inactiva"         description="Cuando una empresa lleva más de 30 días sin actividad" checked={prefs.notifComunicado}     onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Solicitudes pendientes"   description="Cuando hay solicitudes de empresas sin revisar"    checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
+
+              {/* Admin empresa */}
+              {usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" && (<>
+                <ToggleRow label="Nuevo módulo disponible"    description="Cuando se publica un nuevo módulo de formación"       checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Empleado completa módulo"   description="Cuando un empleado de tu empresa termina un módulo"   checked={prefs.notifModuloCompletado}  onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Nuevos comunicados"         description="Cuando recibes un comunicado de la plataforma"        checked={prefs.notifComunicado}        onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Recordatorio pendientes"    description="Si tienes notificaciones sin revisar"                 checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
+
+              {/* Empleado */}
+              {(!usuario?.codigoRol || usuario.codigoRol === "ROLE_EMPLEADO") && (<>
+                <ToggleRow label="Nuevo módulo disponible"  description="Cuando se publica un nuevo módulo de formación" checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
+                <ToggleRow label="Módulo completado"        description="Confirmación cuando terminas un módulo"         checked={prefs.notifModuloCompletado}  onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Nuevos comunicados"       description="Cuando tu empresa publica un comunicado"        checked={prefs.notifComunicado}        onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Recordatorio pendientes"  description="Si tienes notificaciones sin leer"              checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
+              </>)}
+            </div>
+          </section>
+        </div>
+
+        {/* ── Fila inferior: Apariencia + Sesión ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
+
+          {/* APARIENCIA */}
+          <section className="flex flex-col">
+            <p className={sectionLabel} style={{ color: "var(--texto-muted)" }}>Apariencia</p>
+            <div className="rounded-2xl flex-1 flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", minHeight: "110px" }}>
+              <div className="flex items-center justify-between px-6 flex-1">
+                <div>
+                  <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>Modo oscuro</p>
+                  <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Próximamente disponible</p>
+                </div>
+                <div className="relative shrink-0 rounded-full cursor-not-allowed opacity-40"
+                  style={{ width: "48px", height: "26px", background: "var(--gris-borde)" }}>
+                  <span className="absolute top-0.5 left-0.5 rounded-full"
+                    style={{ width: "22px", height: "22px", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SESIÓN */}
+          <section className="flex flex-col">
+            <p className={sectionLabel} style={{ color: "var(--texto-muted)" }}>Sesión</p>
+            <div className="rounded-2xl flex-1 flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", minHeight: "110px" }}>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-6 w-full flex-1 rounded-2xl transition-colors text-left cursor-pointer active:bg-red-500/10"
+                style={{ color: "var(--error)" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(220,38,38,0.04)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <LogOut size={18} />
+                <span className="text-base font-semibold">Cerrar sesión</span>
+              </button>
+            </div>
+          </section>
+
         </div>
       </div>
     </div>

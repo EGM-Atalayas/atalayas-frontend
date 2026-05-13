@@ -266,8 +266,9 @@ function ActionItem({
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer select-none active:bg-black/[0.05]"
+      className="flex items-center gap-3 px-3 py-3 cursor-pointer select-none active:bg-black/[0.05]"
       style={{
+        borderRadius: "var(--radius-sm)",
         background: hov
           ? (danger ? "rgba(192,57,43,0.07)" : "rgba(0,0,0,0.045)")
           : "transparent",

@@ -358,8 +358,8 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
                       key={notif.notificacionId}
                       ref={(el) => { if (el) cardsRef.current[idx] = el; }}
                       onClick={() => handleClickNotificacion(notif)}
-                      className="flex items-center gap-3 py-2.5 px-2 rounded-xl cursor-pointer active:bg-black/[0.05]"
-                      style={{ transition: "background 0.12s ease" }}
+                      className="flex items-center gap-3 py-2.5 px-2 cursor-pointer active:bg-black/[0.05]"
+                      style={{ borderRadius: "var(--radius-sm)", transition: "background 0.12s ease" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.03)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
@@ -391,7 +391,7 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
 
             {/* ── Paginación ── */}
             {hayPaginacion && (
-              <div className="px-2 py-2.5 flex items-center justify-center gap-0.5" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+              <div className="px-2 py-2.5 flex items-center justify-center gap-0.5" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", margin: "0 12px" }}>
 
                 {/* Flecha anterior */}
                 <button

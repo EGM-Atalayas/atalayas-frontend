@@ -16,6 +16,12 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, LabelList,
+} from "recharts";
+import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type FiltrosEstadisticas } from "@/lib/api/estadisticas";
+import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import ExcelJS from "exceljs";
 
@@ -73,6 +79,7 @@ interface Usuario {
   departamento: string | null;
   activo: boolean;
   fechaRegistro: string;
+  fechaBaja?: string | null;
 }
 
 export interface NuevoEmpleadoForm {
@@ -106,7 +113,7 @@ function AdminContent() {
   const searchParams = useSearchParams();
   const { usuario } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias">("empleados");
+  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas">("empleados");
 
   const queryClient = useQueryClient();
 
@@ -165,6 +172,8 @@ function AdminContent() {
   const [toast, setToast] = useState<string | null>(null);
   const [showBorradores, setShowBorradores] = useState(true);
 
+
+
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
       router.replace("/dashboard");
@@ -176,6 +185,7 @@ function AdminContent() {
     if (tab === "formaciones") setActiveTab("formaciones");
     if (tab === "anuncios") setActiveTab("anuncios");
     if (tab === "empleados") setActiveTab("empleados");
+    if (tab === "estadisticas") setActiveTab("estadisticas");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
@@ -184,6 +194,34 @@ function AdminContent() {
       }
     }
   }, [searchParams, formaciones, router]);
+
+  // Calcular estadísticas cuando se activa el tab o cambian los datos / filtros
+  useEffect(() => {
+    if (activeTab !== "estadisticas") return;
+
+    // Si el dpto guardado ya no existe entre los empleados actuales, resetear
+    if (statsDpto && empleados.length > 0) {
+      const existe = empleados.some((e) => e.departamento === statsDpto);
+      if (!existe) {
+        setStatsDpto(null);
+        return; // el cambio dispara otro render
+      }
+    }
+
+    setCargandoStats(true);
+    try {
+      const filtros: FiltrosEstadisticas = {
+        rangoMeses:   statsRango,
+        departamento: statsDpto,
+        estado:       statsEstado,
+        tipoModulo:   statsTipoMod,
+      };
+      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
+      setStatsEmpresa(stats);
+    } finally {
+      setCargandoStats(false);
+    }
+  }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -210,18 +248,24 @@ function AdminContent() {
         body: JSON.stringify({
           nombre: editEmpleadoForm.nombre.trim(),
           apellidos: editEmpleadoForm.apellidos.trim(),
-          email: editEmpleadoForm.email.trim(),
+          email: editEmpleadoForm.email.trim() || undefined, // ← si está vacío no lo manda
           puestoTrabajo: editEmpleadoForm.puestoTrabajo.trim() || null,
           departamento: editEmpleadoForm.departamento || null,
         }),
       });
+
+      const data = await res.json();
+      console.log("Respuesta del servidor:", data); // ← ahora verás el error real
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? "Error al guardar el empleado");
+        throw new Error(data.message ?? "Error al guardar el empleado"); // ← usa data, no res.json()
       }
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setEditandoEmpleado(false);
-    } catch { }
+    } catch (err) {
+      console.error("Error al guardar empleado:", err); // ← AÑADE
+
+    }
     finally { setGuardandoEditEmpleado(false); }
   };
 
@@ -538,6 +582,17 @@ function AdminContent() {
         </svg>
       ),
     },
+    {
+      key: "estadisticas" as const,
+      label: "Estadísticas",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
   ];
 
   // Accent colors per modulo tipo for top strip
@@ -581,7 +636,7 @@ function AdminContent() {
         <div className="sm:hidden mb-8">
           <select
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias")}
+            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas")}
             className="w-full rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none"
             style={{
               border: "1px solid var(--gris-borde)",
@@ -592,6 +647,8 @@ function AdminContent() {
             <option value="empleados">Empleados</option>
             <option value="anuncios">Anuncios</option>
             <option value="formaciones">Módulos formativos</option>
+            <option value="incidencias">Incidencias</option>
+            <option value="estadisticas">Estadísticas</option>
           </select>
         </div>
 
@@ -1699,9 +1756,455 @@ function AdminContent() {
         {activeTab === "incidencias" && (
           <GestionIncidencias empresaId={usuario?.empresaId} />
         )}
+
+        {/* ── TAB ESTADÍSTICAS ── */}
+        {activeTab === "estadisticas" && (
+          <div className="animate-fadeIn">
+            {/* ── Barra de filtros y personalización ── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-3">
+              {/* Rango temporal */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rango</span>
+                <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
+                  {([3, 6, 12] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setStatsRango(n)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                      style={{
+                        background: statsRango === n ? "var(--azul-egm)" : "transparent",
+                        color:      statsRango === n ? "white" : "var(--texto-muted)",
+                      }}
+                    >
+                      {n} meses
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Departamento — opciones derivadas de empleados reales */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dpto.</span>
+                <select
+                  value={statsDpto ?? ""}
+                  onChange={(e) => setStatsDpto(e.target.value === "" ? null : e.target.value)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="">Todos</option>
+                  {(() => {
+                    const presentes = new Set(
+                      empleados.map((e) => e.departamento).filter((d): d is string => !!d)
+                    );
+                    return DEPARTAMENTOS
+                      .filter((d) => presentes.has(d.id))
+                      .map((d) => {
+                        const n = empleados.filter((e) => e.departamento === d.id).length;
+                        return (
+                          <option key={d.id} value={d.id}>
+                            {d.label} ({n})
+                          </option>
+                        );
+                      });
+                  })()}
+                </select>
+              </div>
+
+              {/* Estado del empleado */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
+                <select
+                  value={statsEstado}
+                  onChange={(e) => setStatsEstado(e.target.value as "activos" | "inactivos" | "todos")}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="activos">Activos</option>
+                  <option value="inactivos">Inactivos</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+
+              {/* Tipo de módulo — opciones derivadas de módulos reales */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo módulo</span>
+                <select
+                  value={statsTipoMod ?? ""}
+                  onChange={(e) => setStatsTipoMod(e.target.value === "" ? null : e.target.value)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                >
+                  <option value="">Todos</option>
+                  {(() => {
+                    const tipos = new Set(
+                      formaciones.map((m: any) => m.tipoModulo).filter((t): t is string => !!t)
+                    );
+                    return Array.from(tipos).map((t) => {
+                      const n = formaciones.filter((m: any) => m.tipoModulo === t).length;
+                      const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
+                      return (
+                        <option key={t} value={t}>
+                          {label} ({n})
+                        </option>
+                      );
+                    });
+                  })()}
+                </select>
+              </div>
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Export */}
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+                  className="text-xs font-semibold border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
+                  style={{ background: "white", color: "var(--texto-primario)" }}
+                  aria-label="Formato de exportación"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="xml">XML</option>
+                </select>
+                <button
+                  onClick={handleExportEstadisticas}
+                  disabled={!statsEmpresa}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "var(--azul-egm)", color: "white" }}
+                  title="Descargar reporte"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Descargar
+                </button>
+              </div>
+
+              {/* Badge de personalización */}
+              {hayPersonalizacion && (
+                <button
+                  onClick={resetVistaEstadisticas}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  title="Restablecer vista por defecto"
+                >
+                  Restablecer
+                </button>
+              )}
+
+              {/* Botón personalizar */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowPersonalizar((v) => !v)}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{
+                    background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
+                    color:      showPersonalizar ? "white" : "var(--texto-primario)",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                  Personalizar
+                </button>
+
+                {/* Panel desplegable de personalización */}
+                {showPersonalizar && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Mostrar secciones</p>
+                    {[
+                      { label: "KPIs resumen",            value: showKpis,            set: setShowKpis },
+                      { label: "Incorporaciones y salidas", value: showMovimiento,    set: setShowMovimiento },
+                      { label: "Progreso por módulo",     value: showProgreso,        set: setShowProgreso },
+                      { label: "Estado de formación",     value: showEstadoFormacion, set: setShowEstadoFormacion },
+                    ].map(({ label, value, set }) => (
+                      <label key={label} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2">
+                        <input
+                          type="checkbox"
+                          checked={value}
+                          onChange={(e) => set(e.target.checked)}
+                          className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-700">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {cargandoStats ? (
+              <div className="flex items-center justify-center py-32">
+                <div className="w-8 h-8 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+              </div>
+            ) : !statsEmpresa ? (
+              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
+                No hay datos disponibles aún.
+              </div>
+            ) : !showKpis && !showMovimiento && !showProgreso && !showEstadoFormacion ? (
+              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
+                <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
+                <button
+                  onClick={resetVistaEstadisticas}
+                  className="text-xs font-semibold px-4 py-2 rounded-lg"
+                  style={{ background: "var(--azul-egm)", color: "white" }}
+                >
+                  Restablecer vista
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* ── KPIs ── */}
+                {showKpis && (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {[
+                    { label: "Total empleados",        value: String(statsEmpresa.kpis.totalEmpleados),          color: "text-blue-600"    },
+                    { label: "Altas este mes",          value: String(statsEmpresa.kpis.altasEsteMes),            color: "text-emerald-600" },
+                    { label: "Tasa de rotación anual",  value: `${statsEmpresa.kpis.tasaRotacion}%`,              color: "text-amber-600"   },
+                    { label: "Completitud formación",   value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`,      color: "text-violet-600"  },
+                    { label: "Sin iniciar formación",   value: String(statsEmpresa.empleadosSinFormacion),        color: "text-red-500"     },
+                    { label: "Formación completada",    value: String(statsEmpresa.empleadosCompletados),         color: "text-emerald-600" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+                      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+                )}
+
+                {/* ── Incorporaciones y salidas ── */}
+                {showMovimiento && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                  <div className="flex items-start justify-between mb-1">
+                    <h2 className="text-lg font-bold text-slate-800">Incorporaciones y salidas</h2>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Clic en un mes para ver detalle</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos {statsRango} meses{statsDpto ? ` · Dpto. ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : ""}</p>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={statsEmpresa.movimientoMensual}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        onClick={(e: any) => {
+                          const label = e?.activeLabel as string | undefined;
+                          if (label) setDrillMes(label);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <defs>
+                          <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}   />
+                          </linearGradient>
+                          <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#F43F5E" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#F43F5E" stopOpacity={0}   />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} allowDecimals={false} />
+                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                        <Legend verticalAlign="top" height={36} iconType="circle" />
+                        <Area type="monotone" name="Altas"  dataKey="altas"  stroke="#3B82F6" strokeWidth={3} fill="url(#gradAltas)" />
+                        <Area type="monotone" name="Bajas"  dataKey="bajas"  stroke="#F43F5E" strokeWidth={3} fill="url(#gradBajas)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                )}
+
+                {/* ── Progreso de formación por módulo ── */}
+                {showProgreso && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
+                  <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
+                  {statsEmpresa.progresoModulos.length === 0 ? (
+                    <p className="text-sm text-slate-400 text-center py-12">Sin módulos con datos de progreso</p>
+                  ) : (
+                    <div style={{ height: Math.max(240, statsEmpresa.progresoModulos.length * 48) }} className="w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsEmpresa.progresoModulos} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                          <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
+                          <YAxis type="category" dataKey="nombre" axisLine={false} tickLine={false}
+                            tick={{ fill: "#64748b", fontSize: 11 }} width={130}
+                            tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + "…" : v} />
+                          <RechartsTooltip
+                            cursor={{ fill: "#f8fafc" }}
+                            contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                            formatter={(v) => [`${v ?? 0}%`, "Completitud"]}
+                          />
+                          <Bar dataKey="porcentaje" radius={[0, 8, 8, 0]} barSize={24}>
+                            {statsEmpresa.progresoModulos.map((entry, i) => (
+                              <Cell
+                                key={`cell-${i}`}
+                                fill={entry.porcentaje >= 80 ? "#10B981" : entry.porcentaje >= 40 ? "#3B82F6" : "#F59E0B"}
+                              />
+                            ))}
+                            <LabelList dataKey="porcentaje" position="right"
+                              style={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                              formatter={(v: unknown) => `${v ?? 0}%`} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {/* ── Estado de formación de la plantilla ── */}
+                {showEstadoFormacion && (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                  <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
+                  <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
+                  <div className="h-[220px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
+                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
+                          ].filter((d) => d.value > 0)}
+                          cx="50%" cy="50%"
+                          innerRadius={60} outerRadius={90}
+                          paddingAngle={4}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {[
+                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
+                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
+                          ].filter((d) => d.value > 0).map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
 
+
+      {/* ── Modal de drill-down de mes ── */}
+      {drillMes && (() => {
+        const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+        const mesIdx = MESES.indexOf(drillMes);
+        // Recorremos la ventana ya construida para localizar año + mes
+        const hoy = new Date();
+        let anioMes = hoy.getFullYear();
+        for (let i = statsRango - 1; i >= 0; i--) {
+          const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+          if (MESES[d.getMonth()] === drillMes) {
+            anioMes = d.getFullYear();
+            break;
+          }
+        }
+        // Recolectar empleados con altas y bajas en ese mes (respetando filtros activos)
+        let empFiltrados = empleados;
+        if (statsEstado === "activos")  empFiltrados = empFiltrados.filter((e) => e.activo !== false);
+        if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
+        if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
+
+        const altasDelMes = empFiltrados.filter((e) => {
+          const f = new Date(e.fechaRegistro ?? 0);
+          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+        });
+        const bajasDelMes = empFiltrados.filter((e) => {
+          if (!e.fechaBaja) return false;
+          const f = new Date(e.fechaBaja);
+          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+        });
+
+        return (
+          <div
+            className="fixed inset-0 z-100 flex items-center justify-center p-4"
+            style={{ background: "rgba(15, 25, 35, 0.55)", backdropFilter: "blur(2px)" }}
+            onClick={() => setDrillMes(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            >
+              <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle del mes</p>
+                  <h3 className="text-xl font-bold text-slate-800">{drillMes} {anioMes}</h3>
+                </div>
+                <button
+                  onClick={() => setDrillMes(null)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
+                  aria-label="Cerrar"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-6 space-y-6">
+                {/* Altas */}
+                <div>
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h4 className="text-sm font-bold text-slate-800">Altas</h4>
+                    <span className="text-xs font-semibold text-blue-600">{altasDelMes.length}</span>
+                  </div>
+                  {altasDelMes.length === 0 ? (
+                    <p className="text-xs text-slate-400">Sin incorporaciones este mes</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {altasDelMes.map((e) => (
+                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-blue-50/50 text-sm">
+                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
+                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Bajas */}
+                <div>
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h4 className="text-sm font-bold text-slate-800">Bajas</h4>
+                    <span className="text-xs font-semibold text-rose-600">{bajasDelMes.length}</span>
+                  </div>
+                  {bajasDelMes.length === 0 ? (
+                    <p className="text-xs text-slate-400">Sin salidas este mes</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {bajasDelMes.map((e) => (
+                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-rose-50/50 text-sm">
+                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
+                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Toast */}
       {toast && (
