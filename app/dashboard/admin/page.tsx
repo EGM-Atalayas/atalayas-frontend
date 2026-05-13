@@ -3,16 +3,17 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
-import type { ProgresoEmpleado } from "@/lib/types/progreso";
+import { QK } from "@/lib/queryKeys";
 
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
+import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
@@ -114,8 +115,51 @@ function AdminContent() {
 
   const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas">("empleados");
 
-  const [empleados, setEmpleados] = useState<Usuario[]>([]);
-  const [cargandoEmpleados, setCargandoEmpleados] = useState(true);
+  const queryClient = useQueryClient();
+
+  // ── Queries ──────────────────────────────────────────────────────────────────
+  const { data: empleados = [], isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
+    queryKey: QK.empleados(usuario?.empresaId),
+    queryFn: () => apiFetch(`${API_URL}/users`).then((r) => r.json()),
+    enabled: !!usuario?.empresaId,
+    staleTime: 30_000,
+  });
+
+  const { data: noticias = [] } = useQuery({
+    queryKey: QK.noticias(usuario?.empresaId),
+    queryFn: () => getNoticias(usuario!.empresaId),
+    enabled: !!usuario?.empresaId && activeTab === "anuncios",
+    staleTime: 30_000,
+  });
+
+  const { data: formaciones = [] } = useQuery({
+    queryKey: QK.modulos(usuario?.empresaId),
+    queryFn: () => getModulosConProgreso(usuario?.empresaId),
+    enabled: !!usuario?.empresaId && activeTab === "formaciones",
+    staleTime: 60_000,
+  });
+
+  const { data: progresoEmpresa = [], isLoading: cargandoProgreso } = useQuery({
+    queryKey: QK.progresoEmpresa(usuario?.empresaId),
+    queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
+    enabled: !!usuario?.empresaId,
+    staleTime: 60_000,
+  });
+
+  // Refs for stats effect to avoid infinite loops from unstable default [] references
+  const formacionesRef = useRef(formaciones);
+  useEffect(() => { formacionesRef.current = formaciones; }, [formaciones]);
+  const progresoEmpresaRef = useRef(progresoEmpresa);
+  useEffect(() => { progresoEmpresaRef.current = progresoEmpresa; }, [progresoEmpresa]);
+  const empleadosRef = useRef(empleados);
+  useEffect(() => { empleadosRef.current = empleados; }, [empleados]);
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const PAGE_SIZE = 25;
+  const [empPage, setEmpPage] = useState(0);
+  const [progPage, setProgPage] = useState(0);
+
+  // ── UI state ─────────────────────────────────────────────────────────────────
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
   const [formEmpleado, setFormEmpleado] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
   const [guardandoEmpleado, setGuardandoEmpleado] = useState(false);
@@ -128,176 +172,85 @@ function AdminContent() {
   const [importando, setImportando] = useState(false);
   const [importResult, setImportResult] = useState<{ ok: number; errors: string[] } | null>(null);
 
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
   const [editando, setEditando] = useState<Noticia | null>(null);
   const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [showBorradores, setShowBorradores] = useState(true);
 
-  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
-  const [progresoEmpresa, setProgresoEmpresa] = useState<ProgresoEmpleado[]>([]);
-  const [cargandoProgreso, setCargandoProgreso] = useState(true);
-
-  const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
+  // ── Stats tab state ───────────────────────────────────────────────────────────
+  const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);
+  const [statsDpto, setStatsDpto] = useState<string | null>(null);
+  const [statsEstado, setStatsEstado] = useState<"todos" | "activos" | "inactivos">("todos");
+  const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
   const [cargandoStats, setCargandoStats] = useState(false);
-
-  // Filtros del tab de estadísticas
-  const [statsRango,    setStatsRango]    = useState<3 | 6 | 12>(6);
-  const [statsDpto,     setStatsDpto]     = useState<string | null>(null);
-  const [statsEstado,   setStatsEstado]   = useState<"activos" | "inactivos" | "todos">("activos");
-  const [statsTipoMod,  setStatsTipoMod]  = useState<string | null>(null);
-  // Drill-down: mes seleccionado en el gráfico de movimiento
-  const [drillMes, setDrillMes] = useState<string | null>(null);
-  // Export
+  const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
-  // Visibilidad de secciones (configurable por el admin)
-  const [showKpis,          setShowKpis]          = useState(true);
-  const [showMovimiento,    setShowMovimiento]    = useState(true);
-  const [showProgreso,      setShowProgreso]      = useState(true);
+  const [showPersonalizar, setShowPersonalizar] = useState(false);
+  const [showKpis, setShowKpis] = useState(true);
+  const [showMovimiento, setShowMovimiento] = useState(true);
+  const [showProgreso, setShowProgreso] = useState(true);
   const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
-  const [showPersonalizar,  setShowPersonalizar]  = useState(false);
+  const [drillMes, setDrillMes] = useState<string | null>(null);
 
-  // Cargar preferencias guardadas
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("egm_admin_stats_prefs");
-      if (raw) {
-        const p = JSON.parse(raw);
-        if (p.rango === 3 || p.rango === 6 || p.rango === 12) setStatsRango(p.rango);
-        if (typeof p.dpto === "string" || p.dpto === null) setStatsDpto(p.dpto);
-        if (p.estado === "activos" || p.estado === "inactivos" || p.estado === "todos") setStatsEstado(p.estado);
-        if (typeof p.tipoMod === "string" || p.tipoMod === null) setStatsTipoMod(p.tipoMod);
-        if (typeof p.showKpis === "boolean") setShowKpis(p.showKpis);
-        if (typeof p.showMovimiento === "boolean") setShowMovimiento(p.showMovimiento);
-        if (typeof p.showProgreso === "boolean") setShowProgreso(p.showProgreso);
-        if (typeof p.showEstadoFormacion === "boolean") setShowEstadoFormacion(p.showEstadoFormacion);
-      }
-    } catch { /* ignorar errores de localStorage */ }
-  }, []);
-
-  // Guardar preferencias cuando cambien
-  useEffect(() => {
-    try {
-      localStorage.setItem("egm_admin_stats_prefs", JSON.stringify({
-        rango: statsRango,
-        dpto: statsDpto,
-        estado: statsEstado,
-        tipoMod: statsTipoMod,
-        showKpis, showMovimiento, showProgreso, showEstadoFormacion,
-      }));
-    } catch { /* ignorar errores de localStorage */ }
-  }, [statsRango, statsDpto, statsEstado, statsTipoMod, showKpis, showMovimiento, showProgreso, showEstadoFormacion]);
-
-  const hayPersonalizacion =
-    !showKpis || !showMovimiento || !showProgreso || !showEstadoFormacion ||
-    statsRango !== 6 || statsDpto !== null || statsEstado !== "activos" || statsTipoMod !== null;
-
+  const hayPersonalizacion = !showKpis || !showMovimiento || !showProgreso || !showEstadoFormacion;
   const resetVistaEstadisticas = () => {
-    setStatsRango(6);
-    setStatsDpto(null);
-    setStatsEstado("activos");
-    setStatsTipoMod(null);
-    setShowKpis(true);
-    setShowMovimiento(true);
-    setShowProgreso(true);
-    setShowEstadoFormacion(true);
+    setShowKpis(true); setShowMovimiento(true); setShowProgreso(true); setShowEstadoFormacion(true);
   };
-
   const handleExportEstadisticas = () => {
     if (!statsEmpresa) return;
-    const dptoLabel = statsDpto
-      ? (DEPARTAMENTOS.find((d) => d.id === statsDpto)?.label ?? statsDpto)
-      : "Todos";
-    const tipoLabel = statsTipoMod
-      ? ((MODULO_TIPO_LABEL as Record<string, string>)[statsTipoMod] ?? statsTipoMod)
-      : "Todos";
-    const estadoLabel = statsEstado.charAt(0).toUpperCase() + statsEstado.slice(1);
-
+    const filtrosLabel = [
+      statsDpto ? `Dpto: ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : null,
+      statsEstado !== "todos" ? `Estado: ${statsEstado}` : null,
+      statsTipoMod ? `Módulo: ${statsTipoMod}` : null,
+    ].filter(Boolean).join(" · ") || undefined;
     const sections: StatsSection[] = [
       {
-        id: "kpis",
-        title: "KPIs resumen",
-        headers: ["Métrica", "Valor"],
+        id: "kpis", title: "KPIs resumen",
+        headers: ["Indicador", "Valor"],
         rows: [
-          ["Total empleados",         statsEmpresa.kpis.totalEmpleados],
-          ["Altas este mes",          statsEmpresa.kpis.altasEsteMes],
-          ["Bajas este mes",          statsEmpresa.kpis.bajasEsteMes],
-          ["Tasa de rotación anual",  `${statsEmpresa.kpis.tasaRotacion}%`],
-          ["Completitud formación",   `${statsEmpresa.kpis.pctCompletitudGlobal}%`],
-          ["Módulos con progreso",    statsEmpresa.kpis.modulosConProgreso],
-          ["Sin iniciar formación",   statsEmpresa.empleadosSinFormacion],
-          ["En progreso formación",   statsEmpresa.empleadosEnProgreso],
-          ["Formación completada",    statsEmpresa.empleadosCompletados],
+          ["Total empleados",       statsEmpresa.kpis.totalEmpleados],
+          ["Altas este mes",        statsEmpresa.kpis.altasEsteMes],
+          ["Bajas este mes",        statsEmpresa.kpis.bajasEsteMes],
+          ["Tasa rotación anual %", statsEmpresa.kpis.tasaRotacion],
+          ["Completitud formación %", statsEmpresa.kpis.pctCompletitudGlobal],
         ],
       },
       {
-        id: "movimiento",
-        title: "Incorporaciones y salidas por mes",
+        id: "movimiento", title: "Incorporaciones y salidas por mes",
         headers: ["Mes", "Altas", "Bajas"],
-        rows: statsEmpresa.movimientoMensual.map((m) => [m.mes, m.altas, m.bajas]),
+        rows: statsEmpresa.movimientoMensual.map(m => [m.mes, m.altas, m.bajas]),
       },
       {
-        id: "progreso_modulos",
-        title: "Progreso por módulo formativo (%)",
-        headers: ["Módulo", "Completitud"],
-        rows: statsEmpresa.progresoModulos.map((m) => [m.nombre, `${m.porcentaje}%`]),
+        id: "progreso", title: "Progreso por módulo",
+        headers: ["Módulo", "% completitud"],
+        rows: statsEmpresa.progresoModulos.map(m => [m.nombre, m.porcentaje]),
       },
       {
-        id: "estado_formacion",
-        title: "Estado de formación de la plantilla",
+        id: "estado_formacion", title: "Estado de formación",
         headers: ["Estado", "Empleados"],
         rows: [
-          ["Sin iniciar", statsEmpresa.empleadosSinFormacion],
-          ["En progreso", statsEmpresa.empleadosEnProgreso],
-          ["Completada",  statsEmpresa.empleadosCompletados],
+          ["Sin iniciar",  statsEmpresa.empleadosSinFormacion],
+          ["En progreso",  statsEmpresa.empleadosEnProgreso],
+          ["Completada",   statsEmpresa.empleadosCompletados],
         ],
       },
     ];
-
     exportStats(exportFormat, {
-      title: "Estadísticas de Administración de Empresa",
-      subtitle: usuario?.nombreEmpresa ?? undefined,
-      filtros: `Rango: ${statsRango} meses · Dpto: ${dptoLabel} · Estado: ${estadoLabel} · Tipo módulo: ${tipoLabel}`,
+      title: "Estadísticas de empresa",
+      filtros: filtrosLabel,
       fileName: `estadisticas-empresa-${new Date().toISOString().split("T")[0]}`,
       sections,
     });
   };
-  const cargarEmpleados = async () => {
-    setCargandoEmpleados(true);
-    try {
-      const res = await apiFetch(`${API_URL}/users`);
-      if (res.ok) setEmpleados(await res.json());
-    } catch { }
-    finally { setCargandoEmpleados(false); }
-  };
-
-  const refreshData = async () => {
-    if (!usuario?.empresaId) return;
-    const [news, modulos, progreso] = await Promise.allSettled([
-      getNoticias(usuario.empresaId),
-      getModulosConProgreso(),
-      getProgresoEmpresa(usuario.empresaId),
-    ]);
-    if (news.status === "fulfilled") setNoticias(news.value);
-    if (modulos.status === "fulfilled") setFormaciones(modulos.value);
-    if (progreso.status === "fulfilled") {
-      setProgresoEmpresa(progreso.value);
-      setCargandoProgreso(false);
-    }
-  };
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [showBorradores, setShowBorradores] = useState(true);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
       router.replace("/dashboard");
     }
   }, [usuario, router]);
-
-  useEffect(() => {
-    if (usuario?.empresaId) { cargarEmpleados(); refreshData(); cargarAnuncios(); }
-  }, [usuario?.empresaId]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -309,7 +262,6 @@ function AdminContent() {
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
       if (f) {
-        // Redirigir a la página completa de edición
         router.push(`/dashboard/admin/modulos/crear?edit=${editId}`);
       }
     }
@@ -336,12 +288,12 @@ function AdminContent() {
         estado:       statsEstado,
         tipoModulo:   statsTipoMod,
       };
-      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
+      const stats = getEstadisticasAdminEmpresa(empleadosRef.current, formacionesRef.current, progresoEmpresaRef.current, filtros);
       setStatsEmpresa(stats);
     } finally {
       setCargandoStats(false);
     }
-  }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
+  }, [activeTab, empleados, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -380,8 +332,7 @@ function AdminContent() {
       if (!res.ok) {
         throw new Error(data.message ?? "Error al guardar el empleado"); // ← usa data, no res.json()
       }
-
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setEditandoEmpleado(false);
     } catch (err) {
       console.error("Error al guardar empleado:", err); // ← AÑADE
@@ -416,7 +367,7 @@ function AdminContent() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message ?? "Error al crear el empleado");
       }
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setFormEmpleado(EMPTY_EMPLEADO);
       setShowFormEmpleado(false);
     } catch (e: unknown) {
@@ -435,7 +386,7 @@ function AdminContent() {
       } else {
         await apiFetch(`${API_URL}/users/${usuarioId}/activar`, { method: "PATCH" });
       }
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
     } catch { }
   };
@@ -445,13 +396,6 @@ function AdminContent() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  async function cargarAnuncios() {
-    if (!usuario?.empresaId) return;
-    try {
-      const data = await getNoticias(usuario.empresaId);
-      setNoticias(data);
-    } catch { setNoticias([]); }
-  }
 
   function abrirCrear() {
     setInitialForm({
@@ -492,7 +436,7 @@ function AdminContent() {
     try {
       if (editando) await editarNoticia(editando.anuncioId, data);
       else await crearNoticia({ ...data, empresaId: usuario?.empresaId ?? null });
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       cerrarForm();
       mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
     } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
@@ -502,7 +446,7 @@ function AdminContent() {
   async function handleDesactivarAnuncio(id: string) {
     try {
       await desactivarNoticia(id);
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio desactivado");
     } catch { }
   }
@@ -517,7 +461,7 @@ function AdminContent() {
         adjuntoNombre: n.adjuntoNombre ?? null, fijado: n.fijado ?? false,
         categoria: n.categoria ?? null, estado: "publicado",
       });
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio publicado correctamente");
     } catch { mostrarToast("Error al publicar el anuncio"); }
   }
@@ -549,7 +493,7 @@ function AdminContent() {
         });
       }
       if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
-      await refreshData();
+      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
     } catch { alert("Error al cambiar el estado del módulo"); }
   };
 
@@ -558,7 +502,7 @@ function AdminContent() {
     try {
       const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
-      await refreshData();
+      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
     } catch { alert("Error al eliminar el módulo"); }
   };
 
@@ -633,7 +577,7 @@ function AdminContent() {
       const filas: { rowNum: number; values: string[] }[] = [];
       worksheet.eachRow((row, rowIdx) => {
         if (rowIdx === 1) return;
-        const values = (row.values as any[]).slice(1).map((v) => String(v ?? "").trim());
+        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
         if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
       });
       for (const { rowNum, values } of filas) {
@@ -664,7 +608,7 @@ function AdminContent() {
     } catch { errores.push("El archivo no es un Excel válido"); }
     setImportando(false);
     setImportResult({ ok, errors: errores });
-    await cargarEmpleados();
+    queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
   };
 
   const tabs = [
@@ -945,26 +889,26 @@ function AdminContent() {
                     </button>
                   </div>
                 ) : (
-                  <>
-                    {/* Vista desktop — tabla */}
-                    <div className="hidden md:block">
-                      <table className="w-full">
-                        <thead>
-                          <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                            {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
-                              <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
-                                style={{ color: "var(--texto-muted)" }}>{h}</th>
-                            ))}
-                            <th className="py-3.5 px-5" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {empleados.map((e, idx) => (
+                    <>
+                      {/* Vista desktop — tabla */}
+                      <div className="hidden md:block">
+                        <table className="w-full">
+                          <thead>
+                            <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                              {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
+                                <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
+                                  style={{ color: "var(--texto-muted)" }}>{h}</th>
+                              ))}
+                              <th className="py-3.5 px-5" />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
                             <tr
                               key={e.usuarioId}
                               className="cursor-pointer transition-colors"
                               style={{
-                                borderBottom: idx < empleados.length - 1 ? "1px solid var(--gris-borde)" : "none",
+                                borderBottom: idx < Math.min(empleados.length, PAGE_SIZE) - 1 ? "1px solid var(--gris-borde)" : "none",
                                 background: empleadoSeleccionado?.usuarioId === e.usuarioId
                                   ? "var(--azul-egm-light)" : "transparent",
                               }}
@@ -1034,13 +978,29 @@ function AdminContent() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
-                    </div>
+                        </table>
+                        {/* Paginación desktop empleados */}
+                        {empleados.length > PAGE_SIZE && (
+                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                            </span>
+                            <div className="flex gap-2">
+                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
+                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Vista móvil — tarjetas */}
-                    <div className="md:hidden flex flex-col divide-y"
-                      style={{ borderColor: "var(--gris-borde)" }}>
-                      {empleados.map((e) => (
+                      {/* Vista móvil — tarjetas */}
+                      <div className="md:hidden flex flex-col divide-y"
+                        style={{ borderColor: "var(--gris-borde)" }}>
+                        {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e) => (
                         <div
                           key={e.usuarioId}
                           className="px-5 py-4 flex items-center justify-between gap-3 cursor-pointer"
@@ -1084,7 +1044,23 @@ function AdminContent() {
                             </span>
                           </div>
                         </div>
-                      ))}
+                        ))}
+                        {/* Paginación móvil empleados */}
+                        {empleados.length > PAGE_SIZE && (
+                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                            </span>
+                            <div className="flex gap-2">
+                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>←</button>
+                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>→</button>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </>
                 )}
@@ -1646,7 +1622,7 @@ function AdminContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {progresoEmpresa.map((emp, idx, arr) => {
+                    {progresoEmpresa.slice(progPage * PAGE_SIZE, (progPage + 1) * PAGE_SIZE).map((emp, idx, arr) => {
                       const media = emp.modulos.length > 0
                         ? Math.round(emp.modulos.reduce((acc, m) => acc + m.porcentaje, 0) / emp.modulos.length)
                         : 0;
@@ -1682,6 +1658,22 @@ function AdminContent() {
                     })}
                   </tbody>
                 </table>
+                {/* Paginación progreso */}
+                {progresoEmpresa.length > PAGE_SIZE && (
+                  <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      {progPage * PAGE_SIZE + 1}–{Math.min((progPage + 1) * PAGE_SIZE, progresoEmpresa.length)} de {progresoEmpresa.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setProgPage(p => Math.max(0, p - 1))} disabled={progPage === 0}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
+                      <button onClick={() => setProgPage(p => p + 1)} disabled={(progPage + 1) * PAGE_SIZE >= progresoEmpresa.length}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1917,10 +1909,10 @@ function AdminContent() {
                   <option value="">Todos</option>
                   {(() => {
                     const tipos = new Set(
-                      formaciones.map((m: any) => m.tipoModulo).filter((t): t is string => !!t)
+                      formaciones.map((m: ModuloConProgreso) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
                     );
                     return Array.from(tipos).map((t) => {
-                      const n = formaciones.filter((m: any) => m.tipoModulo === t).length;
+                        const n = formaciones.filter((m: ModuloConProgreso) => m.tipoModulo === t).length;
                       const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
                       return (
                         <option key={t} value={t}>
@@ -1978,7 +1970,7 @@ function AdminContent() {
               {/* Botón personalizar */}
               <div className="relative">
                 <button
-                  onClick={() => setShowPersonalizar((v) => !v)}
+                  onClick={() => setShowPersonalizar((v: boolean) => !v)}
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
                   style={{
                     background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
@@ -2073,9 +2065,9 @@ function AdminContent() {
                       <AreaChart
                         data={statsEmpresa.movimientoMensual}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                        onClick={(e: any) => {
-                          const label = e?.activeLabel as string | undefined;
-                          if (label) setDrillMes(label);
+                        onClick={(e) => {
+                          const label = e?.activeLabel;
+                          if (typeof label === "string") setDrillMes(label);
                         }}
                         style={{ cursor: "pointer" }}
                       >

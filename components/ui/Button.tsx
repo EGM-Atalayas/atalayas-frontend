@@ -7,21 +7,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?:    "sm" | "md" | "lg";
 }
 
-// ── Tamaños ───────────────────────────────────────────────────────────────────
 const SIZES: Record<string, string> = {
   sm: "px-3 py-1.5 text-xs gap-1.5",
   md: "px-5 py-2.5 text-sm gap-2",
   lg: "px-7 py-3.5 text-base gap-2.5",
 };
 
-// ── Estilos base por variante (estado normal) ─────────────────────────────────
 const BASE: Record<string, React.CSSProperties> = {
   primary: {
-    background: "var(--azul-egm)",
-    color:      "#ffffff",
-    border:     "none",
-    filter:     "brightness(1)",
-    boxShadow:  "0 2px 8px rgba(27,63,126,0.20)",
+    background:           "rgba(38,82,158,0.90)",
+    color:                "#ffffff",
+    border:               "1px solid rgba(255,255,255,0.18)",
+    boxShadow:            "none",
+    backdropFilter:       "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
   },
   secondary: {
     background: "transparent",
@@ -43,14 +42,14 @@ const BASE: Record<string, React.CSSProperties> = {
   },
 };
 
-// ── Estilos hover por variante ────────────────────────────────────────────────
 const HOVER: Record<string, React.CSSProperties> = {
   primary: {
-    background: "var(--azul-egm)",
-    color:      "#ffffff",
-    border:     "none",
-    filter:     "brightness(1.18)",
-    boxShadow:  "0 8px 24px rgba(27,63,126,0.42), 0 0 0 3px rgba(27,63,126,0.25)",
+    background:           "rgba(27,63,126,0.95)",
+    color:                "#ffffff",
+    border:               "1px solid rgba(255,255,255,0.22)",
+    boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 20px rgba(27,63,126,0.38)",
+    backdropFilter:       "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
   },
   secondary: {
     background: "rgba(0,0,0,0.06)",
@@ -72,14 +71,14 @@ const HOVER: Record<string, React.CSSProperties> = {
   },
 };
 
-// ── Estilos pressed por variante ──────────────────────────────────────────────
 const PRESSED: Record<string, React.CSSProperties> = {
   primary: {
-    background: "var(--azul-egm)",
-    color:      "#ffffff",
-    border:     "none",
-    filter:     "brightness(0.92)",
-    boxShadow:  "0 2px 6px rgba(27,63,126,0.18)",
+    background:           "rgba(27,63,126,1)",
+    color:                "#ffffff",
+    border:               "1px solid rgba(255,255,255,0.14)",
+    boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 4px rgba(27,63,126,0.20)",
+    backdropFilter:       "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
   },
   secondary: {
     background: "rgba(0,0,0,0.10)",
@@ -101,15 +100,13 @@ const PRESSED: Record<string, React.CSSProperties> = {
   },
 };
 
-// ── Estilos disabled por variante ─────────────────────────────────────────────
 const DISABLED: Record<string, React.CSSProperties> = {
-  primary:   { background: "var(--azul-egm)",  color: "#ffffff",           border: "none" },
-  secondary: { background: "transparent",       color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
-  danger:    { background: "transparent",       color: "#dc2626",           border: "1.5px solid #dc2626" },
-  ghost:     { background: "transparent",       color: "var(--azul-egm)",   border: "1px solid rgba(0,0,0,0.12)" },
+  primary:   { background: "rgba(38,82,158,0.90)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" },
+  secondary: { background: "transparent",                                        color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
+  danger:    { background: "transparent",                                        color: "#dc2626",            border: "1.5px solid #dc2626" },
+  ghost:     { background: "transparent",                                        color: "var(--azul-egm)",    border: "1px solid rgba(0,0,0,0.12)" },
 };
 
-// ── Componente ────────────────────────────────────────────────────────────────
 export const Button: React.FC<ButtonProps> = ({
   children,
   variant   = "primary",
@@ -137,14 +134,13 @@ export const Button: React.FC<ButtonProps> = ({
     borderRadius: "var(--radius-btn)",
     fontWeight:   600,
     transition:   [
-      "filter 0.18s ease",
-      "background 0.15s ease",
+      "background 0.18s ease",
       "color 0.15s ease",
       "border-color 0.15s ease",
       "box-shadow 0.22s var(--ease-spring)",
     ].join(", "),
-    outline:  "none",
-    cursor:   disabled ? "not-allowed" : "pointer",
+    outline: "none",
+    cursor:  disabled ? "not-allowed" : "pointer",
     ...style,
   };
 

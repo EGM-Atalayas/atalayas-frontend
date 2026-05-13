@@ -1,7 +1,7 @@
 // lib/api.ts
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-c25d.onrender.com/api/v1";
+  "https://atalayas-backend-1.onrender.com/api/v1";
 
 // Variables de control para evitar bucles infinitos de refresco
 let isRefreshing = false;

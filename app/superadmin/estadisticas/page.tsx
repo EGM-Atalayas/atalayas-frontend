@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getEstadisticasSuperadmin, EstadisticasResponse } from "@/lib/api/estadisticas";
+import { QK } from "@/lib/queryKeys";
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -12,9 +14,6 @@ import { FaChartPie } from "react-icons/fa";
 const STORAGE_KEY = "egm_superadmin_stats_prefs";
 
 const EstadisticasPage: React.FC = () => {
-  const [data, setData]           = useState<EstadisticasResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError]         = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
 
   const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);

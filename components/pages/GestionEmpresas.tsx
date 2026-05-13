@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { FaBan, FaCheckCircle, FaSearch, FaBuilding, FaRegFolderOpen, FaClock } from "react-icons/fa";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getEmpresas, toggleActivacionEmpresa } from "@/lib/api/empresas";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { QK } from "@/lib/queryKeys";
 
 export interface EmpresaDB {
   empresaId: string;
@@ -24,48 +26,36 @@ const coloresEstado: Record<string, string> = {
 };
 
 const GestionEmpresas: React.FC = () => {
-  const [empresas, setEmpresas] = useState<EmpresaDB[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<"TODAS" | "ACTIVA" | "INACTIVA" | "PENDIENTE">("TODAS");
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: empresas = [], isLoading, error: queryError } = useQuery({
+    queryKey: QK.empresas(),
+    queryFn: getEmpresas,
+    staleTime: 30_000,
+  });
+  const error = queryError ? (queryError as Error).message : "";
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const data = await getEmpresas();
-      setEmpresas(data);
-    } catch (err: any) {
-      console.error("Error cargando empresas:", err);
-      setError(err.message || "No se pudo conectar con el servidor.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleActivacion = async (id: string, activaActual: boolean) => {
-    // Optimistic update
-    setEmpresas(empresas.map((emp) =>
-      emp.empresaId === id ? { ...emp, activo: !activaActual } : emp
-    ));
-
-    try {
-      await toggleActivacionEmpresa(id);
-    } catch (error) {
-      console.error("Error cambiando activación:", error);
+  const toggleMutation = useMutation({
+    mutationFn: ({ id }: { id: string; activaActual: boolean }) => toggleActivacionEmpresa(id),
+    onMutate: async ({ id, activaActual }: { id: string; activaActual: boolean }) => {
+      await queryClient.cancelQueries({ queryKey: QK.empresas() });
+      const prev = queryClient.getQueryData<typeof empresas>(QK.empresas());
+      queryClient.setQueryData<typeof empresas>(QK.empresas(), (old = []) =>
+        old.map((emp) => emp.empresaId === id ? { ...emp, activo: !activaActual } : emp)
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      queryClient.setQueryData(QK.empresas(), ctx?.prev);
       alert("Hubo un error al guardar el cambio en el servidor.");
-      // Revertir
-      setEmpresas(empresas.map((emp) =>
-        emp.empresaId === id ? { ...emp, activo: activaActual } : emp
-      ));
-    }
-  };
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: QK.empresas() }),
+  });
+
+  const toggleActivacion = (id: string, activaActual: boolean) =>
+    toggleMutation.mutate({ id, activaActual });
 
   const empresasFiltradas = useMemo(() => {
     return empresas.filter((emp) => {

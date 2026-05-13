@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaCheckCircle } from "react-icons/fa";
-import { FiArrowRight, FiChevronLeft } from "react-icons/fi";
+import { FiArrowRight, FiChevronLeft, FiCheckCircle, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 
 const SECTORES = [
@@ -15,9 +15,10 @@ const SECTORES = [
 const RegisterEmpresa: React.FC = () => {
   const router = useRouter();
 
-  const [paso, setPaso]               = useState(1);
-  const [isLoading, setIsLoading]     = useState(false);
+  const [paso, setPaso]                 = useState(1);
+  const [isLoading, setIsLoading]       = useState(false);
   const [errorMensaje, setErrorMensaje] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     nombreEmpresa: "",
@@ -101,8 +102,8 @@ const RegisterEmpresa: React.FC = () => {
     else setPaso((p) => p - 1);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     setErrorMensaje("");
     setIsLoading(true);
     const payload = {
@@ -173,12 +174,12 @@ const RegisterEmpresa: React.FC = () => {
 
   /* ═══════════════════ PASO 1 ═══════════════════ */
   const renderPaso1 = () => (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Tu empresa
         </h2>
-        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al área empresarial de Atalayas.</p>
+        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al área empresarial de Atalayas</p>
       </div>
 
       <div>
@@ -187,7 +188,7 @@ const RegisterEmpresa: React.FC = () => {
           placeholder="Empresa S.L." required className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>CIF</label>
           <input type="text" name="cif" value={formData.cif} onChange={handleChange}
@@ -195,11 +196,11 @@ const RegisterEmpresa: React.FC = () => {
             maxLength={9}
           />
           {erroresValidacion.cif && (
-            <p className="text-sm mt-1" style={{ color: "#EF4444" }}>{erroresValidacion.cif}</p>
+            <p className="text-sm mt-1" style={{ color: "var(--error)" }}>{erroresValidacion.cif}</p>
           )}
         </div>
         <div>
-          <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>Sector</label>
+          <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>Sector <span className="font-normal" style={{ color: "#9CA3AF" }}>(opcional)</span></label>
           <select name="sector" value={formData.sector} onChange={handleChange}
             className={`${inputClass} appearance-none cursor-pointer`}
             style={{
@@ -236,35 +237,25 @@ const RegisterEmpresa: React.FC = () => {
         )}
       </div>
 
-      <button type="button" onClick={nextStep} disabled={!isStep1Valid}
-        className="w-full py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{
-          background:           isStep1Valid ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
-          border:               "1px solid rgba(255,255,255,0.18)",
-          color:                isStep1Valid ? "#ffffff" : "#8aa6cc",
-          backdropFilter:       "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow:            isStep1Valid ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
-        }}
-        onMouseEnter={(e) => { if (isStep1Valid) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
-        onMouseLeave={(e) => { if (isStep1Valid) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
-      >
-        Continuar <FiArrowRight />
-      </button>
+      <div className="mt-2">
+        <Button variant="primary" size="lg" className="w-full" disabled={!isStep1Valid} onClick={nextStep}>
+          Continuar <FiArrowRight />
+        </Button>
+      </div>
     </div>
   );
 
   /* ═══════════════════ PASO 2 ═══════════════════ */
   const renderPaso2 = () => (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Administrador
         </h2>
-        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Crea la cuenta con la que gestionarás tu empresa.</p>
+        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Crea la cuenta con la que gestionarás tu empresa</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>Nombre</label>
           <input type="text" name="nombreAdmin" value={formData.nombreAdmin} onChange={handleChange}
@@ -285,42 +276,45 @@ const RegisterEmpresa: React.FC = () => {
 
       <div>
         <label className="block text-base font-medium mb-2" style={{ color: "#3D4A5C" }}>Contraseña</label>
-        <input type="password" name="passwordAdmin" value={formData.passwordAdmin} onChange={handleChange}
-          placeholder="••••••••" required className={inputClass} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+        <div className="relative">
+          <input type={showPassword ? "text" : "password"} name="passwordAdmin" value={formData.passwordAdmin} onChange={handleChange}
+            placeholder="••••••••" required className={`${inputClass} pr-11`} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 focus:outline-none"
+            style={{ color: "#6B7A8D" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
+            tabIndex={-1}
+          >
+            {showPassword ? <FiEyeOff /> : <FiEye />}
+          </button>
+        </div>
       </div>
 
-      <button type="button" onClick={nextStep} disabled={!isStep2Valid}
-        className="w-full py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{
-          background:           isStep2Valid ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
-          border:               "1px solid rgba(255,255,255,0.18)",
-          color:                isStep2Valid ? "#ffffff" : "#8aa6cc",
-          backdropFilter:       "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow:            isStep2Valid ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
-        }}
-        onMouseEnter={(e) => { if (isStep2Valid) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
-        onMouseLeave={(e) => { if (isStep2Valid) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
-      >
-        Continuar <FiArrowRight />
-      </button>
+      <div className="mt-2">
+        <Button variant="primary" size="lg" className="w-full" disabled={!isStep2Valid} onClick={nextStep}>
+          Continuar <FiArrowRight />
+        </Button>
+      </div>
     </div>
   );
 
   /* ═══════════════════ PASO 3 ═══════════════════ */
   const renderPaso3 = () => (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Verifica tus datos
         </h2>
-        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Revisa la información antes de enviar la solicitud.</p>
+        <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Revisa la información antes de enviar la solicitud</p>
       </div>
 
       {/* Sección Empresa */}
-      <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos de la Empresa</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="p-5 rounded-2xl" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.10)" }}>
+        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos de la empresa</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>
             <p style={{ color: "#6B7A8D" }}>Nombre de empresa</p>
             <p className="font-medium" style={{ color: "#0f1923" }}>{formData.nombreEmpresa}</p>
@@ -329,10 +323,12 @@ const RegisterEmpresa: React.FC = () => {
             <p style={{ color: "#6B7A8D" }}>CIF</p>
             <p className="font-medium" style={{ color: "#0f1923" }}>{formData.cif}</p>
           </div>
-          <div>
-            <p style={{ color: "#6B7A8D" }}>Sector</p>
-            <p className="font-medium" style={{ color: "#0f1923" }}>{formData.sector}</p>
-          </div>
+          {formData.sector && (
+            <div>
+              <p style={{ color: "#6B7A8D" }}>Sector</p>
+              <p className="font-medium" style={{ color: "#0f1923" }}>{formData.sector}</p>
+            </div>
+          )}
           <div>
             <p style={{ color: "#6B7A8D" }}>Email de contacto</p>
             <p className="font-medium" style={{ color: "#0f1923" }}>{formData.emailEmpresa}</p>
@@ -347,9 +343,9 @@ const RegisterEmpresa: React.FC = () => {
       </div>
 
       {/* Sección Administrador */}
-      <div className="p-5 rounded-lg" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.1)" }}>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos del Administrador</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="p-5 rounded-2xl" style={{ background: "rgba(27,63,126,0.04)", border: "1px solid rgba(27,63,126,0.10)" }}>
+        <h3 className="text-base font-semibold mb-4" style={{ color: "var(--azul-egm)" }}>Datos del administrador</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>
             <p style={{ color: "#6B7A8D" }}>Nombre</p>
             <p className="font-medium" style={{ color: "#0f1923" }}>{formData.nombreAdmin}</p>
@@ -368,79 +364,56 @@ const RegisterEmpresa: React.FC = () => {
       {/* Checkboxes Legales */}
       <div className="flex flex-col gap-2">
         {/* Términos y Condiciones */}
-        <div className="flex items-start gap-3 p-4 rounded-lg transition-colors" style={{ background: aceptarTerminos ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.1)" }}>
-          <input
-            type="checkbox"
-            checked={aceptarTerminos}
-            onChange={(e) => setAceptarTerminos(e.target.checked)}
-            className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
-            style={{ accentColor: "var(--azul-egm)" }}
-          />
-          <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarTerminos(!aceptarTerminos)}>
-            He leído y acepto los <Link href="/terminos" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Términos y Condiciones</Link> de uso de la plataforma Atalayas.
-          </label>
+        <div className="flex items-start gap-3 p-4 rounded-2xl transition-colors cursor-pointer" style={{ background: aceptarTerminos ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.10)" }} onClick={() => setAceptarTerminos(!aceptarTerminos)}>
+          <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+            <div className="w-4 h-4 rounded" style={{ border: aceptarTerminos ? "1px solid var(--azul-egm)" : "1px solid #C8CDD8", background: aceptarTerminos ? "var(--azul-egm)" : "#f5f6f8" }} />
+            {aceptarTerminos && (
+              <svg className="w-3 h-3 text-white absolute pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm leading-tight" style={{ color: "#3D4A5C" }}>
+            He leído y acepto los <Link href="/terminos" target="_blank" className="font-semibold" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Términos y Condiciones</Link> de uso de la plataforma Atalayas.
+          </span>
         </div>
 
         {/* Política de Privacidad */}
-        <div className="flex items-start gap-3 p-4 rounded-lg transition-colors" style={{ background: aceptarPrivacidad ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.1)" }}>
-          <input
-            type="checkbox"
-            checked={aceptarPrivacidad}
-            onChange={(e) => setAceptarPrivacidad(e.target.checked)}
-            className="mt-1 w-5 h-5 rounded accent-blue-600 cursor-pointer"
-            style={{ accentColor: "var(--azul-egm)" }}
-          />
-          <label className="text-sm cursor-pointer leading-tight" style={{ color: "#3D4A5C" }} onClick={() => setAceptarPrivacidad(!aceptarPrivacidad)}>
-            He leído y acepto la <Link href="/privacidad" target="_blank" className="font-semibold transition-colors hover:text-blue-800" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Política de Privacidad</Link> relativa al tratamiento de mis datos personales.
-          </label>
+        <div className="flex items-start gap-3 p-4 rounded-2xl transition-colors cursor-pointer" style={{ background: aceptarPrivacidad ? "rgba(27,63,126,0.08)" : "rgba(27,63,126,0.03)", border: "1px solid rgba(27,63,126,0.10)" }} onClick={() => setAceptarPrivacidad(!aceptarPrivacidad)}>
+          <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+            <div className="w-4 h-4 rounded" style={{ border: aceptarPrivacidad ? "1px solid var(--azul-egm)" : "1px solid #C8CDD8", background: aceptarPrivacidad ? "var(--azul-egm)" : "#f5f6f8" }} />
+            {aceptarPrivacidad && (
+              <svg className="w-3 h-3 text-white absolute pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm leading-tight" style={{ color: "#3D4A5C" }}>
+            He leído y acepto la <Link href="/privacidad" target="_blank" className="font-semibold" style={{ color: "var(--azul-egm)", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Política de Privacidad</Link> relativa al tratamiento de mis datos personales.
+          </span>
         </div>
       </div>
 
       {errorMensaje && (
-        <div className="p-4 rounded-lg text-sm" style={{ background: "#FEE2E2", border: "1px solid #FECACA", color: "#991B1B" }}>
+        <div className="p-4 rounded-2xl text-sm" style={{ background: "var(--error-light)", border: "1px solid var(--error)", color: "var(--error)" }}>
           {errorMensaje}
         </div>
       )}
 
-      <div className="flex gap-4 mt-2">
-        <button type="button" onClick={prevStep}
-          className="flex-1 py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
-          style={{
-            background: "rgba(27,63,126,0.1)",
-            border: "1px solid rgba(27,63,126,0.22)",
-            color: "var(--azul-egm)",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.15)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(27,63,126,0.1)"; }}
-        >
-          <FiChevronLeft /> Atrás
-        </button>
-
-        <button type="button" onClick={handleSubmit} disabled={!isReadyToSubmit}
-          className="flex-1 py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          style={{
-            background:           isReadyToSubmit ? "rgba(27,63,126,0.82)" : "rgba(27,63,126,0.25)",
-            border:               "1px solid rgba(255,255,255,0.18)",
-            color:                isReadyToSubmit ? "#ffffff" : "#8aa6cc",
-            backdropFilter:       "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow:            isReadyToSubmit ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)" : "none",
-          }}
-          onMouseEnter={(e) => { if (isReadyToSubmit) e.currentTarget.style.background = "rgba(27,63,126,0.95)"; }}
-          onMouseLeave={(e) => { if (isReadyToSubmit) e.currentTarget.style.background = "rgba(27,63,126,0.82)"; }}
-        >
+      <div className="mt-2">
+        <Button variant="primary" size="lg" className="w-full" disabled={!isReadyToSubmit} onClick={handleSubmit}>
           {isLoading ? <span className="loading-dots">Enviando</span> : <> Enviar solicitud <FiArrowRight /> </>}
-        </button>
+        </Button>
       </div>
     </div>
   );
 
   /* ═══════════════════ PASO 4 (ÉXITO) ═══════════════════ */
   const renderExito = () => (
-    <div className="flex flex-col items-center justify-center gap-6 text-center py-10">
+    <div className="flex flex-col items-center justify-center gap-6 text-center py-6">
       <div className="w-20 h-20 rounded-full flex items-center justify-center"
         style={{ background: "rgba(27,63,126,0.08)" }}>
-        <FaCheckCircle className="text-4xl" style={{ color: "var(--azul-egm)" }} />
+        <FiCheckCircle size={36} style={{ color: "var(--azul-egm)" }} />
       </div>
       <div>
         <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif" }}>
@@ -450,21 +423,9 @@ const RegisterEmpresa: React.FC = () => {
           Hemos recibido tus datos. Nuestro equipo validará la información y te contactaremos por email en breve.
         </p>
       </div>
-      <button onClick={() => router.push("/login")}
-        className="py-3 px-8 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer"
-        style={{
-          background:           "rgba(27,63,126,0.82)",
-          border:               "1px solid rgba(255,255,255,0.18)",
-          color:                "#ffffff",
-          backdropFilter:       "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2)",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(27,63,126,0.95)")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(27,63,126,0.82)")}
-      >
+      <Button variant="primary" size="lg" className="w-full" onClick={() => router.push("/login")}>
         Ir al inicio de sesión
-      </button>
+      </Button>
     </div>
   );
 
@@ -479,11 +440,13 @@ const RegisterEmpresa: React.FC = () => {
       >
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
 
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-10">
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="h-32 sm:h-44 w-auto brightness-0 invert" />
+        </div>
 
-          <div className="flex items-center justify-center gap-8">
+        {/* Steps — un poco por encima del fondo */}
+        <div className="absolute bottom-20 left-0 right-0 z-10 flex items-center justify-center gap-8">
             {steps.map((step) => {
               const isActive  = paso >= step.num;
               const isCurrent = paso === step.num;
@@ -498,7 +461,9 @@ const RegisterEmpresa: React.FC = () => {
                       backdropFilter: "blur(8px)",
                     }}
                   >
-                    {isActive && !isCurrent ? <i className="bi bi-check-lg" style={{ fontSize: "18px" }} /> : step.num}
+                    {isActive && !isCurrent ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                    ) : step.num}
                   </div>
                   <div>
                     <p className="text-sm font-semibold leading-tight" style={{ color: isCurrent ? "#ffffff" : "rgba(255,255,255,0.38)" }}>
@@ -511,7 +476,6 @@ const RegisterEmpresa: React.FC = () => {
                 </div>
               );
             })}
-          </div>
         </div>
       </div>
 
@@ -521,32 +485,59 @@ const RegisterEmpresa: React.FC = () => {
         style={{ background: "#ffffff" }}
       >
         {/* Branding móvil */}
-        <div className="lg:hidden w-full px-6 py-12 mb-2 relative flex flex-col items-center"
+        <div className="lg:hidden w-full relative flex flex-col items-center"
           style={{ background: "url('/background-empresa.webp') center/cover no-repeat" }}>
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="Atalayas" className="relative z-10 h-20 w-auto brightness-0 invert" />
+          <div className="relative z-10 w-full flex flex-col items-center px-6 py-10 gap-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="Atalayas" className="h-16 w-auto brightness-0 invert" />
+            {/* Indicador de pasos móvil */}
+            {paso < 4 && (
+              <div className="w-full max-w-xs flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center gap-2 w-full">
+                  {steps.map((step, i) => (
+                    <React.Fragment key={step.num}>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300"
+                          style={{
+                            background: paso > step.num ? "rgba(255,255,255,0.90)" : paso === step.num ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.10)",
+                            color:      paso > step.num ? "var(--azul-egm)" : "#ffffff",
+                            border:     paso === step.num ? "1.5px solid rgba(255,255,255,0.70)" : "1.5px solid rgba(255,255,255,0.20)",
+                          }}>
+                          {paso > step.num
+                            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                            : step.num}
+                        </div>
+                        <span className="text-xs font-medium" style={{ color: paso === step.num ? "#ffffff" : "rgba(255,255,255,0.40)" }}>
+                          {step.label}
+                        </span>
+                      </div>
+                      {i < steps.length - 1 && (
+                        <div className="flex-1 h-px" style={{ background: paso > step.num ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.20)" }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="w-full max-w-md px-6 lg:px-0 py-8 lg:py-0">
 
           {/* Volver */}
-          {paso < 3 && (
-            <button onClick={prevStep}
-              className="flex items-center gap-1.5 text-sm mb-6 transition-colors cursor-pointer"
-              style={{ color: "var(--azul-egm)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
-            >
-              <FiChevronLeft size={15} />
-              Volver
-            </button>
+          {paso < 4 && (
+            <div className="mb-6">
+              <Button variant="secondary" size="md" onClick={prevStep}>
+                <FiChevronLeft size={15} /> Atrás
+              </Button>
+            </div>
           )}
 
           {/* Error */}
           {errorMensaje && paso < 4 && (
-            <div className="text-sm text-center py-3 px-4 rounded-lg mb-4"
-              style={{ background: "#FDECEA", border: "1px solid #C84B31", color: "#C84B31" }}>
+            <div className="text-sm text-center py-3 px-4 rounded-2xl mb-4"
+              style={{ background: "var(--error-light)", border: "1px solid var(--error)", color: "var(--error)" }}>
               {errorMensaje}
             </div>
           )}
