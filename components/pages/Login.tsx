@@ -150,7 +150,7 @@ const LoginPage: React.FC = () => {
       <div
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
         style={{
-          background:     "url('/background-login.webp') no-repeat center center",
+          background: "url('/background-login.webp') no-repeat center center",
           backgroundSize: "cover",
         }}
       >
@@ -407,12 +407,12 @@ const LoginPage: React.FC = () => {
                 href="/register-empresa"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
                 style={{
-                  background:           "rgba(255,255,255,0.15)",
-                  border:               "1px solid rgba(255,255,255,0.3)",
-                  color:                "#ffffff",
-                  backdropFilter:       "blur(12px)",
+                  background: "rgba(255,255,255,0.15)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "#ffffff",
+                  backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
-                  boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
@@ -420,19 +420,6 @@ const LoginPage: React.FC = () => {
                 Solicitar alta de empresa →
               </Link>
             </div>
-          </div>
-
-          {/* Acceso invitado */}
-          <div className="text-center mt-3">
-            <button
-              onClick={handleInvitado}
-              className="text-sm transition-colors cursor-pointer"
-              style={{ color: "#6B7A8D" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
-            >
-              ← Continuar como invitado
-            </button>
           </div>
         </div>
       </div>

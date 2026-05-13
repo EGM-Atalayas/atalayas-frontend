@@ -6,13 +6,13 @@ import { Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
-import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getModulos } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
 import { QK } from "@/lib/queryKeys";
-
+import { ChartNoAxesCombined, Check, ChevronDown, ChevronRight, Download, FileText, LibraryBig, Megaphone, Newspaper, Plus, RefreshCw, SlidersHorizontal, TriangleAlert, Upload, Users, X } from "lucide-react";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
-import type { ModuloConProgreso } from "@/lib/types/modulos";
+import type { Modulo } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
@@ -133,9 +133,9 @@ function AdminContent() {
     staleTime: 30_000,
   });
 
-  const { data: formaciones = [] } = useQuery({
+  const { data: formaciones = [] } = useQuery<Modulo[]>({
     queryKey: QK.modulos(usuario?.empresaId),
-    queryFn: () => getModulosConProgreso(usuario?.empresaId),
+    queryFn: () => getModulos(usuario?.empresaId),
     enabled: !!usuario?.empresaId && activeTab === "formaciones",
     staleTime: 60_000,
   });
@@ -208,9 +208,9 @@ function AdminContent() {
         id: "kpis", title: "KPIs resumen",
         headers: ["Indicador", "Valor"],
         rows: [
-          ["Total empleados",       statsEmpresa.kpis.totalEmpleados],
-          ["Altas este mes",        statsEmpresa.kpis.altasEsteMes],
-          ["Bajas este mes",        statsEmpresa.kpis.bajasEsteMes],
+          ["Total empleados", statsEmpresa.kpis.totalEmpleados],
+          ["Altas este mes", statsEmpresa.kpis.altasEsteMes],
+          ["Bajas este mes", statsEmpresa.kpis.bajasEsteMes],
           ["Tasa rotación anual %", statsEmpresa.kpis.tasaRotacion],
           ["Completitud formación %", statsEmpresa.kpis.pctCompletitudGlobal],
         ],
@@ -229,9 +229,9 @@ function AdminContent() {
         id: "estado_formacion", title: "Estado de formación",
         headers: ["Estado", "Empleados"],
         rows: [
-          ["Sin iniciar",  statsEmpresa.empleadosSinFormacion],
-          ["En progreso",  statsEmpresa.empleadosEnProgreso],
-          ["Completada",   statsEmpresa.empleadosCompletados],
+          ["Sin iniciar", statsEmpresa.empleadosSinFormacion],
+          ["En progreso", statsEmpresa.empleadosEnProgreso],
+          ["Completada", statsEmpresa.empleadosCompletados],
         ],
       },
     ];
@@ -285,10 +285,10 @@ function AdminContent() {
     setCargandoStats(true);
     try {
       const filtros: FiltrosEstadisticas = {
-        rangoMeses:   statsRango,
+        rangoMeses: statsRango,
         departamento: statsDpto,
-        estado:       statsEstado,
-        tipoModulo:   statsTipoMod,
+        estado: statsEstado,
+        tipoModulo: statsTipoMod,
       };
       const stats = getEstadisticasAdminEmpresa(empleadosRef.current, formacionesRef.current, progresoEmpresaRef.current, filtros);
       setStatsEmpresa(stats);
@@ -467,9 +467,9 @@ function AdminContent() {
       mostrarToast("Anuncio publicado correctamente");
     } catch { mostrarToast("Error al publicar el anuncio"); }
   }
-  const handleEditModulo = (f: ModuloConProgreso) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
+  const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
-  const handleDesactivarModulo = async (modulo: ModuloConProgreso) => {
+  const handleDesactivarModulo = async (modulo: Modulo) => {
     const estaActivo = modulo.activo;
     const msg = estaActivo
       ? "¿Desactivar este módulo? Dejará de ser visible para los empleados."
@@ -618,64 +618,42 @@ function AdminContent() {
       key: "empleados" as const,
       label: "Empleados",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
+        <Users />
       ),
     },
     {
       key: "anuncios" as const,
       label: "Anuncios",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 11l19-9-9 19-2-8-8-2z" />
-        </svg>
+        <Newspaper />
       ),
     },
     {
       key: "formaciones" as const,
       label: "Módulos formativos",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-        </svg>
+        <LibraryBig />
       ),
     },
     {
       key: "incidencias" as const,
       label: "Incidencias",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-          <line x1="12" y1="9" x2="12" y2="13" />
-          <line x1="12" y1="17" x2="12.01" y2="17" />
-        </svg>
+        <TriangleAlert />
       ),
     },
     {
       key: "estadisticas" as const,
       label: "Estadísticas",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10" />
-          <line x1="12" y1="20" x2="12" y2="4" />
-          <line x1="6" y1="20" x2="6" y2="14" />
-        </svg>
+        <ChartNoAxesCombined />
       ),
     },
     {
       key: "documentos" as const,
       label: "Documentos",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="9" y1="15" x2="15" y2="15" />
-        </svg>
+        <FileText />
       ),
     },
   ];
@@ -762,9 +740,7 @@ function AdminContent() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--azul-egm-light)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
+                  <Upload size={14} />
                   {importando ? "Importando..." : "Importar Excel"}
                 </button>
                 <button
@@ -775,9 +751,7 @@ function AdminContent() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "var(--verde-oliva)")}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <Download size={14} />
                   Exportar Excel
                 </button>
                 <button
@@ -787,9 +761,7 @@ function AdminContent() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <Plus size={14} />
                   Añadir empleado
                 </button>
               </div>
@@ -889,10 +861,7 @@ function AdminContent() {
                   <div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
                       style={{ background: "var(--gris-pagina)" }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--texto-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                      </svg>
+                      <Users size={22} color="var(--texto-muted)" strokeWidth={1.5} />
                     </div>
                     <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
                     <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Añade el primer empleado a tu empresa</p>
@@ -903,21 +872,21 @@ function AdminContent() {
                     </button>
                   </div>
                 ) : (
-                    <>
-                      {/* Vista desktop — tabla */}
-                      <div className="hidden md:block">
-                        <table className="w-full">
-                          <thead>
-                            <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                              {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
-                                <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
-                                  style={{ color: "var(--texto-muted)" }}>{h}</th>
-                              ))}
-                              <th className="py-3.5 px-5" />
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
+                  <>
+                    {/* Vista desktop — tabla */}
+                    <div className="hidden md:block">
+                      <table className="w-full">
+                        <thead>
+                          <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                            {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
+                              <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
+                                style={{ color: "var(--texto-muted)" }}>{h}</th>
+                            ))}
+                            <th className="py-3.5 px-5" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
                             <tr
                               key={e.usuarioId}
                               className="cursor-pointer transition-colors"
@@ -985,36 +954,34 @@ function AdminContent() {
                                 </span>
                               </td>
                               <td className="py-4 px-5 text-right">
-                                <svg className="w-4 h-4 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: "var(--gris-borde)" }}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                </svg>
+                                <ChevronRight size={16} className="ml-auto" strokeWidth={1.5} style={{ color: "var(--gris-borde)" }} />
                               </td>
                             </tr>
                           ))}
                         </tbody>
-                        </table>
-                        {/* Paginación desktop empleados */}
-                        {empleados.length > PAGE_SIZE && (
-                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
-                            </span>
-                            <div className="flex gap-2">
-                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
-                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
-                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
-                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
-                            </div>
+                      </table>
+                      {/* Paginación desktop empleados */}
+                      {empleados.length > PAGE_SIZE && (
+                        <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                          <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                            {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                          </span>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                              style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
+                            <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                              style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                    </div>
 
-                      {/* Vista móvil — tarjetas */}
-                      <div className="md:hidden flex flex-col divide-y"
-                        style={{ borderColor: "var(--gris-borde)" }}>
-                        {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e) => (
+                    {/* Vista móvil — tarjetas */}
+                    <div className="md:hidden flex flex-col divide-y"
+                      style={{ borderColor: "var(--gris-borde)" }}>
+                      {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e) => (
                         <div
                           key={e.usuarioId}
                           className="px-5 py-4 flex items-center justify-between gap-3 cursor-pointer"
@@ -1058,23 +1025,23 @@ function AdminContent() {
                             </span>
                           </div>
                         </div>
-                        ))}
-                        {/* Paginación móvil empleados */}
-                        {empleados.length > PAGE_SIZE && (
-                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
-                            </span>
-                            <div className="flex gap-2">
-                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
-                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>←</button>
-                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
-                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>→</button>
-                            </div>
+                      ))}
+                      {/* Paginación móvil empleados */}
+                      {empleados.length > PAGE_SIZE && (
+                        <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                          <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                            {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                          </span>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                              style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>←</button>
+                            <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                              style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>→</button>
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -1294,13 +1261,9 @@ function AdminContent() {
                   <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                     style={{ background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
                     {importResult.errors.length === 0 ? (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "var(--exito)" }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check size={16} strokeWidth={2.5} style={{ color: "var(--exito)" }} />
                     ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#d97706" }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
+                      <TriangleAlert size={16} strokeWidth={2} style={{ color: "#d97706" }} />
                     )}
                   </div>
                   <div className="flex-1">
@@ -1345,9 +1308,7 @@ function AdminContent() {
                 style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                <Plus size={14} />
                 Nuevo anuncio
               </button>
             </div>
@@ -1384,10 +1345,7 @@ function AdminContent() {
                         <span className="text-sm font-semibold flex-1 text-left" style={{ color: "var(--texto-primario)" }}>
                           {borradores.length} {borradores.length === 1 ? "anuncio pendiente" : "anuncios pendientes"}
                         </span>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#d97706" strokeWidth={2.5}
-                          style={{ transition: "transform 0.2s", transform: showBorradores ? "rotate(0deg)" : "rotate(-90deg)" }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <ChevronDown size={14} strokeWidth={2.5} style={{ color: "#d97706", transition: "transform 0.2s", transform: showBorradores ? "rotate(0deg)" : "rotate(-90deg)" }} />
                       </button>
                       {showBorradores && (
                         <div className="flex flex-col" style={{ borderTop: "1px solid #bfdbfe" }}>
@@ -1397,9 +1355,7 @@ function AdminContent() {
                               {n.imagenUrl
                                 ? <img src={n.imagenUrl} alt="" className="rounded-xl object-cover shrink-0" style={{ width: 44, height: 44 }} />
                                 : <div className="rounded-xl shrink-0 flex items-center justify-center" style={{ width: 44, height: 44, background: "#eff6ff" }}>
-                                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                  </svg>
+                                  <FileText size={18} strokeWidth={1.8} style={{ color: "#93c5fd" }} />
                                 </div>
                               }
                               <div className="flex-1 min-w-0">
@@ -1460,9 +1416,7 @@ function AdminContent() {
                             </>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center" style={{ background: GRAD_EMP }}>
-                              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1} style={{ opacity: 0.2 }}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                              </svg>
+                              <Megaphone size={48} strokeWidth={1} style={{ color: "white", opacity: 0.2 }} />
                             </div>
                           )}
                           <div className="absolute inset-0 flex flex-col justify-end p-5">
@@ -1532,9 +1486,7 @@ function AdminContent() {
                                     <img src={n.imagenUrl} alt={n.titulo} className="w-full h-full object-cover" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center" style={{ background: GRAD_EMP }}>
-                                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1} style={{ opacity: 0.2 }}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                                      </svg>
+                                      <Megaphone size={24} strokeWidth={1} style={{ color: "white", opacity: 0.2 }} />
                                     </div>
                                   )}
                                 </div>
@@ -1704,18 +1656,36 @@ function AdminContent() {
                 </h1>
                 <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Administra los módulos formativos de tu empresa</p>
               </div>
-              <button
-                onClick={() => router.push("/dashboard/admin/modulos/crear")}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Nuevo módulo
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    for (let i = localStorage.length - 1; i >= 0; i--) {
+                      const key = localStorage.key(i);
+                      if (key?.startsWith("egm_modulo_admin_")) localStorage.removeItem(key);
+                    }
+                    queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
+                    mostrarToast("Progreso de admin reiniciado");
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
+                  title="Reiniciar progreso de admin"
+                >
+                  < RefreshCw />
+                  Reiniciar
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard/admin/modulos/crear")}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                >
+                  < Plus />
+                  Nuevo módulo
+                </button>
+              </div>
             </div>
 
             {/* Grid de módulos */}
@@ -1724,10 +1694,7 @@ function AdminContent() {
                 style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
                   style={{ background: "var(--gris-pagina)" }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--texto-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
+                  <LibraryBig size={24} strokeWidth={1.5} style={{ color: "var(--texto-muted)" }} />
                 </div>
                 <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
                 <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo formativo para tus empleados</p>
@@ -1806,6 +1773,11 @@ function AdminContent() {
                           style={{ borderTop: "1px solid var(--gris-borde)" }}>
                           {f.empresaId !== null ? (
                             <>
+                              <button onClick={() => router.push(`/dashboard/formacion/${f.moduloId}`)}
+                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                                Ver
+                              </button>
                               <button onClick={() => handleEditModulo(f)}
                                 className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
                                 style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
@@ -1872,7 +1844,7 @@ function AdminContent() {
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                       style={{
                         background: statsRango === n ? "var(--azul-egm)" : "transparent",
-                        color:      statsRango === n ? "white" : "var(--texto-muted)",
+                        color: statsRango === n ? "white" : "var(--texto-muted)",
                       }}
                     >
                       {n} meses
@@ -1936,10 +1908,10 @@ function AdminContent() {
                   <option value="">Todos</option>
                   {(() => {
                     const tipos = new Set(
-                      formaciones.map((m: ModuloConProgreso) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
+                      formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
                     );
                     return Array.from(tipos).map((t) => {
-                        const n = formaciones.filter((m: ModuloConProgreso) => m.tipoModulo === t).length;
+                      const n = formaciones.filter((m: Modulo) => m.tipoModulo === t).length;
                       const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
                       return (
                         <option key={t} value={t}>
@@ -1974,11 +1946,7 @@ function AdminContent() {
                   style={{ background: "var(--azul-egm)", color: "white" }}
                   title="Descargar reporte"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <Download size={13} strokeWidth={2.2} />
                   Descargar
                 </button>
               </div>
@@ -2001,15 +1969,10 @@ function AdminContent() {
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
                   style={{
                     background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
-                    color:      showPersonalizar ? "white" : "var(--texto-primario)",
+                    color: showPersonalizar ? "white" : "var(--texto-primario)",
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-                  </svg>
+                  <SlidersHorizontal size={14} />
                   Personalizar
                 </button>
 
@@ -2018,10 +1981,10 @@ function AdminContent() {
                   <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Mostrar secciones</p>
                     {[
-                      { label: "KPIs resumen",            value: showKpis,            set: setShowKpis },
-                      { label: "Incorporaciones y salidas", value: showMovimiento,    set: setShowMovimiento },
-                      { label: "Progreso por módulo",     value: showProgreso,        set: setShowProgreso },
-                      { label: "Estado de formación",     value: showEstadoFormacion, set: setShowEstadoFormacion },
+                      { label: "KPIs resumen", value: showKpis, set: setShowKpis },
+                      { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
+                      { label: "Progreso por módulo", value: showProgreso, set: setShowProgreso },
+                      { label: "Estado de formación", value: showEstadoFormacion, set: setShowEstadoFormacion },
                     ].map(({ label, value, set }) => (
                       <label key={label} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2">
                         <input
@@ -2062,138 +2025,138 @@ function AdminContent() {
               <>
                 {/* ── KPIs ── */}
                 {showKpis && (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {[
-                    { label: "Total empleados",        value: String(statsEmpresa.kpis.totalEmpleados),          color: "text-blue-600"    },
-                    { label: "Altas este mes",          value: String(statsEmpresa.kpis.altasEsteMes),            color: "text-emerald-600" },
-                    { label: "Tasa de rotación anual",  value: `${statsEmpresa.kpis.tasaRotacion}%`,              color: "text-amber-600"   },
-                    { label: "Completitud formación",   value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`,      color: "text-violet-600"  },
-                    { label: "Sin iniciar formación",   value: String(statsEmpresa.empleadosSinFormacion),        color: "text-red-500"     },
-                    { label: "Formación completada",    value: String(statsEmpresa.empleadosCompletados),         color: "text-emerald-600" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-                      <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                    </div>
-                  ))}
-                </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {[
+                      { label: "Total empleados", value: String(statsEmpresa.kpis.totalEmpleados), color: "text-blue-600" },
+                      { label: "Altas este mes", value: String(statsEmpresa.kpis.altasEsteMes), color: "text-emerald-600" },
+                      { label: "Tasa de rotación anual", value: `${statsEmpresa.kpis.tasaRotacion}%`, color: "text-amber-600" },
+                      { label: "Completitud formación", value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`, color: "text-violet-600" },
+                      { label: "Sin iniciar formación", value: String(statsEmpresa.empleadosSinFormacion), color: "text-red-500" },
+                      { label: "Formación completada", value: String(statsEmpresa.empleadosCompletados), color: "text-emerald-600" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+                        <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {/* ── Incorporaciones y salidas ── */}
                 {showMovimiento && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-                  <div className="flex items-start justify-between mb-1">
-                    <h2 className="text-lg font-bold text-slate-800">Incorporaciones y salidas</h2>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Clic en un mes para ver detalle</span>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                    <div className="flex items-start justify-between mb-1">
+                      <h2 className="text-lg font-bold text-slate-800">Incorporaciones y salidas</h2>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Clic en un mes para ver detalle</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos {statsRango} meses{statsDpto ? ` · Dpto. ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : ""}</p>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                          data={statsEmpresa.movimientoMensual}
+                          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                          onClick={(e) => {
+                            const label = e?.activeLabel;
+                            if (typeof label === "string") setDrillMes(label);
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <defs>
+                            <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.2} />
+                              <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} allowDecimals={false} />
+                          <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                          <Legend verticalAlign="top" height={36} iconType="circle" />
+                          <Area type="monotone" name="Altas" dataKey="altas" stroke="#3B82F6" strokeWidth={3} fill="url(#gradAltas)" />
+                          <Area type="monotone" name="Bajas" dataKey="bajas" stroke="#F43F5E" strokeWidth={3} fill="url(#gradBajas)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos {statsRango} meses{statsDpto ? ` · Dpto. ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : ""}</p>
-                  <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={statsEmpresa.movimientoMensual}
-                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                        onClick={(e) => {
-                          const label = e?.activeLabel;
-                          if (typeof label === "string") setDrillMes(label);
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <defs>
-                          <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}   />
-                          </linearGradient>
-                          <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#F43F5E" stopOpacity={0.2} />
-                            <stop offset="95%" stopColor="#F43F5E" stopOpacity={0}   />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} allowDecimals={false} />
-                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                        <Legend verticalAlign="top" height={36} iconType="circle" />
-                        <Area type="monotone" name="Altas"  dataKey="altas"  stroke="#3B82F6" strokeWidth={3} fill="url(#gradAltas)" />
-                        <Area type="monotone" name="Bajas"  dataKey="bajas"  stroke="#F43F5E" strokeWidth={3} fill="url(#gradBajas)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
                 )}
 
                 {/* ── Progreso de formación por módulo ── */}
                 {showProgreso && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-                  <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
-                  <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
-                  {statsEmpresa.progresoModulos.length === 0 ? (
-                    <p className="text-sm text-slate-400 text-center py-12">Sin módulos con datos de progreso</p>
-                  ) : (
-                    <div style={{ height: Math.max(240, statsEmpresa.progresoModulos.length * 48) }} className="w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={statsEmpresa.progresoModulos} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                          <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
-                          <YAxis type="category" dataKey="nombre" axisLine={false} tickLine={false}
-                            tick={{ fill: "#64748b", fontSize: 11 }} width={130}
-                            tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + "…" : v} />
-                          <RechartsTooltip
-                            cursor={{ fill: "#f8fafc" }}
-                            contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                            formatter={(v) => [`${v ?? 0}%`, "Completitud"]}
-                          />
-                          <Bar dataKey="porcentaje" radius={[0, 8, 8, 0]} barSize={24}>
-                            {statsEmpresa.progresoModulos.map((entry, i) => (
-                              <Cell
-                                key={`cell-${i}`}
-                                fill={entry.porcentaje >= 80 ? "#10B981" : entry.porcentaje >= 40 ? "#3B82F6" : "#F59E0B"}
-                              />
-                            ))}
-                            <LabelList dataKey="porcentaje" position="right"
-                              style={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
-                              formatter={(v: unknown) => `${v ?? 0}%`} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                    <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
+                    <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
+                    {statsEmpresa.progresoModulos.length === 0 ? (
+                      <p className="text-sm text-slate-400 text-center py-12">Sin módulos con datos de progreso</p>
+                    ) : (
+                      <div style={{ height: Math.max(240, statsEmpresa.progresoModulos.length * 48) }} className="w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={statsEmpresa.progresoModulos} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                            <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
+                            <YAxis type="category" dataKey="nombre" axisLine={false} tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 11 }} width={130}
+                              tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + "…" : v} />
+                            <RechartsTooltip
+                              cursor={{ fill: "#f8fafc" }}
+                              contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                              formatter={(v) => [`${v ?? 0}%`, "Completitud"]}
+                            />
+                            <Bar dataKey="porcentaje" radius={[0, 8, 8, 0]} barSize={24}>
+                              {statsEmpresa.progresoModulos.map((entry, i) => (
+                                <Cell
+                                  key={`cell-${i}`}
+                                  fill={entry.porcentaje >= 80 ? "#10B981" : entry.porcentaje >= 40 ? "#3B82F6" : "#F59E0B"}
+                                />
+                              ))}
+                              <LabelList dataKey="porcentaje" position="right"
+                                style={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                                formatter={(v: unknown) => `${v ?? 0}%`} />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* ── Estado de formación de la plantilla ── */}
                 {showEstadoFormacion && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                  <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
-                  <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
-                  <div className="h-[220px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
-                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
-                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
-                          ].filter((d) => d.value > 0)}
-                          cx="50%" cy="50%"
-                          innerRadius={60} outerRadius={90}
-                          paddingAngle={4}
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {[
-                            { name: "Sin iniciar",  value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
-                            { name: "En progreso",  value: statsEmpresa.empleadosEnProgreso,   fill: "#3B82F6" },
-                            { name: "Completada",   value: statsEmpresa.empleadosCompletados,  fill: "#10B981" },
-                          ].filter((d) => d.value > 0).map((entry, i) => (
-                            <Cell key={`cell-${i}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
+                    <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
+                    <div className="h-[220px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: "Sin iniciar", value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                              { name: "En progreso", value: statsEmpresa.empleadosEnProgreso, fill: "#3B82F6" },
+                              { name: "Completada", value: statsEmpresa.empleadosCompletados, fill: "#10B981" },
+                            ].filter((d) => d.value > 0)}
+                            cx="50%" cy="50%"
+                            innerRadius={60} outerRadius={90}
+                            paddingAngle={4}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {[
+                              { name: "Sin iniciar", value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
+                              { name: "En progreso", value: statsEmpresa.empleadosEnProgreso, fill: "#3B82F6" },
+                              { name: "Completada", value: statsEmpresa.empleadosCompletados, fill: "#10B981" },
+                            ].filter((d) => d.value > 0).map((entry, i) => (
+                              <Cell key={`cell-${i}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                          <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                </div>
                 )}
               </>
             )}
@@ -2205,7 +2168,7 @@ function AdminContent() {
 
       {/* ── Modal de drill-down de mes ── */}
       {drillMes && (() => {
-        const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+        const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         const mesIdx = MESES.indexOf(drillMes);
         // Recorremos la ventana ya construida para localizar año + mes
         const hoy = new Date();
@@ -2219,7 +2182,7 @@ function AdminContent() {
         }
         // Recolectar empleados con altas y bajas en ese mes (respetando filtros activos)
         let empFiltrados = empleados;
-        if (statsEstado === "activos")  empFiltrados = empFiltrados.filter((e) => e.activo !== false);
+        if (statsEstado === "activos") empFiltrados = empFiltrados.filter((e) => e.activo !== false);
         if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
         if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
 
@@ -2253,9 +2216,7 @@ function AdminContent() {
                   className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
                   aria-label="Cerrar"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <X size={16} />
                 </button>
               </div>
 
@@ -2309,9 +2270,7 @@ function AdminContent() {
       {toast && (
         <div className="fixed bottom-6 left-1/2 z-300 flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg, #1b3f7e 0%, #2563eb 100%)", color: "#fff", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+          <Check size={16} strokeWidth={2.5} />
           {toast}
           <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(12px) scale(0.95); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }`}</style>
         </div>

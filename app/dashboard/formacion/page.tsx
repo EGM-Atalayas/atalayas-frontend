@@ -60,9 +60,9 @@ function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: st
 
 type ModuloEnriquecido = ModuloConProgreso & { duracion: string; porcentaje: number };
 
-function leerPorcentajeLS(moduloId: string): number | null {
+function leerPorcentajeLS(moduloId: string, esAdmin: boolean): number | null {
   try {
-    const raw = localStorage.getItem(`egm_modulo_${moduloId}`);
+    const raw = localStorage.getItem(esAdmin ? `egm_modulo_admin_${moduloId}` : `egm_modulo_${moduloId}`);
     if (!raw) return null;
     const { completados, total } = JSON.parse(raw) as { completados: string[]; total?: number };
     const totalItems = total ?? 5; // fallback para datos legacy
@@ -87,8 +87,8 @@ const DURACION_POR_TIPO: Record<string, string> = {
 // Tipos que pertenecen al bloque "Onboarding" — el resto va a "Formación continua"
 const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
 
-function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
-  const pctLS = leerPorcentajeLS(m.moduloId);
+function enriquecer(m: ModuloConProgreso, esAdmin: boolean): ModuloEnriquecido {
+  const pctLS = leerPorcentajeLS(m.moduloId, esAdmin);
   const porcentaje = pctLS !== null ? pctLS
     : m.status === "completado" ? 100 : m.status === "en progreso" ? 50 : 0;
   const status = pctLS !== null
@@ -111,6 +111,7 @@ const ESTADO_LABELS: { value: FiltroEstado; label: string }[] = [
 export default function FormacionPage() {
   const router      = useRouter();
   const { usuario } = useAuth();
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
 
   const [modules,    setModules]    = useState<ModuloEnriquecido[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -137,9 +138,9 @@ export default function FormacionPage() {
     getModulosConProgreso(usuario?.empresaId)
       .then((data) => {
         const sorted = data.sort((a, b) => a.orden - b.orden);
-        setModules(sorted.length > 0 ? sorted.map(enriquecer) : MOCK_MODULES.map(enriquecer));
+        setModules(sorted.length > 0 ? sorted.map((m) => enriquecer(m, esAdmin)) : MOCK_MODULES.map((m) => enriquecer(m, esAdmin)));
       })
-      .catch(() => setModules(MOCK_MODULES.map(enriquecer)))
+      .catch(() => setModules(MOCK_MODULES.map((m) => enriquecer(m, esAdmin))))
       .finally(() => setLoading(false));
   }, []);
 
