@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/AuthContext";
+import QueryProvider from "@/components/providers/QueryProvider";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import { Inter, Playfair_Display, Poppins, Raleway } from "next/font/google";
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <QueryProvider><AuthProvider>{children}</AuthProvider></QueryProvider>
       </body>
     </html>
   );

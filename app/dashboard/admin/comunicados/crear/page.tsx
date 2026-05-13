@@ -11,9 +11,13 @@ const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
 
 // ── IA helper ─────────────────────────────────────────────────────────
 async function llamarIA(prompt: string): Promise<string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null
   const res = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ messages: [{ role: "user", content: prompt }], context: {} }),
   });
   if (!res.ok || !res.body) throw new Error("IA no disponible");

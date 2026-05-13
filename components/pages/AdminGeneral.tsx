@@ -17,7 +17,9 @@ import {
   FaRocket,
   FaStar,
 } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
 import { API_URL, apiFetch } from "@/lib/api";
+import { QK } from "@/lib/queryKeys";
 
 export interface Actividad {
   id: number;
@@ -95,9 +97,6 @@ const STORAGE_KEY = "superadmin-onboarding-completados";
 
 const AdminGeneral: React.FC = () => {
   const router = useRouter();
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const [completados, setCompletados] = useState<number[]>([]);
   const [expandido, setExpandido] = useState<number | null>(null);
 
@@ -108,25 +107,19 @@ const AdminGeneral: React.FC = () => {
     } catch {}
   }, []);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const response = await apiFetch(`${API_URL}/dashboard/superadmin`);
-        const json = await response.json().catch(() => ({}));
-        if (!response.ok || json.code === 403 || json.code === 401) {
-          throw new Error(`Acceso denegado (Error ${json.code || response.status}).`);
-        }
-        setData(json);
-      } catch (err: any) {
-        setError(err.message || "Error de conexión al obtener los datos del panel.");
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: QK.dashboardSuperadmin(),
+    queryFn: async () => {
+      const response = await apiFetch(`${API_URL}/dashboard/superadmin`);
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || json.code === 403 || json.code === 401) {
+        throw new Error(`Acceso denegado (Error ${json.code || response.status}).`);
       }
-    };
-    fetchDashboardData();
-  }, []);
+      return json as DashboardResponse;
+    },
+    staleTime: 60_000,
+  });
+  const error = queryError ? (queryError as Error).message : "";
 
   function toggleCompletado(id: number) {
     setCompletados((prev) => {

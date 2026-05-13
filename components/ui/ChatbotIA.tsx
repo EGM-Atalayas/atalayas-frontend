@@ -3,21 +3,20 @@
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
 import Grainient from "./Grainient"
-import { IconButton } from "@/components/ui/IconButton"
 import { getModulosConProgreso } from "@/lib/api/modulos"
 import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
-  gradientUser:   "linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%)",
-  chipBg:         "rgba(79,70,229,0.08)",
-  chipBorder:     "rgba(79,70,229,0.22)",
-  chipText:       "#4F46E5",
-  chipHoverBg:    "rgba(79,70,229,0.16)",
-  pulse:          "rgba(79,70,229,0.45)",
-  shadow:         "rgba(79,70,229,0.35)",
-  accent:         "#4F46E5",
+  gradientFab:    "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
+  gradientUser:   "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
+  chipBg:         "rgba(21,128,61,0.08)",
+  chipBorder:     "rgba(21,128,61,0.22)",
+  chipText:       "#15803d",
+  chipHoverBg:    "rgba(21,128,61,0.16)",
+  pulse:          "rgba(34,197,94,0.45)",
+  shadow:         "rgba(21,128,61,0.35)",
+  accent:         "#22c55e",
 } as const
 
 const C = COLORS
@@ -71,7 +70,6 @@ interface Message {
   role: "assistant" | "user"
   text: string
   time: string
-  isError?: boolean
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -189,8 +187,8 @@ function TypingIndicator() {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "12px" }}>
       <div style={{
-        background: "var(--ia-light)",
-        border: "1px solid var(--ia-glow)",
+        background: "rgba(240,132,90,0.07)",
+        border: "1px solid rgba(240,132,90,0.15)",
         borderRadius: "4px 18px 18px 18px",
         padding: "12px 16px",
         display: "flex",
@@ -275,10 +273,6 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
   const isAssistant = message.role === "assistant"
 
   if (isAssistant) {
-    const bubbleBg     = message.isError ? "var(--error-light)"          : "var(--ia-light)"
-    const bubbleBorder = message.isError ? "1px solid rgba(192,57,43,0.22)" : "1px solid var(--ia-glow)"
-    const bubbleColor  = message.isError ? "var(--error)"                : "var(--texto-primario)"
-
     return (
       <div style={{
         display: "flex", alignItems: "flex-start",
@@ -287,13 +281,13 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
       }}>
         <div style={{ maxWidth: "82%", display: "flex", flexDirection: "column", gap: "5px" }}>
           <div style={{
-            background: bubbleBg,
-            border: bubbleBorder,
+            background: "rgba(240,132,90,0.07)",
+            border: "1px solid rgba(240,132,90,0.15)",
             borderRadius: "4px 18px 18px 18px",
             padding: isStreaming && !message.text ? "10px 14px" : "12px 16px",
             fontSize: "14px",
             lineHeight: "1.65",
-            color: bubbleColor,
+            color: "#1e293b",
             fontWeight: 400,
             transition: "padding 0.1s",
           }}>
@@ -301,7 +295,7 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
             {isStreaming && <span className="chatbot-cursor" />}
           </div>
           <span style={{
-            fontSize: "10.5px", color: "var(--texto-muted)", paddingLeft: "6px",
+            fontSize: "10.5px", color: "#b0bac7", paddingLeft: "6px",
             fontWeight: 400, letterSpacing: "0.01em", lineHeight: 1.4,
           }}>{message.time}</span>
         </div>
@@ -328,7 +322,7 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
           {renderText(message.text)}
         </div>
         <span style={{
-          fontSize: "10.5px", color: "var(--texto-muted)", paddingRight: "6px",
+          fontSize: "10.5px", color: "#b0bac7", paddingRight: "6px",
           fontWeight: 400, letterSpacing: "0.01em", lineHeight: 1.4,
         }}>{message.time}</span>
       </div>
@@ -629,7 +623,7 @@ export default function ChatbotIA() {
         setIsTyping(false)
         apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
         setMessages((prev) => [...prev, {
-          id: (Date.now() + 1).toString(), role: "assistant", text: errorText, isError: true,
+          id: (Date.now() + 1).toString(), role: "assistant", text: errorText,
           time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
         }])
         return
@@ -667,7 +661,7 @@ export default function ChatbotIA() {
         : "No he podido conectar con el servidor. Inténtalo en unos segundos."
       apiHistoryRef.current = [...apiHistoryRef.current, { role: "assistant", content: errorText }]
       setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(), role: "assistant", text: errorText, isError: true,
+        id: (Date.now() + 1).toString(), role: "assistant", text: errorText,
         time: new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
       }])
     }
@@ -780,8 +774,8 @@ export default function ChatbotIA() {
           to   { opacity: 0; }
         }
         @keyframes chatbotPulse {
-          0%, 100% { box-shadow: 0 8px 28px ${C.pulse}, 0 4px 16px rgba(0,0,0,0.22); }
-          50%       { box-shadow: 0 10px 36px ${C.pulse}, 0 0 0 7px rgba(79,70,229,0.15), 0 4px 16px rgba(0,0,0,0.22); }
+          0%, 100% { box-shadow: 0 6px 24px ${C.pulse}; }
+          50%       { box-shadow: 0 8px 36px ${C.pulse}, 0 0 0 8px ${C.pulse.replace("0.45", "0.12")}; }
         }
         @keyframes msgFadeIn {
           from { opacity: 0; transform: translateY(6px); }
@@ -801,16 +795,16 @@ export default function ChatbotIA() {
         }
         .chatbot-cursor {
           display: inline-block; width: 2px; height: 13px;
-          background: var(--ia); border-radius: 1px;
+          background: #1e293b; border-radius: 1px;
           animation: chatbotCursor 0.65s ease-in-out infinite;
           vertical-align: middle; margin-left: 2px;
         }
-        .chatbot-fab { transition: transform 0.18s var(--ease-spring); }
+        .chatbot-fab { transition: transform 0.2s ease; }
         .chatbot-fab:hover { transform: scale(1.1) !important; }
         .chatbot-fab-drag { cursor: grab !important; }
         .chatbot-fab-drag:active { cursor: grabbing !important; }
         .chatbot-send { transition: background 0.2s, filter 0.15s, box-shadow 0.15s; }
-        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(79,70,229,0.25); }
+        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(240,132,90,0.4); }
         .chatbot-send:hover:not(:disabled) svg { transform: scale(1.18); transition: transform 0.15s; }
         .chatbot-send:active:not(:disabled) { filter: brightness(0.95); }
         .chatbot-send:active:not(:disabled) svg { transform: scale(0.9); }
@@ -819,21 +813,23 @@ export default function ChatbotIA() {
         }
         .chatbot-chip:hover {
           background: ${C.chipHoverBg} !important;
-          border-color: rgba(79,70,229,0.40) !important;
+          border-color: rgba(27,63,126,0.4) !important;
           transform: translateY(-1px);
         }
-
+        .chatbot-close { transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+        .chatbot-close:hover { background: rgba(0,0,0,0.35) !important; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(0,0,0,0.15) !important; }
+        .chatbot-close:active { transform: scale(0.95); }
         .chatbot-messages::-webkit-scrollbar { width: 4px; }
         .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
-        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.20); border-radius: 4px; }
-        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.40); }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(240,132,90,0.35); border-radius: 4px; }
+        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(240,132,90,0.6); }
         .chatbot-input:focus { outline: none; }
-        .chatbot-input::placeholder { color: var(--texto-placeholder); }
+        .chatbot-input::placeholder { color: #b0bac7; }
         .chatbot-suggestions { animation: msgFadeIn 0.3s ease 0.1s both; }
       `}</style>
 
       {/* ── FAB ──────────────────────────────────────────────────────────── */}
-      {posReady && (isMobile ? !(open || isClosing) : true) && <div ref={fabRef} style={{ ...fabStyle }}>
+      {posReady && (isMobile ? !(open || isClosing) : !isClosing) && <div ref={fabRef} style={{ ...fabStyle }}>
 
         {/* Tooltip — posicionado absolutamente para no mover el FAB */}
         {showTooltip && !open && (
@@ -844,7 +840,7 @@ export default function ChatbotIA() {
               : { left: `${FAB_SIZE + 10}px` }),
             top: "50%",
             transform: "translateY(-50%)",
-            background: "var(--marino)",
+            background: "rgba(15,23,42,0.9)",
             color: "white",
             fontSize: "12px",
             fontWeight: 500,
@@ -870,12 +866,12 @@ export default function ChatbotIA() {
             height: `${FAB_SIZE}px`,
             borderRadius: "50%",
             background: C.gradientFab,
-            border: "2.5px solid rgba(255,255,255,0.55)",
+            border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             animation: hasUnread ? `chatbotPulse 2.5s ease-in-out infinite` : "none",
-            boxShadow: `0 8px 28px ${C.shadow}, 0 4px 16px rgba(0,0,0,0.22)`,
+            boxShadow: `0 6px 24px ${C.shadow}`,
             position: "relative",
             padding: 0,
             userSelect: "none",
@@ -924,7 +920,7 @@ src="/logo-chatbot.webp"
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          background: "var(--ia)",
+          background: "#1b3f7e",
           animation: isDragging.current ? "none" : isMobile
             ? isClosing ? "chatbotSlideDown 0.28s ease forwards" : "chatbotSlideUp 0.3s ease forwards"
             : isClosing ? "chatbotFadeOut 0.15s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
@@ -932,11 +928,11 @@ src="/logo-chatbot.webp"
         }}>
 
           {/* Header */}
-          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "var(--ia)" }}>
+          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#1b3f7e" }}>
             <Grainient
-              color1="#6366f1"
-              color2="#818cf8"
-              color3="#4338CA"
+              color1="#2563eb"
+              color2="#60a5fa"
+              color3="#1b3f7e"
               timeSpeed={0.12}
               warpSpeed={0.8}
               warpStrength={1.0}
@@ -953,12 +949,12 @@ src="/logo-chatbot.webp"
             }}>
               <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
-                  width: "44px", height: "44px", borderRadius: "50%",
-                  background: "rgba(255,255,255,0.15)",
-                  border: "1.5px solid rgba(255,255,255,0.40)",
+                  width: "50px", height: "50px", borderRadius: "50%",
+                  background: C.gradientFab,
+                  border: "2px solid rgba(255,255,255,0.25)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.20)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
                   flexShrink: 0,
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -973,7 +969,7 @@ src="/logo-chatbot.webp"
 
               <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
                 <div style={{
-                  color: "white", fontWeight: 700, fontSize: "18px", lineHeight: 1.1,
+                  color: "white", fontWeight: 800, fontSize: "20px", lineHeight: 1.1,
                   letterSpacing: "-0.02em",
                   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}>
@@ -984,7 +980,7 @@ src="/logo-chatbot.webp"
                   letterSpacing: "0.01em",
                   textShadow: "0 1px 3px rgba(0,0,0,0.25)",
                 }}>
-                  {isTyping ? "Escribiendo..." : streamingId ? "Respondiendo..." : "Tu asistente inteligente"}
+                  {isTyping ? "Escribiendo..." : streamingId ? "Respondiendo..." : "Tu asistente en Atalayas"}
                 </div>
               </div>
 
@@ -1000,19 +996,18 @@ src="/logo-chatbot.webp"
                       setTimeout(() => setMessages([buildWelcomeMessage(usuario?.nombre)]), 220)
                     }}
                     style={{
-                      height: "38px", padding: "0 13px",
-                      borderRadius: "var(--radius-md)",
-                      background: "#dc2626", border: "1px solid rgba(255,255,255,0.22)",
+                      height: "32px", padding: "0 14px",
+                      borderRadius: "16px",
+                      background: "rgba(239,68,68,0.75)", border: "1px solid rgba(255,255,255,0.25)",
                       color: "white", fontSize: "12px", fontWeight: 600,
                       cursor: "pointer", whiteSpace: "nowrap",
-                      display: "flex", alignItems: "center", gap: "5px",
-                      boxShadow: "0 3px 10px rgba(220,38,38,0.40)",
+                      display: "flex", alignItems: "center", gap: "6px",
                       opacity: confirmFading ? 1 : 0,
                       animation: confirmFading
                         ? "confirmDisappear 0.2s ease forwards"
                         : "confirmAppear 0.2s ease 0.25s forwards",
                     }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                       stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="1 4 1 10 7 10" />
                       <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
@@ -1021,29 +1016,30 @@ src="/logo-chatbot.webp"
                   </button>
                 ) : (
                   <>
-                    <IconButton
-                      variant="glass"
-                      size="md"
-                      label="Nueva conversación"
-                      title="Nueva conversación"
-                      onClick={handleClearClick}
-                      style={{ borderRadius: "50%" }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    <button className="chatbot-close" onClick={handleClearClick}
+                      aria-label="Nueva conversación" title="Nueva conversación"
+                      style={{
+                        width: "32px", height: "32px", borderRadius: "50%",
+                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                      }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                         stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <polyline points="1 4 1 10 7 10" />
                         <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
                       </svg>
-                    </IconButton>
-                    <IconButton
-                      variant="glass"
-                      size="md"
-                      label="Cerrar asistente"
-                      onClick={closePanel}
-                      style={{ borderRadius: "50%" }}
-                    >
+                    </button>
+                    <button className="chatbot-close" onClick={closePanel}
+                      aria-label="Cerrar asistente"
+                      style={{
+                        width: "32px", height: "32px", borderRadius: "50%",
+                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                      }}>
                       <CloseIcon />
-                    </IconButton>
+                    </button>
                   </>
                 )}
               </div>
@@ -1055,7 +1051,7 @@ src="/logo-chatbot.webp"
             flex: 1, overflowY: "auto",
             padding: "18px 16px 8px",
             display: "flex", flexDirection: "column",
-            background: "var(--gris-pagina)",
+            background: "#f0f2f5",
           }}>
             {messages.map((msg) => (
               <MessageBubble
@@ -1105,7 +1101,7 @@ src="/logo-chatbot.webp"
                 style={{
                   position: "absolute",
                   bottom: "10px",
-                  background: "var(--blanco)",
+                  background: "white",
                   border: `1px solid ${C.chipBorder}`,
                   borderRadius: "20px",
                   padding: "5px 14px",
@@ -1132,16 +1128,16 @@ src="/logo-chatbot.webp"
 
           {/* Input */}
           <div style={{
-            borderTop: "1px solid var(--surface-border)",
+            borderTop: "1px solid #E2E8F0",
             padding: isMobile
               ? "10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px"
               : "10px 12px",
-            background: "var(--blanco)",
+            background: "white",
             flexShrink: 0,
           }}>
             {rateLimited && (
               <div style={{
-                fontSize: "11.5px", color: "var(--exito)", textAlign: "center",
+                fontSize: "11.5px", color: "#15803d", textAlign: "center",
                 marginBottom: "6px", fontWeight: 500,
               }}>
                 ⏳ Vas muy rápido, espera un momento antes de continuar
@@ -1150,14 +1146,14 @@ src="/logo-chatbot.webp"
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{
                 flex: 1,
-                background: "var(--gris-panel)",
+                background: "#F1F5F9",
                 borderRadius: "24px",
                 padding: "0 14px",
                 display: "flex",
                 alignItems: "center",
-                border: inputFocused ? "1.5px solid rgba(79,70,229,0.45)" : "1px solid var(--surface-border)",
+                border: inputFocused ? "1.5px solid rgba(27,63,126,0.4)" : "1px solid #E2E8F0",
                 transition: "border-color 0.15s, box-shadow 0.15s",
-                boxShadow: inputFocused ? "0 0 0 3px rgba(79,70,229,0.10)" : "none",
+                boxShadow: inputFocused ? "0 0 0 3px rgba(27,63,126,0.1)" : "none",
                 cursor: isBusy ? "not-allowed" : "text",
               }}>
                 <input
@@ -1176,7 +1172,7 @@ src="/logo-chatbot.webp"
                     border: "none",
                     background: "transparent",
                     fontSize: "14px",
-                    color: "var(--texto-primario)",
+                    color: "#1e293b",
                     padding: "10px 0",
                     fontFamily: "inherit",
                     letterSpacing: "0.01em",
@@ -1187,7 +1183,7 @@ src="/logo-chatbot.webp"
                 {showCharWarning && (
                   <span style={{
                     fontSize: "11px", flexShrink: 0, marginLeft: "6px",
-                    color: charsLeft <= 20 ? "var(--advertencia)" : "var(--texto-muted)",
+                    color: charsLeft <= 20 ? "#15803d" : "#94a3b8",
                     fontWeight: 500,
                   }}>
                     {charsLeft}
@@ -1200,8 +1196,8 @@ src="/logo-chatbot.webp"
                 disabled={!input.trim() || isBusy || rateLimited}
                 aria-label="Enviar mensaje"
                 style={{
-                  width: "38px", height: "38px", borderRadius: "50%",
-                  background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "var(--gris-superficie)",
+                  width: "40px", height: "40px", borderRadius: "50%",
+                  background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "#E2E8F0",
                   border: "none",
                   cursor: input.trim() && !isBusy && !rateLimited ? "pointer" : "not-allowed",
                   display: "flex", alignItems: "center", justifyContent: "center",

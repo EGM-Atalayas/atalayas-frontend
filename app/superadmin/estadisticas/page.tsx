@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getEstadisticasSuperadmin, EstadisticasResponse } from "@/lib/api/estadisticas";
+import { QK } from "@/lib/queryKeys";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar, LabelList
@@ -9,27 +11,15 @@ import {
 import { FaChartPie } from "react-icons/fa";
 
 const EstadisticasPage: React.FC = () => {
-  const [data, setData]           = useState<EstadisticasResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError]         = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<"xml" | "csv" | "pdf">("pdf");
 
-  useEffect(() => {
-    const fetchEstadisticas = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const stats = await getEstadisticasSuperadmin();
-        setData(stats);
-      } catch (err: any) {
-        console.error("[Estadísticas] Error:", err);
-        setError("No se pudieron cargar las estadísticas. Comprueba la conexión con el servidor.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchEstadisticas();
-  }, []);
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: QK.estadisticasSuperadmin(),
+    queryFn: getEstadisticasSuperadmin,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const error = queryError ? "No se pudieron cargar las estadísticas. Comprueba la conexión con el servidor." : null;
 
   const downloadFile = (content: string, fileName: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });

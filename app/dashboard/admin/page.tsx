@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
-import type { ProgresoEmpleado } from "@/lib/types/progreso";
+import { QK } from "@/lib/queryKeys";
 
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
@@ -107,8 +108,38 @@ function AdminContent() {
 
   const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias">("empleados");
 
-  const [empleados, setEmpleados] = useState<Usuario[]>([]);
-  const [cargandoEmpleados, setCargandoEmpleados] = useState(true);
+  const queryClient = useQueryClient();
+
+  // ── Queries ──────────────────────────────────────────────────────────────────
+  const { data: empleados = [], isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
+    queryKey: QK.empleados(usuario?.empresaId),
+    queryFn: () => apiFetch(`${API_URL}/users`).then((r) => r.json()),
+    enabled: !!usuario?.empresaId,
+    staleTime: 30_000,
+  });
+
+  const { data: noticias = [] } = useQuery({
+    queryKey: QK.noticias(usuario?.empresaId),
+    queryFn: () => getNoticias(usuario!.empresaId),
+    enabled: !!usuario?.empresaId && activeTab === "anuncios",
+    staleTime: 30_000,
+  });
+
+  const { data: formaciones = [] } = useQuery({
+    queryKey: QK.modulos(usuario?.empresaId),
+    queryFn: getModulosConProgreso,
+    enabled: !!usuario?.empresaId && activeTab === "formaciones",
+    staleTime: 60_000,
+  });
+
+  const { data: progresoEmpresa = [], isLoading: cargandoProgreso } = useQuery({
+    queryKey: QK.progresoEmpresa(usuario?.empresaId),
+    queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
+    enabled: !!usuario?.empresaId,
+    staleTime: 60_000,
+  });
+
+  // ── UI state ─────────────────────────────────────────────────────────────────
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
   const [formEmpleado, setFormEmpleado] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
   const [guardandoEmpleado, setGuardandoEmpleado] = useState(false);
@@ -121,7 +152,6 @@ function AdminContent() {
   const [importando, setImportando] = useState(false);
   const [importResult, setImportResult] = useState<{ ok: number; errors: string[] } | null>(null);
 
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
   const [editando, setEditando] = useState<Noticia | null>(null);
   const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
@@ -130,42 +160,11 @@ function AdminContent() {
   const [toast, setToast] = useState<string | null>(null);
   const [showBorradores, setShowBorradores] = useState(true);
 
-  const [formaciones, setFormaciones] = useState<ModuloConProgreso[]>([]);
-  const [progresoEmpresa, setProgresoEmpresa] = useState<ProgresoEmpleado[]>([]);
-  const [cargandoProgreso, setCargandoProgreso] = useState(true);
-  const cargarEmpleados = async () => {
-    setCargandoEmpleados(true);
-    try {
-      const res = await apiFetch(`${API_URL}/users`);
-      if (res.ok) setEmpleados(await res.json());
-    } catch { }
-    finally { setCargandoEmpleados(false); }
-  };
-
-  const refreshData = async () => {
-    if (!usuario?.empresaId) return;
-    const [news, modulos, progreso] = await Promise.allSettled([
-      getNoticias(usuario.empresaId),
-      getModulosConProgreso(),
-      getProgresoEmpresa(usuario.empresaId),
-    ]);
-    if (news.status === "fulfilled") setNoticias(news.value);
-    if (modulos.status === "fulfilled") setFormaciones(modulos.value);
-    if (progreso.status === "fulfilled") {
-      setProgresoEmpresa(progreso.value);
-      setCargandoProgreso(false);
-    }
-  };
-
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
       router.replace("/dashboard");
     }
   }, [usuario, router]);
-
-  useEffect(() => {
-    if (usuario?.empresaId) { cargarEmpleados(); refreshData(); cargarAnuncios(); }
-  }, [usuario?.empresaId]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -176,7 +175,6 @@ function AdminContent() {
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
       if (f) {
-        // Redirigir a la página completa de edición
         router.push(`/dashboard/admin/modulos/crear?edit=${editId}`);
       }
     }
@@ -216,7 +214,7 @@ function AdminContent() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message ?? "Error al guardar el empleado");
       }
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setEditandoEmpleado(false);
     } catch { }
     finally { setGuardandoEditEmpleado(false); }
@@ -248,7 +246,7 @@ function AdminContent() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message ?? "Error al crear el empleado");
       }
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setFormEmpleado(EMPTY_EMPLEADO);
       setShowFormEmpleado(false);
     } catch (e: unknown) {
@@ -267,7 +265,7 @@ function AdminContent() {
       } else {
         await apiFetch(`${API_URL}/users/${usuarioId}/activar`, { method: "PATCH" });
       }
-      await cargarEmpleados();
+      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
     } catch { }
   };
@@ -277,13 +275,6 @@ function AdminContent() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  async function cargarAnuncios() {
-    if (!usuario?.empresaId) return;
-    try {
-      const data = await getNoticias(usuario.empresaId);
-      setNoticias(data);
-    } catch { setNoticias([]); }
-  }
 
   function abrirCrear() {
     setInitialForm({
@@ -324,7 +315,7 @@ function AdminContent() {
     try {
       if (editando) await editarNoticia(editando.anuncioId, data);
       else await crearNoticia({ ...data, empresaId: usuario?.empresaId ?? null });
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       cerrarForm();
       mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
     } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
@@ -334,7 +325,7 @@ function AdminContent() {
   async function handleDesactivarAnuncio(id: string) {
     try {
       await desactivarNoticia(id);
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio desactivado");
     } catch { }
   }
@@ -349,7 +340,7 @@ function AdminContent() {
         adjuntoNombre: n.adjuntoNombre ?? null, fijado: n.fijado ?? false,
         categoria: n.categoria ?? null, estado: "publicado",
       });
-      await cargarAnuncios();
+      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio publicado correctamente");
     } catch { mostrarToast("Error al publicar el anuncio"); }
   }
@@ -381,7 +372,7 @@ function AdminContent() {
         });
       }
       if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
-      await refreshData();
+      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
     } catch { alert("Error al cambiar el estado del módulo"); }
   };
 
@@ -390,7 +381,7 @@ function AdminContent() {
     try {
       const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
-      await refreshData();
+      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
     } catch { alert("Error al eliminar el módulo"); }
   };
 
@@ -496,7 +487,7 @@ function AdminContent() {
     } catch { errores.push("El archivo no es un Excel válido"); }
     setImportando(false);
     setImportResult({ ok, errors: errores });
-    await cargarEmpleados();
+    queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
   };
 
   const tabs = [
