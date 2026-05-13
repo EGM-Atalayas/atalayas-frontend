@@ -323,34 +323,43 @@ export default function AdminEmpresa() {
                     <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo para tu equipo</p>
                   </div>
                 ) : (
-                  modulosStats.map((mod) => {
-                    const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
-                    const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
-                    return (
-                      <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
-                          <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
+                  <>
+                    {modulosStats.slice(0, 4).map((mod) => {
+                      const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
+                      const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
+                      return (
+                        <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
+                            <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
+                          </div>
+                          <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
+                            <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
+                            <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
+                          </div>
+                          <div className="flex gap-4 mt-2">
+                            {[
+                              { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
+                              { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
+                              { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
+                            ].map((s) => (
+                              <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
+                                {s.n} {s.label}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
-                          <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
-                          <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
-                        </div>
-                        <div className="flex gap-4 mt-2">
-                          {[
-                            { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
-                            { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
-                            { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
-                          ].map((s) => (
-                            <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
-                              {s.n} {s.label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                    {modulosStats.length > 4 && (
+                      <button onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+                        className="w-full text-xs font-semibold py-3 rounded-xl transition-colors"
+                        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                        Ver más módulos →
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

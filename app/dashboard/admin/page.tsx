@@ -146,6 +146,14 @@ function AdminContent() {
     staleTime: 60_000,
   });
 
+  // Refs for stats effect to avoid infinite loops from unstable default [] references
+  const formacionesRef = useRef(formaciones);
+  useEffect(() => { formacionesRef.current = formaciones; }, [formaciones]);
+  const progresoEmpresaRef = useRef(progresoEmpresa);
+  useEffect(() => { progresoEmpresaRef.current = progresoEmpresa; }, [progresoEmpresa]);
+  const empleadosRef = useRef(empleados);
+  useEffect(() => { empleadosRef.current = empleados; }, [empleados]);
+
   // ── Pagination ───────────────────────────────────────────────────────────────
   const PAGE_SIZE = 25;
   const [empPage, setEmpPage] = useState(0);
@@ -172,7 +180,94 @@ function AdminContent() {
   const [toast, setToast] = useState<string | null>(null);
   const [showBorradores, setShowBorradores] = useState(true);
 
+  // ── Estadísticas state ─────────────────────────────────────────────────────────
+  const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);
+  const [statsDpto, setStatsDpto] = useState<string | null>(null);
+  const [statsEstado, setStatsEstado] = useState<"activos" | "inactivos" | "todos">("todos");
+  const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
+  const [cargandoStats, setCargandoStats] = useState(false);
+  const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
+  const [showKpis, setShowKpis] = useState(true);
+  const [showMovimiento, setShowMovimiento] = useState(true);
+  const [showProgreso, setShowProgreso] = useState(true);
+  const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
+  const [showPersonalizar, setShowPersonalizar] = useState(false);
+  const [drillMes, setDrillMes] = useState<string | null>(null);
 
+  const hayPersonalizacion = showKpis !== true || showMovimiento !== true || showProgreso !== true || showEstadoFormacion !== true;
+
+  const resetVistaEstadisticas = () => {
+    setShowKpis(true);
+    setShowMovimiento(true);
+    setShowProgreso(true);
+    setShowEstadoFormacion(true);
+  };
+
+  const handleExportEstadisticas = async () => {
+    if (!statsEmpresa) return;
+    try {
+      const secciones: StatsSection[] = [];
+      if (showKpis) {
+        secciones.push({
+          id: "kpis",
+          title: "KPIs resumen",
+          headers: ["Indicador", "Valor"],
+          rows: [
+            ["Total empleados", statsEmpresa.kpis.totalEmpleados],
+            ["Altas este mes", statsEmpresa.kpis.altasEsteMes],
+            ["Tasa de rotación anual", `${statsEmpresa.kpis.tasaRotacion}%`],
+            ["Completitud formación", `${statsEmpresa.kpis.pctCompletitudGlobal}%`],
+            ["Sin iniciar formación", statsEmpresa.empleadosSinFormacion],
+            ["Formación completada", statsEmpresa.empleadosCompletados],
+          ],
+        });
+      }
+      if (showMovimiento) {
+        secciones.push({
+          id: "movimiento",
+          title: "Incorporaciones y salidas",
+          headers: ["Mes", "Altas", "Bajas"],
+          rows: statsEmpresa.movimientoMensual.map((m) => [m.mes, m.altas, m.bajas]),
+        });
+      }
+      if (showProgreso) {
+        secciones.push({
+          id: "progreso",
+          title: "Progreso por módulo",
+          headers: ["Módulo", "Completitud (%)"],
+          rows: statsEmpresa.progresoModulos.map((m) => [m.nombre, m.porcentaje]),
+        });
+      }
+      if (showEstadoFormacion) {
+        secciones.push({
+          id: "estadoFormacion",
+          title: "Estado de formación de la plantilla",
+          headers: ["Estado", "Empleados"],
+          rows: [
+            ["Sin iniciar", statsEmpresa.empleadosSinFormacion],
+            ["En progreso", statsEmpresa.empleadosEnProgreso],
+            ["Completada", statsEmpresa.empleadosCompletados],
+          ],
+        });
+      }
+      const filtrosPartes: string[] = [];
+      filtrosPartes.push(`Rango: ${statsRango} meses`);
+      if (statsDpto) filtrosPartes.push(`Dpto: ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}`);
+      if (statsEstado !== "todos") filtrosPartes.push(`Estado: ${statsEstado}`);
+      if (statsTipoMod) filtrosPartes.push(`Tipo: ${statsTipoMod}`);
+
+      exportStats(exportFormat, {
+        title: "Estadísticas de empresa",
+        subtitle: undefined,
+        filtros: filtrosPartes.join(" · "),
+        fileName: `estadisticas_${new Date().toISOString().split("T")[0]}`,
+        sections: secciones,
+      });
+    } catch (err) {
+      console.error("Error al exportar estadísticas:", err);
+    }
+  };
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -216,12 +311,12 @@ function AdminContent() {
         estado:       statsEstado,
         tipoModulo:   statsTipoMod,
       };
-      const stats = getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
+      const stats = getEstadisticasAdminEmpresa(empleadosRef.current, formacionesRef.current, progresoEmpresaRef.current, filtros);
       setStatsEmpresa(stats);
     } finally {
       setCargandoStats(false);
     }
-  }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
+  }, [activeTab, empleados, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 

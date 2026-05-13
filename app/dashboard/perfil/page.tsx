@@ -316,7 +316,8 @@ export default function PerfilPage() {
          apellidosFinal     === (perfil?.apellidos      ?? "")      &&
          puestoFinal        === (perfil?.puestoTrabajo  ?? "")      &&
          formTelefono.trim() === telefonoOriginal                    &&
-         formDisponibilidad  === (perfil?.disponibilidad ?? "DISPONIBLE"))
+         formDisponibilidad  === (perfil?.disponibilidad ?? "DISPONIBLE") &&
+         emailFinal         === (perfil?.email          ?? ""))
       : (emailFinal         === (perfil?.email          ?? "")      &&
          formTelefono.trim() === telefonoOriginal);
 
@@ -330,6 +331,7 @@ export default function PerfilPage() {
           puestoTrabajo:  puestoFinal,
           telefono:       telefonoFinal,
           disponibilidad: formDisponibilidad,
+          email:          emailFinal,
         }
       : {
           email:          emailFinal,
@@ -793,10 +795,10 @@ export default function PerfilPage() {
               )}
             </div>
 
-            {/* Email — editable solo para empleados */}
+            {/* Email */}
             <div className="flex flex-col gap-2 min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email</p>
-              {editando && !esAdmin ? (
+              {editando ? (
                 <input
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
@@ -806,11 +808,6 @@ export default function PerfilPage() {
                   onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
                   onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
                 />
-              ) : editando && esAdmin ? (
-                <input value={perfil?.email ?? ""} readOnly
-                  className="w-full px-3 py-2.5 text-base rounded-xl border cursor-not-allowed select-none"
-                  style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)", background: "#e8eaed", outline: "none" }}
-                  onFocus={(e) => e.target.blur()} />
               ) : (
                 <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{perfil?.email ?? "—"}</p>
               )}
