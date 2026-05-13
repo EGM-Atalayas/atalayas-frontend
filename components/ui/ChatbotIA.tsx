@@ -3,20 +3,21 @@
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
 import Grainient from "./Grainient"
+import { IconButton } from "./IconButton"
 import { getModulosConProgreso } from "@/lib/api/modulos"
 import type { ModuloConProgreso } from "@/lib/types/modulos"
 
 // ─── Tema de color ────────────────────────────────────────────────────────────
 const COLORS = {
-  gradientFab:    "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
-  gradientUser:   "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
-  chipBg:         "rgba(21,128,61,0.08)",
-  chipBorder:     "rgba(21,128,61,0.22)",
-  chipText:       "#15803d",
-  chipHoverBg:    "rgba(21,128,61,0.16)",
-  pulse:          "rgba(34,197,94,0.45)",
-  shadow:         "rgba(21,128,61,0.35)",
-  accent:         "#22c55e",
+  gradientFab:    "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
+  gradientUser:   "linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%)",
+  chipBg:         "rgba(79,70,229,0.08)",
+  chipBorder:     "rgba(79,70,229,0.22)",
+  chipText:       "#4F46E5",
+  chipHoverBg:    "rgba(79,70,229,0.16)",
+  pulse:          "rgba(79,70,229,0.45)",
+  shadow:         "rgba(67,56,202,0.35)",
+  accent:         "#4F46E5",
 } as const
 
 const C = COLORS
@@ -187,8 +188,8 @@ function TypingIndicator() {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "12px" }}>
       <div style={{
-        background: "rgba(240,132,90,0.07)",
-        border: "1px solid rgba(240,132,90,0.15)",
+        background: "rgba(79,70,229,0.06)",
+        border: "1px solid rgba(79,70,229,0.15)",
         borderRadius: "4px 18px 18px 18px",
         padding: "12px 16px",
         display: "flex",
@@ -281,8 +282,8 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
       }}>
         <div style={{ maxWidth: "82%", display: "flex", flexDirection: "column", gap: "5px" }}>
           <div style={{
-            background: "rgba(240,132,90,0.07)",
-            border: "1px solid rgba(240,132,90,0.15)",
+            background: "rgba(79,70,229,0.06)",
+            border: "1px solid rgba(79,70,229,0.15)",
             borderRadius: "4px 18px 18px 18px",
             padding: isStreaming && !message.text ? "10px 14px" : "12px 16px",
             fontSize: "14px",
@@ -795,16 +796,16 @@ export default function ChatbotIA() {
         }
         .chatbot-cursor {
           display: inline-block; width: 2px; height: 13px;
-          background: #1e293b; border-radius: 1px;
+          background: var(--ia, #4F46E5); border-radius: 1px;
           animation: chatbotCursor 0.65s ease-in-out infinite;
           vertical-align: middle; margin-left: 2px;
         }
-        .chatbot-fab { transition: transform 0.2s ease; }
+        .chatbot-fab { transition: transform 0.18s var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1)); }
         .chatbot-fab:hover { transform: scale(1.1) !important; }
         .chatbot-fab-drag { cursor: grab !important; }
         .chatbot-fab-drag:active { cursor: grabbing !important; }
         .chatbot-send { transition: background 0.2s, filter 0.15s, box-shadow 0.15s; }
-        .chatbot-send:hover:not(:disabled) { filter: brightness(1.18); box-shadow: 0 0 0 4px rgba(240,132,90,0.4); }
+        .chatbot-send:hover:not(:disabled) { filter: brightness(1.12); box-shadow: 0 0 0 4px ${C.pulse}; }
         .chatbot-send:hover:not(:disabled) svg { transform: scale(1.18); transition: transform 0.15s; }
         .chatbot-send:active:not(:disabled) { filter: brightness(0.95); }
         .chatbot-send:active:not(:disabled) svg { transform: scale(0.9); }
@@ -821,8 +822,8 @@ export default function ChatbotIA() {
         .chatbot-close:active { transform: scale(0.95); }
         .chatbot-messages::-webkit-scrollbar { width: 4px; }
         .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
-        .chatbot-messages::-webkit-scrollbar-thumb { background: rgba(240,132,90,0.35); border-radius: 4px; }
-        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: rgba(240,132,90,0.6); }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: ${C.pulse}; border-radius: 4px; }
+        .chatbot-messages::-webkit-scrollbar-thumb:hover { background: ${C.shadow}; }
         .chatbot-input:focus { outline: none; }
         .chatbot-input::placeholder { color: #b0bac7; }
         .chatbot-suggestions { animation: msgFadeIn 0.3s ease 0.1s both; }
@@ -840,7 +841,7 @@ export default function ChatbotIA() {
               : { left: `${FAB_SIZE + 10}px` }),
             top: "50%",
             transform: "translateY(-50%)",
-            background: "rgba(15,23,42,0.9)",
+            background: "var(--marino, rgba(15,23,42,0.9))",
             color: "white",
             fontSize: "12px",
             fontWeight: 500,
@@ -866,12 +867,14 @@ export default function ChatbotIA() {
             height: `${FAB_SIZE}px`,
             borderRadius: "50%",
             background: C.gradientFab,
-            border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             animation: hasUnread ? `chatbotPulse 2.5s ease-in-out infinite` : "none",
-            boxShadow: `0 6px 24px ${C.shadow}`,
+            boxShadow: hasUnread
+              ? `0 8px 28px ${C.pulse}, 0 4px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.30)`
+              : `0 8px 24px ${C.shadow}, 0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            border: "1.5px solid rgba(255,255,255,0.18)",
             position: "relative",
             padding: 0,
             userSelect: "none",
@@ -879,7 +882,7 @@ export default function ChatbotIA() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-src="/logo-chatbot.webp"
+            src="/logo-chatbot.webp"
             alt="Asistente IA"
             style={{
               width: "60%", height: "60%",
@@ -920,7 +923,7 @@ src="/logo-chatbot.webp"
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          background: "#1b3f7e",
+          background: "#4F46E5",
           animation: isDragging.current ? "none" : isMobile
             ? isClosing ? "chatbotSlideDown 0.28s ease forwards" : "chatbotSlideUp 0.3s ease forwards"
             : isClosing ? "chatbotFadeOut 0.15s ease forwards" : "chatbotFadeIn 0.25s ease forwards",
@@ -928,11 +931,11 @@ src="/logo-chatbot.webp"
         }}>
 
           {/* Header */}
-          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#1b3f7e" }}>
+          <div style={{ position: "relative", flexShrink: 0, height: "72px", overflow: "hidden", background: "#4F46E5" }}>
             <Grainient
-              color1="#2563eb"
-              color2="#60a5fa"
-              color3="#1b3f7e"
+              color1="#6366f1"
+              color2="#818cf8"
+              color3="#4338CA"
               timeSpeed={0.12}
               warpSpeed={0.8}
               warpStrength={1.0}
@@ -949,12 +952,12 @@ src="/logo-chatbot.webp"
             }}>
               <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
-                  width: "50px", height: "50px", borderRadius: "50%",
-                  background: C.gradientFab,
-                  border: "2px solid rgba(255,255,255,0.25)",
+                  width: "44px", height: "44px", borderRadius: "50%",
+                  background: "rgba(255,255,255,0.14)",
+                  border: "1.5px solid rgba(255,255,255,0.30)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.20)",
                   flexShrink: 0,
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -969,7 +972,7 @@ src="/logo-chatbot.webp"
 
               <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
                 <div style={{
-                  color: "white", fontWeight: 800, fontSize: "20px", lineHeight: 1.1,
+                  color: "white", fontWeight: 700, fontSize: "18px", lineHeight: 1.1,
                   letterSpacing: "-0.02em",
                   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}>
@@ -980,7 +983,7 @@ src="/logo-chatbot.webp"
                   letterSpacing: "0.01em",
                   textShadow: "0 1px 3px rgba(0,0,0,0.25)",
                 }}>
-                  {isTyping ? "Escribiendo..." : streamingId ? "Respondiendo..." : "Tu asistente en Atalayas"}
+                  {isTyping ? "Escribiendo..." : streamingId ? "Respondiendo..." : "Tu asistente inteligente"}
                 </div>
               </div>
 
@@ -996,9 +999,9 @@ src="/logo-chatbot.webp"
                       setTimeout(() => setMessages([buildWelcomeMessage(usuario?.nombre)]), 220)
                     }}
                     style={{
-                      height: "32px", padding: "0 14px",
-                      borderRadius: "16px",
-                      background: "rgba(239,68,68,0.75)", border: "1px solid rgba(255,255,255,0.25)",
+                      height: "38px", padding: "0 13px",
+                      borderRadius: "var(--radius-md, 10px)",
+                      background: "#dc2626", border: "1px solid rgba(255,255,255,0.22)",
                       color: "white", fontSize: "12px", fontWeight: 600,
                       cursor: "pointer", whiteSpace: "nowrap",
                       display: "flex", alignItems: "center", gap: "6px",
@@ -1016,30 +1019,16 @@ src="/logo-chatbot.webp"
                   </button>
                 ) : (
                   <>
-                    <button className="chatbot-close" onClick={handleClearClick}
-                      aria-label="Nueva conversación" title="Nueva conversación"
-                      style={{
-                        width: "32px", height: "32px", borderRadius: "50%",
-                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                      }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                    <IconButton variant="glass" size="md" label="Nueva conversación" title="Nueva conversación" onClick={handleClearClick} style={{ borderRadius: "50%" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <polyline points="1 4 1 10 7 10" />
                         <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
                       </svg>
-                    </button>
-                    <button className="chatbot-close" onClick={closePanel}
-                      aria-label="Cerrar asistente"
-                      style={{
-                        width: "32px", height: "32px", borderRadius: "50%",
-                        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)",
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                      }}>
+                    </IconButton>
+                    <IconButton variant="glass" size="md" label="Cerrar asistente" onClick={closePanel} style={{ borderRadius: "50%" }}>
                       <CloseIcon />
-                    </button>
+                    </IconButton>
                   </>
                 )}
               </div>
@@ -1101,7 +1090,7 @@ src="/logo-chatbot.webp"
                 style={{
                   position: "absolute",
                   bottom: "10px",
-                  background: "white",
+                  background: "var(--blanco, white)",
                   border: `1px solid ${C.chipBorder}`,
                   borderRadius: "20px",
                   padding: "5px 14px",
@@ -1132,12 +1121,12 @@ src="/logo-chatbot.webp"
             padding: isMobile
               ? "10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px"
               : "10px 12px",
-            background: "white",
+            background: "var(--blanco, white)",
             flexShrink: 0,
           }}>
             {rateLimited && (
               <div style={{
-                fontSize: "11.5px", color: "#15803d", textAlign: "center",
+                fontSize: "11.5px", color: "var(--exito, #16a34a)", textAlign: "center",
                 marginBottom: "6px", fontWeight: 500,
               }}>
                 ⏳ Vas muy rápido, espera un momento antes de continuar
@@ -1146,7 +1135,7 @@ src="/logo-chatbot.webp"
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{
                 flex: 1,
-                background: "#F1F5F9",
+                background: "var(--gris-panel, #F1F5F9)",
                 borderRadius: "24px",
                 padding: "0 14px",
                 display: "flex",
@@ -1183,7 +1172,7 @@ src="/logo-chatbot.webp"
                 {showCharWarning && (
                   <span style={{
                     fontSize: "11px", flexShrink: 0, marginLeft: "6px",
-                    color: charsLeft <= 20 ? "#15803d" : "#94a3b8",
+                    color: charsLeft <= 20 ? "var(--advertencia, #f59e0b)" : "var(--texto-muted, #94a3b8)",
                     fontWeight: 500,
                   }}>
                     {charsLeft}
@@ -1196,7 +1185,7 @@ src="/logo-chatbot.webp"
                 disabled={!input.trim() || isBusy || rateLimited}
                 aria-label="Enviar mensaje"
                 style={{
-                  width: "40px", height: "40px", borderRadius: "50%",
+                  width: "38px", height: "38px", borderRadius: "50%",
                   background: input.trim() && !isBusy && !rateLimited ? C.gradientFab : "#E2E8F0",
                   border: "none",
                   cursor: input.trim() && !isBusy && !rateLimited ? "pointer" : "not-allowed",

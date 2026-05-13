@@ -13,7 +13,7 @@ import { QK } from "@/lib/queryKeys";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
+import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
@@ -175,99 +175,76 @@ function AdminContent() {
   const [showFormAnuncio, setShowFormAnuncio] = useState(false);
   const [editando, setEditando] = useState<Noticia | null>(null);
   const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [showBorradores, setShowBorradores] = useState(true);
 
-  // ── Estadísticas state ─────────────────────────────────────────────────────────
+  // ── Stats tab state ───────────────────────────────────────────────────────────
   const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);
   const [statsDpto, setStatsDpto] = useState<string | null>(null);
-  const [statsEstado, setStatsEstado] = useState<"activos" | "inactivos" | "todos">("todos");
+  const [statsEstado, setStatsEstado] = useState<"todos" | "activos" | "inactivos">("todos");
   const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
   const [cargandoStats, setCargandoStats] = useState(false);
   const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
-  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
+  const [showPersonalizar, setShowPersonalizar] = useState(false);
   const [showKpis, setShowKpis] = useState(true);
   const [showMovimiento, setShowMovimiento] = useState(true);
   const [showProgreso, setShowProgreso] = useState(true);
   const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
-  const [showPersonalizar, setShowPersonalizar] = useState(false);
   const [drillMes, setDrillMes] = useState<string | null>(null);
 
-  const hayPersonalizacion = showKpis !== true || showMovimiento !== true || showProgreso !== true || showEstadoFormacion !== true;
-
+  const hayPersonalizacion = !showKpis || !showMovimiento || !showProgreso || !showEstadoFormacion;
   const resetVistaEstadisticas = () => {
-    setShowKpis(true);
-    setShowMovimiento(true);
-    setShowProgreso(true);
-    setShowEstadoFormacion(true);
+    setShowKpis(true); setShowMovimiento(true); setShowProgreso(true); setShowEstadoFormacion(true);
   };
-
-  const handleExportEstadisticas = async () => {
+  const handleExportEstadisticas = () => {
     if (!statsEmpresa) return;
-    try {
-      const secciones: StatsSection[] = [];
-      if (showKpis) {
-        secciones.push({
-          id: "kpis",
-          title: "KPIs resumen",
-          headers: ["Indicador", "Valor"],
-          rows: [
-            ["Total empleados", statsEmpresa.kpis.totalEmpleados],
-            ["Altas este mes", statsEmpresa.kpis.altasEsteMes],
-            ["Tasa de rotación anual", `${statsEmpresa.kpis.tasaRotacion}%`],
-            ["Completitud formación", `${statsEmpresa.kpis.pctCompletitudGlobal}%`],
-            ["Sin iniciar formación", statsEmpresa.empleadosSinFormacion],
-            ["Formación completada", statsEmpresa.empleadosCompletados],
-          ],
-        });
-      }
-      if (showMovimiento) {
-        secciones.push({
-          id: "movimiento",
-          title: "Incorporaciones y salidas",
-          headers: ["Mes", "Altas", "Bajas"],
-          rows: statsEmpresa.movimientoMensual.map((m) => [m.mes, m.altas, m.bajas]),
-        });
-      }
-      if (showProgreso) {
-        secciones.push({
-          id: "progreso",
-          title: "Progreso por módulo",
-          headers: ["Módulo", "Completitud (%)"],
-          rows: statsEmpresa.progresoModulos.map((m) => [m.nombre, m.porcentaje]),
-        });
-      }
-      if (showEstadoFormacion) {
-        secciones.push({
-          id: "estadoFormacion",
-          title: "Estado de formación de la plantilla",
-          headers: ["Estado", "Empleados"],
-          rows: [
-            ["Sin iniciar", statsEmpresa.empleadosSinFormacion],
-            ["En progreso", statsEmpresa.empleadosEnProgreso],
-            ["Completada", statsEmpresa.empleadosCompletados],
-          ],
-        });
-      }
-      const filtrosPartes: string[] = [];
-      filtrosPartes.push(`Rango: ${statsRango} meses`);
-      if (statsDpto) filtrosPartes.push(`Dpto: ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}`);
-      if (statsEstado !== "todos") filtrosPartes.push(`Estado: ${statsEstado}`);
-      if (statsTipoMod) filtrosPartes.push(`Tipo: ${statsTipoMod}`);
-
-      exportStats(exportFormat, {
-        title: "Estadísticas de empresa",
-        subtitle: undefined,
-        filtros: filtrosPartes.join(" · "),
-        fileName: `estadisticas_${new Date().toISOString().split("T")[0]}`,
-        sections: secciones,
-      });
-    } catch (err) {
-      console.error("Error al exportar estadísticas:", err);
-    }
+    const filtrosLabel = [
+      statsDpto ? `Dpto: ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : null,
+      statsEstado !== "todos" ? `Estado: ${statsEstado}` : null,
+      statsTipoMod ? `Módulo: ${statsTipoMod}` : null,
+    ].filter(Boolean).join(" · ") || undefined;
+    const sections: StatsSection[] = [
+      {
+        id: "kpis", title: "KPIs resumen",
+        headers: ["Indicador", "Valor"],
+        rows: [
+          ["Total empleados",       statsEmpresa.kpis.totalEmpleados],
+          ["Altas este mes",        statsEmpresa.kpis.altasEsteMes],
+          ["Bajas este mes",        statsEmpresa.kpis.bajasEsteMes],
+          ["Tasa rotación anual %", statsEmpresa.kpis.tasaRotacion],
+          ["Completitud formación %", statsEmpresa.kpis.pctCompletitudGlobal],
+        ],
+      },
+      {
+        id: "movimiento", title: "Incorporaciones y salidas por mes",
+        headers: ["Mes", "Altas", "Bajas"],
+        rows: statsEmpresa.movimientoMensual.map(m => [m.mes, m.altas, m.bajas]),
+      },
+      {
+        id: "progreso", title: "Progreso por módulo",
+        headers: ["Módulo", "% completitud"],
+        rows: statsEmpresa.progresoModulos.map(m => [m.nombre, m.porcentaje]),
+      },
+      {
+        id: "estado_formacion", title: "Estado de formación",
+        headers: ["Estado", "Empleados"],
+        rows: [
+          ["Sin iniciar",  statsEmpresa.empleadosSinFormacion],
+          ["En progreso",  statsEmpresa.empleadosEnProgreso],
+          ["Completada",   statsEmpresa.empleadosCompletados],
+        ],
+      },
+    ];
+    exportStats(exportFormat, {
+      title: "Estadísticas de empresa",
+      filtros: filtrosLabel,
+      fileName: `estadisticas-empresa-${new Date().toISOString().split("T")[0]}`,
+      sections,
+    });
   };
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [showBorradores, setShowBorradores] = useState(true);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -600,7 +577,7 @@ function AdminContent() {
       const filas: { rowNum: number; values: string[] }[] = [];
       worksheet.eachRow((row, rowIdx) => {
         if (rowIdx === 1) return;
-        const values = (row.values as any[]).slice(1).map((v) => String(v ?? "").trim());
+        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
         if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
       });
       for (const { rowNum, values } of filas) {
@@ -1932,10 +1909,10 @@ function AdminContent() {
                   <option value="">Todos</option>
                   {(() => {
                     const tipos = new Set(
-                      formaciones.map((m: any) => m.tipoModulo).filter((t): t is string => !!t)
+                      formaciones.map((m: ModuloConProgreso) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
                     );
                     return Array.from(tipos).map((t) => {
-                      const n = formaciones.filter((m: any) => m.tipoModulo === t).length;
+                        const n = formaciones.filter((m: ModuloConProgreso) => m.tipoModulo === t).length;
                       const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
                       return (
                         <option key={t} value={t}>
@@ -1993,7 +1970,7 @@ function AdminContent() {
               {/* Botón personalizar */}
               <div className="relative">
                 <button
-                  onClick={() => setShowPersonalizar((v) => !v)}
+                  onClick={() => setShowPersonalizar((v: boolean) => !v)}
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
                   style={{
                     background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
@@ -2088,9 +2065,9 @@ function AdminContent() {
                       <AreaChart
                         data={statsEmpresa.movimientoMensual}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                        onClick={(e: any) => {
-                          const label = e?.activeLabel as string | undefined;
-                          if (label) setDrillMes(label);
+                        onClick={(e) => {
+                          const label = e?.activeLabel;
+                          if (typeof label === "string") setDrillMes(label);
                         }}
                         style={{ cursor: "pointer" }}
                       >
