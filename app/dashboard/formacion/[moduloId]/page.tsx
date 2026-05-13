@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { PresentationViewer } from "@/components/presentation/PresentationViewer";
 import { getBestSpanishVoice } from "@/lib/speech";
@@ -276,18 +277,18 @@ function getMockBase(id: string): ModuloMock {
   };
 }
 
-function lsKey(id: string) { return `egm_modulo_${id}`; }
+function lsKey(id: string, esAdmin: boolean) { return esAdmin ? `egm_modulo_admin_${id}` : `egm_modulo_${id}`; }
 
-function cargarEstado(id: string): { completados: string[]; activoId: string } {
+function cargarEstado(id: string, esAdmin: boolean): { completados: string[]; activoId: string } {
   try {
-    const raw = localStorage.getItem(lsKey(id));
+    const raw = localStorage.getItem(lsKey(id, esAdmin));
     if (raw) return JSON.parse(raw);
   } catch { /* noop */ }
   return { completados: [], activoId: "c1" };
 }
 
-function guardarEstado(id: string, completados: string[], activoId: string, total: number) {
-  try { localStorage.setItem(lsKey(id), JSON.stringify({ completados, activoId, total })); }
+function guardarEstado(id: string, completados: string[], activoId: string, total: number, esAdmin: boolean) {
+  try { localStorage.setItem(lsKey(id, esAdmin), JSON.stringify({ completados, activoId, total })); }
   catch { /* noop */ }
 }
 
@@ -306,6 +307,8 @@ export default function Page() {
   const router = useRouter();
   const rawParams = useParams();
   const id = Array.isArray(rawParams.moduloId) ? rawParams.moduloId[0] : (rawParams.moduloId ?? "");
+  const { usuario } = useAuth();
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
 
   const [modulo, setModulo] = useState<ModuloMock | null>(null);
   const [moduloApi, setModuloApi] = useState<ModuloAPI | null>(null);
@@ -343,31 +346,30 @@ export default function Page() {
           const data: ModuloAPI = await res.json();
           setModuloApi(data);
           const base = apiToMock(data);
-          const { completados, activoId: savedActivo } = cargarEstado(id);
+          const { completados, activoId: savedActivo } = cargarEstado(id, esAdmin);
           const moduloConEstado = aplicarEstado(base, completados);
           setModulo(moduloConEstado);
-          // Si el módulo ya está 100% completado, empezar desde el primer ítem
           const yaCompletado = completados.length >= moduloConEstado.totalItems;
           setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
           return;
         }
       } catch { /* fallback */ }
       // Fallback: datos mock legacy
-      const { completados, activoId: savedActivo } = cargarEstado(id);
+      const { completados, activoId: savedActivo } = cargarEstado(id, esAdmin);
       const moduloConEstado = aplicarEstado(getMockBase(id), completados);
       setModulo(moduloConEstado);
       const yaCompletado = completados.length >= moduloConEstado.totalItems;
       setActivoId(yaCompletado ? moduloConEstado.contenidos[0].id : savedActivo);
     };
     cargar();
-  }, [id]);
+  }, [id, esAdmin]);
 
   // Persistir en localStorage cuando cambia el estado
   useEffect(() => {
     if (!id || !modulo) return;
     const hechos = modulo.contenidos.filter((c) => c.completado).map((c) => c.id);
-    guardarEstado(id, hechos, activoId, modulo.totalItems);
-  }, [modulo, activoId]);
+    guardarEstado(id, hechos, activoId, modulo.totalItems, esAdmin);
+  }, [modulo, activoId, esAdmin]);
 
   if (!modulo) return null;
 
