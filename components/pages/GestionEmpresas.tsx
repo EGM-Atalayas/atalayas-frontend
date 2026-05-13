@@ -38,7 +38,7 @@ const GestionEmpresas: React.FC = () => {
   const error = queryError ? (queryError as Error).message : "";
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id }: { id: string }) => toggleActivacionEmpresa(id),
+    mutationFn: ({ id }: { id: string; activaActual: boolean }) => toggleActivacionEmpresa(id),
     onMutate: async ({ id, activaActual }: { id: string; activaActual: boolean }) => {
       await queryClient.cancelQueries({ queryKey: QK.empresas() });
       const prev = queryClient.getQueryData<typeof empresas>(QK.empresas());

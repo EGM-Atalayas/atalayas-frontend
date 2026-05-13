@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
@@ -138,6 +138,11 @@ function AdminContent() {
     enabled: !!usuario?.empresaId,
     staleTime: 60_000,
   });
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const PAGE_SIZE = 25;
+  const [empPage, setEmpPage] = useState(0);
+  const [progPage, setProgPage] = useState(0);
 
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
@@ -755,26 +760,26 @@ function AdminContent() {
                     </button>
                   </div>
                 ) : (
-                  <>
-                    {/* Vista desktop — tabla */}
-                    <div className="hidden md:block">
-                      <table className="w-full">
-                        <thead>
-                          <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
-                            {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
-                              <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
-                                style={{ color: "var(--texto-muted)" }}>{h}</th>
-                            ))}
-                            <th className="py-3.5 px-5" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {empleados.map((e, idx) => (
+                    <>
+                      {/* Vista desktop — tabla */}
+                      <div className="hidden md:block">
+                        <table className="w-full">
+                          <thead>
+                            <tr style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                              {["Empleado", "Puesto", "Departamento", "Rol", "Alta", "Estado"].map((h) => (
+                                <th key={h} className="text-left py-3.5 px-5 text-xs font-bold uppercase tracking-wider"
+                                  style={{ color: "var(--texto-muted)" }}>{h}</th>
+                              ))}
+                              <th className="py-3.5 px-5" />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
                             <tr
                               key={e.usuarioId}
                               className="cursor-pointer transition-colors"
                               style={{
-                                borderBottom: idx < empleados.length - 1 ? "1px solid var(--gris-borde)" : "none",
+                                borderBottom: idx < Math.min(empleados.length, PAGE_SIZE) - 1 ? "1px solid var(--gris-borde)" : "none",
                                 background: empleadoSeleccionado?.usuarioId === e.usuarioId
                                   ? "var(--azul-egm-light)" : "transparent",
                               }}
@@ -844,13 +849,29 @@ function AdminContent() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
-                    </div>
+                        </table>
+                        {/* Paginación desktop empleados */}
+                        {empleados.length > PAGE_SIZE && (
+                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                            </span>
+                            <div className="flex gap-2">
+                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
+                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Vista móvil — tarjetas */}
-                    <div className="md:hidden flex flex-col divide-y"
-                      style={{ borderColor: "var(--gris-borde)" }}>
-                      {empleados.map((e) => (
+                      {/* Vista móvil — tarjetas */}
+                      <div className="md:hidden flex flex-col divide-y"
+                        style={{ borderColor: "var(--gris-borde)" }}>
+                        {empleados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e) => (
                         <div
                           key={e.usuarioId}
                           className="px-5 py-4 flex items-center justify-between gap-3 cursor-pointer"
@@ -894,7 +915,23 @@ function AdminContent() {
                             </span>
                           </div>
                         </div>
-                      ))}
+                        ))}
+                        {/* Paginación móvil empleados */}
+                        {empleados.length > PAGE_SIZE && (
+                          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                            <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                              {empPage * PAGE_SIZE + 1}–{Math.min((empPage + 1) * PAGE_SIZE, empleados.length)} de {empleados.length}
+                            </span>
+                            <div className="flex gap-2">
+                              <button onClick={() => setEmpPage(p => Math.max(0, p - 1))} disabled={empPage === 0}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>←</button>
+                              <button onClick={() => setEmpPage(p => p + 1)} disabled={(empPage + 1) * PAGE_SIZE >= empleados.length}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                                style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>→</button>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </>
                 )}
@@ -1456,7 +1493,7 @@ function AdminContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {progresoEmpresa.map((emp, idx, arr) => {
+                    {progresoEmpresa.slice(progPage * PAGE_SIZE, (progPage + 1) * PAGE_SIZE).map((emp, idx, arr) => {
                       const media = emp.modulos.length > 0
                         ? Math.round(emp.modulos.reduce((acc, m) => acc + m.porcentaje, 0) / emp.modulos.length)
                         : 0;
@@ -1492,6 +1529,22 @@ function AdminContent() {
                     })}
                   </tbody>
                 </table>
+                {/* Paginación progreso */}
+                {progresoEmpresa.length > PAGE_SIZE && (
+                  <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                    <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                      {progPage * PAGE_SIZE + 1}–{Math.min((progPage + 1) * PAGE_SIZE, progresoEmpresa.length)} de {progresoEmpresa.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setProgPage(p => Math.max(0, p - 1))} disabled={progPage === 0}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>← Anterior</button>
+                      <button onClick={() => setProgPage(p => p + 1)} disabled={(progPage + 1) * PAGE_SIZE >= progresoEmpresa.length}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "var(--gris-pagina)", color: "var(--texto-primario)" }}>Siguiente →</button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
