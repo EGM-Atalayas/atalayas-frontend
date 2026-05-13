@@ -6,7 +6,7 @@ import { NextRequest } from "next/server"
 // Este fichero actúa como proxy: construye el systemPrompt y reenvía al backend.
 const BACKEND_URL =
   process.env.BACKEND_URL ??
-  "https://atalayas-backend-c25d.onrender.com/api/v1"
+  "https://atalayas-backend-1.onrender.com/api/v1"
 
 interface ChatMessage {
   role: "user" | "assistant"
