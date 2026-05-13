@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
+import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
@@ -1028,6 +1029,11 @@ export default function PerfilPage() {
         </div>
 
         </div>{/* fin sección formación */}
+
+{/* ── Mis documentos ── */}
+<div id="mis-documentos" className="scroll-mt-20">
+  <MisDocumentos />
+</div>
 
 {/* ── Buzón (izquierda) + Certificados/Configuración (derecha) ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
