@@ -148,7 +148,7 @@ export default function Empleado() {
       try {
         const [noticiasData, modulosData] = await Promise.all([
           getNoticias(usuario?.empresaId).catch(() => []),
-          getModulosConProgreso().catch(() => []),
+          getModulosConProgreso(usuario?.empresaId).catch(() => []),
         ]);
         setNoticias((noticiasData as Noticia[]).slice(0, 6));
         const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);

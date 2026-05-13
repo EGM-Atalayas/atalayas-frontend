@@ -134,7 +134,7 @@ export default function FormacionPage() {
   }, []);
 
   useEffect(() => {
-    getModulosConProgreso()
+    getModulosConProgreso(usuario?.empresaId)
       .then((data) => {
         const sorted = data.sort((a, b) => a.orden - b.orden);
         setModules(sorted.length > 0 ? sorted.map(enriquecer) : MOCK_MODULES.map(enriquecer));

@@ -45,7 +45,7 @@ export default function OnboardingPage() {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    getModulosConProgreso()
+    getModulosConProgreso(usuario?.empresaId)
       .then((data) => {
         const onboarding = data
           .filter((m) => TIPOS_ONBOARDING.has(m.tipoModulo))
