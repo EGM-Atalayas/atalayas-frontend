@@ -59,10 +59,9 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     const resUsuarios = await apiFetch(`${API_URL}/users`);
     if (resUsuarios.ok) {
       usuarios = await resUsuarios.json();
-      console.log("[DEBUG usuarios]", usuarios.slice(0, 3));
     }
   } catch {
-    console.warn("[Estadísticas] No se pudo cargar /users, continuando sin ellos.");
+    // Continuar sin usuarios si no se pueden cargar
   }
 
   // ── SECTORES ─────────────────────────────────────────────────────────────────
@@ -87,8 +86,6 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     conteoRoles[rol] = (conteoRoles[rol] ?? 0) + 1;
   }
 
-  console.log("[DEBUG conteoRoles]", conteoRoles);
-
   const usuariosPorRol = Object.entries(conteoRoles).map(([rol, cantidad]) => ({
     rol:      ETIQUETA_ROL[rol]   ?? rol,
     cantidad,
@@ -106,19 +103,30 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
   }
 
   const conteoCrecimiento = ventana.map(({ anio, mes, label }) => {
-    const empresasHasta = empresas.filter((emp) => {
-      const fecha = new Date(emp.creadoEn ?? emp.fechaCreacion ?? emp.createdAt ?? 0);
-      return fecha.getFullYear() < anio || (fecha.getFullYear() === anio && fecha.getMonth() <= mes);
+    const empresasNuevas = empresas.filter((emp) => {
+      if (emp.estadoSolicitud !== "APROBADA") return false;
+      // Para empresas, usar fechaResolucion (cuando se aprobó)
+      const fechaStr = emp.fechaResolucion ?? emp.actualizadoEn ?? emp.fechaRegistro ?? emp.creadoEn ?? emp.fechaCreacion ?? emp.createdAt ?? emp.created_at;
+      if (!fechaStr) return false;
+      const fecha = new Date(fechaStr);
+      if (isNaN(fecha.getTime())) {
+        return false;
+      }
+      return fecha.getFullYear() === anio && fecha.getMonth() === mes;
     }).length;
 
-    const empleadosHasta = usuarios.filter((u) => {
+    const empleadosNuevos = usuarios.filter((u) => {
+      const fechaStr = u.fechaRegistro ?? u.creadoEn ?? u.fechaCreacion ?? u.createdAt ?? u.created_at;
+      if (!fechaStr) return false;
       const rol = u.codigoRol ?? u.rol ?? u.role ?? "";
       if (rol !== "ROLE_EMPLEADO") return false;
-      const fecha = new Date(u.creadoEn ?? u.fechaCreacion ?? u.createdAt ?? 0);
-      return fecha.getFullYear() < anio || (fecha.getFullYear() === anio && fecha.getMonth() <= mes);
+      const fecha = new Date(fechaStr);
+      if (isNaN(fecha.getTime())) return false;
+      const match = fecha.getFullYear() === anio && fecha.getMonth() === mes;
+      return match;
     }).length;
 
-    return { mes: label, empleados: empleadosHasta, empresas: empresasHasta };
+    return { mes: label, empleados: empleadosNuevos, empresas: empresasNuevas };
   });
 
   return {
