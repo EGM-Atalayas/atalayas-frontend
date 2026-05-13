@@ -30,7 +30,7 @@ function ToggleRow({
         </div>
         <button
           onClick={() => onChange(!checked)}
-          className="relative shrink-0 transition-colors rounded-full cursor-pointer"
+          className="relative shrink-0 rounded-full cursor-pointer transition-all"
           style={{
             width: "48px", height: "26px",
             background: checked ? "var(--lima)" : "var(--gris-borde)",
@@ -43,7 +43,7 @@ function ToggleRow({
               background: "#fff",
               left: "2px",
               transform: checked ? "translateX(22px)" : "translateX(0)",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.22)",
             }}
           />
         </button>
@@ -329,8 +329,8 @@ export default function ConfiguracionPage() {
               {/* Superadmin */}
               {usuario?.codigoRol === "ROLE_ADMIN" && (<>
                 <ToggleRow label="Nueva empresa registrada" description="Cuando una nueva empresa se une a la plataforma"  checked={prefs.notifNuevoModulo}      onChange={(v) => updatePref("notifNuevoModulo", v)} />
-                <ToggleRow label="Suscripción por vencer"   description="Cuando la suscripción de una empresa está próxima a expirar" checked={prefs.notifModuloCompletado} onChange={(v) => updatePref("notifModuloCompletado", v)} />
-                <ToggleRow label="Empresa inactiva"         description="Cuando una empresa lleva más de 30 días sin actividad" checked={prefs.notifComunicado}     onChange={(v) => updatePref("notifComunicado", v)} />
+                <ToggleRow label="Nuevo comunicado"          description="Cuando otro administrador publica un comunicado en la plataforma" checked={prefs.notifModuloCompletado} onChange={(v) => updatePref("notifModuloCompletado", v)} />
+                <ToggleRow label="Incidencia reportada"      description="Cuando un usuario reporta una incidencia o sugerencia" checked={prefs.notifComunicado}    onChange={(v) => updatePref("notifComunicado", v)} />
                 <ToggleRow label="Solicitudes pendientes"   description="Cuando hay solicitudes de empresas sin revisar"    checked={prefs.notifPendiente}         onChange={(v) => updatePref("notifPendiente", v)} separator={false} />
               </>)}
 
