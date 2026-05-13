@@ -165,9 +165,9 @@ export default function AdminEmpresa() {
         const empresaId = usuario?.empresaId;
         const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
-          apiFetch(`${API_URL}/anuncios`),
+          empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : apiFetch(`${API_URL}/anuncios`),
           getActividadReciente(5).catch(() => [] as ActividadItem[]),
-          getModulos().catch(() => [] as Modulo[]),
+          getModulos(empresaId).catch(() => [] as Modulo[]),
           empresaId ? getProgresoEmpresa(empresaId).catch(() => [] as ProgresoEmpleado[]) : Promise.resolve([] as ProgresoEmpleado[]),
         ]);
         let resumenData = null;

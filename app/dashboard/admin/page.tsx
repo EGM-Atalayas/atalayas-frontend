@@ -134,7 +134,7 @@ function AdminContent() {
 
   const { data: formaciones = [] } = useQuery({
     queryKey: QK.modulos(usuario?.empresaId),
-    queryFn: getModulosConProgreso,
+    queryFn: () => getModulosConProgreso(usuario?.empresaId),
     enabled: !!usuario?.empresaId && activeTab === "formaciones",
     staleTime: 60_000,
   });

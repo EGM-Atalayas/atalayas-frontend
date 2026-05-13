@@ -251,7 +251,7 @@ export default function CrearModuloPage() {
     if (!editId || !usuario?.empresaId) return;
     const cargarModulo = async () => {
       try {
-        const modulos = await getModulosConProgreso();
+        const modulos = await getModulosConProgreso(usuario?.empresaId);
         const modulo = modulos.find((m) => m.moduloId === editId);
         if (modulo) {
           setModuloEditando(modulo);

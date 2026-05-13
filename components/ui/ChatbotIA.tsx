@@ -444,7 +444,7 @@ export default function ChatbotIA() {
   }, [])
 
   useEffect(() => {
-    getModulosConProgreso().then((m) => {
+    getModulosConProgreso(usuario?.empresaId).then((m) => {
       setModulos(m)
       setSuggestions(getSuggestions(usuario?.codigoRol, m))
       // Mostrar punto rojo si hay módulos pendientes o en progreso
