@@ -866,7 +866,6 @@ export default function ChatbotIA() {
             height: `${FAB_SIZE}px`,
             borderRadius: "50%",
             background: C.gradientFab,
-            border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
