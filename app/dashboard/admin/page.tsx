@@ -23,6 +23,7 @@ import {
 import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type FiltrosEstadisticas } from "@/lib/api/estadisticas";
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
+import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
 import ExcelJS from "exceljs";
 
 const EMPTY_ANUNCIO: NoticiaInput = {
@@ -113,7 +114,7 @@ function AdminContent() {
   const searchParams = useSearchParams();
   const { usuario } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas">("empleados");
+  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas" | "documentos">("empleados");
 
   const queryClient = useQueryClient();
 
@@ -258,6 +259,7 @@ function AdminContent() {
     if (tab === "anuncios") setActiveTab("anuncios");
     if (tab === "empleados") setActiveTab("empleados");
     if (tab === "estadisticas") setActiveTab("estadisticas");
+    if (tab === "documentos") setActiveTab("documentos");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
@@ -665,6 +667,17 @@ function AdminContent() {
         </svg>
       ),
     },
+    {
+      key: "documentos" as const,
+      label: "Documentos",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="9" y1="15" x2="15" y2="15" />
+        </svg>
+      ),
+    },
   ];
 
   // Accent colors per modulo tipo for top strip
@@ -708,7 +721,7 @@ function AdminContent() {
         <div className="sm:hidden mb-8">
           <select
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas")}
+            onChange={(e) => setActiveTab(e.target.value as "empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas" | "documentos")}
             className="w-full rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none"
             style={{
               border: "1px solid var(--gris-borde)",
@@ -721,6 +734,7 @@ function AdminContent() {
             <option value="formaciones">Módulos formativos</option>
             <option value="incidencias">Incidencias</option>
             <option value="estadisticas">Estadísticas</option>
+            <option value="documentos">Documentos</option>
           </select>
         </div>
 
@@ -1827,6 +1841,19 @@ function AdminContent() {
         {/* ── TAB INCIDENCIAS ── */}
         {activeTab === "incidencias" && (
           <GestionIncidencias empresaId={usuario?.empresaId} />
+        )}
+
+        {activeTab === "documentos" && usuario?.empresaId && (
+          <DocumentosAdminTab
+            empresaId={usuario.empresaId}
+            empleados={empleados.map((e) => ({
+              usuarioId: e.usuarioId,
+              nombre: e.nombre,
+              apellidos: e.apellidos,
+              departamento: e.departamento,
+            }))}
+            departamentos={DEPARTAMENTOS}
+          />
         )}
 
         {/* ── TAB ESTADÍSTICAS ── */}
