@@ -871,7 +871,10 @@ export default function ChatbotIA() {
             alignItems: "center",
             justifyContent: "center",
             animation: hasUnread ? `chatbotPulse 2.5s ease-in-out infinite` : "none",
-            boxShadow: `0 6px 24px ${C.shadow}`,
+            boxShadow: hasUnread
+              ? `0 8px 28px ${C.pulse}, 0 4px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.30)`
+              : `0 8px 24px ${C.shadow}, 0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            border: "1.5px solid rgba(255,255,255,0.18)",
             position: "relative",
             padding: 0,
             userSelect: "none",
@@ -879,7 +882,7 @@ export default function ChatbotIA() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-src="/logo-chatbot.webp"
+            src="/logo-chatbot.webp"
             alt="Asistente IA"
             style={{
               width: "60%", height: "60%",

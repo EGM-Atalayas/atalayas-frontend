@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+/* ── Liquid Glass button ─────────────────────────────────────────────────────── */
+@keyframes glassShimmer {
+  0%   { transform: translateX(-120%) skewX(-15deg); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translateX(260%) skewX(-15deg);  opacity: 0; }
+}
+/* Specular highlight — franja de luz superior */
+.glass-btn-highlight {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.28) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* Shimmer sweep on hover */
+.glass-btn-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.22) 50%, transparent 65%);
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+}
+.glass-shimmer:hover .glass-btn-shimmer {
+  animation: glassShimmer 0.7s ease forwards;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 /* ── IAButton — star border animations ──────────────────────────────────────── */
 @keyframes star-movement-bottom {
   0%   { transform: translate(0%, 0%);     opacity: 1; }
@@ -179,6 +208,7 @@ body::-webkit-scrollbar,
 }
 
 /* ── Liquid Glass ─────────────────────────────────────────────────────────── */
+
 .liquid-glass {
   background: rgba(255, 255, 255, 0.10);
   backdrop-filter: blur(12px);
