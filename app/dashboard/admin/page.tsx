@@ -13,7 +13,7 @@ import { QK } from "@/lib/queryKeys";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
+import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
 import {
@@ -1903,7 +1903,7 @@ function AdminContent() {
                   <option value="">Todos</option>
                   {(() => {
                     const tipos = new Set(
-                      formaciones.map((m: ModuloConProgreso) => m.tipoModulo).filter((t): t is string => !!t)
+                      formaciones.map((m: ModuloConProgreso) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
                     );
                     return Array.from(tipos).map((t) => {
                         const n = formaciones.filter((m: ModuloConProgreso) => m.tipoModulo === t).length;
@@ -2059,9 +2059,9 @@ function AdminContent() {
                       <AreaChart
                         data={statsEmpresa.movimientoMensual}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                        onClick={(e: { activeLabel?: string } | null) => {
+                        onClick={(e) => {
                           const label = e?.activeLabel;
-                          if (label) setDrillMes(label);
+                          if (typeof label === "string") setDrillMes(label);
                         }}
                         style={{ cursor: "pointer" }}
                       >
