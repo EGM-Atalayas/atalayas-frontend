@@ -14,7 +14,6 @@ import {
   TIPO_DOCUMENTO_LABEL, TIPO_DOCUMENTO_COLOR,
 } from "@/lib/types/documentos";
 import { FileText, Upload, Trash2, Eye, Check, X, AlertTriangle, Users, Building2 } from "lucide-react";
-import { IAButton } from "@/components/ui/IAButton";
 
 interface Props {
   empresaId: string;
@@ -484,9 +483,24 @@ function ModalSubirDocumento({
           >
             Cancelar
           </button>
-          <IAButton size="md" onClick={submit} loading={enviando} loadingLabel="Subiendo..." disabled={!puedeEnviar}>
-            Subir y asignar
-          </IAButton>
+          <button
+            onClick={submit}
+            disabled={!puedeEnviar || enviando}
+            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: "var(--azul-egm)", color: "white" }}
+          >
+            {enviando ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Subiendo...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Subir y asignar
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
