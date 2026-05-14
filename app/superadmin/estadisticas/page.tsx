@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
 import { getEstadisticasSuperadmin, EstadisticasResponse } from "@/lib/api/estadisticas";
-import { QK } from "@/lib/queryKeys";
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -24,6 +22,9 @@ const EstadisticasPage: React.FC = () => {
   const [showUsuarios,    setShowUsuarios]    = useState(true);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<EstadisticasResponse | null>(null);
 
   useEffect(() => {
     try {
