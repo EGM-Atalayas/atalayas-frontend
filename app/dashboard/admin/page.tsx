@@ -17,7 +17,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
-import type { Modulo } from "@/lib/types/modulos";
+import type { Modulo, ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
@@ -295,7 +295,7 @@ function AdminContent() {
     if (tab === "documentos") setActiveTab("documentos");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
-      const f = formaciones.find((x) => x.moduloId === editId);
+      const f = formaciones.find((x: Modulo) => x.moduloId === editId);
       if (f) {
         router.push(`/dashboard/admin/modulos/crear?edit=${editId}`);
       }
@@ -308,7 +308,7 @@ function AdminContent() {
 
     // Si el dpto guardado ya no existe entre los empleados actuales, resetear
     if (statsDpto && empleados.length > 0) {
-      const existe = empleados.some((e) => e.departamento === statsDpto);
+      const existe = empleados.some((e: Usuario) => e.departamento === statsDpto);
       if (!existe) {
         setStatsDpto(null);
         return; // el cambio dispara otro render
@@ -405,8 +405,8 @@ function AdminContent() {
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setFormEmpleado(EMPTY_EMPLEADO);
       setShowFormEmpleado(false);
-    } catch (e: unknown) {
-      setErrorEmpleado(e instanceof Error ? e.message : "Error al crear el empleado");
+    } catch (err: unknown) {
+      setErrorEmpleado(err instanceof Error ? err.message : "Error al crear el empleado");
     } finally {
       setGuardandoEmpleado(false);
     }
@@ -423,10 +423,10 @@ function AdminContent() {
       }
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
-    } catch { }
+    } catch (_err: unknown) { }
   };
 
-  function abrirCrear() {
+  function abrirCrear(): void {
     setInitialForm({
       titulo: "", contenido: "", esGlobal: false, empresaId: usuario?.empresaId ?? null, imagenUrl: null,
       enlaceUrl: null, enlaceTexto: null, videoUrl: null,
@@ -438,7 +438,7 @@ function AdminContent() {
     setFormError(null);
   }
 
-  function abrirEditar(n: Noticia) {
+  function abrirEditar(n: Noticia): void {
     setInitialForm({
       titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
       empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
@@ -452,14 +452,14 @@ function AdminContent() {
     setFormError(null);
   }
 
-  function cerrarForm() {
+  function cerrarForm(): void {
     setShowFormAnuncio(false);
     setEditando(null);
     setInitialForm(EMPTY_ANUNCIO);
     setFormError(null);
   }
 
-  async function handleSubmitAnuncio(data: NoticiaInput) {
+  async function handleSubmitAnuncio(data: NoticiaInput): Promise<void> {
     setSubmitting(true);
     setFormError(null);
     try {
@@ -468,19 +468,19 @@ function AdminContent() {
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       cerrarForm();
       mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
-    } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
+    } catch (_err: unknown) { setFormError("Error al guardar. Inténtalo de nuevo."); }
     finally { setSubmitting(false); }
   }
 
-  async function handleDesactivarAnuncio(id: string) {
+  async function handleDesactivarAnuncio(id: string): Promise<void> {
     try {
       await desactivarNoticia(id);
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio desactivado");
-    } catch { }
+    } catch (_err: unknown) { }
   }
 
-  async function publicarBorrador(n: Noticia) {
+  async function publicarBorrador(n: Noticia): Promise<void> {
     try {
       await editarNoticia(n.anuncioId, {
         titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
@@ -492,11 +492,11 @@ function AdminContent() {
       });
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio publicado correctamente");
-    } catch { mostrarToast("Error al publicar el anuncio"); }
+    } catch (_err: unknown) { mostrarToast("Error al publicar el anuncio"); }
   }
   const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
-  const handleDesactivarModulo = async (modulo: Modulo) => {
+  const handleDesactivarModulo = async (modulo: Modulo): Promise<void> => {
     const estaActivo = modulo.activo;
     const msg = estaActivo
       ? "¿Desactivar este módulo? Dejará de ser visible para los empleados."
@@ -521,30 +521,30 @@ function AdminContent() {
           }),
         });
       }
-      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); alert((e as any).message ?? "Error"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { alert("Error al cambiar el estado del módulo"); }
+    } catch (_err: unknown) { alert("Error al cambiar el estado del módulo"); }
   };
 
-  const handleEliminarModulo = async (moduloId: string) => {
+  const handleEliminarModulo = async (moduloId: string): Promise<void> => {
     if (!confirm("¿Eliminar este módulo permanentemente? Esta acción no se puede deshacer.")) return;
     try {
       const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { alert("Error al eliminar el módulo"); }
+    } catch (_err: unknown) { alert("Error al eliminar el módulo"); }
   };
 
-  function getInitials(nombre: string, apellidos?: string | null) {
+  function getInitials(nombre: string, apellidos?: string | null): string {
     return [nombre, apellidos].filter(Boolean).join(" ").split(" ")
       .slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
   }
 
-  function formatFecha(iso: string) {
+  function formatFecha(iso: string): string {
     return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const exportarEmpleadosExcel = async () => {
+  const exportarEmpleadosExcel = async (): Promise<void> => {
     setExportando(true);
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Empleados");
@@ -560,7 +560,7 @@ function AdminContent() {
       { header: "Fecha de alta", key: "fechaAlta", width: 18 },
     ];
 
-    worksheet.getRow(1).eachCell((cell) => {
+    worksheet.getRow(1).eachCell((cell: any) => {
       cell.fill = {
         type: "pattern",
         pattern: "solid",
@@ -570,7 +570,7 @@ function AdminContent() {
       cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
-    empleados.forEach((e) => {
+    empleados.forEach((e: Usuario) => {
       worksheet.addRow({
         nombre: e.nombre,
         apellidos: e.apellidos,
@@ -596,7 +596,7 @@ function AdminContent() {
     mostrarToast(`Excel exportado con ${empleados.length} empleados`);
   };
 
-  const importarEmpleados = async (file: File) => {
+  const importarEmpleados = async (file: File): Promise<void> => {
     setImportando(true);
     setImportResult(null);
     const errores: string[] = [];
@@ -607,12 +607,12 @@ function AdminContent() {
       await workbook.xlsx.load(buffer);
       const worksheet = workbook.worksheets[0];
       const filas: { rowNum: number; values: string[] }[] = [];
-      worksheet.eachRow((row, rowIdx) => {
+      worksheet.eachRow((row: any, rowIdx: number) => {
         if (rowIdx === 1) return;
-        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
+        const values = (row.values as unknown[]).slice(1).map((v: unknown) => String(v ?? "").trim());
         if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
       });
-      for (const { rowNum, values } of filas) {
+      for (const { rowNum, values } of filas as { rowNum: number; values: string[] }[]) {
         const [nombre, apellidos, email, puesto, dept] = values;
         if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
         try {
@@ -637,7 +637,7 @@ function AdminContent() {
           }
         } catch { errores.push(`${email}: Error de conexión`); }
       }
-    } catch { errores.push("El archivo no es un Excel válido"); }
+    } catch (_importErr: unknown) { errores.push("El archivo no es un Excel válido"); }
     setImportando(false);
     setImportResult({ ok, errors: errores });
     queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
@@ -1159,7 +1159,7 @@ function AdminContent() {
                                 if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
                                   el.currentTarget.style.background = "var(--gris-superficie)";
                               }}
-                              onMouseLeave={(el) => {
+                              onMouseLeave={(el: React.MouseEvent<HTMLTableRowElement>) => {
                                 if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
                                   el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#fafbfc";
                               }}
