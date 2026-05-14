@@ -56,7 +56,17 @@ export default function UserMenu({
   const [open, setOpen]       = useState(false);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const containerRef          = useRef<HTMLDivElement>(null);
+
+  // Resetear el error cuando cambia la URL (el usuario sube nueva foto)
+  const prevAvatarUrl = useRef(avatarUrl);
+  if (avatarUrl !== prevAvatarUrl.current) {
+    prevAvatarUrl.current = avatarUrl;
+    if (imgError) setImgError(false);
+  }
+
+  const showAvatar = !!avatarUrl && !imgError;
   const dropdownRef           = useRef<HTMLDivElement>(null);
   const cardsRef              = useRef<HTMLDivElement[]>([]);
   const tlRef                 = useRef<gsap.core.Timeline | null>(null);
@@ -124,14 +134,14 @@ export default function UserMenu({
           style={{
             width:      "30px",
             height:     "30px",
-            background: avatarUrl ? "transparent" : "rgba(255,255,255,0.15)",
+            background: showAvatar ? "transparent" : "rgba(255,255,255,0.15)",
             color:      "#fff",
             border:     `2px solid ${hovered || open ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.30)"}`,
             transition: "border-color 0.15s ease",
           }}
         >
-          {avatarUrl
-            ? <Image src={avatarUrl} alt="Avatar" width={30} height={30} className="object-cover rounded-full" />
+          {showAvatar
+            ? <Image src={avatarUrl!} alt="Avatar" width={30} height={30} className="object-cover rounded-full" onError={() => setImgError(true)} />
             : initials}
         </div>
 
@@ -184,14 +194,14 @@ export default function UserMenu({
                   width:      "46px",
                   height:     "46px",
                   fontSize:   "17px",
-                  background: avatarUrl ? "transparent" : "var(--azul-egm)",
+                  background: showAvatar ? "transparent" : "var(--azul-egm)",
                   color:      "#fff",
                   border:     "2px solid rgba(0,0,0,0.06)",
                   flexShrink: 0,
                 }}
               >
-                {avatarUrl
-                  ? <Image src={avatarUrl} alt="Avatar" width={46} height={46} className="object-cover rounded-full" />
+                {showAvatar
+                  ? <Image src={avatarUrl!} alt="Avatar" width={46} height={46} className="object-cover rounded-full" onError={() => setImgError(true)} />
                   : initials}
               </div>
 
