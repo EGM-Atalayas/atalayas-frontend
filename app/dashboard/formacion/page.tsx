@@ -8,6 +8,7 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { descargarCertificado } from "@/lib/certificado";
+import { obtenerCertificadoModulo } from "@/lib/api/documentos";
 
 // Mock data para demostrar el diseño cuando el backend no devuelve módulos
 const MOCK_MODULES: ModuloConProgreso[] = [
@@ -60,9 +61,9 @@ function getFormacionImg(moduloId: string, nombre: string, imagenPortadaUrl?: st
 
 type ModuloEnriquecido = ModuloConProgreso & { duracion: string; porcentaje: number };
 
-function leerPorcentajeLS(moduloId: string): number | null {
+function leerPorcentajeLS(moduloId: string, esAdmin: boolean): number | null {
   try {
-    const raw = localStorage.getItem(`egm_modulo_${moduloId}`);
+    const raw = localStorage.getItem(esAdmin ? `egm_modulo_admin_${moduloId}` : `egm_modulo_${moduloId}`);
     if (!raw) return null;
     const { completados, total } = JSON.parse(raw) as { completados: string[]; total?: number };
     const totalItems = total ?? 5; // fallback para datos legacy
@@ -87,8 +88,8 @@ const DURACION_POR_TIPO: Record<string, string> = {
 // Tipos que pertenecen al bloque "Onboarding" — el resto va a "Formación continua"
 const TIPOS_ONBOARDING = new Set(["ONBOARDING"]);
 
-function enriquecer(m: ModuloConProgreso): ModuloEnriquecido {
-  const pctLS = leerPorcentajeLS(m.moduloId);
+function enriquecer(m: ModuloConProgreso, esAdmin: boolean): ModuloEnriquecido {
+  const pctLS = leerPorcentajeLS(m.moduloId, esAdmin);
   const porcentaje = pctLS !== null ? pctLS
     : m.status === "completado" ? 100 : m.status === "en progreso" ? 50 : 0;
   const status = pctLS !== null
@@ -111,6 +112,7 @@ const ESTADO_LABELS: { value: FiltroEstado; label: string }[] = [
 export default function FormacionPage() {
   const router      = useRouter();
   const { usuario } = useAuth();
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
 
   const [modules,    setModules]    = useState<ModuloEnriquecido[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -137,9 +139,9 @@ export default function FormacionPage() {
     getModulosConProgreso(usuario?.empresaId)
       .then((data) => {
         const sorted = data.sort((a, b) => a.orden - b.orden);
-        setModules(sorted.length > 0 ? sorted.map(enriquecer) : MOCK_MODULES.map(enriquecer));
+        setModules(sorted.length > 0 ? sorted.map((m) => enriquecer(m, esAdmin)) : MOCK_MODULES.map((m) => enriquecer(m, esAdmin)));
       })
-      .catch(() => setModules(MOCK_MODULES.map(enriquecer)))
+      .catch(() => setModules(MOCK_MODULES.map((m) => enriquecer(m, esAdmin))))
       .finally(() => setLoading(false));
   }, []);
 
@@ -634,7 +636,21 @@ function CourseCard({
   const isCompletado  = m.status === "completado";
   const isEnProgreso  = m.status === "en progreso";
 
-  const handleDescargarCertificado = () => {
+  const [descargando, setDescargando] = useState(false);
+
+  const handleDescargarCertificado = async () => {
+    setDescargando(true);
+    try {
+      // Priorizar el certificado guardado en Supabase (generado automáticamente por el backend)
+      const url = await obtenerCertificadoModulo(m.moduloId);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        setDescargando(false);
+        return;
+      }
+    } catch { /* fallback */ }
+
+    // Fallback: generar localmente con jsPDF si el backend aún no lo tiene
     descargarCertificado({
       nombreEmpleado: usuario?.nombre ?? "Empleado",
       apellidosEmpleado: usuario?.apellidos,
@@ -643,6 +659,7 @@ function CourseCard({
       nombreEmpresa: usuario?.nombreEmpresa,
       fechaCompletado: new Date(),
     });
+    setDescargando(false);
   };
 
   return (
@@ -731,15 +748,20 @@ function CourseCard({
           <div className="mt-auto flex flex-col gap-2">
             <button
               onClick={handleDescargarCertificado}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+              disabled={descargando}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+              onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
               onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
             >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Descargar certificado
+              {descargando ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
+              {descargando ? "Obteniendo certificado..." : "Descargar certificado"}
             </button>
             <button
               className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2"
@@ -789,28 +811,48 @@ function CourseCard({
 // ── Botón certificado para onboarding ──────────────────────────────────────────
 function OnboardingCertificadoBtn({ modulo }: { modulo: ModuloEnriquecido }) {
   const { usuario } = useAuth();
+  const [descargando, setDescargando] = useState(false);
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDescargando(true);
+    try {
+      const url = await obtenerCertificadoModulo(modulo.moduloId);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        setDescargando(false);
+        return;
+      }
+    } catch { /* fallback */ }
+
+    descargarCertificado({
+      nombreEmpleado: usuario?.nombre ?? "Empleado",
+      apellidosEmpleado: usuario?.apellidos,
+      nombreModulo: modulo.nombre,
+      tipoModulo: MODULO_TIPO_LABEL[modulo.tipoModulo] ?? modulo.tipoModulo,
+      nombreEmpresa: usuario?.nombreEmpresa,
+      fechaCompletado: new Date(),
+    });
+    setDescargando(false);
+  };
+
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        descargarCertificado({
-          nombreEmpleado: usuario?.nombre ?? "Empleado",
-          apellidosEmpleado: usuario?.apellidos,
-          nombreModulo: modulo.nombre,
-          tipoModulo: MODULO_TIPO_LABEL[modulo.tipoModulo] ?? modulo.tipoModulo,
-          nombreEmpresa: usuario?.nombreEmpresa,
-          fechaCompletado: new Date(),
-        });
-      }}
-      className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+      onClick={handleClick}
+      disabled={descargando}
+      className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-70"
       style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+      onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
     >
-      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Descargar certificado
+      {descargando ? (
+        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )}
+      {descargando ? "Obteniendo..." : "Descargar certificado"}
     </button>
   );
 }

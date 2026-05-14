@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
+import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
-  Play, FileText, Download,
 } from "lucide-react";
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
@@ -162,7 +162,12 @@ export default function PerfilPage() {
   const [sugerencia, setSugerencia]       = useState("");
   const [enviandoSug, setEnviandoSug]     = useState(false);
   const [estadoSug, setEstadoSug]         = useState<"idle" | "ok" | "error">("idle");
-  const [destinatarioSug, setDestinatarioSug] = useState<"EMPRESA" | "EGM">("EMPRESA");
+  // Los admins (empresa y general) solo pueden enviar a EGM Atalayas; los empleados eligen
+  const [destinatarioSug, setDestinatarioSug] = useState<"EMPRESA" | "EGM">(
+    usuario && (usuario.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario.codigoRol === "ROLE_ADMIN")
+      ? "EGM"
+      : "EMPRESA"
+  );
   const [dispOpen, setDispOpen] = useState(false);
   const dispRef = useRef<HTMLDivElement>(null);
 
@@ -353,74 +358,6 @@ export default function PerfilPage() {
     await patchPerfil({ bannerUrl: src });
     setSavingBanner(false);
     setShowBannerPicker(false);
-  };
-
-  const handleDescargarCertificado = async (titulo: string) => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const nombre = `${perfil?.nombre ?? ""} ${perfil?.apellidos ?? ""}`.trim();
-    const fecha = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-    const W = doc.internal.pageSize.getWidth();
-    const H = doc.internal.pageSize.getHeight();
-
-    // Fondo
-    doc.setFillColor(245, 247, 250);
-    doc.rect(0, 0, W, H, "F");
-
-    // Borde decorativo
-    doc.setDrawColor(27, 63, 126);
-    doc.setLineWidth(1.2);
-    doc.rect(10, 10, W - 20, H - 20);
-    doc.setLineWidth(0.4);
-    doc.rect(12, 12, W - 24, H - 24);
-
-    // Título
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(28);
-    doc.setTextColor(27, 63, 126);
-    doc.text("CERTIFICADO DE FORMACIÓN", W / 2, 42, { align: "center" });
-
-    // Línea decorativa
-    doc.setDrawColor(163, 181, 53);
-    doc.setLineWidth(1);
-    doc.line(W / 2 - 60, 48, W / 2 + 60, 48);
-
-    // Cuerpo
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(13);
-    doc.setTextColor(80, 80, 80);
-    doc.text("Se certifica que", W / 2, 65, { align: "center" });
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(20, 20, 20);
-    doc.text(nombre, W / 2, 78, { align: "center" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(13);
-    doc.setTextColor(80, 80, 80);
-    doc.text("ha completado satisfactoriamente el curso", W / 2, 92, { align: "center" });
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(17);
-    doc.setTextColor(27, 63, 126);
-    doc.text(titulo, W / 2, 105, { align: "center" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(120, 120, 120);
-    doc.text(`Expedido el ${fecha}`, W / 2, 118, { align: "center" });
-
-    // Firma
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.5);
-    doc.line(W / 2 - 40, H - 32, W / 2 + 40, H - 32);
-    doc.setFontSize(10);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Atalayas Ciudad Empresarial", W / 2, H - 26, { align: "center" });
-
-    const nombreArchivo = `Certificado_${titulo.replace(/\s+/g, "_")}_${nombre.replace(/\s+/g, "_")}.pdf`;
-    doc.save(nombreArchivo);
   };
 
   const handleEnviarSugerencia = async () => {
@@ -1029,10 +966,17 @@ export default function PerfilPage() {
 
         </div>{/* fin sección formación */}
 
-{/* ── Buzón (izquierda) + Certificados/Configuración (derecha) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
+{/* ── Mis documentos (solo para empleados; admins no lo necesitan) ── */}
+{!esAdmin && (
+  <div id="mis-documentos" className="scroll-mt-20">
+    <MisDocumentos />
+  </div>
+)}
 
-          {/* ── Columna izquierda: Buzón ── */}
+{/* ── Buzón de sugerencias ── */}
+        <div className="grid grid-cols-1 gap-8 items-start">
+
+          {/* ── Buzón ── */}
           <div className="flex flex-col gap-4">
             <h2 style={{
               fontFamily: "var(--font-raleway), sans-serif",
@@ -1053,26 +997,34 @@ export default function PerfilPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
                   Enviar a
                 </p>
-                <div className="flex gap-2">
-                  {(["EMPRESA", "EGM"] as const).map((d) => {
-                    const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
-                    const selected = destinatarioSug === d;
-                    return (
-                      <button key={d} type="button"
-                        onClick={() => setDestinatarioSug(d)}
-                        className="px-3 py-1.5 rounded-full text-xs font-semibold border"
-                        style={{
-                          background: selected ? "var(--azul-egm)" : "transparent",
-                          color: selected ? "#fff" : "var(--texto-secundario)",
-                          borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
-                          transition: "background 0.35s, color 0.35s, border-color 0.35s",
-                          boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
-                        }}>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
+                {esAdmin ? (
+                  // Admins solo pueden contactar con EGM Atalayas
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
+                    EGM Atalayas
+                  </span>
+                ) : (
+                  <div className="flex gap-2">
+                    {(["EMPRESA", "EGM"] as const).map((d) => {
+                      const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
+                      const selected = destinatarioSug === d;
+                      return (
+                        <button key={d} type="button"
+                          onClick={() => setDestinatarioSug(d)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border"
+                          style={{
+                            background: selected ? "var(--azul-egm)" : "transparent",
+                            color: selected ? "#fff" : "var(--texto-secundario)",
+                            borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
+                            transition: "background 0.35s, color 0.35s, border-color 0.35s",
+                            boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
+                          }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Textarea */}
@@ -1133,77 +1085,6 @@ export default function PerfilPage() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Certificados */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <h2 style={{
-                fontFamily: "var(--font-raleway), sans-serif",
-                fontWeight: 700,
-                fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
-                lineHeight: 1.2,
-                color: "var(--texto-primario)",
-                letterSpacing: "-0.01em",
-              }}>Certificados</h2>
-              <span className="inline-flex items-center justify-center rounded-full text-xs font-bold px-2 py-0.5"
-                style={{ background: "var(--azul-egm)", color: "#fff", minWidth: "1.5rem" }}>
-                3
-              </span>
-            </div>
-
-            {false ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl text-center"
-                style={{ border: "1px dashed var(--gris-borde)", background: "var(--blanco)", minHeight: "180px" }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--azul-egm-light)" }}>
-                  <Award size={18} style={{ color: "var(--azul-egm)" }} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Sin certificados aún</p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Completa un curso para obtener el tuyo</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: "260px" }}>
-                {[
-                  { moduloId: "mock1", titulo: "Introducción al onboarding", tipoModulo: "VIDEO" },
-                  { moduloId: "mock2", titulo: "Herramientas digitales", tipoModulo: "VIDEO" },
-                  { moduloId: "mock3", titulo: "Prevención de riesgos laborales", tipoModulo: "DOCUMENTO" },
-                ].map((m) => (
-                  <div key={m.moduloId} className="flex items-center gap-3 px-4 py-3 rounded-2xl shrink-0"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: "var(--azul-egm-light)" }}>
-                      {m.tipoModulo === "VIDEO"
-                        ? <Play size={16} style={{ color: "var(--azul-egm)" }} />
-                        : <FileText size={16} style={{ color: "var(--azul-egm)" }} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold leading-tight truncate" style={{ color: "var(--texto-primario)" }}>
-                        {m.titulo}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                        {m.tipoModulo === "VIDEO" ? "Vídeo" : "Documento"}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleDescargarCertificado(m.titulo)}
-                      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium"
-                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", transition: "background 0.15s" }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--gris-borde)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "var(--gris-superficie)"}
-                      title={`Descargar certificado de ${m.titulo}`}
-                    >
-                      <Download size={13} />
-                      <span className="hidden sm:inline">Descargar</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-
           </div>
 
         </div>

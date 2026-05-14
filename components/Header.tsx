@@ -20,6 +20,7 @@ function getInitials(nombre: string): string {
 
 export default function Header() {
   const [mobileOpen, setMobileOpen]   = useState(false);
+  const [mobileAvatarError, setMobileAvatarError] = useState(false);
   const mobileOpenRef  = useRef(false);          // ref espejo para closures estables
   const menuPanelRef   = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
@@ -30,6 +31,9 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
+
+  // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
+  useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
 
   // DETECTAMOS SI ES SUPERADMIN
   const isSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN" || pathname.startsWith("/superadmin");
@@ -324,10 +328,11 @@ export default function Header() {
                 }}
               >
                 <div className="shrink-0">
-                  {usuario?.avatarUrl ? (
+                  {usuario?.avatarUrl && !mobileAvatarError ? (
                     <img
                       src={usuario.avatarUrl} alt={nombreMostrado}
                       style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.30)" }}
+                      onError={() => setMobileAvatarError(true)}
                     />
                   ) : (
                     <div className="rounded-full flex items-center justify-center font-bold"

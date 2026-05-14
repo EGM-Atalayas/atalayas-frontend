@@ -1023,7 +1023,7 @@ export default function CrearModuloPage() {
           {/* ══ MENSAJE ERROR IA ══ */}
           {aiError && (
             <div className="mb-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+              <Sparkles size={16} strokeWidth={2} className="shrink-0" />
               <span className="flex-1">{aiError}</span>
               <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
             </div>
@@ -1312,7 +1312,7 @@ export default function CrearModuloPage() {
 
           {errorMsg && (
             <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              <AlertTriangle size={16} strokeWidth={2} className="shrink-0" />
               {errorMsg}
             </div>
           )}
@@ -1330,7 +1330,7 @@ export default function CrearModuloPage() {
                   style={{ borderBottom: "1px solid var(--gris-borde)", background: "linear-gradient(135deg,#f5f3ff,#ede9fe)" }}>
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>
+                      <Sparkles size={16} />
                     </div>
                     <div>
                       <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Crear módulo con IA</h2>
@@ -1342,7 +1342,7 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
                 {/* Body */}
@@ -1375,7 +1375,7 @@ export default function CrearModuloPage() {
                   </div>
                   {errorIA && (
                     <div className="mt-3 text-xs px-3 py-2 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                      <AlertTriangle size={14} strokeWidth={2} className="shrink-0" />
                       {errorIA}
                     </div>
                   )}
@@ -1470,7 +1470,7 @@ export default function CrearModuloPage() {
                     <p className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>{tipo.desc}</p>
                   </div>
                   <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid var(--gris-borde)" }}>
-                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "transparent" }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                    <Check size={10} strokeWidth={2.5} style={{ color: "transparent" }} />
                   </div>
                 </button>
               ))}
