@@ -162,7 +162,12 @@ export default function PerfilPage() {
   const [sugerencia, setSugerencia]       = useState("");
   const [enviandoSug, setEnviandoSug]     = useState(false);
   const [estadoSug, setEstadoSug]         = useState<"idle" | "ok" | "error">("idle");
-  const [destinatarioSug, setDestinatarioSug] = useState<"EMPRESA" | "EGM">("EMPRESA");
+  // Los admins (empresa y general) solo pueden enviar a EGM Atalayas; los empleados eligen
+  const [destinatarioSug, setDestinatarioSug] = useState<"EMPRESA" | "EGM">(
+    usuario && (usuario.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario.codigoRol === "ROLE_ADMIN")
+      ? "EGM"
+      : "EMPRESA"
+  );
   const [dispOpen, setDispOpen] = useState(false);
   const dispRef = useRef<HTMLDivElement>(null);
 
@@ -992,26 +997,34 @@ export default function PerfilPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
                   Enviar a
                 </p>
-                <div className="flex gap-2">
-                  {(["EMPRESA", "EGM"] as const).map((d) => {
-                    const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
-                    const selected = destinatarioSug === d;
-                    return (
-                      <button key={d} type="button"
-                        onClick={() => setDestinatarioSug(d)}
-                        className="px-3 py-1.5 rounded-full text-xs font-semibold border"
-                        style={{
-                          background: selected ? "var(--azul-egm)" : "transparent",
-                          color: selected ? "#fff" : "var(--texto-secundario)",
-                          borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
-                          transition: "background 0.35s, color 0.35s, border-color 0.35s",
-                          boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
-                        }}>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
+                {esAdmin ? (
+                  // Admins solo pueden contactar con EGM Atalayas
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
+                    EGM Atalayas
+                  </span>
+                ) : (
+                  <div className="flex gap-2">
+                    {(["EMPRESA", "EGM"] as const).map((d) => {
+                      const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
+                      const selected = destinatarioSug === d;
+                      return (
+                        <button key={d} type="button"
+                          onClick={() => setDestinatarioSug(d)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border"
+                          style={{
+                            background: selected ? "var(--azul-egm)" : "transparent",
+                            color: selected ? "#fff" : "var(--texto-secundario)",
+                            borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
+                            transition: "background 0.35s, color 0.35s, border-color 0.35s",
+                            boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
+                          }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Textarea */}
