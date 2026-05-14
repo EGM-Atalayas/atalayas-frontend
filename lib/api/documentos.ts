@@ -59,3 +59,19 @@ export async function marcarDocumentoVisto(documentoId: string): Promise<void> {
   });
   if (!res.ok) throw new Error("Error al marcar visto");
 }
+
+/**
+ * Devuelve la URL del certificado auto-generado (guardado en Supabase) para un módulo.
+ * El frontend la usa para priorizar la versión persistida sobre la generada localmente con jsPDF.
+ * Devuelve null si aún no se ha generado (módulo no completado o proceso async pendiente).
+ */
+export async function obtenerCertificadoModulo(moduloId: string): Promise<string | null> {
+  try {
+    const res = await apiFetch(`${API_URL}/documentos/me/certificado/${moduloId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
+}

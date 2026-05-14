@@ -8,6 +8,7 @@ import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { descargarCertificado } from "@/lib/certificado";
+import { obtenerCertificadoModulo } from "@/lib/api/documentos";
 
 // Mock data para demostrar el diseño cuando el backend no devuelve módulos
 const MOCK_MODULES: ModuloConProgreso[] = [
@@ -634,7 +635,21 @@ function CourseCard({
   const isCompletado  = m.status === "completado";
   const isEnProgreso  = m.status === "en progreso";
 
-  const handleDescargarCertificado = () => {
+  const [descargando, setDescargando] = useState(false);
+
+  const handleDescargarCertificado = async () => {
+    setDescargando(true);
+    try {
+      // Priorizar el certificado guardado en Supabase (generado automáticamente por el backend)
+      const url = await obtenerCertificadoModulo(m.moduloId);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        setDescargando(false);
+        return;
+      }
+    } catch { /* fallback */ }
+
+    // Fallback: generar localmente con jsPDF si el backend aún no lo tiene
     descargarCertificado({
       nombreEmpleado: usuario?.nombre ?? "Empleado",
       apellidosEmpleado: usuario?.apellidos,
@@ -643,6 +658,7 @@ function CourseCard({
       nombreEmpresa: usuario?.nombreEmpresa,
       fechaCompletado: new Date(),
     });
+    setDescargando(false);
   };
 
   return (
@@ -731,15 +747,20 @@ function CourseCard({
           <div className="mt-auto flex flex-col gap-2">
             <button
               onClick={handleDescargarCertificado}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+              disabled={descargando}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+              onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
               onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
             >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Descargar certificado
+              {descargando ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
+              {descargando ? "Obteniendo certificado..." : "Descargar certificado"}
             </button>
             <button
               className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2"
@@ -789,28 +810,48 @@ function CourseCard({
 // ── Botón certificado para onboarding ──────────────────────────────────────────
 function OnboardingCertificadoBtn({ modulo }: { modulo: ModuloEnriquecido }) {
   const { usuario } = useAuth();
+  const [descargando, setDescargando] = useState(false);
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDescargando(true);
+    try {
+      const url = await obtenerCertificadoModulo(modulo.moduloId);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        setDescargando(false);
+        return;
+      }
+    } catch { /* fallback */ }
+
+    descargarCertificado({
+      nombreEmpleado: usuario?.nombre ?? "Empleado",
+      apellidosEmpleado: usuario?.apellidos,
+      nombreModulo: modulo.nombre,
+      tipoModulo: MODULO_TIPO_LABEL[modulo.tipoModulo] ?? modulo.tipoModulo,
+      nombreEmpresa: usuario?.nombreEmpresa,
+      fechaCompletado: new Date(),
+    });
+    setDescargando(false);
+  };
+
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        descargarCertificado({
-          nombreEmpleado: usuario?.nombre ?? "Empleado",
-          apellidosEmpleado: usuario?.apellidos,
-          nombreModulo: modulo.nombre,
-          tipoModulo: MODULO_TIPO_LABEL[modulo.tipoModulo] ?? modulo.tipoModulo,
-          nombreEmpresa: usuario?.nombreEmpresa,
-          fechaCompletado: new Date(),
-        });
-      }}
-      className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+      onClick={handleClick}
+      disabled={descargando}
+      className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-70"
       style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+      onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
     >
-      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Descargar certificado
+      {descargando ? (
+        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )}
+      {descargando ? "Obteniendo..." : "Descargar certificado"}
     </button>
   );
 }
