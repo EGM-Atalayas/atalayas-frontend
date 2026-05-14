@@ -142,7 +142,7 @@ function AdminContent() {
   const { data: formaciones = [] } = useQuery<Modulo[]>({
     queryKey: QK.modulos(usuario?.empresaId),
     queryFn: () => getModulos(usuario?.empresaId),
-    enabled: !!usuario?.empresaId && activeTab === "formaciones",
+    enabled: !!usuario?.empresaId && (activeTab === "formaciones" || activeTab === "estadisticas"),
     staleTime: 60_000,
   });
 
@@ -218,17 +218,19 @@ function AdminContent() {
   const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
   const [cargandoStats, setCargandoStats] = useState(false);
   const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
+  const [statsKey, setStatsKey] = useState(0);
+  useEffect(() => { setStatsKey(k => k + 1); }, [empleados.length, formaciones.length, progresoEmpresa.length]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const [showKpis, setShowKpis] = useState(true);
   const [showMovimiento, setShowMovimiento] = useState(true);
-  const [showProgreso, setShowProgreso] = useState(true);
   const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
+  const [showDetalleModulos, setShowDetalleModulos] = useState(true);
   const [drillMes, setDrillMes] = useState<string | null>(null);
 
-  const hayPersonalizacion = !showKpis || !showMovimiento || !showProgreso || !showEstadoFormacion;
+  const hayPersonalizacion = !showKpis || !showMovimiento || !showEstadoFormacion || !showDetalleModulos;
   const resetVistaEstadisticas = () => {
-    setShowKpis(true); setShowMovimiento(true); setShowProgreso(true); setShowEstadoFormacion(true);
+    setShowKpis(true); setShowMovimiento(true); setShowEstadoFormacion(true); setShowDetalleModulos(true);
   };
   const handleExportEstadisticas = () => {
     if (!statsEmpresa) return;
@@ -323,12 +325,20 @@ function AdminContent() {
         estado: statsEstado,
         tipoModulo: statsTipoMod,
       };
+      console.log("[statsEffect] empleados:", empleadosRef.current.length, "formaciones:", formacionesRef.current.length, "progresoEmpresa:", progresoEmpresaRef.current.length);
+      if (formacionesRef.current.length > 0) {
+        console.log("[statsEffect] móduloIds:", formacionesRef.current.slice(0, 8).map(m => ({ mid: m.moduloId, nombre: m.nombre })));
+      }
+      if (progresoEmpresaRef.current.length > 0 && formacionesRef.current.length > 0) {
+        const muestra = progresoEmpresaRef.current[0];
+        console.log("[statsEffect] primer empleado progreso:", muestra.usuarioId, "modulos:", muestra.modulos?.length, "moduloIds:", muestra.modulos?.map(m => m.moduloId));
+      }
       const stats = getEstadisticasAdminEmpresa(empleadosRef.current, formacionesRef.current, progresoEmpresaRef.current, filtros);
       setStatsEmpresa(stats);
     } finally {
       setCargandoStats(false);
     }
-  }, [activeTab, empleados, statsRango, statsDpto, statsEstado, statsTipoMod]);
+  }, [activeTab, statsKey, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -2347,8 +2357,8 @@ function AdminContent() {
                     {[
                       { label: "KPIs resumen", value: showKpis, set: setShowKpis },
                       { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
-                      { label: "Progreso por módulo", value: showProgreso, set: setShowProgreso },
                       { label: "Estado de formación", value: showEstadoFormacion, set: setShowEstadoFormacion },
+                      { label: "Detalle por módulo", value: showDetalleModulos, set: setShowDetalleModulos },
                     ].map(({ label, value, set }) => (
                       <label key={label} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2">
                         <input
@@ -2374,7 +2384,7 @@ function AdminContent() {
               <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
                 No hay datos disponibles aún.
               </div>
-            ) : !showKpis && !showMovimiento && !showProgreso && !showEstadoFormacion ? (
+            ) : !showKpis && !showMovimiento && !showEstadoFormacion && !showDetalleModulos ? (
               <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
                 <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
                 <button
@@ -2448,45 +2458,6 @@ function AdminContent() {
                   </div>
                 )}
 
-                {/* ── Progreso de formación por módulo ── */}
-                {showProgreso && (
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">Progreso de formación por módulo</h2>
-                    <p className="text-xs text-slate-400 mb-6">% medio de completitud entre todos los empleados</p>
-                    {statsEmpresa.progresoModulos.length === 0 ? (
-                      <p className="text-sm text-slate-400 text-center py-12">Sin módulos con datos de progreso</p>
-                    ) : (
-                      <div style={{ height: Math.max(240, statsEmpresa.progresoModulos.length * 48) }} className="w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={statsEmpresa.progresoModulos} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                            <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
-                            <YAxis type="category" dataKey="nombre" axisLine={false} tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 11 }} width={130}
-                              tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + "…" : v} />
-                            <RechartsTooltip
-                              cursor={{ fill: "#f8fafc" }}
-                              contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                              formatter={(v) => [`${v ?? 0}%`, "Completitud"]}
-                            />
-                            <Bar dataKey="porcentaje" radius={[0, 8, 8, 0]} barSize={24}>
-                              {statsEmpresa.progresoModulos.map((entry, i) => (
-                                <Cell
-                                  key={`cell-${i}`}
-                                  fill={entry.porcentaje >= 80 ? "#10B981" : entry.porcentaje >= 40 ? "#3B82F6" : "#F59E0B"}
-                                />
-                              ))}
-                              <LabelList dataKey="porcentaje" position="right"
-                                style={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
-                                formatter={(v: unknown) => `${v ?? 0}%`} />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* ── Estado de formación de la plantilla ── */}
                 {showEstadoFormacion && (
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -2519,6 +2490,46 @@ function AdminContent() {
                           <Legend verticalAlign="bottom" height={36} iconType="circle" />
                         </PieChart>
                       </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Detalle por módulo (completados / en progreso / pendientes) ── */}
+                {showDetalleModulos && statsEmpresa.detalleModulos.length > 0 && (
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-6">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-lg font-bold text-slate-800">Detalle por módulo</h2>
+                    </div>
+                    <p className="text-xs text-slate-400 mb-6">Empleados que han completado, están cursando o tienen pendiente cada módulo</p>
+                    <div className="flex flex-col gap-3">
+                      {statsEmpresa.detalleModulos.map((mod) => {
+                        const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
+                        const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
+                        return (
+                          <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
+                              <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
+                            </div>
+                            <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
+                              <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
+                              <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
+                            </div>
+                            <div className="flex gap-4 mt-2">
+                              {[
+                                { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
+                                { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
+                                { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
+                              ].map((s) => (
+                                <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
+                                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
+                                  {s.n} {s.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

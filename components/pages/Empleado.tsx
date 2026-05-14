@@ -150,7 +150,10 @@ export default function Empleado() {
           getNoticias(usuario?.empresaId).catch(() => []),
           getModulosConProgreso(usuario?.empresaId).catch(() => []),
         ]);
-        setNoticias((noticiasData as Noticia[]).slice(0, 6));
+        const filtradas = usuario?.empresaId
+          ? (noticiasData as Noticia[]).filter((n) => n.empresaId === usuario.empresaId)
+          : (noticiasData as Noticia[]).filter((n) => !n.empresaId);
+        setNoticias(filtradas.slice(0, 6));
         const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
         setFormaciones(real);
         // Si la API no devuelve módulos, usar mock con progreso de localStorage

@@ -454,8 +454,11 @@ export default function ComunicacionPage() {
     setLoadingAnuncios(true);
     try {
       const data = await getNoticias(usuario?.empresaId);
-      setAnuncios(data.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado"));
-      setBorradores(data.filter((n) => n.activo && n.estado === "borrador"));
+      const filtrados = usuario?.empresaId
+        ? data.filter((n) => n.empresaId === usuario.empresaId)
+        : data.filter((n) => !n.empresaId);
+      setAnuncios(filtrados.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado"));
+      setBorradores(filtrados.filter((n) => n.activo && n.estado === "borrador"));
     } catch { setAnuncios([]); setBorradores([]); }
     finally { setLoadingAnuncios(false); }
   }
