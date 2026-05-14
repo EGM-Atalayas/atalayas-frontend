@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { PresentationViewer } from "@/components/presentation/PresentationViewer";
 import { getBestSpanishVoice } from "@/lib/speech";
+import { generarCertificadoModulo } from "@/lib/api/documentos";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -397,6 +398,8 @@ export default function Page() {
       } else {
         // Último ítem — módulo completado
         setModuloCompletado(true);
+        // Generar y guardar el certificado en el backend (aparece en "Mis documentos")
+        generarCertificadoModulo(id).catch(() => null);
       }
       setCompletando(false);
     }, 600);

@@ -82,6 +82,23 @@ export async function firmarDocumento(documentoId: string, firmaBase64: string):
   return res.json();
 }
 
+/**
+ * Llama al backend para generar el certificado cuando el empleado completa un módulo.
+ * Si ya existe lo devuelve directamente. Devuelve la URL del PDF en Supabase.
+ */
+export async function generarCertificadoModulo(moduloId: string): Promise<string | null> {
+  try {
+    const res = await apiFetch(`${API_URL}/documentos/me/certificado/${moduloId}`, {
+      method: "POST",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function obtenerCertificadoModulo(moduloId: string): Promise<string | null> {
   try {
     const res = await apiFetch(`${API_URL}/documentos/me/certificado/${moduloId}`);
