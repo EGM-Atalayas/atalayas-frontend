@@ -65,6 +65,23 @@ export async function marcarDocumentoVisto(documentoId: string): Promise<void> {
  * El frontend la usa para priorizar la versión persistida sobre la generada localmente con jsPDF.
  * Devuelve null si aún no se ha generado (módulo no completado o proceso async pendiente).
  */
+/**
+ * Envía la firma (PNG en base64) al backend para que la estampe sobre el PDF.
+ * El backend devuelve la URL del nuevo PDF firmado.
+ */
+export async function firmarDocumento(documentoId: string, firmaBase64: string): Promise<{ firmaUrl: string }> {
+  const res = await apiFetch(`${API_URL}/documentos/me/${documentoId}/firmar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ firmaBase64 }),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || "No se pudo procesar la firma");
+  }
+  return res.json();
+}
+
 export async function obtenerCertificadoModulo(moduloId: string): Promise<string | null> {
   try {
     const res = await apiFetch(`${API_URL}/documentos/me/certificado/${moduloId}`);
