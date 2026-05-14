@@ -165,7 +165,7 @@ export default function AdminEmpresa() {
         const empresaId = usuario?.empresaId;
         const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
-          empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : apiFetch(`${API_URL}/anuncios`),
+          empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : Promise.resolve(new Response(JSON.stringify([]))),
           getActividadReciente(5).catch(() => [] as ActividadItem[]),
           getModulos(empresaId).catch(() => [] as Modulo[]),
           empresaId ? getProgresoEmpresa(empresaId).catch(() => [] as ProgresoEmpleado[]) : Promise.resolve([] as ProgresoEmpleado[]),
@@ -177,7 +177,8 @@ export default function AdminEmpresa() {
         }
         if (anunciosRes.ok) {
           const data = await anunciosRes.json();
-          setAnuncios(data.filter((a: Anuncio) => a.activo).slice(0, 4));
+          const filtrados = data.filter((a: Anuncio) => empresaId ? a.empresaId === empresaId : true);
+          setAnuncios(filtrados.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
         setActividad(actividadData);
         // servicios: usa mock hasta conectar el nuevo endpoint
@@ -353,10 +354,10 @@ export default function AdminEmpresa() {
                       );
                     })}
                     {modulosStats.length > 4 && (
-                      <button onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+                      <button onClick={() => router.push("/dashboard/admin?tab=estadisticas")}
                         className="w-full text-xs font-semibold py-3 rounded-xl transition-colors"
                         style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                        Ver más módulos →
+                        Ver estadísticas detalladas →
                       </button>
                     )}
                   </>

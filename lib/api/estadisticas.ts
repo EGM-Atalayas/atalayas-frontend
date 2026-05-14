@@ -1,5 +1,6 @@
 // src/lib/api/estadisticas.ts
 import { API_URL, apiFetch } from "../api";
+import type { ProgresoEmpleado } from "@/lib/types/progreso";
 
 // ─── Tipos para admin empresa ─────────────────────────────────────────────────
 
@@ -17,6 +18,8 @@ export interface EstadisticasEmpresaResponse {
   movimientoMensual: { mes: string; altas: number; bajas: number }[];
   /** % de completitud por módulo (todos los empleados) */
   progresoModulos: { nombre: string; porcentaje: number }[];
+  /** Desglose detallado por módulo: completados / en progreso / pendientes */
+  detalleModulos: { moduloId: string; nombre: string; completados: number; enProgreso: number; pendientes: number; total: number }[];
   /** Empleados sin iniciar ningún módulo */
   empleadosSinFormacion: number;
   /** Empleados con formación incompleta (> 0 % y < 100 %) */
@@ -236,25 +239,32 @@ export function getEstadisticasAdminEmpresa(
   // ── Progreso de formación por módulo ────────────────────────────────────────
   const totalEmpleados = activos.length || 1;
 
-  const progresoModulos = modulos.slice(0, 8).map((m) => {
+  const progresoModulos: { nombre: string; porcentaje: number }[] = [];
+  const detalleModulos: { moduloId: string; nombre: string; completados: number; enProgreso: number; pendientes: number; total: number }[] = [];
+
+  for (const m of modulos.slice(0, 8)) {
     const mid = m.moduloId ?? m.id ?? "";
-    // Buscamos en progresoEmpresa cuántos tienen ese módulo con porcentaje 100
     let completados = 0;
+    let enProgreso  = 0;
     let sumPct      = 0;
     let conDatos    = 0;
     for (const pe of progresoEmpresa) {
-      const pm = pe.modulos.find((x) => x.moduloId === mid);
+      const pm = pe.modulos?.find((x) => String(x.moduloId) === String(mid));
       if (pm) {
         conDatos++;
         sumPct += pm.porcentaje ?? 0;
         if ((pm.porcentaje ?? 0) >= 100) completados++;
+        else if ((pm.porcentaje ?? 0) > 0) enProgreso++;
       }
     }
     const porcentaje = conDatos > 0
       ? Math.round(sumPct / totalEmpleados)
       : 0;
-    return { nombre: m.titulo ?? m.nombre ?? "Módulo", porcentaje };
-  });
+    const nombre = m.titulo ?? m.nombre ?? "Módulo";
+    const pendientes = Math.max(0, totalEmpleados - completados - enProgreso);
+    progresoModulos.push({ nombre, porcentaje });
+    detalleModulos.push({ moduloId: mid, nombre, completados, enProgreso, pendientes, total: totalEmpleados || 1 });
+  }
 
   // ── Estado de formación de empleados ────────────────────────────────────────
   let sinFormacion   = 0;
@@ -288,8 +298,80 @@ export function getEstadisticasAdminEmpresa(
     },
     movimientoMensual,
     progresoModulos,
+    detalleModulos,
     empleadosSinFormacion:  sinFormacion,
     empleadosEnProgreso:    enProgreso,
     empleadosCompletados:   completados100,
   };
+}
+
+// ─── Formación global para Superadmin ─────────────────────────────────────────
+
+export interface FormacionGlobalModulo {
+  moduloId: string;
+  nombre: string;
+  completados: number;
+  enProgreso: number;
+  pendientes: number;
+  total: number;
+}
+
+/**
+ * Agrega el progreso de formación de TODOS los empleados de TODAS las empresas
+ * aprobadas, devolviendo estadísticas por módulo similares a las que ve el
+ * admin de empresa en su dashboard.
+ */
+export async function getFormacionGlobalSuperadmin(): Promise<FormacionGlobalModulo[]> {
+  const [resEmp, resMod] = await Promise.all([
+    apiFetch(`${API_URL}/empresas`),
+    apiFetch(`${API_URL}/modulos`),
+  ]);
+
+  const empresas: any[] = resEmp.ok ? await resEmp.json() : [];
+  const modulos: any[]  = resMod.ok ? await resMod.json()  : [];
+
+  const empresasAprobadas = empresas.filter((e: any) => e.estadoSolicitud === "APROBADA");
+  const modulosActivos    = modulos.filter((m: any) => m.activo !== false);
+
+  if (empresasAprobadas.length === 0 || modulosActivos.length === 0) return [];
+
+  // Progreso de todas las empresas en paralelo
+  const progresosPorEmpresa = await Promise.all(
+    empresasAprobadas.map((emp: any) =>
+      apiFetch(`${API_URL}/progreso/empresa/${emp.id}`)
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+    ),
+  );
+
+  const allProgreso: ProgresoEmpleado[] = progresosPorEmpresa.flat();
+
+  // Empleados únicos con algún registro de progreso
+  const empleadosConProgreso = new Set(allProgreso.map((p) => p.usuarioId));
+  const totalEmpleados = Math.max(empleadosConProgreso.size, 1);
+
+  return modulosActivos.map((mod: any) => {
+    const mid = mod.moduloId ?? mod.id ?? "";
+    let completados = 0;
+    let enProgreso  = 0;
+
+    for (const emp of allProgreso) {
+      const mp = emp.modulos?.find((m) => m.moduloId === mid);
+      if (mp) {
+        if ((mp.porcentaje ?? 0) >= 100) completados++;
+        else if ((mp.porcentaje ?? 0) > 0) enProgreso++;
+      }
+    }
+
+    const pendientes = Math.max(0, totalEmpleados - completados - enProgreso);
+
+    return {
+      moduloId: mid,
+      nombre: mod.titulo ?? mod.nombre ?? "Módulo",
+      completados,
+      enProgreso,
+      pendientes,
+      total: totalEmpleados,
+    };
+  });
 }
