@@ -20,6 +20,8 @@ interface Props {
   autoplayDelay?:  number;
   pauseOnHover?:   boolean;
   loop?:           boolean;
+  /** Altura mínima del carrusel en px. Por defecto 320 */
+  minHeight?:      number;
 }
 
 const GAP              = 16;
@@ -107,6 +109,7 @@ export default function ComunicadosCarousel({
   autoplayDelay = 4000,
   pauseOnHover  = true,
   loop          = true,
+  minHeight     = 320,
 }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const [cWidth, setCWidth] = useState(600);
@@ -221,8 +224,8 @@ export default function ComunicadosCarousel({
       {/* Carousel track */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-2xl flex-1"
-        style={{ minHeight: "320px" }}
+        className="relative overflow-hidden rounded-2xl"
+        style={{ height: `${minHeight}px` }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
