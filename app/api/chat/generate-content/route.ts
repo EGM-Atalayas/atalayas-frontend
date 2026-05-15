@@ -11,8 +11,10 @@ interface ChatMessage {
 // --- Extraer JSON de un texto (objeto o array) ---
 function extraerJson(text: string): unknown {
   let cleaned = text.trim()
-  const jsonMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (jsonMatch) cleaned = jsonMatch[1].trim()
+  const codeMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeMatch) cleaned = codeMatch[1].trim()
+  // Quitar trailing commas antes de ] o }
+  cleaned = cleaned.replace(/,(\s*[}\]])/g, "$1")
   const arrayMatch = cleaned.match(/\[[\s\S]*\]/)
   const objectMatch = cleaned.match(/\{[\s\S]*\}/)
   if (arrayMatch && (!objectMatch || cleaned.indexOf("[") < cleaned.indexOf("{"))) {
@@ -40,6 +42,17 @@ function parseGeneratedContent(text: string): {
         etiquetas: Array.isArray(parsed.etiquetas || parsed.tags)
           ? (parsed.etiquetas || parsed.tags).slice(0, 3)
           : [],
+      }
+    }
+    // Fallback: extraer por regex si JSON.parse funciona pero no tiene la estructura esperada
+    const descMatch = text.match(/"descripcion"\s*:\s*"([^"]+)"/) || text.match(/"description"\s*:\s*"([^"]+)"/)
+    const titleMatch = text.match(/"titulo"\s*:\s*"([^"]+)"/) || text.match(/"title"\s*:\s*"([^"]+)"/)
+    if (descMatch || titleMatch) {
+      return {
+        titulo: titleMatch ? titleMatch[1] : "",
+        descripcion: descMatch ? descMatch[1] : "",
+        resumen: "",
+        etiquetas: [],
       }
     }
   } catch (e) {

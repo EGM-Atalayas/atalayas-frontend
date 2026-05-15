@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, CircleUser, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
 import { IAButton } from "@/components/ui/IAButton";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
@@ -17,6 +17,7 @@ import { BienvenidaTemplatePanel } from "@/components/bienvenida/BienvenidaTempl
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoPagina = "texto" | "archivo" | "test";
+type AiTipo = "descripcion" | "test" | "podcast" | "video" | "documento";
 
 interface PreguntaPagina {
   texto: string;
@@ -237,7 +238,8 @@ export default function CrearModuloPage() {
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [aiLoading, setAiLoading] = useState<"descripcion" | "test" | "podcast" | "video" | "documento" | null>(null);
+  const [aiSeleccionadas, setAiSeleccionadas] = useState<Record<AiTipo, boolean>>({ descripcion: false, test: false, podcast: false, video: false, documento: false });
+  const [aiLoading, setAiLoading] = useState<AiTipo | null>(null);
   const [aiError, setAiError] = useState("");
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [presentacionPanelOpen, setPresentacionPanelOpen] = useState(false);
@@ -319,7 +321,7 @@ export default function CrearModuloPage() {
             apellidos: u.apellidos || "",
           })));
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [audiencia, usuario?.empresaId, alumnosDisponibles.length]);
 
@@ -331,156 +333,7 @@ export default function CrearModuloPage() {
   const toggleDepto = (id: string) =>
     setDeptos((p) => p.includes(id) ? p.filter((d) => d !== id) : [...p, id]);
 
-  async function generarConIA(tipo: "descripcion" | "test" | "podcast" | "video" | "documento") {
-    setAiError("");
-    if (!nombre.trim() && !pdfFile) {
-      setAiError("Necesitas un título o un documento PDF para que la IA pueda generar contenido.");
-      return;
-    }
-    if (tipo === "test" && !paginaActiva) return;
-    setAiLoading(tipo);
-    try {
-      const contenidoExistente = paginaActiva?.contenido || "";
-      const prompts: Record<string, string> = {
-        descripcion: `Genera una descripción corta y profesional (máximo 150 caracteres) para un módulo de formación llamado "${nombre}". Devuelve SOLO la descripción.`,
-        test: `Crea 5 preguntas de test de opción múltiple (4 opciones cada una) basadas en el módulo "${nombre}". ${contenidoExistente ? `Contexto adicional: ${contenidoExistente}` : ""} Devuelve el resultado estrictamente en formato JSON: [{"texto":"pregunta","opciones":["op1","op2","op3","op4"],"correcta":0}] sin texto adicional.`,
-        podcast: `Crea un podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 500 palabras. Devuelve SOLO el guion en español, listo para ser narrado en voz alta.`,
-        video: `Genera un array JSON de slides para un vídeo educativo sobre "${nombre}". Cada slide debe tener: numero (entero), titulo (string), contenido (string con viñetas separadas por \\n), notas (string opcional). Máximo 8 slides. Estructura: 1 slide intro, 4-5 slides de contenido, 1 slide resumen, 1 slide cierre. Devuelve SOLO el JSON, sin formato adicional. Ejemplo: [{"numero":1,"titulo":"Introducción","contenido":"Punto 1\\nPunto 2","notas":"Hablar pausado"}].`,
-        documento: `Crea un documento de formación completo y estructurado sobre "${nombre}". Incluye: resumen ejecutivo, introducción, 3-4 secciones con subtítulos (##), conclusiones y recursos adicionales. Usa viñetas (-) donde sea útil. Máximo 1000 palabras. Devuelve SOLO el documento en markdown.`,
-      };
 
-      // Usar /api/chat/generate-content para descripción y test (mejor para JSON estructurado)
-      // Usar /api/chat para contenido, podcast, video, documento (texto libre)
-      const usarGenerateContent = tipo === "descripcion" || tipo === "test";
-      const endpoint = usarGenerateContent ? "/api/chat/generate-content" : "/api/chat";
-
-      const body = usarGenerateContent
-        ? {
-          prompt: prompts[tipo],
-          systemPrompt: tipo === "test"
-            ? "Eres un asistente que genera preguntas de test. Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown. Ejemplo: [{\"texto\":\"Pregunta\",\"opciones\":[\"A\",\"B\",\"C\",\"D\"],\"correcta\":0}]"
-            : undefined,
-        }
-        : { messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`[IA] Error ${res.status}:`, errorText);
-        throw new Error("Error en la respuesta");
-      }
-
-      let textoLimpio = "";
-
-      if (usarGenerateContent) {
-        // Para generate-content, la respuesta es JSON
-        const data = await res.json();
-        if (tipo === "descripcion" && data.descripcion) {
-          textoLimpio = data.descripcion;
-        } else {
-          textoLimpio = JSON.stringify(data);
-        }
-      } else {
-        // Para chat normal, leer streaming
-        if (!res.body) throw new Error("No hay body");
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          textoLimpio += dec.decode(value);
-        }
-      }
-
-      textoLimpio = textoLimpio.trim();
-
-      if (!textoLimpio) throw new Error("Respuesta vacía");
-
-      // Aplicar el contenido generado según el tipo
-      if (tipo === "descripcion") {
-        setDescripcion(textoLimpio);
-      } else if (tipo === "test" && paginaActiva) {
-        try {
-          const preguntas = JSON.parse(textoLimpio);
-          if (Array.isArray(preguntas) && preguntas.length > 0) {
-            const preguntasFormateadas = preguntas.map((p: any) => ({
-              texto: p.texto || p.text || "",
-              opciones: Array.isArray(p.opciones || p.options) ? (p.opciones || p.options) : ["", "", "", ""],
-              correcta: typeof p.correcta === "number" ? p.correcta : typeof p.correct === "number" ? p.correct : 0,
-            }));
-            setPaginas((p) => p.map((pg) => pg.id !== paginaActiva.id ? pg : { ...pg, tipo: "test", preguntas: preguntasFormateadas }));
-          } else {
-            throw new Error("Formato incorrecto");
-          }
-        } catch (e) {
-          console.error("[IA] Error parseando test:", e);
-          setAiError("Error al procesar el test generado. Intenta de nuevo.");
-        }
-      } else if (tipo === "documento") {
-        const nuevaPagina: PaginaModulo = {
-          id: newId(),
-          tipo: "texto",
-          titulo: `Documento: ${paginaActiva?.titulo || "Nueva página"}`,
-          contenido: textoLimpio,
-          archivoUrl: null,
-          archivoNombre: null,
-          archivoFile: null,
-          preguntas: [],
-        };
-        setPaginas((p) => [...p, nuevaPagina]);
-        setPaginaActivaId(nuevaPagina.id);
-      } else if (tipo === "podcast") {
-        setScriptPodcast(textoLimpio);
-        setTiposSalida((prev) => prev.includes("podcast") ? prev : [prev, "podcast"].filter(Boolean).join(","));
-        const nuevaPagina: PaginaModulo = {
-          id: newId(),
-          tipo: "texto",
-          titulo: `Podcast: ${paginaActiva?.titulo || "Nueva página"}`,
-          contenido: textoLimpio,
-          archivoUrl: null,
-          archivoNombre: null,
-          archivoFile: null,
-          preguntas: [],
-        };
-        setPaginas((p) => [...p, nuevaPagina]);
-        setPaginaActivaId(nuevaPagina.id);
-      } else if (tipo === "video") {
-        try {
-          const slides = JSON.parse(textoLimpio);
-          if (Array.isArray(slides) && slides.length > 0) {
-            setScriptVideo(textoLimpio);
-            setTiposSalida((prev) => prev.includes("video") ? prev : [prev, "video"].filter(Boolean).join(","));
-            const nuevaPagina: PaginaModulo = {
-              id: newId(),
-              tipo: "texto",
-              titulo: `Vídeo: ${paginaActiva?.titulo || "Nueva página"}`,
-              contenido: textoLimpio,
-              archivoUrl: null,
-              archivoNombre: null,
-              archivoFile: null,
-              preguntas: [],
-            };
-            setPaginas((p) => [...p, nuevaPagina]);
-            setPaginaActivaId(nuevaPagina.id);
-          } else {
-            throw new Error("Formato inválido");
-          }
-        } catch {
-          setAiError("Error al procesar los slides generados. Intenta de nuevo.");
-        }
-      }
-    } catch (err) {
-      console.error("[IA] Error:", err);
-      setAiError("La IA no está disponible. Verifica que el backend esté funcionando.");
-    } finally {
-      setAiLoading(null);
-    }
-  }
 
   const nuevaPagina = (tipo: TipoPagina) => {
     const nueva: PaginaModulo = {
@@ -547,10 +400,89 @@ export default function CrearModuloPage() {
 
   const paginaActiva = paginas.find((p) => p.id === paginaActivaId) ?? null;
 
+  async function generarAiSave(): Promise<PaginaModulo[]> {
+    const nuevas: PaginaModulo[] = [];
+    const activos = Object.entries(aiSeleccionadas).filter(([, v]) => v).map(([k]) => k as AiTipo);
+    if (activos.length === 0) return nuevas;
+    setAiError("");
+
+    const contenidoExistente = paginaActiva?.contenido || "";
+    const prompts: Record<AiTipo, string> = {
+      descripcion: `Genera una descripción corta y profesional (máximo 150 caracteres) para un módulo de formación llamado "${nombre}". Devuelve SOLO la descripción, sin JSON ni formato adicional.`,
+      test: `Crea 5 preguntas de test de opción múltiple (4 opciones cada una) basadas en el módulo "${nombre}". ${contenidoExistente ? `Contexto adicional: ${contenidoExistente}` : ""} Devuelve el resultado estrictamente en formato JSON: [{"texto":"pregunta","opciones":["op1","op2","op3","op4"],"correcta":0}] sin texto adicional.`,
+      podcast: `Crea un podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 500 palabras. Devuelve SOLO el guion en español, listo para ser narrado en voz alta.`,
+      video: `Genera un array JSON de slides para un vídeo educativo sobre "${nombre}". Cada slide debe tener: numero (entero), titulo (string), contenido (string con viñetas separadas por \\n), notas (string opcional). Máximo 8 slides. Estructura: 1 slide intro, 4-5 slides de contenido, 1 slide resumen, 1 slide cierre. Devuelve SOLO el JSON, sin formato adicional. Ejemplo: [{"numero":1,"titulo":"Introducción","contenido":"Punto 1\\nPunto 2","notas":"Hablar pausado"}].`,
+      documento: `Crea un documento de formación completo y estructurado sobre "${nombre}". Incluye: resumen ejecutivo, introducción, 3-4 secciones con subtítulos (##), conclusiones y recursos adicionales. Usa viñetas (-) donde sea útil. Máximo 1000 palabras. Devuelve SOLO el documento en markdown.`,
+    };
+
+    for (const tipo of activos) {
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} }),
+        });
+        if (!res.ok) { setAiError(`Error al generar ${tipo}: el servicio de IA no está disponible`); continue; }
+
+        let texto = "";
+        const reader = res.body!.getReader();
+        const dec = new TextDecoder();
+        while (true) { const { done, value } = await reader.read(); if (done) break; texto += dec.decode(value); }
+        texto = texto.trim();
+        if (!texto) { setAiError(`Error al generar ${tipo}: respuesta vacía`); continue; }
+
+        if (tipo === "descripcion") {
+          setDescripcion(texto);
+        } else if (tipo === "test") {
+          const jsonMatch = texto.match(/\[[\s\S]*?\]/);
+          if (!jsonMatch) { setAiError(`Error al generar test: la IA no devolvió un formato válido`); continue; }
+          try {
+            const preguntas = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(preguntas) && preguntas.length > 0) {
+              nuevas.push({
+                id: newId(), tipo: "test", titulo: `Test: ${nombre}`,
+                contenido: contenidoExistente || "Responde las siguientes preguntas:",
+                archivoUrl: null, archivoNombre: null, archivoFile: null,
+                preguntas: preguntas.map((p: any) => ({
+                  texto: p.texto || p.text || "",
+                  opciones: Array.isArray(p.opciones || p.options) ? (p.opciones || p.options) : ["", "", "", ""],
+                  correcta: typeof p.correcta === "number" ? p.correcta : typeof p.correct === "number" ? p.correct : 0,
+                })),
+              });
+            } else { setAiError("Error al generar test: formato de preguntas inválido"); }
+          } catch { setAiError("Error al generar test: la IA no devolvió JSON válido"); }
+        } else if (tipo === "podcast") {
+          setScriptPodcast(texto);
+          setTiposSalida((prev) => prev.includes("podcast") ? prev : [prev, "podcast"].filter(Boolean).join(","));
+          nuevas.push({ id: newId(), tipo: "texto", titulo: `Podcast: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+        } else if (tipo === "video") {
+          const jsonMatch = texto.match(/\[[\s\S]*?\]/);
+          if (!jsonMatch) { setAiError(`Error al generar vídeo: la IA no devolvió un formato válido`); continue; }
+          try {
+            const slides = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(slides) && slides.length > 0) {
+              setScriptVideo(texto);
+              setTiposSalida((prev) => prev.includes("video") ? prev : [prev, "video"].filter(Boolean).join(","));
+              nuevas.push({ id: newId(), tipo: "texto", titulo: `Vídeo: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+            } else { setAiError("Error al generar vídeo: formato de slides inválido"); }
+          } catch { setAiError("Error al generar vídeo: la IA no devolvió JSON válido"); }
+        } else if (tipo === "documento") {
+          nuevas.push({ id: newId(), tipo: "texto", titulo: `Documento: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+        }
+      } catch { setAiError(`Error al generar ${tipo}: no se pudo conectar con la IA`); }
+    }
+    return nuevas;
+  }
+
   const guardarModulo = async () => {
     if (!nombre.trim()) { setErrorMsg("El nombre del módulo es obligatorio"); return; }
     setGuardando(true); setErrorMsg("");
     try {
+      // Generar contenido IA para tipos seleccionados
+      const paginasAI = await generarAiSave();
+      const paginasCompletas = [...paginas, ...paginasAI];
+      setPaginas(paginasCompletas);
+
       let imagenPortadaUrl: string | null = null;
       if (portadaFile) {
         try { imagenPortadaUrl = await subirImagenModulo(portadaFile); }
@@ -561,7 +493,7 @@ export default function CrearModuloPage() {
 
       // Subir archivos de las páginas tipo archivo
       const paginasConArchivos = await Promise.all(
-        paginas.map(async (p) => {
+        paginasCompletas.map(async (p) => {
           if (p.tipo === "archivo" && p.archivoFile) {
             try {
               const adjunto = await subirAdjunto(p.archivoFile);
@@ -633,7 +565,9 @@ export default function CrearModuloPage() {
       const data = await res.json();
       setNombre(data.nombre || "");
       setDescripcion(data.descripcion || "");
-      if (data.categoria) setCategoria(data.categoria);
+      if (data.categoria && ["GENERAL", "ESPECIALIZADO", "ESPECIALIZADO_IA", "CUMPLIMIENTO", "ONBOARDING"].includes(data.categoria)) {
+        setCategoria(data.categoria);
+      }
 
       // Procesar páginas
       const paginasGeneradas: PaginaModulo[] = (data.paginas || []).map((p: any, i: number) => ({
@@ -683,6 +617,7 @@ export default function CrearModuloPage() {
     setPaginas([]); setPaginaActivaId(null); setPortadaFile(null); setPortadaPreview("");
     setScriptPodcast(""); setTiposSalida("documentacion");
     setGuardado(false); setErrorMsg(""); setActivo(true); setMostrarSelectorTipo(false);
+    setAiSeleccionadas({ descripcion: false, test: false, podcast: false, video: false, documento: false });
   };
 
   const inputBase = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" };
@@ -708,7 +643,7 @@ export default function CrearModuloPage() {
 
   return (
     <div className="w-full min-h-screen pt-20" style={{ background: "var(--gris-pagina)" }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .28s ease both}`}</style>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.05)}to{transform:scale(1)}}.fade-up{animation:fadeUp .28s ease both}.ai-pop{animation:pop .25s ease both}`}</style>
 
       {/* ══ HEADER BREADCRUMBS ══ */}
       <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
@@ -816,7 +751,7 @@ export default function CrearModuloPage() {
                       <div className="flex gap-2">
                         {([
                           { key: "todos" as AudienciaTipo, label: "Todos", icon: <UsersRound /> },
-                          { key: "alumno" as AudienciaTipo, label: "Alumno", icon: <Shield /> },
+                          { key: "alumno" as AudienciaTipo, label: "Alumno", icon: <CircleUser /> },
                           { key: "departamento" as AudienciaTipo, label: "Departamento", icon: <Briefcase /> },
                         ]).map((op) => {
                           const sel = audiencia === op.key;
@@ -960,25 +895,28 @@ export default function CrearModuloPage() {
                 {nombre.trim() || pdfFile ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
                     {[
-                      { key: "descripcion", label: "Descripción", icon: "📝", desc: "Corta y profesional", disabled: false },
-                      { key: "test", label: "Test", icon: "✅", desc: "5 preguntas", disabled: false },
-                      { key: "podcast", label: "Podcast", icon: "🎙️", desc: "5-7 minutos", disabled: false },
-                      { key: "video", label: "Vídeo", icon: "🎬", desc: "Slides educativos", disabled: false },
-                      { key: "documento", label: "Documento", icon: "📑", desc: "Completo", disabled: false },
+                      { key: "descripcion" as AiTipo, label: "Descripción", icon: "📝", desc: "Corta y profesional" },
+                      { key: "test" as AiTipo, label: "Test", icon: "✅", desc: "5 preguntas" },
+                      { key: "podcast" as AiTipo, label: "Podcast", icon: "🎙️", desc: "5-7 minutos" },
+                      { key: "video" as AiTipo, label: "Vídeo", icon: "🎬", desc: "Slides educativos" },
+                      { key: "documento" as AiTipo, label: "Documento", icon: "📑", desc: "Completo" },
                     ].map((opt) => {
-                      const loading = aiLoading === opt.key;
+                      const sel = aiSeleccionadas[opt.key];
                       return (
                         <button key={opt.key} type="button"
-                          onClick={() => generarConIA(opt.key as any)}
-                          disabled={loading || opt.disabled}
-                          className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-center transition-all disabled:opacity-40"
+                          onClick={() => setAiSeleccionadas((p) => ({ ...p, [opt.key]: !p[opt.key] }))}
+                          className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-center transition-all ${sel ? "ai-pop" : ""}`}
                           style={{
-                            border: `1.5px solid ${loading ? "#c4b5fd" : "var(--gris-borde)"}`,
-                            background: loading ? "#f5f3ff" : "var(--gris-pagina)",
+                            border: `1.5px solid ${sel ? "#7c3aed" : "var(--gris-borde)"}`,
+                            background: sel ? "#f5f3ff" : "var(--gris-pagina)",
+                            color: sel ? "#5b21b6" : "var(--texto-primario)",
                           }}>
-                          <span className="text-lg">{loading ? <Loader className="w-5 h-5 animate-spin" /> : opt.icon}</span>
-                          <span className="text-xs font-semibold" style={{ color: "var(--texto-primario)" }}>{opt.label}</span>
-                          <span className="text-[10px]" style={{ color: "var(--texto-muted)" }}>{opt.desc}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-lg">{opt.icon}</span>
+                            {sel && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "#7c3aed" }} />}
+                          </div>
+                          <span className="text-xs font-semibold">{opt.label}</span>
+                          <span className="text-[10px]" style={{ color: sel ? "#7c3aed" : "var(--texto-muted)" }}>{opt.desc}</span>
                         </button>
                       );
                     })}
@@ -1296,13 +1234,13 @@ export default function CrearModuloPage() {
               style={{ color: "var(--texto-muted)" }}>
               Cancelar
             </button>
-            <button type="button" onClick={guardarModulo} disabled={guardando || paginas.length === 0}
+            <button type="button" onClick={guardarModulo} disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all"
               style={{
-                background: guardando || paginas.length === 0 ? "var(--gris-superficie)" : "var(--verde-oliva)",
-                color: guardando || paginas.length === 0 ? "var(--texto-muted)" : "#fff",
-                boxShadow: guardando || paginas.length === 0 ? "none" : "0 4px 14px rgba(45,125,78,0.2)",
-                cursor: guardando || paginas.length === 0 ? "not-allowed" : "pointer",
+                background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--gris-superficie)" : "var(--verde-oliva)",
+                color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--texto-muted)" : "#fff",
+                boxShadow: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "none" : "0 4px 14px rgba(45,125,78,0.2)",
+                cursor: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "not-allowed" : "pointer",
               }}>
               {guardando ? (
                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</>
