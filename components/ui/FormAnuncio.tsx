@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { subirImagenBackend, subirAdjuntoBackend } from "@/lib/api/noticias";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import Grainient from "@/components/ui/Grainient";
 
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
-const GRAD_EGM = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
+const GRAD_BTN  = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+const GRAD_EGM  = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
+const TAB_COLOR = "#0A8A96"; // teal — mismo que el header del modal
 
 const EMPTY_FORM: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
@@ -22,18 +27,38 @@ const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border:
 };
 
 const inputStyle: React.CSSProperties = {
-  border: "1.5px solid var(--gris-borde)",
-  background: "var(--blanco)",
+  border: "1px solid rgba(0,0,0,0.12)",
+  background: "#ffffff",
   color: "var(--texto-primario)",
-  transition: "border-color 0.15s",
+  height: "44px",
+  transition: "border-color 0.15s, box-shadow 0.15s",
+};
+const textareaStyle: React.CSSProperties = {
+  border: "1px solid rgba(0,0,0,0.12)",
+  background: "#ffffff",
+  color: "var(--texto-primario)",
+  transition: "border-color 0.15s, box-shadow 0.15s",
 };
 function onFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = "#93c5fd";
-  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(147,197,253,0.18)";
+  e.currentTarget.style.borderColor = "var(--azul-egm)";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.08)";
 }
 function onBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = "var(--gris-borde)";
+  e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
   e.currentTarget.style.boxShadow = "none";
+}
+
+// Asterisco con tooltip "Obligatorio" — igual que EmpCampo
+function RequiredMark() {
+  return (
+    <span className="relative group ml-0.5 inline-block" style={{ color: "#ef4444" }}>
+      *
+      <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        style={{ background: "#1f2937", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.18)", zIndex: 99 }}>
+        Obligatorio
+      </span>
+    </span>
+  );
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -128,9 +153,9 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
   return (
     <button type="button" onClick={onClick} disabled={loading || disabled}
       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all disabled:opacity-40"
-      style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", color: "#1d4ed8", border: "1px solid #bfdbfe", boxShadow: "0 1px 6px rgba(37,99,235,0.15)" }}
-      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(37,99,235,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)"; e.currentTarget.style.boxShadow = "0 1px 6px rgba(37,99,235,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+      style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", color: "#4F46E5", border: "1px solid #c4b5fd", boxShadow: "0 1px 6px rgba(79,70,229,0.12)", cursor: loading || disabled ? "not-allowed" : "pointer" }}
+      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(79,70,229,0.22)"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)"; e.currentTarget.style.boxShadow = "0 1px 6px rgba(79,70,229,0.12)"; e.currentTarget.style.transform = "translateY(0)"; }}>
       {loading
         ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
         : <IconSparkle size={15} />}
@@ -342,7 +367,7 @@ function DetallePreviewModal({ item, onClose }: {
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderTop: "1px solid var(--gris-borde)" }}>
           <button onClick={onClose}
             className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-xl"
-            style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+            style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}>
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -494,33 +519,53 @@ export default function FormAnuncio({
 
   return (
     <>
-    <div className="fixed inset-0 flex items-start justify-center"
-      style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
-      onClick={handleRequestClose}>
-
-      <div className="relative w-full flex flex-col"
+    <AnimatePresence>
+    <motion.div
+      key="anuncio-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22 }}
+      className="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ zIndex: 160, background: "var(--overlay, rgba(0,0,0,0.50))" }}
+      onClick={handleRequestClose}
+    >
+      <motion.div
+        key="anuncio-panel"
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.97 }}
+        transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
+        className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden"
         style={{
-          maxWidth: 660,
-          height: "auto",
-          maxHeight: "calc(100vh - 112px)",
           background: "var(--blanco)",
-          borderRadius: 20,
           boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
-          overflow: "hidden",
+          maxHeight: "92dvh",
           isolation: "isolate",
         }}
-        onClick={(e) => e.stopPropagation()}>
+        onClick={(e) => e.stopPropagation()}
+      >
 
-        {/* Cabecera */}
-        <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
+        {/* Drag handle — solo móvil */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0" style={{ background: "#0A8A96" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.35)" }} />
+        </div>
+
+        {/* Cabecera con Grainient */}
+        <div className="relative shrink-0 overflow-hidden" style={{ background: "#0A8A96" }}>
+          <div className="absolute inset-0">
+            <Grainient
+              color1="#0A8A96" color2="#0D7A85" color3="#0B6B75"
+              timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
+              warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
+            />
+          </div>
           <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1 min-w-0">
               <h3 style={{
                 fontFamily: "var(--font-raleway), sans-serif",
                 fontWeight: 800,
-                fontSize: "clamp(1.65rem, 4vw, 2.1rem)",
+                fontSize: "clamp(1.5rem, 4vw, 2rem)",
                 lineHeight: 1.1,
                 letterSpacing: "-0.03em",
                 color: "#ffffff",
@@ -529,110 +574,129 @@ export default function FormAnuncio({
               }}>
                 {editando ? "Editar anuncio" : "Nuevo anuncio"}
               </h3>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
-                {editando ? "Modifica los datos y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
+                {editando
+                  ? editando.estado === "borrador"
+                    ? "Borrador · no visible para los empleados todavía"
+                    : "Publicado · los cambios se aplicarán en vivo"
+                  : form.estado === "borrador"
+                    ? "Se guardará como borrador hasta que lo publiques"
+                    : "Se publicará inmediatamente para todos los empleados"}
               </p>
             </div>
-            <button onClick={handleRequestClose}
-              className="shrink-0 flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
-              title="Cerrar (Esc)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <IconButton onClick={handleRequestClose} variant="glass" label="Cerrar" />
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
           <div className="flex">
-            {TABS.map(({ id, label, badge, error }) => (
+            {TABS.map(({ id, label, badge, error }) => {
+              const isActive = tab === id;
+              return (
               <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
-                className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-semibold focus:outline-none"
                 style={{
-                  color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)",
+                  color: isActive ? (error ? "var(--error)" : TAB_COLOR) : "var(--texto-muted)",
                   background: "none",
+                  outline: "none",
+                  cursor: "pointer",
+                  transition: "color 0.2s ease",
                 }}>
                 {label}
                 {badge ? (
-                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
+                  <span className="inline-flex items-center justify-center text-xs font-bold leading-none rounded-full"
                     style={{
-                      background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db",
-                      color: error || tab === id ? "#fff" : "var(--texto-muted)",
-                      minWidth: 18, textAlign: "center",
+                      minWidth: 18, height: 18, padding: "0 5px",
+                      background: error
+                        ? "var(--error)"
+                        : isActive
+                          ? TAB_COLOR
+                          : "rgba(0,0,0,0.08)",
+                      color: error || isActive ? "#fff" : "var(--texto-muted)",
+                      transition: "background 0.2s ease, color 0.2s ease",
                     }}>
                     {badge}
                   </span>
                 ) : null}
               </button>
-            ))}
+              );
+            })}
           </div>
           <div style={{
             position: "absolute",
-            bottom: 0,
+            bottom: -1,
             left: 0,
             width: `${100 / TABS.length}%`,
-            height: 2,
-            borderRadius: "2px 2px 0 0",
-            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
+            height: 3,
+            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : TAB_COLOR,
             transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
-            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
+            transition: "transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), background 0.18s ease",
+            zIndex: 1,
           }} />
         </div>
 
         {/* Cuerpo con scroll */}
-        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
+        <div className="overflow-y-auto" style={{ background: "var(--blanco)" }}>
 
           {/* TAB: Contenido */}
           <div style={{ display: tab === "contenido" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div>
-              <FieldLabel label="Título" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
-                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
-                  </div>
-                }
-              />
-              <input type="text" value={form.titulo}
+          <div className="flex flex-col gap-5 px-5 sm:px-7 py-6">
+
+            {/* Título */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
+                  Título<RequiredMark />
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                  <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                </div>
+              </div>
+              <input type="text" value={form.titulo ?? ""}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                 placeholder="Ej: Recordatorio reunión de equipo"
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                className="w-full rounded-lg text-sm outline-none border transition-all duration-150"
+                style={{ ...inputStyle, paddingLeft: 14, paddingRight: 14, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
                 onFocus={onFocus} onBlur={onBlur}
               />
-              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
+              {tituloError && <p className="text-xs" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
             </div>
 
-            <div>
-              <FieldLabel label="Descripción" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
-                    <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
-                      label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("contenido")} />
-                  </div>
-                }
-              />
-              <textarea value={form.contenido}
+            {/* Descripción */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
+                  Descripción<RequiredMark />
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
+                  <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
+                    label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("contenido")} />
+                </div>
+              </div>
+              <textarea value={form.contenido ?? ""}
                 onChange={(e) => setForm({ ...form, contenido: e.target.value })}
-                placeholder="Escribe la descripción. Puedes usar **negrita** y - listas."
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
-                style={{ ...inputStyle, minHeight: 180, ...(contenidoError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                placeholder="Escribe el contenido del anuncio…"
+                className="w-full rounded-lg text-sm outline-none border transition-all duration-150 resize-none"
+                style={{ ...textareaStyle, minHeight: 148, padding: "10px 14px", ...(contenidoError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
                 onFocus={onFocus} onBlur={onBlur}
               />
-              {contenidoError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>La descripción es obligatoria</p>}
+              {contenidoError
+                ? <p className="text-xs" style={{ color: "var(--error)" }}>La descripción es obligatoria</p>
+                : <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                    Usa <span className="font-mono px-1 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", fontSize: "0.7rem" }}>**texto**</span> para negrita
+                    y <span className="font-mono px-1 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", fontSize: "0.7rem" }}>- elemento</span> para listas
+                  </p>
+              }
             </div>
 
-            <div>
-              <FieldLabel label="Categoría" />
+            {/* Categoría */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Categoría</label>
               <div className="flex gap-2 flex-wrap">
                 {CATEGORIAS.map((cat) => {
                   const active = (form.categoria ?? "General") === cat;
@@ -640,12 +704,14 @@ export default function FormAnuncio({
                   return (
                     <button key={cat} type="button"
                       onClick={() => setForm({ ...form, categoria: cat === "General" ? null : cat })}
-                      className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
+                      className="text-sm font-medium px-4 py-1.5 rounded-full transition-all focus:outline-none"
                       style={{
-                        background: active ? col.bg : "var(--blanco)",
+                        background: active ? col.bg : "transparent",
                         color: active ? col.text : "var(--texto-muted)",
-                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
-                        boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
+                        border: `1.5px solid ${active ? col.border : "rgba(0,0,0,0.12)"}`,
+                        boxShadow: active ? `0 2px 8px ${col.border}55` : "none",
+                        outline: "none",
+                        cursor: "pointer",
                       }}>
                       {cat}
                     </button>
@@ -653,33 +719,47 @@ export default function FormAnuncio({
                 })}
               </div>
             </div>
+
           </div></div>
 
           {/* TAB: Multimedia */}
           {visitedTabs.current.has("multimedia") && (
           <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+          <div className="flex flex-col gap-5 px-5 sm:px-7 py-6">
             <div>
-              <FieldLabel label="Imagen"
-                right={
-                  <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                    {(["url", "upload"] as const).map((m) => (
-                      <button key={m} type="button" onClick={() => setImagenModo(m)}
-                        className="text-xs px-3 py-1.5 font-semibold transition-all"
-                        style={{ background: imagenModo === m ? GRAD_BTN : "transparent", color: imagenModo === m ? "#fff" : "var(--texto-secundario)" }}>
-                        {m === "url" ? "URL" : "Subir"}
-                      </button>
-                    ))}
-                  </div>
-                }
-              />
-              {imagenModo === "url" ? (
-                <>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Imagen</label>
+                <div className="flex rounded-xl overflow-hidden gap-0.5 p-0.5" style={{ background: "var(--gris-borde)", transition: "background 0.22s ease" }}>
+                  {(["url", "upload"] as const).map((m) => (
+                    <button key={m} type="button" onClick={() => setImagenModo(m)}
+                      className="text-xs px-3 py-1.5 font-semibold rounded-lg focus:outline-none"
+                      style={{
+                        background: imagenModo === m ? "var(--blanco)" : "transparent",
+                        color: imagenModo === m ? "var(--azul-egm)" : "var(--texto-muted)",
+                        boxShadow: imagenModo === m ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                        outline: "none",
+                        cursor: "pointer",
+                        transition: "background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease",
+                      }}>
+                      {m === "url" ? "URL" : "Subir"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative overflow-hidden">
+                <AnimatePresence mode="sync" initial={false}>
+                {imagenModo === "url" ? (
+                  <motion.div key="img-url"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}>
                   <input type="url" value={form.imagenUrl ?? ""}
                     onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                    placeholder="https://..."
-                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                    placeholder="https://…"
+                    className="w-full rounded-lg text-sm outline-none border transition-all duration-150"
+                    style={{ ...inputStyle, paddingLeft: 14, paddingRight: 14 }}
+                    onFocus={onFocus} onBlur={onBlur}
                   />
                   {form.imagenUrl && (
                     <div className="relative mt-3">
@@ -695,16 +775,20 @@ export default function FormAnuncio({
                       </button>
                     </div>
                   )}
-                </>
-              ) : (
-                <>
+                  </motion.div>
+                ) : (
+                  <motion.div key="img-upload"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
                     className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
                     style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
+                    onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#f0f7ff"; }}}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#eff6ff"; }}
                     onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -734,12 +818,14 @@ export default function FormAnuncio({
                       </button>
                     </div>
                   )}
-                </>
-              )}
+                  </motion.div>
+                )}
+                </AnimatePresence>
+              </div>
             </div>
 
             <div>
-              <FieldLabel label="Vídeo (YouTube o Vimeo)" />
+              <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--texto-label)" }}>Vídeo <span className="font-normal" style={{ color: "var(--texto-muted)" }}>(YouTube o Vimeo)</span></label>
               {embedUrl ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between px-3 py-2 rounded-xl"
@@ -750,7 +836,7 @@ export default function FormAnuncio({
                     </div>
                     <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
                       className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}
+                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
                       onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
@@ -766,9 +852,10 @@ export default function FormAnuncio({
                 <div className="flex flex-col gap-1.5">
                   <input type="url" value={form.videoUrl || ""}
                     onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
-                    placeholder="https://youtube.com/watch?v=..."
-                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                    placeholder="https://youtube.com/watch?v=…"
+                    className="w-full rounded-lg text-sm outline-none border transition-all duration-150"
+                    style={{ ...inputStyle, paddingLeft: 14, paddingRight: 14 }}
+                    onFocus={onFocus} onBlur={onBlur}
                   />
                   {form.videoUrl && (
                     <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
@@ -781,7 +868,7 @@ export default function FormAnuncio({
             </div>
 
             <div>
-              <FieldLabel label="Documento adjunto" />
+              <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--texto-label)" }}>Documento adjunto</label>
               <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
               {form.adjuntoUrl ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
@@ -818,23 +905,25 @@ export default function FormAnuncio({
           {/* TAB: Publicación */}
           {visitedTabs.current.has("publicacion") && (
           <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div style={{ width: "100%" }}>
-              <FieldLabel label="Enlace externo" />
+          <div className="flex flex-col gap-5 px-5 sm:px-7 py-6">
+            <div>
+              <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--texto-label)" }}>Enlace externo <span className="font-normal" style={{ color: "var(--texto-muted)" }}>(opcional)</span></label>
               <div className="flex flex-col gap-2">
                 <input type="url" value={form.enlaceUrl || ""}
                   onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
-                  placeholder="https://..."
-                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                  style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                  placeholder="https://…"
+                  className="w-full rounded-lg text-sm outline-none border transition-all duration-150"
+                  style={{ ...inputStyle, paddingLeft: 14, paddingRight: 14 }}
+                  onFocus={onFocus} onBlur={onBlur}
                 />
                 {form.enlaceUrl && (
                   <>
                     <input type="text" value={form.enlaceTexto || ""}
                       onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
                       placeholder='Texto del enlace — ej: "Más información"'
-                      className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                      className="w-full rounded-lg text-sm outline-none border transition-all duration-150"
+                      style={{ ...inputStyle, paddingLeft: 14, paddingRight: 14 }}
+                      onFocus={onFocus} onBlur={onBlur}
                     />
                     <div className="flex flex-col gap-1.5 pt-1">
                       <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el anuncio</p>
@@ -850,7 +939,7 @@ export default function FormAnuncio({
                         </div>
                         <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
                           className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}>
                           Quitar
                         </button>
                       </div>
@@ -862,7 +951,7 @@ export default function FormAnuncio({
 
             {/* Visibilidad */}
             <div>
-              <FieldLabel label="Estado" />
+              <label className="block text-sm font-semibold mb-2" style={{ color: "var(--texto-label)" }}>Estado</label>
               <div className="rounded-2xl overflow-hidden" style={{
                 border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`,
                 transition: "border-color 0.18s",
@@ -916,102 +1005,64 @@ export default function FormAnuncio({
         </div>
 
         {/* Footer fijo */}
-        <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
+        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0"
           style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
           <div className="flex-1 min-w-0">
             {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleRequestClose}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+            <Button variant="secondary" size="md" onClick={handleRequestClose}>
               Cancelar
-            </button>
-            <button type="button" onClick={handlePreview}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-              Previsualizar
-            </button>
-            {editando && editando.estado === "borrador" && (() => {
-              const active = isDirty && canSubmit;
-              return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
-                  disabled={submitting}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{
-                    background: active ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
-                    color: "#fff",
-                    boxShadow: active ? "0 2px 8px rgba(217,119,6,0.35)" : "none",
-                    cursor: active ? "pointer" : "not-allowed",
-                    opacity: submitting ? 0.5 : 1,
-                  }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Guardando..." : "Guardar cambios"}
-                </button>
-              );
-            })()}
+            </Button>
+            {editando && editando.estado === "borrador" && (
+              <Button
+                variant="ghost" size="md"
+                disabled={submitting || !canSubmit || !isDirty}
+                onClick={() => { if (!canSubmit || !isDirty) return; setTouched(true); onSubmit(form); }}
+              >
+                {submitting ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            )}
             {!(editando && editando.estado === "borrador") && (() => {
               const esBorrador = form.estado === "borrador" && !editando;
               const active = canSubmit && (!editando || isDirty);
-              const bg = active
-                ? esBorrador ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : GRAD_BTN
-                : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
-              const shadow = active
-                ? esBorrador ? "0 2px 8px rgba(217,119,6,0.35)" : "0 2px 8px rgba(37,99,235,0.3)"
-                : "none";
               return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
-                  disabled={submitting}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{ background: bg, color: "#fff", boxShadow: shadow, cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1 }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                <Button
+                  variant="primary" size="md"
+                  disabled={submitting || !active}
+                  onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
+                >
                   {submitting ? "Guardando..." : editando ? "Guardar cambios" : esBorrador ? "Guardar borrador" : "Publicar anuncio"}
-                </button>
+                </Button>
               );
             })()}
-            {editando && editando.estado === "borrador" && (() => {
-              const active = canSubmit;
-              return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit({ ...form, estado: "publicado" }); }}
-                  disabled={submitting}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: active ? "0 2px 8px rgba(22,163,74,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : !active ? 0.5 : 1 }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting || !active ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Publicando..." : "Publicar ahora"}
-                </button>
-              );
-            })()}
+            {editando && editando.estado === "borrador" && (
+              <Button
+                variant="primary" size="md"
+                disabled={submitting || !canSubmit}
+                onClick={() => { if (!canSubmit) return; setTouched(true); onSubmit({ ...form, estado: "publicado" }); }}
+              >
+                {submitting ? "Publicando..." : "Publicar ahora"}
+              </Button>
+            )}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
 
     {/* Diálogo confirmar cierre */}
     {confirmClose && (
       <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
-        <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+          className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
           style={{
             background: "var(--blanco)",
             boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
             border: "1px solid var(--gris-borde)",
-            animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
           }}>
           <div className="flex justify-center">
             <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
@@ -1025,26 +1076,14 @@ export default function FormAnuncio({
             <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
           </div>
           <div className="flex flex-col gap-2">
-            <button onClick={() => setConfirmClose(false)}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: GRAD_BTN, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+            <Button variant="primary" size="md" onClick={() => setConfirmClose(false)} style={{ width: "100%", justifyContent: "center" }}>
               Seguir editando
-            </button>
-            <button onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+            </Button>
+            <Button variant="danger" size="md" onClick={onClose} style={{ width: "100%", justifyContent: "center" }}>
               Descartar cambios
-            </button>
+            </Button>
           </div>
-        </div>
+        </motion.div>
       </div>
     )}
     </>

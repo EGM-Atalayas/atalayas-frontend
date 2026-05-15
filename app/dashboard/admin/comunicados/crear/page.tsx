@@ -215,12 +215,14 @@ export default function CrearComunicadoPage() {
                     onClick={() => sugerirConIA("titulo")}
                     disabled={aiLoading === "titulo"}
                     className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-60"
-                    style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                    style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", color: "#4F46E5", border: "1px solid #c4b5fd", boxShadow: "0 1px 6px rgba(79,70,229,0.12)" }}
                   >
                     {aiLoading === "titulo" ? (
                       <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
                     ) : (
-                      <i className="bi bi-stars" style={{ fontSize: "14px" }} />
+                      <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
                     )}
                     {aiLoading === "titulo" ? "Generando..." : "Sugerir título"}
                   </button>
@@ -250,12 +252,14 @@ export default function CrearComunicadoPage() {
                       onClick={() => sugerirConIA("mensaje")}
                       disabled={aiLoading === "mensaje" || !form.mensaje.trim()}
                       className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-all disabled:opacity-50"
-                      style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                      style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", color: "#4F46E5", border: "1px solid #c4b5fd", boxShadow: "0 1px 6px rgba(79,70,229,0.12)" }}
                     >
                       {aiLoading === "mensaje" ? (
                         <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
                       ) : (
-                        <i className="bi bi-stars" style={{ fontSize: "14px" }} />
+                        <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
                       )}
                       {aiLoading === "mensaje" ? "Mejorando..." : "Mejorar con IA"}
                     </button>
