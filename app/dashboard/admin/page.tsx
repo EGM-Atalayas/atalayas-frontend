@@ -243,8 +243,8 @@ const StatsTab = React.memo(function StatsTab({
 }: {
   statsEmpresa: import("@/lib/api/estadisticas").EstadisticasEmpresaResponse | null;
   cargandoStats: boolean;
-  statsRango: 3 | 6 | 12;
-  setStatsRangoT: (v: 3 | 6 | 12) => void;
+  statsRango: 1 | 3 | 6 | 12 | 24;
+  setStatsRangoT: (v: 1 | 3 | 6 | 12 | 24) => void;
   statsDpto: string | null;
   setStatsDptoT: (v: string | null) => void;
   statsEstado: "todos" | "activos" | "inactivos";
@@ -298,7 +298,7 @@ const StatsTab = React.memo(function StatsTab({
       {/* ── Barra DESKTOP: una sola fila ── */}
       <div className="hidden sm:flex sm:items-center sm:flex-wrap gap-2 mb-8">
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
-          {([{ n: 3, label: "3 meses" }, { n: 6, label: "6 meses" }, { n: 12, label: "1 año" }] as const).map(({ n, label }) => (
+          {([{ n: 1, label: "1 mes" }, { n: 3, label: "3 meses" }, { n: 6, label: "6 meses" }, { n: 12, label: "1 año" }, { n: 24, label: "2 años" }] as const).map(({ n, label }) => (
             <motion.button key={n} onClick={() => setStatsRangoT(n)}
               className="relative text-sm font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
               style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
@@ -411,7 +411,7 @@ const StatsTab = React.memo(function StatsTab({
       <div className="flex flex-col gap-3 mb-8 sm:hidden">
         {/* Rango — fila completa con etiquetas cortas */}
         <div className="flex gap-1 p-1 rounded-xl w-full" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
-          {([{ n: 3, short: "3m", label: "3 meses" }, { n: 6, short: "6m", label: "6 meses" }, { n: 12, short: "1a", label: "1 año" }] as const).map(({ n, short, label }) => (
+          {([{ n: 1, short: "1m", label: "1 mes" }, { n: 3, short: "3m", label: "3 meses" }, { n: 6, short: "6m", label: "6 meses" }, { n: 12, short: "1a", label: "1 año" }, { n: 24, short: "2a", label: "2 años" }] as const).map(({ n, short, label }) => (
             <motion.button key={n} onClick={() => setStatsRangoT(n)}
               className="relative flex-1 text-sm font-semibold py-1.5 rounded-lg focus:outline-none cursor-pointer text-center"
               style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
@@ -719,7 +719,7 @@ const StatsTab = React.memo(function StatsTab({
                           Distribución por departamento
                         </h2>
                         <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>
-                          Plantilla activa — {(() => { const activos = empleados.filter(e => e.activo !== false); const dptos = new Set(activos.map(e => e.departamento).filter(Boolean)); return dptos.size; })()} departamentos
+                          Plantilla activa - {(() => { const activos = empleados.filter(e => e.activo !== false); const dptos = new Set(activos.map(e => e.departamento).filter(Boolean)); return dptos.size; })()} departamentos
                         </p>
                       </div>
                     </div>
@@ -1074,16 +1074,16 @@ function AdminContent() {
   const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
 
   // ── Stats tab state ───────────────────────────────────────────────────────────
-  const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);
-  const statsRangoLabel = statsRango === 12 ? "Último año" : `Últimos ${statsRango} meses`;
-  const statsRangoLabelMin = statsRango === 12 ? "último año" : `últimos ${statsRango} meses`;
+  const [statsRango, setStatsRango] = useState<1 | 3 | 6 | 12 | 24>(6);
+  const statsRangoLabel = statsRango === 1 ? "Último mes" : statsRango === 12 ? "Último año" : statsRango === 24 ? "Últimos 2 años" : `Últimos ${statsRango} meses`;
+  const statsRangoLabelMin = statsRango === 1 ? "último mes" : statsRango === 12 ? "último año" : statsRango === 24 ? "últimos 2 años" : `últimos ${statsRango} meses`;
   const [statsDpto, setStatsDpto] = useState<string | null>(null);
   const [statsEstado, setStatsEstado] = useState<"todos" | "activos" | "inactivos">("activos");
   const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
   const [isPendingStats, startStatsTransition] = useTransition();
   const cargandoStats = isPendingStats;
 
-  const setStatsRangoT  = useCallback((v: 3|6|12) => startStatsTransition(() => setStatsRango(v)),  [startStatsTransition]);
+  const setStatsRangoT  = useCallback((v: 1|3|6|12|24) => startStatsTransition(() => setStatsRango(v)),  [startStatsTransition]);
   const setStatsDptoT   = useCallback((v: string|null)  => startStatsTransition(() => setStatsDpto(v)),   [startStatsTransition]);
   const setStatsEstadoT = useCallback((v: "todos"|"activos"|"inactivos") => startStatsTransition(() => setStatsEstado(v)), [startStatsTransition]);
   const setStatsTipoModT= useCallback((v: string|null)  => startStatsTransition(() => setStatsTipoMod(v)),[startStatsTransition]);

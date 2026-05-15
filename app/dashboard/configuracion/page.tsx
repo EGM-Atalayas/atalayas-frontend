@@ -236,8 +236,8 @@ export default function ConfiguracionPage() {
                       placeholder="Tu contraseña actual"
                       className={`${inputClass} pr-12`}
                       style={{ ...inputStyle, borderRadius: "var(--radius-sm)", borderColor: intentado && !pwdActual ? "var(--error)" : "var(--gris-borde)" }}
-                      onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                      onBlur={(e)  => e.target.style.borderColor = intentado && !pwdActual ? "var(--error)" : "var(--gris-borde)"}
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
+                      onBlur={(e)  => { e.target.style.borderColor = intentado && !pwdActual ? "var(--error)" : "var(--gris-borde)"; e.target.style.boxShadow = "none"; }}
                     />
                     <button type="button" onClick={() => setShowPwdActual(!showPwdActual)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"
@@ -262,8 +262,8 @@ export default function ConfiguracionPage() {
                         borderRadius: "var(--radius-sm)",
                         borderColor: (intentado && !pwdNueva) || (pwdNueva && pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)",
                       }}
-                      onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                      onBlur={(e)  => e.target.style.borderColor = (intentado && !pwdNueva) || (pwdNueva && pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"}
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
+                      onBlur={(e)  => { e.target.style.borderColor = (intentado && !pwdNueva) || (pwdNueva && pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"; e.target.style.boxShadow = "none"; }}
                     />
                     <button type="button" onClick={() => setShowPwdNueva(!showPwdNueva)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"
@@ -288,8 +288,8 @@ export default function ConfiguracionPage() {
                         borderRadius: "var(--radius-sm)",
                         borderColor: (intentado && !pwdConfirmar) || (pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)",
                       }}
-                      onFocus={(e) => e.target.style.borderColor = "var(--azul-egm)"}
-                      onBlur={(e)  => e.target.style.borderColor = (intentado && !pwdConfirmar) || (pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"}
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
+                      onBlur={(e)  => { e.target.style.borderColor = (intentado && !pwdConfirmar) || (pwdConfirmar && pwdNueva !== pwdConfirmar) ? "var(--error)" : "var(--gris-borde)"; e.target.style.boxShadow = "none"; }}
                     />
                     <button type="button" onClick={() => setShowPwdConfirmar(!showPwdConfirmar)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 active:scale-90 transition-transform duration-100 cursor-pointer"

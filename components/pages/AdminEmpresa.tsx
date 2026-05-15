@@ -262,7 +262,7 @@ export default function AdminEmpresa() {
         prefijo="Hola, "
         titulo={firstName}
 
-        imagenFondo={usuario?.bannerUrl ?? "/background-dashboard.webp"}
+        imagenFondo={usuario?.bannerUrl ?? "/background-admin.webp"}
         variante="inicio"
       />
 
