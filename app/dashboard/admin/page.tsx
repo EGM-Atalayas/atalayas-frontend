@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, useTransition, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
 import FormAnuncio from "@/components/ui/FormAnuncio";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
-import type { Modulo, ModuloConProgreso } from "@/lib/types/modulos";
+import type { Modulo } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
@@ -114,6 +114,860 @@ export default function AdminPage() {
   );
 }
 
+function DonutDepartamentos({ data, total, palette }: {
+  data: { nombre: string; total: number }[];
+  total: number;
+  palette: string[];
+}) {
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const active    = activeIdx !== null ? data[activeIdx]                  : null;
+  const activeColor = activeIdx !== null ? palette[activeIdx % palette.length] : null;
+
+  return (
+    <div className="flex-1 flex flex-col sm:flex-row gap-6 items-center min-h-[260px]">
+      {/* Donut */}
+      <div style={{ width: 240, height: 240, flexShrink: 0, position: "relative" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="total"
+              nameKey="nombre"
+              cx="50%" cy="50%"
+              innerRadius={74} outerRadius={108}
+              paddingAngle={2}
+              animationDuration={400}
+              animationEasing="ease-out"
+              onMouseEnter={(_, i) => setActiveIdx(i)}
+              onMouseLeave={() => setActiveIdx(null)}
+            >
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={palette[i % palette.length]}
+                  stroke="none"
+                  opacity={activeIdx === null || activeIdx === i ? 1 : 0.25}
+                  style={{ cursor: "pointer", transition: "opacity 0.18s ease" }}
+                />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+
+        {/* Centro con fade suave */}
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", padding: "0 16px" }}>
+          <AnimatePresence mode="wait">
+            {active ? (
+              <motion.div key={activeIdx}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "1.7rem", fontWeight: 800, color: activeColor!, lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{active.total}</span>
+                <span className="text-center" style={{ fontSize: "0.58rem", fontWeight: 700, color: activeColor!, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.3 }}>{active.nombre}</span>
+              </motion.div>
+            ) : (
+              <motion.div key="total"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "1.9rem", fontWeight: 800, color: "var(--texto-primario)", lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{total}</span>
+                <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--texto-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>activos</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Leyenda */}
+      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+        {data.map((d, i) => {
+          const color    = palette[i % palette.length];
+          const pct      = Math.round(d.total / total * 100);
+          const isActive = activeIdx === i;
+          return (
+            <div key={d.nombre}
+              className="flex items-center gap-2 min-w-0 rounded-lg px-2 py-1"
+              style={{ background: isActive ? `${color}12` : "transparent", cursor: "default",
+                transition: "background 0.15s ease" }}
+              onMouseEnter={() => setActiveIdx(i)}
+              onMouseLeave={() => setActiveIdx(null)}>
+              <span className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ background: color, transform: isActive ? "scale(1.35)" : "scale(1)",
+                  transition: "transform 0.15s ease" }} />
+              <span className="text-xs truncate flex-1"
+                style={{ color: isActive ? "var(--texto-primario)" : "var(--texto-secundario)",
+                  fontWeight: isActive ? 600 : 500, transition: "color 0.15s ease, font-weight 0.15s ease" }}>
+                {d.nombre}
+              </span>
+              <span className="text-xs font-bold shrink-0" style={{ minWidth: 18, textAlign: "right", color: isActive ? color : "var(--texto-primario)", transition: "color 0.15s ease" }}>{d.total}</span>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                style={{ background: `${color}18`, color }}>{pct}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const StatsTab = React.memo(function StatsTab({
+  statsEmpresa,
+  cargandoStats,
+  statsRango,
+  setStatsRangoT,
+  statsDpto,
+  setStatsDptoT,
+  statsEstado,
+  setStatsEstadoT,
+  statsTipoMod,
+  setStatsTipoModT,
+  startStatsTransition,
+  statsRangoLabel,
+  statsRangoLabelMin,
+  showKpis,
+  setShowKpis,
+  showMovimiento,
+  setShowMovimiento,
+  showEstadoFormacion,
+  setShowEstadoFormacion,
+  hayPersonalizacion,
+  resetVistaEstadisticas,
+  showPersonalizar,
+  setShowPersonalizar,
+  personalizarRef,
+  exportFormat,
+  setExportFormat,
+  handleExportEstadisticas,
+  empleados,
+  formaciones,
+}: {
+  statsEmpresa: import("@/lib/api/estadisticas").EstadisticasEmpresaResponse | null;
+  cargandoStats: boolean;
+  statsRango: 1 | 3 | 6 | 12 | 24;
+  setStatsRangoT: (v: 1 | 3 | 6 | 12 | 24) => void;
+  statsDpto: string | null;
+  setStatsDptoT: (v: string | null) => void;
+  statsEstado: "todos" | "activos" | "inactivos";
+  setStatsEstadoT: (v: "todos" | "activos" | "inactivos") => void;
+  statsTipoMod: string | null;
+  setStatsTipoModT: (v: string | null) => void;
+  startStatsTransition: React.TransitionStartFunction;
+  statsRangoLabel: string;
+  statsRangoLabelMin: string;
+  showKpis: boolean;
+  setShowKpis: (v: boolean) => void;
+  showMovimiento: boolean;
+  setShowMovimiento: (v: boolean) => void;
+  showEstadoFormacion: boolean;
+  setShowEstadoFormacion: (v: boolean) => void;
+  hayPersonalizacion: boolean;
+  resetVistaEstadisticas: () => void;
+  showPersonalizar: boolean;
+  setShowPersonalizar: React.Dispatch<React.SetStateAction<boolean>>;
+  personalizarRef: React.RefObject<HTMLDivElement | null>;
+  exportFormat: import("@/lib/utils/statsExport").ExportFormat;
+  setExportFormat: (v: import("@/lib/utils/statsExport").ExportFormat) => void;
+  handleExportEstadisticas: () => void;
+  empleados: Usuario[];
+  formaciones: Modulo[];
+}) {
+  const [drillMes, setDrillMes] = useState<string | null>(null);
+  const [drillSearch, setDrillSearch] = useState("");
+  useEffect(() => {
+    document.body.style.overflow = drillMes ? "hidden" : "";
+    if (drillMes) document.body.classList.add("drill-modal-open");
+    else { document.body.classList.remove("drill-modal-open"); setDrillSearch(""); }
+    return () => { document.body.style.overflow = ""; document.body.classList.remove("drill-modal-open"); };
+  }, [drillMes]);
+
+  return (
+    <div>
+      {/* ── Título ── */}
+      <div className="mb-8 text-center sm:text-left">
+        <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+          Estadísticas
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+          {statsRangoLabel}
+          {statsEmpresa && <> · <span style={{ color: "var(--texto-secundario)", fontWeight: 600 }}>{statsEmpresa.kpis.totalEmpleados} empleado{statsEmpresa.kpis.totalEmpleados !== 1 ? "s" : ""}</span></>}
+          {statsDpto && <> · {DEPARTAMENTOS.find(d => d.id === statsDpto)?.label}</>}
+          {statsEstado !== "todos" && <> · <span style={{ color: "var(--error)", fontWeight: 600 }}>{statsEstado === "activos" ? "Solo activos" : "Solo inactivos"}</span></>}
+        </p>
+      </div>
+
+      {/* ── Barra DESKTOP: una sola fila ── */}
+      <div className="hidden sm:flex sm:items-center sm:flex-wrap gap-2 mb-8">
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
+          {([{ n: 1, label: "1 mes" }, { n: 3, label: "3 meses" }, { n: 6, label: "6 meses" }, { n: 12, label: "1 año" }, { n: 24, label: "2 años" }] as const).map(({ n, label }) => (
+            <motion.button key={n} onClick={() => setStatsRangoT(n)}
+              className="relative text-sm font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
+              style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
+              whileTap={{ scale: 0.94 }}>
+              {statsRango === n && <motion.span layoutId="rango-pill-desktop" className="absolute inset-0 rounded-lg" style={{ background: "var(--azul-egm)", zIndex: -1 }} transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
+              {label}
+            </motion.button>
+          ))}
+        </div>
+        <div className="w-px h-5" style={{ background: "var(--surface-border)" }} />
+        <StatsSelect value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={148} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
+        <StatsSelect value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={110} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
+        <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
+        <AnimatePresence>
+          {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
+            <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
+              className="inline-flex items-center gap-2 text-sm font-semibold px-3 h-9 rounded-xl focus:outline-none cursor-pointer"
+              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid rgba(27,63,126,0.3)" }}>
+              <X size={13} strokeWidth={2.5} />Limpiar
+            </motion.button>
+          )}
+        </AnimatePresence>
+        <div className="ml-auto flex items-center gap-2">
+          {/* Restablecer */}
+          <AnimatePresence>
+            {hayPersonalizacion && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                onClick={resetVistaEstadisticas}
+                className="inline-flex items-center gap-2 text-sm font-semibold px-4 h-10 rounded-xl focus:outline-none cursor-pointer"
+                style={{ background: "transparent", color: "var(--azul-egm)", border: "1px solid rgba(0,0,0,0.12)" }}
+              >
+                <RefreshCw size={14} />
+                Restablecer
+              </motion.button>
+            )}
+          </AnimatePresence>
+          {/* Personalizar */}
+          <div className="relative" ref={personalizarRef}>
+            <Button
+              variant={showPersonalizar ? "primary" : "ghost"}
+              size="md"
+              onClick={() => setShowPersonalizar((v: boolean) => !v)}
+            >
+              <SlidersHorizontal size={14} />
+              Personalizar
+            </Button>
+            <AnimatePresence>
+              {showPersonalizar && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: [0.34, 1.2, 0.64, 1] }}
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl z-20"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider px-4 pt-4 pb-2" style={{ color: "var(--texto-muted)" }}>
+                    Mostrar secciones
+                  </p>
+                  {[
+                    { label: "KPIs resumen",              value: showKpis,            set: setShowKpis },
+                    { label: "Incorporaciones y salidas",  value: showMovimiento,      set: setShowMovimiento },
+                    { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
+                  ].map(({ label, value, set }, idx) => (
+                    <label key={label}
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+                      style={{ borderTop: idx > 0 ? "1px solid var(--surface-border)" : "none" }}
+                    >
+                      <input
+                        type="checkbox" checked={value}
+                        onChange={(e) => set(e.target.checked)}
+                        className="w-4 h-4 cursor-pointer rounded"
+                        style={{ accentColor: "var(--azul-egm)" }}
+                      />
+                      <span className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{label}</span>
+                    </label>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          {/* Descargar */}
+          <div className="flex items-center gap-2">
+            <StatsSelect
+              value={exportFormat}
+              onChange={(v) => { if (v) setExportFormat(v as import("@/lib/utils/statsExport").ExportFormat); }}
+              placeholder={exportFormat.toUpperCase()}
+              minWidth={85}
+              hidePlaceholder
+              options={[
+                { id: "pdf", label: "PDF" },
+                { id: "csv", label: "CSV" },
+                { id: "xml", label: "XML" },
+              ]}
+            />
+            <Button variant="primary" size="md" onClick={handleExportEstadisticas} disabled={!statsEmpresa}>
+              <Download size={14} />
+              Descargar
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Barra MÓVIL: filas apiladas ── */}
+      <div className="flex flex-col gap-3 mb-8 sm:hidden">
+        {/* Rango — fila completa con etiquetas cortas */}
+        <div className="flex gap-1 p-1 rounded-xl w-full" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
+          {([{ n: 1, short: "1m", label: "1 mes" }, { n: 3, short: "3m", label: "3 meses" }, { n: 6, short: "6m", label: "6 meses" }, { n: 12, short: "1a", label: "1 año" }, { n: 24, short: "2a", label: "2 años" }] as const).map(({ n, short, label }) => (
+            <motion.button key={n} onClick={() => setStatsRangoT(n)}
+              className="relative flex-1 text-sm font-semibold py-1.5 rounded-lg focus:outline-none cursor-pointer text-center"
+              style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
+              title={label}
+              whileTap={{ scale: 0.94 }}>
+              {statsRango === n && <motion.span layoutId="rango-pill-mobile" className="absolute inset-0 rounded-lg" style={{ background: "var(--azul-egm)", zIndex: -1 }} transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
+              {short}
+            </motion.button>
+          ))}
+        </div>
+        {/* Filtros: apilados ancho completo */}
+        <div className="flex flex-col gap-2">
+          <StatsSelect fullWidth value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={0} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
+          <StatsSelect fullWidth value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={0} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
+          <StatsSelect fullWidth value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={0} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
+        </div>
+        {/* Acciones móvil */}
+        <div className="flex flex-col gap-2">
+
+          {/* Fila 1: Personalizar (ancho completo) + Restablecer */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1" ref={personalizarRef}>
+              <button
+                type="button"
+                onClick={() => setShowPersonalizar((v: boolean) => !v)}
+                className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold h-10 rounded-xl focus:outline-none cursor-pointer"
+                style={{
+                  background: showPersonalizar ? "var(--azul-egm)" : "transparent",
+                  color: showPersonalizar ? "#fff" : "var(--texto-primario)",
+                  border: `1px solid ${showPersonalizar ? "var(--azul-egm)" : "rgba(0,0,0,0.12)"}`,
+                  transition: "background 0.15s, color 0.15s, border-color 0.15s",
+                }}
+              >
+                <SlidersHorizontal size={14} />
+                Personalizar
+              </button>
+              <AnimatePresence>
+                {showPersonalizar && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.15, ease: [0.34, 1.2, 0.64, 1] }}
+                    className="absolute left-0 top-full mt-2 w-full rounded-2xl"
+                    style={{ zIndex: 30, background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wider px-4 pt-4 pb-2" style={{ color: "var(--texto-muted)" }}>
+                      Mostrar secciones
+                    </p>
+                    {[
+                      { label: "KPIs resumen",              value: showKpis,            set: setShowKpis },
+                      { label: "Incorporaciones y salidas",  value: showMovimiento,      set: setShowMovimiento },
+                      { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
+                    ].map(({ label, value, set }, idx) => (
+                      <label key={label}
+                        className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+                        style={{ borderTop: idx > 0 ? "1px solid var(--surface-border)" : "none" }}
+                      >
+                        <input
+                          type="checkbox" checked={value}
+                          onChange={(e) => set(e.target.checked)}
+                          className="w-4 h-4 cursor-pointer rounded"
+                          style={{ accentColor: "var(--azul-egm)" }}
+                        />
+                        <span className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{label}</span>
+                      </label>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Restablecer — icono, solo visible si hay personalización */}
+            <AnimatePresence>
+              {hayPersonalizacion && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                  onClick={resetVistaEstadisticas}
+                  className="inline-flex items-center justify-center h-10 w-10 rounded-xl focus:outline-none cursor-pointer shrink-0"
+                  style={{ background: "transparent", color: "var(--azul-egm)", border: "1px solid rgba(0,0,0,0.12)" }}
+                >
+                  <RefreshCw size={15} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Fila 2: PDF selector (30%) + Descargar (70%) */}
+          <div className="flex items-center gap-2">
+            <div style={{ width: "30%" }}>
+              <StatsSelect
+                fullWidth
+                value={exportFormat}
+                onChange={(v) => { if (v) setExportFormat(v as import("@/lib/utils/statsExport").ExportFormat); }}
+                placeholder={exportFormat.toUpperCase()}
+                minWidth={0}
+                hidePlaceholder
+                options={[
+                  { id: "pdf", label: "PDF" },
+                  { id: "csv", label: "CSV" },
+                  { id: "xml", label: "XML" },
+                ]}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleExportEstadisticas}
+              disabled={!statsEmpresa}
+              className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold h-10 rounded-xl focus:outline-none cursor-pointer"
+              style={{
+                background: "var(--azul-egm)",
+                color: "#fff",
+                border: "none",
+                opacity: !statsEmpresa ? 0.5 : 1,
+                transition: "opacity 0.15s",
+              }}
+            >
+              <Download size={14} />
+              Descargar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!statsEmpresa ? (
+        <div className="flex items-center justify-center py-32">
+          <div className="w-8 h-8 border-2 rounded-full animate-spin"
+            style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+        </div>
+      ) : !showKpis && !showMovimiento && !showEstadoFormacion ? (
+        <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
+          <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
+          <button
+            onClick={resetVistaEstadisticas}
+            className="text-xs font-semibold px-4 py-2 rounded-lg"
+            style={{ background: "var(--azul-egm)", color: "white" }}
+          >
+            Restablecer vista
+          </button>
+        </div>
+      ) : (
+        <div>
+          {/* ── KPIs ── */}
+          {showKpis && (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              {([
+                { label: "Total empleados",                value: String(statsEmpresa.kpis.totalEmpleados),                                                                                                                                                       accent: "#3B82F6", bg: "rgba(59,130,246,0.08)",  icon: <Users         size={22} strokeWidth={1.8} /> },
+                { label: `Altas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.altas, 0)),      accent: "#10B981", bg: "rgba(16,185,129,0.08)", icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg> },
+                { label: `Bajas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.bajas, 0)),      accent: "#F43F5E", bg: "rgba(244,63,94,0.08)",  icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm8-5h6" /></svg> },
+                { label: "Rotación anualizada",           value: `${statsEmpresa.kpis.tasaRotacion}%`,                                                            accent: "#F59E0B", bg: "rgba(245,158,11,0.08)", icon: <RefreshCw     size={22} strokeWidth={1.8} /> },
+                { label: "Completitud de formación",      value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`,                                                    accent: "#8B5CF6", bg: "rgba(139,92,246,0.08)", icon: <GraduationCap size={22} strokeWidth={1.8} /> },
+                { label: "Módulos con progreso",          value: String(statsEmpresa.kpis.modulosConProgreso),                                                    accent: "#06B6D4", bg: "rgba(6,182,212,0.08)",  icon: <LibraryBig    size={22} strokeWidth={1.8} /> },
+              ] as { label: string; value: string; accent: string; bg: string; icon: React.ReactNode }[]).map(({ label, value, accent, bg, icon }) => (
+                <div
+                  key={label}
+                  style={{
+                    background: "var(--blanco)",
+                    border: "1px solid var(--surface-border)",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  {/* Contenido principal */}
+                  <div className="p-4 sm:p-5" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 100 }}>
+                    {/* Label — altura fija 2 líneas para alinear números entre tarjetas */}
+                    <p style={{ fontSize: "clamp(11px, 3vw, 13px)", fontWeight: 600, color: "var(--texto-muted)", margin: 0, letterSpacing: "0.01em", lineHeight: 1.35, minHeight: "2.7em" }}>{label}</p>
+                    {/* Valor + icono */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                      <p style={{ fontSize: "clamp(1.8rem, 6vw, 2.6rem)", fontWeight: 800, color: accent, margin: 0, lineHeight: 1 }}>{value}</p>
+                      <span className="hidden sm:flex" style={{ alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 12, background: bg, color: accent, flexShrink: 0 }}>
+                        {icon}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Franja de color inferior */}
+                  <div style={{ height: 4, background: accent, opacity: 0.7 }} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Fila superior: 50/50 ── */}
+          {(showMovimiento || showEstadoFormacion) && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+
+              {/* ── 1. Incorporaciones y salidas ── */}
+              {showMovimiento && (() => {
+                const totalAltas = statsEmpresa.movimientoMensual.reduce((s, m) => s + m.altas, 0);
+                const totalBajas = statsEmpresa.movimientoMensual.reduce((s, m) => s + m.bajas, 0);
+                const neto = totalAltas - totalBajas;
+                return (
+                <div className="p-6 rounded-2xl shadow-sm flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                  {/* Header */}
+                  <div className="pb-3 mb-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                    <div className="flex flex-col gap-2">
+                      {/* Título + subtítulo */}
+                      <div className="flex items-start justify-between gap-2">
+                        <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                          Incorporaciones y salidas
+                        </h2>
+                        {/* Badges — al lado del título en desktop, misma fila */}
+                        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                          <span className="hidden sm:inline">Movimiento de plantilla - </span>{statsRangoLabelMin}
+                        </p>
+                        {/* Badges — debajo en móvil */}
+                        <div className="flex sm:hidden items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
+                        </div>
+                      </div>
+                      {/* Hint táctil — solo móvil */}
+                      <p className="flex sm:hidden items-center gap-1 text-[11px]" style={{ color: "var(--texto-muted)" }}>
+                        Toca un mes para ver el detalle
+                      </p>
+                    </div>
+                  </div>
+                  {/* Gráfico */}
+                  <div className="flex-1 min-h-[240px]">
+                    {totalAltas === 0 && totalBajas === 0 ? (
+                      <div className="h-full flex items-center justify-center">
+                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Sin movimiento de personal en este periodo</p>
+                      </div>
+                    ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={statsEmpresa.movimientoMensual}
+                        margin={{ top: 6, right: 16, left: 4, bottom: 4 }}
+                        onClick={(e) => { const label = e?.activeLabel; if (typeof label === "string") setDrillMes(label); }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <defs>
+                          <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.22} />
+                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.15} />
+                            <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--surface-border)" />
+                        <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} dy={8}
+                          interval={statsRango <= 6 ? 0 : statsRango === 12 ? 1 : 2}
+                          padding={{ left: 12, right: 12 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} allowDecimals={false}
+                          width={(() => { const mx = Math.max(...statsEmpresa.movimientoMensual.flatMap(m => [m.altas, m.bajas]), 0); return mx >= 1000 ? 44 : mx >= 100 ? 36 : 28; })()} />
+                        <RechartsTooltip
+                          animationDuration={120}
+                          animationEasing="ease-out"
+                          wrapperStyle={{ pointerEvents: "none" }}
+                          content={({ active, payload, label: mesLabel }) => {
+                            if (!active || !payload?.length) return null;
+                            const altas = (payload.find(p => p.dataKey === "altas")?.value as number) ?? 0;
+                            const bajas = (payload.find(p => p.dataKey === "bajas")?.value as number) ?? 0;
+                            const bal = altas - bajas;
+                            return (
+                              <div style={{ borderRadius: 12, border: "1px solid var(--surface-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", background: "var(--blanco)", padding: "10px 14px", minWidth: 150 }}>
+                                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--texto-primario)", marginBottom: 6 }}>{mesLabel}</p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                  <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↑ {altas} INCORPORACIONES</span>
+                                  <span style={{ fontSize: 11, color: "#F43F5E", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↓ {bajas} SALIDAS</span>
+                                  <span style={{ fontSize: 11, color: bal >= 0 ? "#3B82F6" : "#F43F5E", fontWeight: 700, marginTop: 2, paddingTop: 4, borderTop: "1px solid var(--surface-border)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                                    {bal >= 0 ? "+" : ""}{bal} NETO
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Area type="monotone" name="Altas" dataKey="altas" stroke="#10B981" strokeWidth={2.5} fill="url(#gradAltas)"
+                          dot={{ r: 3, fill: "#10B981", strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#10B981", strokeWidth: 0 }} />
+                        <Area type="monotone" name="Bajas" dataKey="bajas" stroke="#F43F5E" strokeWidth={2.5} fill="url(#gradBajas)"
+                          dot={{ r: 3, fill: "#F43F5E", strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#F43F5E", strokeWidth: 0 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+                );
+              })()}
+
+              {/* ── 2. Empleados por departamento ── */}
+              {showEstadoFormacion && (
+                <div className="p-6 rounded-2xl shadow-sm flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                  <div className="pb-3 mb-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                          Distribución por departamento
+                        </h2>
+                        <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>
+                          Plantilla activa - {(() => { const activos = empleados.filter(e => e.activo !== false); const dptos = new Set(activos.map(e => e.departamento).filter(Boolean)); return dptos.size; })()} departamentos
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {(() => {
+                    const activos = empleados.filter(e => e.activo !== false);
+                    const conteoDptos: Record<string, number> = {};
+                    for (const e of activos) { const d = e.departamento || "Sin dpto."; conteoDptos[d] = (conteoDptos[d] ?? 0) + 1; }
+                    const distribucionDepartamentos = Object.entries(conteoDptos).map(([nombre, total]) => ({ nombre, total })).sort((a, b) => b.total - a.total);
+                    const PALETTE_RAW = ["#3B82F6","#10B981","#8B5CF6","#F59E0B","#F43F5E","#06B6D4","#84CC16","#EC4899","#F97316","#14B8A6","#6366F1","#EAB308"];
+                    const total = activos.length;
+                    return distribucionDepartamentos.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center">
+                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Sin datos de departamento</p>
+                      </div>
+                    ) : (
+                      <DonutDepartamentos data={distribucionDepartamentos} total={total} palette={PALETTE_RAW} />
+                    );
+                  })()}
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ── Modal drill-down mes — vive aquí para no tocar AdminContent ── */}
+      <AnimatePresence>
+        {drillMes && (() => {
+          const MESES      = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+          const MESES_FULL = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+          const mesIdx = MESES.indexOf(drillMes);
+          const hoy = new Date();
+          let anioMes = hoy.getFullYear();
+          for (let i = statsRango - 1; i >= 0; i--) {
+            const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+            if (MESES[d.getMonth()] === drillMes) { anioMes = d.getFullYear(); break; }
+          }
+          let empFiltrados = empleados;
+          if (statsEstado === "activos")   empFiltrados = empFiltrados.filter((e) => e.activo !== false);
+          if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
+          if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
+
+          const altasDelMes = empFiltrados.filter((e) => {
+            const f = new Date(e.fechaRegistro ?? 0);
+            return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+          });
+          const bajasDelMes = empFiltrados.filter((e) => {
+            if (!e.fechaBaja) return false;
+            const f = new Date(e.fechaBaja);
+            return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
+          });
+          const netoMes = altasDelMes.length - bajasDelMes.length;
+          const seccionesLista = [
+            { title: "Incorporaciones", list: altasDelMes.filter(e => !drillSearch || `${e.nombre} ${e.apellidos}`.toLowerCase().includes(drillSearch.toLowerCase())), color: "#10B981", dateKey: "fechaRegistro" as const, empty: "Sin incorporaciones este mes" },
+            { title: "Salidas",         list: bajasDelMes.filter(e => !drillSearch || `${e.nombre} ${e.apellidos}`.toLowerCase().includes(drillSearch.toLowerCase())), color: "#F43F5E", dateKey: "fechaBaja"     as const, empty: "Sin salidas este mes" },
+          ];
+          const totalEmps = altasDelMes.length + bajasDelMes.length;
+
+          return (
+            <motion.div
+              key="drill-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+              style={{ background: "rgba(15,25,35,0.6)" }}
+              onClick={() => setDrillMes(null)}
+            >
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 28, scale: 0.94 },
+                  show:   { opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.3,  ease: [0.22, 1, 0.36, 1] } },
+                  exit:   { opacity: 0, y: 14, scale: 0.97, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
+                }}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col"
+                style={{ background: "var(--blanco)", maxHeight: "92dvh" }}
+              >
+                {/* Cabecera con Grainient verde */}
+                <div className="flex items-center justify-between px-6 shrink-0"
+                  style={{ paddingTop: "20px", paddingBottom: "20px", position: "relative", background: "#10B981" }}>
+                  <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                    <Grainient
+                      color1="#2D8653" color2="#10B981" color3="#059669"
+                      timeSpeed={0.18} warpStrength={1.2} warpFrequency={4.0}
+                      warpSpeed={1.5} warpAmplitude={60} grainAmount={0.08}
+                      contrast={1.2} saturation={1.0} zoom={0.85}
+                      style={{ width: "100%", height: "100%", display: "block" }}
+                    />
+                  </div>
+                  <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.25rem, 5vw, 1.6rem)", color: "#ffffff", letterSpacing: "-0.03em", lineHeight: 1.15, fontVariantNumeric: "lining-nums", position: "relative", zIndex: 1 }}>
+                    {MESES_FULL[mesIdx] ?? drillMes} {anioMes}
+                  </h3>
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <IconButton variant="glass" size="sm" label="Cerrar" onClick={() => setDrillMes(null)} />
+                  </div>
+                </div>
+
+                {/* KPIs + Buscador — zona gris fija */}
+                <div className="shrink-0 px-5 pt-4 pb-0" style={{ background: "var(--gris-panel)" }}>
+                  <div className="grid grid-cols-3 rounded-2xl" style={{ border: "1px solid var(--surface-border)" }}>
+                  {([
+                    { label: "Incorporaciones", short: "Altas",  value: altasDelMes.length, color: "#10B981", bg: "rgba(16,185,129,0.07)", prefix: "↑" },
+                    { label: "Salidas",         short: "Bajas",  value: bajasDelMes.length, color: "#F43F5E", bg: "rgba(244,63,94,0.07)",  prefix: "↓" },
+                    { label: "Neto",            short: "Neto",   value: Math.abs(netoMes),  color: netoMes >= 0 ? "#3B82F6" : "#F43F5E",  bg: netoMes >= 0 ? "rgba(59,130,246,0.07)" : "rgba(244,63,94,0.07)", prefix: netoMes >= 0 ? "+" : "−" },
+                  ] as const).map(({ label, short, value, color, bg, prefix }, i) => (
+                    <div key={label} className="flex flex-col items-center justify-center py-4 sm:py-5 gap-1"
+                      style={{
+                        background: bg,
+                        borderRight: i < 2 ? "1px solid var(--surface-border)" : "none",
+                        borderRadius: i === 0 ? "16px 0 0 16px" : i === 2 ? "0 16px 16px 0" : 0,
+                      }}>
+                      <div className="flex items-baseline gap-0.5">
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color, lineHeight: 1 }}>{prefix}</span>
+                        <span style={{ fontSize: "clamp(1.4rem, 5vw, 1.9rem)", fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: "lining-nums" }}>{value}</span>
+                      </div>
+                      <span className="hidden sm:block" style={{ fontSize: "0.72rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</span>
+                      <span className="block sm:hidden" style={{ fontSize: "0.68rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.04em", textTransform: "uppercase" }}>{short}</span>
+                    </div>
+                  ))}
+                  </div>
+                </div>
+
+                {/* Buscador fijo */}
+                {totalEmps > 5 && (
+                  <div className="px-5 pt-3 pb-3 shrink-0 flex justify-center" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--gris-panel)" }}>
+                    <div className="w-full max-w-sm">
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                        <Search size={15} />
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Buscar empleado…"
+                        value={drillSearch}
+                        onChange={e => setDrillSearch(e.target.value)}
+                        className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                        style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                        onFocus={e => (e.currentTarget.style.borderColor = "var(--azul-egm)")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                      />
+                      {drillSearch && (
+                        <button
+                          onClick={() => setDrillSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
+                          style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
+                        >
+                          <X size={13} strokeWidth={2.5} />
+                        </button>
+                      )}
+                    </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Listas */}
+                <div className="overflow-y-auto px-5 pb-5 pt-3 space-y-5">
+                  {seccionesLista.map(({ title, list, color, dateKey, empty }) => {
+                    const dateLabel = dateKey === "fechaRegistro" ? "ALTA" : "BAJA";
+                    return (
+                      <div key={title}>
+                        {/* Cabecera sección — pill coloreada */}
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                            style={{ background: `${color}14`, color, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.65rem" }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                            {title}
+                          </span>
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${color}14`, color }}>
+                            {list.length}
+                          </span>
+                        </div>
+
+                        {list.length === 0 ? (
+                          <p className="text-xs py-3 text-center rounded-xl" style={{ color: "var(--texto-muted)", background: "var(--gris-superficie)" }}>
+                            {drillSearch ? "Sin resultados para esa búsqueda" : empty}
+                          </p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {list.map((e) => {
+                              const initials = `${e.nombre?.[0] ?? ""}${e.apellidos?.[0] ?? ""}`.toUpperCase();
+                              const fecha = e[dateKey] ? new Date(e[dateKey]!).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : null;
+                              return (
+                                <li key={e.usuarioId}
+                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-default"
+                                  style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}
+                                  onMouseEnter={e2 => (e2.currentTarget.style.background = "var(--gris-superficie)")}
+                                  onMouseLeave={e2 => (e2.currentTarget.style.background = "var(--blanco)")}>
+
+                                  {/* Avatar */}
+                                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                    {initials}
+                                  </div>
+
+                                  {/* Centro: nombre + puesto · departamento */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold truncate leading-tight" style={{ color: "var(--texto-primario)" }}>
+                                      {e.nombre} {e.apellidos}
+                                    </p>
+                                    <div className="flex items-center gap-1 mt-0.5 min-w-0">
+                                      {e.puestoTrabajo && (
+                                        <span className="text-xs truncate shrink min-w-0" style={{ color: "var(--texto-muted)" }}>{e.puestoTrabajo}</span>
+                                      )}
+                                      {e.departamento && (
+                                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                                          style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
+                                          {e.departamento}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Derecha: fecha con etiqueta pill */}
+                                  {fecha && (
+                                    <div className="flex flex-col items-end shrink-0 gap-1">
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                                        style={{ background: `${color}14`, color }}>
+                                        {dateLabel}
+                                      </span>
+                                      <span className="text-xs font-semibold" style={{ color: "var(--texto-primario)" }}>{fecha}</span>
+                                    </div>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+    </div>
+  );
+});
+
 function AdminContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -125,12 +979,13 @@ function AdminContent() {
   const queryClient = useQueryClient();
 
   // ── Queries ──────────────────────────────────────────────────────────────────
-  const { data: empleados = [], isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
+  const { data: _empleadosData, isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
     queryKey: QK.empleados(usuario?.empresaId),
     queryFn: () => apiFetch(`${API_URL}/users`).then((r) => r.json()),
-    enabled: !!usuario?.empresaId,
+    enabled: !!usuario?.empresaId && (activeTab === "formaciones" || activeTab === "estadisticas"),
     staleTime: 30_000,
   });
+  const empleados = useMemo(() => _empleadosData ?? [], [_empleadosData]);
 
   const { data: noticias = [] } = useQuery({
     queryKey: QK.noticias(usuario?.empresaId),
@@ -139,21 +994,23 @@ function AdminContent() {
     staleTime: 30_000,
   });
 
-  const { data: formaciones = [] } = useQuery<Modulo[]>({
+  const { data: _formacionesData } = useQuery<Modulo[]>({
     queryKey: QK.modulos(usuario?.empresaId),
     queryFn: () => getModulos(usuario?.empresaId),
-    enabled: !!usuario?.empresaId && (activeTab === "formaciones" || activeTab === "estadisticas"),
+    enabled: !!usuario?.empresaId,
     staleTime: 60_000,
   });
+  const formaciones = useMemo(() => _formacionesData ?? [], [_formacionesData]);
 
-  const { data: progresoEmpresa = [], isLoading: cargandoProgreso } = useQuery({
+  const { data: _progresoData, isLoading: cargandoProgreso } = useQuery({
     queryKey: QK.progresoEmpresa(usuario?.empresaId),
     queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
     enabled: !!usuario?.empresaId,
     staleTime: 60_000,
   });
+  const progresoEmpresa = useMemo(() => _progresoData ?? [], [_progresoData]);
 
-  // Refs for stats effect to avoid infinite loops from unstable default [] references
+  // Refs para el efecto de estadísticas
   const formacionesRef = useRef(formaciones);
   useEffect(() => { formacionesRef.current = formaciones; }, [formaciones]);
   const progresoEmpresaRef = useRef(progresoEmpresa);
@@ -176,6 +1033,11 @@ function AdminContent() {
 
   // ── Filtros empleados ────────────────────────────────────────────────────────
   const [empSearch, setEmpSearch] = useState("");
+  const [empSearchInput, setEmpSearchInput] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setEmpSearch(empSearchInput), 180);
+    return () => clearTimeout(t);
+  }, [empSearchInput]);
 
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [showFormEmpleado, setShowFormEmpleado] = useState(false);
@@ -212,25 +1074,39 @@ function AdminContent() {
   const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
 
   // ── Stats tab state ───────────────────────────────────────────────────────────
-  const [statsRango, setStatsRango] = useState<3 | 6 | 12>(6);
+  const [statsRango, setStatsRango] = useState<1 | 3 | 6 | 12 | 24>(6);
+  const statsRangoLabel = statsRango === 1 ? "Último mes" : statsRango === 12 ? "Último año" : statsRango === 24 ? "Últimos 2 años" : `Últimos ${statsRango} meses`;
+  const statsRangoLabelMin = statsRango === 1 ? "último mes" : statsRango === 12 ? "último año" : statsRango === 24 ? "últimos 2 años" : `últimos ${statsRango} meses`;
   const [statsDpto, setStatsDpto] = useState<string | null>(null);
-  const [statsEstado, setStatsEstado] = useState<"todos" | "activos" | "inactivos">("todos");
+  const [statsEstado, setStatsEstado] = useState<"todos" | "activos" | "inactivos">("activos");
   const [statsTipoMod, setStatsTipoMod] = useState<string | null>(null);
-  const [cargandoStats, setCargandoStats] = useState(false);
-  const [statsEmpresa, setStatsEmpresa] = useState<EstadisticasEmpresaResponse | null>(null);
-  const [statsKey, setStatsKey] = useState(0);
-  useEffect(() => { setStatsKey(k => k + 1); }, [empleados.length, formaciones.length, progresoEmpresa.length]);
+  const [isPendingStats, startStatsTransition] = useTransition();
+  const cargandoStats = isPendingStats;
+
+  const setStatsRangoT  = useCallback((v: 1|3|6|12|24) => startStatsTransition(() => setStatsRango(v)),  [startStatsTransition]);
+  const setStatsDptoT   = useCallback((v: string|null)  => startStatsTransition(() => setStatsDpto(v)),   [startStatsTransition]);
+  const setStatsEstadoT = useCallback((v: "todos"|"activos"|"inactivos") => startStatsTransition(() => setStatsEstado(v)), [startStatsTransition]);
+  const setStatsTipoModT= useCallback((v: string|null)  => startStatsTransition(() => setStatsTipoMod(v)),[startStatsTransition]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [showPersonalizar, setShowPersonalizar] = useState(false);
+  const personalizarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showPersonalizar) return;
+    const handler = (e: MouseEvent) => {
+      if (personalizarRef.current && !personalizarRef.current.contains(e.target as Node)) {
+        setShowPersonalizar(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPersonalizar]);
   const [showKpis, setShowKpis] = useState(true);
   const [showMovimiento, setShowMovimiento] = useState(true);
   const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
-  const [showDetalleModulos, setShowDetalleModulos] = useState(true);
-  const [drillMes, setDrillMes] = useState<string | null>(null);
 
-  const hayPersonalizacion = !showKpis || !showMovimiento || !showEstadoFormacion || !showDetalleModulos;
+  const hayPersonalizacion = !showKpis || !showMovimiento || !showEstadoFormacion;
   const resetVistaEstadisticas = () => {
-    setShowKpis(true); setShowMovimiento(true); setShowEstadoFormacion(true); setShowDetalleModulos(true);
+    setShowKpis(true); setShowMovimiento(true); setShowEstadoFormacion(true);
   };
   const handleExportEstadisticas = () => {
     if (!statsEmpresa) return;
@@ -255,11 +1131,6 @@ function AdminContent() {
         id: "movimiento", title: "Incorporaciones y salidas por mes",
         headers: ["Mes", "Altas", "Bajas"],
         rows: statsEmpresa.movimientoMensual.map(m => [m.mes, m.altas, m.bajas]),
-      },
-      {
-        id: "progreso", title: "Progreso por módulo",
-        headers: ["Módulo", "% completitud"],
-        rows: statsEmpresa.progresoModulos.map(m => [m.nombre, m.porcentaje]),
       },
       {
         id: "estado_formacion", title: "Estado de formación",
@@ -297,48 +1168,25 @@ function AdminContent() {
     if (tab === "documentos") setActiveTab("documentos");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
-      const f = formaciones.find((x: Modulo) => x.moduloId === editId);
+      const f = formaciones.find((x) => x.moduloId === editId);
       if (f) {
         router.push(`/dashboard/admin/modulos/crear?edit=${editId}`);
       }
     }
   }, [searchParams, formaciones, router]);
 
-  // Calcular estadísticas cuando se activa el tab o cambian los datos / filtros
-  useEffect(() => {
-    if (activeTab !== "estadisticas") return;
-
-    // Si el dpto guardado ya no existe entre los empleados actuales, resetear
-    if (statsDpto && empleados.length > 0) {
-      const existe = empleados.some((e: Usuario) => e.departamento === statsDpto);
-      if (!existe) {
-        setStatsDpto(null);
-        return; // el cambio dispara otro render
-      }
-    }
-
-    setCargandoStats(true);
-    try {
-      const filtros: FiltrosEstadisticas = {
-        rangoMeses: statsRango,
-        departamento: statsDpto,
-        estado: statsEstado,
-        tipoModulo: statsTipoMod,
-      };
-      console.log("[statsEffect] empleados:", empleadosRef.current.length, "formaciones:", formacionesRef.current.length, "progresoEmpresa:", progresoEmpresaRef.current.length);
-      if (formacionesRef.current.length > 0) {
-        console.log("[statsEffect] móduloIds:", formacionesRef.current.slice(0, 8).map(m => ({ mid: m.moduloId, nombre: m.nombre })));
-      }
-      if (progresoEmpresaRef.current.length > 0 && formacionesRef.current.length > 0) {
-        const muestra = progresoEmpresaRef.current[0];
-        console.log("[statsEffect] primer empleado progreso:", muestra.usuarioId, "modulos:", muestra.modulos?.length, "moduloIds:", muestra.modulos?.map(m => m.moduloId));
-      }
-      const stats = getEstadisticasAdminEmpresa(empleadosRef.current, formacionesRef.current, progresoEmpresaRef.current, filtros);
-      setStatsEmpresa(stats);
-    } finally {
-      setCargandoStats(false);
-    }
-  }, [activeTab, statsKey, statsRango, statsDpto, statsEstado, statsTipoMod]);
+  // Calcular estadísticas — useMemo para evitar setState doble y re-renders innecesarios
+  const statsEmpresa = useMemo<EstadisticasEmpresaResponse | null>(() => {
+    if (activeTab !== "estadisticas") return null;
+    if (!empleados.length && !progresoEmpresa.length) return null;
+    const filtros: FiltrosEstadisticas = {
+      rangoMeses: statsRango,
+      departamento: statsDpto,
+      estado: statsEstado,
+      tipoModulo: statsTipoMod,
+    };
+    return getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
+  }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
   const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
 
@@ -415,8 +1263,8 @@ function AdminContent() {
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setFormEmpleado(EMPTY_EMPLEADO);
       setShowFormEmpleado(false);
-    } catch (err: unknown) {
-      setErrorEmpleado(err instanceof Error ? err.message : "Error al crear el empleado");
+    } catch (e: unknown) {
+      setErrorEmpleado(e instanceof Error ? e.message : "Error al crear el empleado");
     } finally {
       setGuardandoEmpleado(false);
     }
@@ -433,10 +1281,10 @@ function AdminContent() {
       }
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
-    } catch (_err: unknown) { }
+    } catch { }
   };
 
-  function abrirCrear(): void {
+  function abrirCrear() {
     setInitialForm({
       titulo: "", contenido: "", esGlobal: false, empresaId: usuario?.empresaId ?? null, imagenUrl: null,
       enlaceUrl: null, enlaceTexto: null, videoUrl: null,
@@ -448,7 +1296,7 @@ function AdminContent() {
     setFormError(null);
   }
 
-  function abrirEditar(n: Noticia): void {
+  function abrirEditar(n: Noticia) {
     setInitialForm({
       titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
       empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
@@ -462,14 +1310,14 @@ function AdminContent() {
     setFormError(null);
   }
 
-  function cerrarForm(): void {
+  function cerrarForm() {
     setShowFormAnuncio(false);
     setEditando(null);
     setInitialForm(EMPTY_ANUNCIO);
     setFormError(null);
   }
 
-  async function handleSubmitAnuncio(data: NoticiaInput): Promise<void> {
+  async function handleSubmitAnuncio(data: NoticiaInput) {
     setSubmitting(true);
     setFormError(null);
     try {
@@ -478,19 +1326,19 @@ function AdminContent() {
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       cerrarForm();
       mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
-    } catch (_err: unknown) { setFormError("Error al guardar. Inténtalo de nuevo."); }
+    } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
     finally { setSubmitting(false); }
   }
 
-  async function handleDesactivarAnuncio(id: string): Promise<void> {
+  async function handleDesactivarAnuncio(id: string) {
     try {
       await desactivarNoticia(id);
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio desactivado");
-    } catch (_err: unknown) { }
+    } catch { }
   }
 
-  async function publicarBorrador(n: Noticia): Promise<void> {
+  async function publicarBorrador(n: Noticia) {
     try {
       await editarNoticia(n.anuncioId, {
         titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
@@ -502,11 +1350,11 @@ function AdminContent() {
       });
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio publicado correctamente");
-    } catch (_err: unknown) { mostrarToast("Error al publicar el anuncio"); }
+    } catch { mostrarToast("Error al publicar el anuncio"); }
   }
   const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
-  const handleDesactivarModulo = async (modulo: Modulo): Promise<void> => {
+  const handleDesactivarModulo = async (modulo: Modulo) => {
     const estaActivo = modulo.activo;
     const msg = estaActivo
       ? "¿Desactivar este módulo? Dejará de ser visible para los empleados."
@@ -531,30 +1379,30 @@ function AdminContent() {
           }),
         });
       }
-      if (!res.ok) { const e = await res.json().catch(() => ({})); alert((e as any).message ?? "Error"); return; }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch (_err: unknown) { alert("Error al cambiar el estado del módulo"); }
+    } catch { alert("Error al cambiar el estado del módulo"); }
   };
 
-  const handleEliminarModulo = async (moduloId: string): Promise<void> => {
+  const handleEliminarModulo = async (moduloId: string) => {
     if (!confirm("¿Eliminar este módulo permanentemente? Esta acción no se puede deshacer.")) return;
     try {
       const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch (_err: unknown) { alert("Error al eliminar el módulo"); }
+    } catch { alert("Error al eliminar el módulo"); }
   };
 
-  function getInitials(nombre: string, apellidos?: string | null): string {
+  function getInitials(nombre: string, apellidos?: string | null) {
     return [nombre, apellidos].filter(Boolean).join(" ").split(" ")
       .slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
   }
 
-  function formatFecha(iso: string): string {
+  function formatFecha(iso: string) {
     return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const exportarEmpleadosExcel = async (): Promise<void> => {
+  const exportarEmpleadosExcel = async () => {
     setExportando(true);
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Empleados");
@@ -570,7 +1418,7 @@ function AdminContent() {
       { header: "Fecha de alta", key: "fechaAlta", width: 18 },
     ];
 
-    worksheet.getRow(1).eachCell((cell: any) => {
+    worksheet.getRow(1).eachCell((cell) => {
       cell.fill = {
         type: "pattern",
         pattern: "solid",
@@ -580,7 +1428,7 @@ function AdminContent() {
       cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
-    empleados.forEach((e: Usuario) => {
+    empleados.forEach((e) => {
       worksheet.addRow({
         nombre: e.nombre,
         apellidos: e.apellidos,
@@ -606,7 +1454,7 @@ function AdminContent() {
     mostrarToast(`Excel exportado con ${empleados.length} empleados`);
   };
 
-  const importarEmpleados = async (file: File): Promise<void> => {
+  const importarEmpleados = async (file: File) => {
     setImportando(true);
     setImportResult(null);
     const errores: string[] = [];
@@ -617,12 +1465,12 @@ function AdminContent() {
       await workbook.xlsx.load(buffer);
       const worksheet = workbook.worksheets[0];
       const filas: { rowNum: number; values: string[] }[] = [];
-      worksheet.eachRow((row: any, rowIdx: number) => {
+      worksheet.eachRow((row, rowIdx) => {
         if (rowIdx === 1) return;
-        const values = (row.values as unknown[]).slice(1).map((v: unknown) => String(v ?? "").trim());
+        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
         if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
       });
-      for (const { rowNum, values } of filas as { rowNum: number; values: string[] }[]) {
+      for (const { rowNum, values } of filas) {
         const [nombre, apellidos, email, puesto, dept] = values;
         if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
         try {
@@ -647,7 +1495,7 @@ function AdminContent() {
           }
         } catch { errores.push(`${email}: Error de conexión`); }
       }
-    } catch (_importErr: unknown) { errores.push("El archivo no es un Excel válido"); }
+    } catch { errores.push("El archivo no es un Excel válido"); }
     setImportando(false);
     setImportResult({ ok, errors: errores });
     queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
@@ -676,7 +1524,7 @@ function AdminContent() {
   const resetEmpSort = () => { setEmpSort({ col: null, dir: "asc" }); setEmpPage(0); };
 
   // ── Empleados filtrados + ordenados (frontend) ───────────────────────────────
-  const empleadosFiltrados = (() => {
+  const empleadosFiltrados = useMemo(() => {
     const q = empSearch.toLowerCase();
     const filtered = empleados.filter((e) =>
       !q || [e.nombre, e.apellidos, e.email, e.puestoTrabajo ?? ""].some((v) => v.toLowerCase().includes(q))
@@ -705,7 +1553,7 @@ function AdminContent() {
           return 0;
       }
     });
-  })();
+  }, [empleados, empSearch, empSort]);
 
   const tabs = [
     { key: "empleados"   as const, label: "Empleados",         icon: <Users size={20} />,         accent: "#1B3F7E" },
@@ -994,8 +1842,8 @@ function AdminContent() {
                   <input
                     type="text"
                     placeholder="Buscar empleado…"
-                    value={empSearch}
-                    onChange={(e) => { setEmpSearch(e.target.value); setEmpPage(0); }}
+                    value={empSearchInput}
+                    onChange={(e) => { setEmpSearchInput(e.target.value); setEmpPage(0); }}
                     className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
                     style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = "var(--tab-empleados)")}
@@ -1003,7 +1851,7 @@ function AdminContent() {
                   />
                   {empSearch && (
                     <button
-                      onClick={() => { setEmpSearch(""); setEmpPage(0); }}
+                      onClick={() => { setEmpSearch(""); setEmpSearchInput(""); setEmpPage(0); }}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full transition-colors"
                       style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
                     >
@@ -1074,7 +1922,7 @@ function AdminContent() {
                     </div>
                     <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
                     <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Ningún empleado coincide con tu búsqueda</p>
-                    <button onClick={() => { setEmpSearch(""); }}
+                    <button onClick={() => { setEmpSearch(""); setEmpSearchInput(""); }}
                       className="text-xs font-semibold px-4 py-2 rounded-xl"
                       style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
                       Limpiar filtros
@@ -1152,7 +2000,7 @@ function AdminContent() {
                               key={e.usuarioId}
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.18, delay: idx * 0.04, ease: "easeOut" }}
+                              transition={{ duration: 0.12, ease: "easeOut" }}
                               className="cursor-pointer"
                               style={{
                                 borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--surface-border)" : "none",
@@ -1169,7 +2017,7 @@ function AdminContent() {
                                 if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
                                   el.currentTarget.style.background = "var(--gris-superficie)";
                               }}
-                              onMouseLeave={(el: React.MouseEvent<HTMLTableRowElement>) => {
+                              onMouseLeave={(el) => {
                                 if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
                                   el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#fafbfc";
                               }}
@@ -1194,7 +2042,7 @@ function AdminContent() {
                                 </div>
                               </td>
                               <td className="py-3.5 px-6 text-base" style={{ color: "var(--texto-secundario)" }}>
-                                {e.puestoTrabajo ?? <span style={{ color: "var(--texto-muted)" }}>—</span>}
+                                {e.puestoTrabajo ?? <span style={{ color: "var(--texto-muted)" }}>-</span>}
                               </td>
                               <td className="py-3.5 px-6">
                                 {e.departamento ? (
@@ -1203,7 +2051,7 @@ function AdminContent() {
                                     {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
                                   </span>
                                 ) : (
-                                  <span className="text-base" style={{ color: "var(--texto-muted)" }}>—</span>
+                                  <span className="text-base" style={{ color: "var(--texto-muted)" }}>-</span>
                                 )}
                               </td>
                               <td className="py-3.5 px-6">
@@ -1386,7 +2234,7 @@ function AdminContent() {
                     className="hidden md:flex fixed top-0 right-0 h-full z-50 flex-col overflow-hidden"
                     style={{
                       width: 400,
-                      background: "#2563EB",
+                      background: "var(--azul-egm)",
                       borderLeft: "1px solid rgba(0,0,0,0.08)",
                       boxShadow: "-8px 0 32px rgba(0,0,0,0.12)",
                     }}
@@ -1397,22 +2245,9 @@ function AdminContent() {
                   >
                     {/* Header slide-over */}
                     <div className="px-6 flex items-center justify-between shrink-0"
-                      style={{ height: 80, borderBottom: "1px solid rgba(255,255,255,0.08)", position: "relative", background: "#2563EB" }}>
-                      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-                        <Grainient
-                          color1="#1B3F7E" color2="#2563EB" color3="#1D4ED8"
-                          timeSpeed={0.18} warpStrength={1.2} warpFrequency={4.0}
-                          warpSpeed={1.5} warpAmplitude={60} grainAmount={0.08}
-                          contrast={1.3} saturation={1.1} zoom={0.85}
-                          style={{ width: "100%", height: "100%", display: "block" }}
-                        />
-                      </div>
-                      <div style={{ position: "relative", zIndex: 1 }}>
-                        <h3 className="text-xl font-bold" style={{ color: "#ffffff" }}>Ficha de empleado</h3>
-                      </div>
-                      <div style={{ position: "relative", zIndex: 1 }}>
-                        <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
-                      </div>
+                      style={{ height: 80, background: "var(--azul-egm)" }}>
+                      <h3 className="text-xl font-bold" style={{ color: "#ffffff" }}>Ficha de empleado</h3>
+                      <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
                     </div>
 
                     {/* Contenido scroll */}
@@ -1492,31 +2327,7 @@ function AdminContent() {
 
                             {/* Datos */}
                             <div className="flex flex-col gap-0" style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--surface-border)" }}>
-                              {empleadoSeleccionado.puestoTrabajo && (
-                                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto</span>
-                                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                    {empleadoSeleccionado.puestoTrabajo}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
-                                {empleadoSeleccionado.departamento
-                                  ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
-                                      {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
-                                    </span>
-                                  : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>—</span>}
-                              </div>
-                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Perfil</span>
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA"
-                                    ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
-                                    : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                  {empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
-                                </span>
-                              </div>
+                              {/* Estado */}
                               <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
                                 <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Estado</span>
                                 <span className="text-xs font-semibold px-3 py-1 rounded-full"
@@ -1526,6 +2337,35 @@ function AdminContent() {
                                   {empleadoSeleccionado.activo ? "Activo" : "Inactivo"}
                                 </span>
                               </div>
+                              {/* Perfil */}
+                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Perfil</span>
+                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                  style={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA"
+                                    ? { background: "rgba(180,83,9,0.10)", color: "#B45309" }
+                                    : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                  {empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
+                                </span>
+                              </div>
+                              {/* Departamento */}
+                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
+                                {empleadoSeleccionado.departamento
+                                  ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
+                                      {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
+                                    </span>
+                                  : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
+                              </div>
+                              {/* Puesto */}
+                              {empleadoSeleccionado.puestoTrabajo && (
+                                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto</span>
+                                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(78,109,126,0.10)", color: "#4E6D7E" }}>
+                                    {empleadoSeleccionado.puestoTrabajo}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Alta */}
                               <div className="flex items-center justify-between px-5 py-4" style={{ background: "var(--blanco)" }}>
                                 <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Alta</span>
                                 <span className="text-xs font-semibold px-3 py-1 rounded-full"
@@ -1589,19 +2429,10 @@ function AdminContent() {
                   transition={{ type: "spring", stiffness: 380, damping: 36 }}
                   style={{ background: "var(--gris-pagina)", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", maxHeight: "88vh", zIndex: 1100 }}>
 
-                  {/* Header con Grainient — igual que slide-over desktop */}
-                  <div className="relative rounded-t-3xl overflow-hidden shrink-0"
-                    style={{ background: "#2563EB" }}>
-                    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-                      <Grainient
-                        color1="#1B3F7E" color2="#2563EB" color3="#1D4ED8"
-                        timeSpeed={0.18} warpStrength={1.2} warpFrequency={4.0}
-                        warpSpeed={1.5} warpAmplitude={60} grainAmount={0.08}
-                        contrast={1.3} saturation={1.1} zoom={0.85}
-                        style={{ width: "100%", height: "100%", display: "block" }}
-                      />
-                    </div>
-                    <div className="relative z-10 px-5 pt-2 pb-5">
+                  {/* Header mobile bottom sheet */}
+                  <div className="rounded-t-3xl shrink-0"
+                    style={{ background: "var(--azul-egm)" }}>
+                    <div className="px-5 pt-2 pb-5">
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
                           {editandoEmpleado ? "Editando empleado" : "Ficha de empleado"}
@@ -1671,18 +2502,18 @@ function AdminContent() {
                           className="px-4 py-4">
                           <div className="flex flex-col gap-0 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--surface-border)" }}>
                             {[
-                              { label: "Puesto", value: empleadoSeleccionado.puestoTrabajo, badge: { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
-                              { label: "Departamento", value: DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label, badge: { bg: "rgba(10,138,150,0.10)", color: "#0A8A96" } },
-                              { label: "Perfil", value: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado", badge: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? { bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)" } : { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
-                              { label: "Estado", value: empleadoSeleccionado.activo ? "Activo" : "Inactivo", badge: empleadoSeleccionado.activo ? { bg: "var(--exito-light)", color: "var(--exito)" } : { bg: "var(--gris-superficie)", color: "var(--texto-muted)" } },
-                              { label: "Alta", value: formatFecha(empleadoSeleccionado.fechaRegistro), badge: { bg: "var(--gris-superficie)", color: "var(--texto-secundario)" } },
+                              { label: "Estado",       value: empleadoSeleccionado.activo ? "Activo" : "Inactivo",                                                                    badge: empleadoSeleccionado.activo ? { bg: "var(--exito-light)", color: "var(--exito)" } : { bg: "var(--gris-superficie)", color: "var(--texto-muted)" } },
+                              { label: "Perfil",       value: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",                                  badge: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? { bg: "rgba(180,83,9,0.10)", color: "#B45309" } : { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
+                              { label: "Departamento", value: DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label,                                              badge: { bg: "var(--lima-light)", color: "var(--verde-oliva)" } },
+                              { label: "Puesto",       value: empleadoSeleccionado.puestoTrabajo,                                                                                      badge: { bg: "rgba(78,109,126,0.10)", color: "#4E6D7E" } },
+                              { label: "Alta",         value: formatFecha(empleadoSeleccionado.fechaRegistro),                                                                         badge: { bg: "var(--gris-superficie)", color: "var(--texto-secundario)" } },
                             ].map(({ label, value, badge }, idx, arr) => (
                               <div key={label} className="flex items-center justify-between px-4 py-3"
                                 style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--surface-border)" : "none", background: "var(--blanco)" }}>
                                 <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{label}</span>
                                 {value
                                   ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{value}</span>
-                                  : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>—</span>}
+                                  : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>-</span>}
                               </div>
                             ))}
                           </div>
@@ -2204,338 +3035,37 @@ function AdminContent() {
 
         {/* ── TAB ESTADÍSTICAS ── */}
         {activeTab === "estadisticas" && (
-          <div>
-            {/* ── Barra de filtros y personalización ── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-3">
-              {/* Rango temporal */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rango</span>
-                <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
-                  {([3, 6, 12] as const).map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setStatsRango(n)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
-                      style={{
-                        background: statsRango === n ? "var(--azul-egm)" : "transparent",
-                        color: statsRango === n ? "white" : "var(--texto-muted)",
-                      }}
-                    >
-                      {n} meses
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Departamento — opciones derivadas de empleados reales */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dpto.</span>
-                <select
-                  value={statsDpto ?? ""}
-                  onChange={(e) => setStatsDpto(e.target.value === "" ? null : e.target.value)}
-                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
-                  style={{ background: "white", color: "var(--texto-primario)" }}
-                >
-                  <option value="">Todos</option>
-                  {(() => {
-                    const presentes = new Set(
-                      empleados.map((e) => e.departamento).filter((d): d is string => !!d)
-                    );
-                    return DEPARTAMENTOS
-                      .filter((d) => presentes.has(d.id))
-                      .map((d) => {
-                        const n = empleados.filter((e) => e.departamento === d.id).length;
-                        return (
-                          <option key={d.id} value={d.id}>
-                            {d.label} ({n})
-                          </option>
-                        );
-                      });
-                  })()}
-                </select>
-              </div>
-
-              {/* Estado del empleado */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
-                <select
-                  value={statsEstado}
-                  onChange={(e) => setStatsEstado(e.target.value as "activos" | "inactivos" | "todos")}
-                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
-                  style={{ background: "white", color: "var(--texto-primario)" }}
-                >
-                  <option value="activos">Activos</option>
-                  <option value="inactivos">Inactivos</option>
-                  <option value="todos">Todos</option>
-                </select>
-              </div>
-
-              {/* Tipo de módulo — opciones derivadas de módulos reales */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo módulo</span>
-                <select
-                  value={statsTipoMod ?? ""}
-                  onChange={(e) => setStatsTipoMod(e.target.value === "" ? null : e.target.value)}
-                  className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
-                  style={{ background: "white", color: "var(--texto-primario)" }}
-                >
-                  <option value="">Todos</option>
-                  {(() => {
-                    const tipos = new Set(
-                      formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)
-                    );
-                    return Array.from(tipos).map((t) => {
-                      const n = formaciones.filter((m: Modulo) => m.tipoModulo === t).length;
-                      const label = (MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t;
-                      return (
-                        <option key={t} value={t}>
-                          {label} ({n})
-                        </option>
-                      );
-                    });
-                  })()}
-                </select>
-              </div>
-
-              {/* Spacer */}
-              <div className="flex-1" />
-
-              {/* Export */}
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
-                  className="text-xs font-semibold border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
-                  style={{ background: "white", color: "var(--texto-primario)" }}
-                  aria-label="Formato de exportación"
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="csv">CSV</option>
-                  <option value="xml">XML</option>
-                </select>
-                <button
-                  onClick={handleExportEstadisticas}
-                  disabled={!statsEmpresa}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: "var(--azul-egm)", color: "white" }}
-                  title="Descargar reporte"
-                >
-                  <Download size={13} strokeWidth={2.2} />
-                  Descargar
-                </button>
-              </div>
-
-              {/* Badge de personalización */}
-              {hayPersonalizacion && (
-                <button
-                  onClick={resetVistaEstadisticas}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-                  title="Restablecer vista por defecto"
-                >
-                  Restablecer
-                </button>
-              )}
-
-              {/* Botón personalizar */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowPersonalizar((v: boolean) => !v)}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
-                  style={{
-                    background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
-                    color: showPersonalizar ? "white" : "var(--texto-primario)",
-                  }}
-                >
-                  <SlidersHorizontal size={14} />
-                  Personalizar
-                </button>
-
-                {/* Panel desplegable de personalización */}
-                {showPersonalizar && (
-                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Mostrar secciones</p>
-                    {[
-                      { label: "KPIs resumen", value: showKpis, set: setShowKpis },
-                      { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
-                      { label: "Estado de formación", value: showEstadoFormacion, set: setShowEstadoFormacion },
-                      { label: "Detalle por módulo", value: showDetalleModulos, set: setShowDetalleModulos },
-                    ].map(({ label, value, set }) => (
-                      <label key={label} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2">
-                        <input
-                          type="checkbox"
-                          checked={value}
-                          onChange={(e) => set(e.target.checked)}
-                          className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
-                        />
-                        <span className="text-sm text-slate-700">{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {cargandoStats ? (
-              <div className="flex items-center justify-center py-32">
-                <div className="w-8 h-8 border-2 rounded-full animate-spin"
-                  style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-              </div>
-            ) : !statsEmpresa ? (
-              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
-                No hay datos disponibles aún.
-              </div>
-            ) : !showKpis && !showMovimiento && !showEstadoFormacion && !showDetalleModulos ? (
-              <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
-                <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
-                <button
-                  onClick={resetVistaEstadisticas}
-                  className="text-xs font-semibold px-4 py-2 rounded-lg"
-                  style={{ background: "var(--azul-egm)", color: "white" }}
-                >
-                  Restablecer vista
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* ── KPIs ── */}
-                {showKpis && (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {[
-                      { label: "Total empleados", value: String(statsEmpresa.kpis.totalEmpleados), color: "text-blue-600" },
-                      { label: "Altas este mes", value: String(statsEmpresa.kpis.altasEsteMes), color: "text-emerald-600" },
-                      { label: "Tasa de rotación anual", value: `${statsEmpresa.kpis.tasaRotacion}%`, color: "text-amber-600" },
-                      { label: "Completitud formación", value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`, color: "text-violet-600" },
-                      { label: "Sin iniciar formación", value: String(statsEmpresa.empleadosSinFormacion), color: "text-red-500" },
-                      { label: "Formación completada", value: String(statsEmpresa.empleadosCompletados), color: "text-emerald-600" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-                        <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* ── Incorporaciones y salidas ── */}
-                {showMovimiento && (
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-                    <div className="flex items-start justify-between mb-1">
-                      <h2 className="text-lg font-bold text-slate-800">Incorporaciones y salidas</h2>
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Clic en un mes para ver detalle</span>
-                    </div>
-                    <p className="text-xs text-slate-400 mb-6">Movimiento de plantilla — últimos {statsRango} meses{statsDpto ? ` · Dpto. ${DEPARTAMENTOS.find(d => d.id === statsDpto)?.label ?? statsDpto}` : ""}</p>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={statsEmpresa.movimientoMensual}
-                          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                          onClick={(e) => {
-                            const label = e?.activeLabel;
-                            if (typeof label === "string") setDrillMes(label);
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <defs>
-                            <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                            </linearGradient>
-                            <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.2} />
-                              <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} allowDecimals={false} />
-                          <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                          <Legend verticalAlign="top" height={36} iconType="circle" />
-                          <Area type="monotone" name="Altas" dataKey="altas" stroke="#3B82F6" strokeWidth={3} fill="url(#gradAltas)" />
-                          <Area type="monotone" name="Bajas" dataKey="bajas" stroke="#F43F5E" strokeWidth={3} fill="url(#gradBajas)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Estado de formación de la plantilla ── */}
-                {showEstadoFormacion && (
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">Estado de formación de la plantilla</h2>
-                    <p className="text-xs text-slate-400 mb-6">Distribución de empleados según su avance</p>
-                    <div className="h-[220px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: "Sin iniciar", value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
-                              { name: "En progreso", value: statsEmpresa.empleadosEnProgreso, fill: "#3B82F6" },
-                              { name: "Completada", value: statsEmpresa.empleadosCompletados, fill: "#10B981" },
-                            ].filter((d) => d.value > 0)}
-                            cx="50%" cy="50%"
-                            innerRadius={60} outerRadius={90}
-                            paddingAngle={4}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {[
-                              { name: "Sin iniciar", value: statsEmpresa.empleadosSinFormacion, fill: "#F59E0B" },
-                              { name: "En progreso", value: statsEmpresa.empleadosEnProgreso, fill: "#3B82F6" },
-                              { name: "Completada", value: statsEmpresa.empleadosCompletados, fill: "#10B981" },
-                            ].filter((d) => d.value > 0).map((entry, i) => (
-                              <Cell key={`cell-${i}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                          <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Detalle por módulo (completados / en progreso / pendientes) ── */}
-                {showDetalleModulos && statsEmpresa.detalleModulos.length > 0 && (
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-6">
-                    <div className="flex items-center justify-between mb-1">
-                      <h2 className="text-lg font-bold text-slate-800">Detalle por módulo</h2>
-                    </div>
-                    <p className="text-xs text-slate-400 mb-6">Empleados que han completado, están cursando o tienen pendiente cada módulo</p>
-                    <div className="flex flex-col gap-3">
-                      {statsEmpresa.detalleModulos.map((mod) => {
-                        const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
-                        const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
-                        return (
-                          <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
-                              <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
-                            </div>
-                            <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
-                              <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
-                              <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
-                            </div>
-                            <div className="flex gap-4 mt-2">
-                              {[
-                                { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
-                                { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
-                                { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
-                              ].map((s) => (
-                                <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
-                                  {s.n} {s.label}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <StatsTab
+            statsEmpresa={statsEmpresa}
+            cargandoStats={cargandoStats}
+            statsRango={statsRango}
+            setStatsRangoT={setStatsRangoT}
+            statsDpto={statsDpto}
+            setStatsDptoT={setStatsDptoT}
+            statsEstado={statsEstado}
+            setStatsEstadoT={setStatsEstadoT}
+            statsTipoMod={statsTipoMod}
+            setStatsTipoModT={setStatsTipoModT}
+            startStatsTransition={startStatsTransition}
+            statsRangoLabel={statsRangoLabel}
+            statsRangoLabelMin={statsRangoLabelMin}
+            showKpis={showKpis}
+            setShowKpis={setShowKpis}
+            showMovimiento={showMovimiento}
+            setShowMovimiento={setShowMovimiento}
+            showEstadoFormacion={showEstadoFormacion}
+            setShowEstadoFormacion={setShowEstadoFormacion}
+            hayPersonalizacion={hayPersonalizacion}
+            resetVistaEstadisticas={resetVistaEstadisticas}
+            showPersonalizar={showPersonalizar}
+            setShowPersonalizar={setShowPersonalizar}
+            personalizarRef={personalizarRef}
+            exportFormat={exportFormat}
+            setExportFormat={setExportFormat}
+            handleExportEstadisticas={handleExportEstadisticas}
+            empleados={empleados}
+            formaciones={formaciones}
+          />
         )}
 
         </motion.div>
@@ -2544,105 +3074,6 @@ function AdminContent() {
 
 
 
-      {/* ── Modal de drill-down de mes ── */}
-      {drillMes && (() => {
-        const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-        const mesIdx = MESES.indexOf(drillMes);
-        // Recorremos la ventana ya construida para localizar año + mes
-        const hoy = new Date();
-        let anioMes = hoy.getFullYear();
-        for (let i = statsRango - 1; i >= 0; i--) {
-          const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-          if (MESES[d.getMonth()] === drillMes) {
-            anioMes = d.getFullYear();
-            break;
-          }
-        }
-        // Recolectar empleados con altas y bajas en ese mes (respetando filtros activos)
-        let empFiltrados = empleados;
-        if (statsEstado === "activos") empFiltrados = empFiltrados.filter((e) => e.activo !== false);
-        if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
-        if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
-
-        const altasDelMes = empFiltrados.filter((e) => {
-          const f = new Date(e.fechaRegistro ?? 0);
-          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
-        });
-        const bajasDelMes = empFiltrados.filter((e) => {
-          if (!e.fechaBaja) return false;
-          const f = new Date(e.fechaBaja);
-          return f.getFullYear() === anioMes && f.getMonth() === mesIdx;
-        });
-
-        return (
-          <div
-            className="fixed inset-0 z-100 flex items-center justify-center p-4"
-            style={{ background: "rgba(15, 25, 35, 0.55)", backdropFilter: "blur(2px)" }}
-            onClick={() => setDrillMes(null)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
-            >
-              <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle del mes</p>
-                  <h3 className="text-xl font-bold text-slate-800">{drillMes} {anioMes}</h3>
-                </div>
-                <button
-                  onClick={() => setDrillMes(null)}
-                  className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
-                  aria-label="Cerrar"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="overflow-y-auto p-6 space-y-6">
-                {/* Altas */}
-                <div>
-                  <div className="flex items-baseline justify-between mb-3">
-                    <h4 className="text-sm font-bold text-slate-800">Altas</h4>
-                    <span className="text-xs font-semibold text-blue-600">{altasDelMes.length}</span>
-                  </div>
-                  {altasDelMes.length === 0 ? (
-                    <p className="text-xs text-slate-400">Sin incorporaciones este mes</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {altasDelMes.map((e) => (
-                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-blue-50/50 text-sm">
-                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
-                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {/* Bajas */}
-                <div>
-                  <div className="flex items-baseline justify-between mb-3">
-                    <h4 className="text-sm font-bold text-slate-800">Bajas</h4>
-                    <span className="text-xs font-semibold text-rose-600">{bajasDelMes.length}</span>
-                  </div>
-                  {bajasDelMes.length === 0 ? (
-                    <p className="text-xs text-slate-400">Sin salidas este mes</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {bajasDelMes.map((e) => (
-                        <li key={e.usuarioId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-rose-50/50 text-sm">
-                          <span className="font-medium text-slate-700">{e.nombre} {e.apellidos}</span>
-                          <span className="text-xs text-slate-500">{e.departamento ?? "—"}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Toast */}
       <AnimatePresence>
@@ -2673,12 +3104,13 @@ function AdminContent() {
 }
 
 // ── Select animado para el modal de empleado ─────────────────────────────────
-function EmpSelect({ label, value, onChange, options, placeholder = "Sin departamento" }: {
+function EmpSelect({ label, value, onChange, options, placeholder = "Sin departamento", hidePlaceholder = false }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { id: string; label: string }[];
   placeholder?: string;
+  hidePlaceholder?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ bottom: 0, left: 0, width: 0 });
@@ -2752,7 +3184,7 @@ function EmpSelect({ label, value, onChange, options, placeholder = "Sin departa
                 transformOrigin: "bottom center",
               }}
             >
-              {[{ id: "", label: placeholder }, ...options].map((opt) => {
+              {(hidePlaceholder ? options : [{ id: "", label: placeholder }, ...options]).map((opt) => {
                 const isSelected = value === opt.id;
                 return (
                   <button
@@ -2767,6 +3199,159 @@ function EmpSelect({ label, value, onChange, options, placeholder = "Sin departa
                     }}
                     onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--gris-pagina)"; }}
                     onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+// ── Select estilado para barras de filtros ────────────────────────────────────
+function StatsSelect({ value, onChange, options, placeholder, minWidth = 140, hidePlaceholder = false, fullWidth = false }: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { id: string; label: string }[];
+  placeholder: string;
+  minWidth?: number;
+  hidePlaceholder?: boolean;
+  fullWidth?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapRef    = useRef<HTMLDivElement>(null);
+  const isActive   = value !== "";
+  const selected   = options.find(o => o.id === value);
+
+  function calcPos() {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + window.scrollY + 6, left: r.left, width: r.width });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOut(e: MouseEvent) {
+      const t = e.target as Node;
+      if (!wrapRef.current?.contains(t) && !dropdownRef.current?.contains(t)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOut);
+    return () => document.removeEventListener("mousedown", onClickOut);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} style={{ ...(fullWidth ? { width: "100%" } : undefined), position: "relative" }}>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => { if (!fullWidth) calcPos(); setOpen(p => !p); }}
+        className="flex items-center gap-2 rounded-xl pl-3 pr-2.5 h-9 text-sm font-semibold cursor-pointer focus:outline-none"
+        style={{
+          background: "var(--blanco)",
+          border: `1px solid ${isActive || open ? "var(--azul-egm)" : "var(--surface-border)"}`,
+          color: isActive ? "var(--azul-egm)" : "var(--texto-primario)",
+          transition: "border-color 0.15s, color 0.15s",
+          minWidth,
+          ...(fullWidth ? { width: "100%" } : {}),
+        }}
+      >
+        <span className="flex-1 text-left truncate">{selected?.label ?? placeholder}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}
+          style={{ display: "flex", flexShrink: 0, color: isActive ? "var(--azul-egm)" : "var(--texto-muted)" }}>
+          <ChevronDown size={13} strokeWidth={2.5} />
+        </motion.span>
+      </button>
+
+      {fullWidth ? (
+        /* Inline (móvil) — se desplaza con la página, z-index bajo el header (z-50) */
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                left: 0,
+                right: 0,
+                zIndex: 30,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                overflow: "hidden",
+              }}
+            >
+              {(hidePlaceholder ? options : [{ id: "", label: placeholder }, ...options]).map((opt) => {
+                const isSel = value === opt.id;
+                return (
+                  <button key={opt.id} type="button"
+                    onClick={() => { onChange(opt.id); setOpen(false); }}
+                    className="w-full text-left px-3.5 py-2.5 text-[15px] cursor-pointer"
+                    style={{
+                      background: isSel ? "var(--azul-egm-light)" : "transparent",
+                      color: isSel ? "var(--azul-egm)" : "var(--texto-primario)",
+                      fontWeight: isSel ? 600 : 400,
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
+                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -4, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                top: pos.top,
+                left: Math.min(pos.left, window.innerWidth - Math.max(pos.width, minWidth) - 12),
+                width: Math.max(pos.width, minWidth),
+                maxWidth: `calc(100vw - 24px)`,
+                zIndex: 9999,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.10)",
+                borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                overflow: "hidden",
+              }}
+            >
+              {(hidePlaceholder ? options : [{ id: "", label: placeholder }, ...options]).map((opt) => {
+                const isSel = value === opt.id;
+                return (
+                  <button key={opt.id} type="button"
+                    onClick={() => { onChange(opt.id); setOpen(false); }}
+                    className="w-full text-left px-3.5 py-2.5 text-[15px] cursor-pointer"
+                    style={{
+                      background: isSel ? "var(--azul-egm-light)" : "transparent",
+                      color: isSel ? "var(--azul-egm)" : "var(--texto-primario)",
+                      fontWeight: isSel ? 600 : 400,
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
+                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
                   >
                     {opt.label}
                   </button>

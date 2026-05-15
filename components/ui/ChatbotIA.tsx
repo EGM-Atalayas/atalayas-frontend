@@ -830,7 +830,7 @@ export default function ChatbotIA() {
       `}</style>
 
       {/* ── FAB ──────────────────────────────────────────────────────────── */}
-      {posReady && (isMobile ? !(open || isClosing) : !isClosing) && <div ref={fabRef} style={{ ...fabStyle }}>
+      {posReady && (isMobile ? !(open || isClosing) : !isClosing) && <div ref={fabRef} data-chatbot-fab style={{ ...fabStyle }}>
 
         {/* Tooltip — posicionado absolutamente para no mover el FAB */}
         {showTooltip && !open && (

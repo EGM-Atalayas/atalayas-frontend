@@ -10,6 +10,8 @@ export interface EstadisticasEmpresaResponse {
     totalEmpleados: number;
     altasEsteMes: number;
     bajasEsteMes: number;
+    altasPeriodo: number;          // total altas en el rango seleccionado
+    bajasPeriodo: number;          // total bajas en el rango seleccionado
     tasaRotacion: number;          // % anualizado
     modulosConProgreso: number;    // módulos con al menos 1 empleado con progreso
     pctCompletitudGlobal: number;  // % medio de completitud de formación
@@ -143,8 +145,8 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
 // Enfocadas en: incorporaciones/salidas/rotación + progreso de formación
 
 export interface FiltrosEstadisticas {
-  /** Nº de meses a mostrar en gráficos de evolución (3, 6, 12) */
-  rangoMeses?: 3 | 6 | 12;
+  /** Nº de meses a mostrar en gráficos de evolución (3, 6, 12, 24) */
+  rangoMeses?: 1 | 3 | 6 | 12 | 24;
   /** Filtrar empleados por departamento. null = todos */
   departamento?: string | null;
   /** Filtrar empleados por estado. "todos" por defecto */
@@ -162,6 +164,9 @@ export function getEstadisticasAdminEmpresa(
   const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const hoy   = new Date();
   const rangoMeses = filtros.rangoMeses ?? 6;
+
+  // Guardar lista completa antes de aplicar filtros (para altas/bajas reales de la empresa)
+  const empleadosTodos = [...empleados];
 
   // Aplicar filtro de estado
   if (filtros.estado === "activos") {
@@ -201,16 +206,20 @@ export function getEstadisticasAdminEmpresa(
   }
 
   // ── Altas y bajas por mes ────────────────────────────────────────────────────
-  // Altas: fechaRegistro del empleado.
-  // Bajas: campo fechaBaja del backend (se setea al desactivar al usuario).
-  const activos = empleados.filter((e) => e.activo !== false);
+  // Siempre sobre empleadosTodos (sin filtro de estado) para reflejar movimiento real de plantilla.
+  // El filtro de departamento sí aplica (empleadosTodos ya está filtrado por dpto si procede).
+  const empleadosParaMovimiento = filtros.departamento
+    ? empleadosTodos.filter((e) => e.departamento === filtros.departamento)
+    : empleadosTodos;
+
+  const activos = empleadosParaMovimiento.filter((e) => e.activo !== false);
 
   const movimientoMensual = ventana.map(({ anio, mes, label }) => {
-    const altas = empleados.filter((e) => {
+    const altas = empleadosParaMovimiento.filter((e) => {
       const f = new Date(e.fechaRegistro ?? e.creadoEn ?? e.createdAt ?? 0);
       return f.getFullYear() === anio && f.getMonth() === mes;
     }).length;
-    const bajas = empleados.filter((e) => {
+    const bajas = empleadosParaMovimiento.filter((e) => {
       if (!e.fechaBaja) return false;
       const f = new Date(e.fechaBaja);
       return f.getFullYear() === anio && f.getMonth() === mes;
@@ -221,11 +230,11 @@ export function getEstadisticasAdminEmpresa(
   // ── KPIs de rotación ────────────────────────────────────────────────────────
   const mesActual  = hoy.getMonth();
   const anioActual = hoy.getFullYear();
-  const altasEsteMes = empleados.filter((e) => {
+  const altasEsteMes = empleadosParaMovimiento.filter((e) => {
     const f = new Date(e.fechaRegistro ?? e.creadoEn ?? e.createdAt ?? 0);
     return f.getFullYear() === anioActual && f.getMonth() === mesActual;
   }).length;
-  const bajasEsteMes = empleados.filter((e) => {
+  const bajasEsteMes = empleadosParaMovimiento.filter((e) => {
     if (!e.fechaBaja) return false;
     const f = new Date(e.fechaBaja);
     return f.getFullYear() === anioActual && f.getMonth() === mesActual;
@@ -248,6 +257,7 @@ export function getEstadisticasAdminEmpresa(
     let enProgreso  = 0;
     let sumPct      = 0;
     let conDatos    = 0;
+
     for (const pe of progresoEmpresa) {
       const pm = pe.modulos?.find((x) => String(x.moduloId) === String(mid));
       if (pm) {
@@ -255,16 +265,18 @@ export function getEstadisticasAdminEmpresa(
         sumPct += pm.porcentaje ?? 0;
         if ((pm.porcentaje ?? 0) >= 100) completados++;
         else if ((pm.porcentaje ?? 0) > 0) enProgreso++;
+
       }
     }
     const porcentaje = conDatos > 0
-      ? Math.round(sumPct / totalEmpleados)
+      ? Math.round(sumPct / conDatos)
       : 0;
     const nombre = m.titulo ?? m.nombre ?? "Módulo";
     const pendientes = Math.max(0, totalEmpleados - completados - enProgreso);
     progresoModulos.push({ nombre, porcentaje });
     detalleModulos.push({ moduloId: mid, nombre, completados, enProgreso, pendientes, total: totalEmpleados || 1 });
   }
+
 
   // ── Estado de formación de empleados ────────────────────────────────────────
   let sinFormacion   = 0;
@@ -282,16 +294,30 @@ export function getEstadisticasAdminEmpresa(
   const conRegistro = progresoEmpresa.length;
   sinFormacion += Math.max(0, activos.length - conRegistro);
 
+  // ── Distribución por departamento ────────────────────────────────────────────
+  const conteoDptos: Record<string, number> = {};
+  for (const e of activos) {
+    const dpto = e.departamento || "Sin departamento";
+    conteoDptos[dpto] = (conteoDptos[dpto] ?? 0) + 1;
+  }
+  const distribucionDepartamentos = Object.entries(conteoDptos)
+    .map(([nombre, total]) => ({ nombre, total }))
+    .sort((a, b) => b.total - a.total);
+
   // ── KPI de completitud global ────────────────────────────────────────────────
-  const pctCompletitudGlobal = progresoModulos.length
-    ? Math.round(progresoModulos.reduce((s, m) => s + m.porcentaje, 0) / progresoModulos.length)
+  // Solo promedia módulos que tienen al menos un empleado con datos (evita arrastrar a 0 módulos sin asignar)
+  const modulosConDatos = progresoModulos.filter((m) => m.porcentaje > 0);
+  const pctCompletitudGlobal = modulosConDatos.length
+    ? Math.round(modulosConDatos.reduce((s, m) => s + m.porcentaje, 0) / modulosConDatos.length)
     : 0;
 
   return {
     kpis: {
-      totalEmpleados:       empleados.length,
+      totalEmpleados:       activos.length,
       altasEsteMes,
       bajasEsteMes,
+      altasPeriodo:         movimientoMensual.reduce((s, m) => s + m.altas, 0),
+      bajasPeriodo:         movimientoMensual.reduce((s, m) => s + m.bajas, 0),
       tasaRotacion,
       modulosConProgreso:   progresoModulos.filter((m) => m.porcentaje > 0).length,
       pctCompletitudGlobal,
@@ -302,6 +328,7 @@ export function getEstadisticasAdminEmpresa(
     empleadosSinFormacion:  sinFormacion,
     empleadosEnProgreso:    enProgreso,
     empleadosCompletados:   completados100,
+
   };
 }
 
