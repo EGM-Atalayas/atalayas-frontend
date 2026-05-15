@@ -22,6 +22,19 @@ export type ModuloTipo =
   | "ESPECIALIZADO"
   | "ESPECIALIZADO_IA";
 
+// Mapeo de valores del frontend a los que espera el backend (Java Enum)
+export const MODULO_TIPO_TO_BACKEND: Record<string, string> = {
+  IDENTIDAD: "IDENTIDAD_CORPORATIVA",
+  BASICA: "FORMACION_BASICA",
+  ESPECIFICA: "FORMACION_ESPECIFICA",
+  DESARROLLO: "DESARROLLO_PROFESIONAL",
+  RECOMPENSAS: "RECOMPENSAS_VENTAJAS",
+};
+
+export function mapTipoToBackend(value: string): string {
+  return MODULO_TIPO_TO_BACKEND[value] ?? value;
+}
+
 // Etiqueta legible para el frontend por cada tipo
 export const MODULO_TIPO_LABEL: Record<ModuloTipo, string> = {
   IDENTIDAD:        "Identidad Corporativa",
