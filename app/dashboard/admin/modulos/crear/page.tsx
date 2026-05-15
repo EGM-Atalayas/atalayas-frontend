@@ -2,13 +2,17 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { IAButton } from "@/components/ui/IAButton";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { PresentationCreator } from "@/components/presentation/PresentationCreator";
+import type { Slide } from "@/components/presentation/slides/SlideRenderers";
+import { BienvenidaTemplatePanel } from "@/components/bienvenida/BienvenidaTemplatePanel";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoPagina = "texto" | "archivo" | "test";
@@ -233,6 +237,8 @@ export default function CrearModuloPage() {
   const [aiLoading, setAiLoading] = useState<"descripcion" | "contenido" | "test" | "podcast" | "video" | "documento" | null>(null);
   const [aiError, setAiError] = useState("");
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [presentacionPanelOpen, setPresentacionPanelOpen] = useState(false);
+  const [presentacionGuardada, setPresentacionGuardada] = useState<{ slides: Slide[]; themeId: string } | null>(null);
   const [mostrarIA, setMostrarIA] = useState(false);
   const [promptIA, setPromptIA] = useState("");
   const [generandoIA, setGenerandoIA] = useState(false);
@@ -245,7 +251,7 @@ export default function CrearModuloPage() {
     if (!editId || !usuario?.empresaId) return;
     const cargarModulo = async () => {
       try {
-        const modulos = await getModulosConProgreso();
+        const modulos = await getModulosConProgreso(usuario?.empresaId);
         const modulo = modulos.find((m) => m.moduloId === editId);
         if (modulo) {
           setModuloEditando(modulo);
@@ -577,8 +583,12 @@ export default function CrearModuloPage() {
           imagenPortadaUrl,
           testPreguntas: null,
           scriptPodcast: scriptPodcast || null,
-          scriptVideo: scriptVideo || null,
-          tiposSalida,
+          scriptVideo: presentacionGuardada
+            ? JSON.stringify({ type: "presentation", themeId: presentacionGuardada.themeId, slides: presentacionGuardada.slides })
+            : scriptVideo || null,
+          tiposSalida: presentacionGuardada
+            ? (tiposSalida.includes("video") ? tiposSalida : tiposSalida + ",video")
+            : tiposSalida,
         }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Error al guardar"); }
@@ -693,14 +703,9 @@ export default function CrearModuloPage() {
                   ← Volver
                 </Link>
                 {!editId && (
-                  <button type="button" onClick={() => setMostrarIA(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-                    style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", boxShadow: "0 2px 10px rgba(124,58,237,0.25)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9" }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1" }}>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>
+                  <IAButton size="sm" onClick={() => setMostrarIA(true)}>
                     Crear con IA
-                  </button>
+                  </IAButton>
                 )}
               </div>
               <div>
@@ -773,8 +778,9 @@ export default function CrearModuloPage() {
                           <option value="ONBOARDING">Onboarding</option>
                         </select>
                         {editId && moduloEditando?.tipoModulo && !["GENERAL", "ESPECIALIZADO", "ESPECIALIZADO_IA", "CUMPLIMIENTO", "ONBOARDING"].includes(moduloEditando.tipoModulo) && (
-                          <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
-                            ⚠️ Este módulo tiene un tipo antiguo ("{moduloEditando.tipoModulo}"). Elíge uno de los valores válidos arriba.
+                          <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "#dc2626" }}>
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            Este módulo tiene un tipo antiguo ("{moduloEditando.tipoModulo}"). Elige uno de los valores válidos arriba.
                           </p>
                         )}
                       </div>
@@ -829,7 +835,7 @@ export default function CrearModuloPage() {
                                   background: sel ? "#fffbeb" : "var(--blanco)",
                                   color: sel ? "#d97706" : "var(--texto-muted)",
                                 }}>
-                                {sel && "✓ "}{d.label}
+                                {sel && <Check className="w-3 h-3 shrink-0" />}{d.label}
                               </button>
                             );
                           })}
@@ -856,13 +862,25 @@ export default function CrearModuloPage() {
             )}
           </div>
 
+          {/* ══ PANEL PLANTILLA BIENVENIDA (solo Onboarding) ══ */}
+          {categoria === "ONBOARDING" && (
+            <BienvenidaTemplatePanel
+              nombreEmpresa={usuario?.nombreEmpresa || ""}
+              newId={newId}
+              onAplicar={(nuevasPaginas) => {
+                setPaginas(nuevasPaginas);
+                setPaginaActivaId(nuevasPaginas[0]?.id ?? null);
+              }}
+            />
+          )}
+
           {/* ══ PANEL IA ══ */}
           <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
             <button type="button" onClick={() => setAiPanelOpen(!aiPanelOpen)}
               className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
               style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderBottom: aiPanelOpen ? "1px solid #bfdbfe" : "none" }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563eb", color: "#fff" }}>✨</div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563eb", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
                 <div className="text-left">
                   <p className="text-sm font-bold" style={{ color: "#1e40af" }}>Asistente IA</p>
                   <p className="text-xs" style={{ color: "#3b82f6" }}>Genera contenido basado en el título: "{nombre || '...'}"</p>
@@ -968,12 +986,46 @@ export default function CrearModuloPage() {
             )}
           </div>
 
+          {/* ══ PANEL PRESENTACIÓN IA ══ */}
+          <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+            <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: presentacionPanelOpen ? "1px solid #ddd6fe" : "none" }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
+                <div className="text-left">
+                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Presentación con IA</p>
+                  <p className="text-xs" style={{ color: "#7c3aed" }}>
+                    {presentacionGuardada
+                      ? `Presentación lista — ${presentacionGuardada.slides.length} slides`
+                      : "Genera slides automáticamente desde un PDF"}
+                  </p>
+                </div>
+              </div>
+              <div className="transition-transform" style={{ transform: presentacionPanelOpen ? "rotate(0)" : "rotate(-90deg)" }}>
+                <ChevronDown style={{ color: "#7c3aed" }} />
+              </div>
+            </button>
+
+            {presentacionPanelOpen && (
+              <div className="px-6 py-5 fade-up">
+                <PresentationCreator
+                  moduleTitle={nombre}
+                  onSave={(slides, themeId) => {
+                    setPresentacionGuardada({ slides, themeId });
+                    setPresentacionPanelOpen(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
           {/* ══ MENSAJE ERROR IA ══ */}
           {aiError && (
             <div className="mb-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+              <Sparkles size={16} strokeWidth={2} className="shrink-0" />
               <span className="flex-1">{aiError}</span>
-              <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}>✕</button>
+              <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
             </div>
           )}
 
@@ -1260,7 +1312,7 @@ export default function CrearModuloPage() {
 
           {errorMsg && (
             <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              <AlertTriangle size={16} strokeWidth={2} className="shrink-0" />
               {errorMsg}
             </div>
           )}
@@ -1278,7 +1330,7 @@ export default function CrearModuloPage() {
                   style={{ borderBottom: "1px solid var(--gris-borde)", background: "linear-gradient(135deg,#f5f3ff,#ede9fe)" }}>
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>
+                      <Sparkles size={16} />
                     </div>
                     <div>
                       <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Crear módulo con IA</h2>
@@ -1290,7 +1342,7 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
                 {/* Body */}
@@ -1323,7 +1375,7 @@ export default function CrearModuloPage() {
                   </div>
                   {errorIA && (
                     <div className="mt-3 text-xs px-3 py-2 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                      <AlertTriangle size={14} strokeWidth={2} className="shrink-0" />
                       {errorIA}
                     </div>
                   )}
@@ -1335,20 +1387,15 @@ export default function CrearModuloPage() {
                     style={{ color: "var(--texto-muted)" }}>
                     Cancelar
                   </button>
-                  <button type="button" onClick={generarModuloConIA} disabled={generandoIA || !promptIA.trim()}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all"
-                    style={{
-                      background: generandoIA ? "var(--gris-superficie)" : "linear-gradient(135deg,#7c3aed,#a855f7)",
-                      color: generandoIA ? "var(--texto-muted)" : "#fff",
-                      cursor: generandoIA || !promptIA.trim() ? "not-allowed" : "pointer",
-                      boxShadow: generandoIA ? "none" : "0 4px 14px rgba(124,58,237,0.25)",
-                    }}>
-                    {generandoIA ? (
-                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando…</>
-                    ) : (
-                      <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" /></svg>Generar módulo</>
-                    )}
-                  </button>
+                  <IAButton
+                    size="md"
+                    onClick={generarModuloConIA}
+                    disabled={!promptIA.trim()}
+                    loading={generandoIA}
+                    loadingLabel="Generando…"
+                  >
+                    Generar módulo
+                  </IAButton>
                 </div>
               </div>
             </div>
@@ -1423,7 +1470,7 @@ export default function CrearModuloPage() {
                     <p className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>{tipo.desc}</p>
                   </div>
                   <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid var(--gris-borde)" }}>
-                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: "transparent" }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                    <Check size={10} strokeWidth={2.5} style={{ color: "transparent" }} />
                   </div>
                 </button>
               ))}

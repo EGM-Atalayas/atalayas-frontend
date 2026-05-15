@@ -46,7 +46,7 @@ export default function DashboardHero({
     ? "clamp(2.5rem, 5vw, 3.5rem)"
     : variante === "minima"
       ? "1.5rem"
-      : "clamp(1.75rem, 3.5vw, 2.5rem)";
+      : "clamp(2.2rem, 4vw, 3rem)";
 
   const fechaHoy = new Date().toLocaleDateString("es-ES", {
     weekday: "long", day: "numeric", month: "long",
@@ -151,7 +151,7 @@ export default function DashboardHero({
               fontWeight:    500,
               color:         "rgba(255,255,255,0.68)",
               letterSpacing: "0.02em",
-              animation:     "heroFadeUp 0.6s ease both",
+              animation:     "fade-rise 0.6s ease both",
             }}
           >
             <span
@@ -168,7 +168,7 @@ export default function DashboardHero({
         )}
 
         {/* Prefijo + Título */}
-        <div style={{ animation: "heroFadeUp 0.7s ease 0.1s both" }}>
+        <div style={{ animation: "fade-rise 0.7s ease 0.1s both" }}>
           <div className="leading-tight flex flex-wrap items-baseline gap-x-3 gap-y-1">
 
             {prefijo && (
@@ -193,7 +193,8 @@ export default function DashboardHero({
                 fontStyle:            "italic",
                 fontWeight:           500,
                 letterSpacing:        "-0.01em",
-                lineHeight:           1.05,
+                lineHeight:           1.2,
+                paddingBottom:        "0.15em",
                 backgroundImage:      "linear-gradient(90deg, #ffffff, #c8d96a, #ffffff)",
                 backgroundSize:       "250% auto",
                 WebkitBackgroundClip: "text",
@@ -203,6 +204,7 @@ export default function DashboardHero({
                 overflowWrap:         "break-word",
                 wordBreak:            "break-word",
                 maxWidth:             "100%",
+                display:              "inline-block",
               }}
             >
               {titulo}

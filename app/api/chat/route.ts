@@ -1,11 +1,17 @@
 export const runtime = "nodejs"
 
 import { NextRequest } from "next/server"
-import { chatCompletionStream, ChatMessage } from "@/lib/ai/provider"
 
+// La clave de IA ya NO vive en Vercel — el backend de Render la gestiona.
+// Este fichero actúa como proxy: construye el systemPrompt y reenvía al backend.
 const BACKEND_URL =
   process.env.BACKEND_URL ??
-  "https://atalayas-backend-c25d.onrender.com/api/v1"
+  "https://atalayas-backend-1.onrender.com/api/v1"
+
+interface ChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
 
 function buildSystemPrompt(context: {
   nombreUsuario?: string
@@ -70,57 +76,28 @@ export async function POST(req: NextRequest) {
 
     // ── Proxy al backend de Render ────────────────────────────────────────────
     // El backend tiene las claves de IA (Gemini / Groq) y devuelve el stream.
-    // Si falla, usamos el proveedor local como fallback.
-    let usarBackend = true
-    let backendRes: Response | null = null
-
-    try {
-      backendRes = await fetch(`${BACKEND_URL}/ai/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, systemPrompt }),
-        signal: AbortSignal.timeout(15000),
-      })
-    } catch {
-      console.warn("[/api/chat] Backend no respondió, usando proveedor local")
-      usarBackend = false
-    }
-
-    if (usarBackend && backendRes?.ok && backendRes.body) {
-      return new Response(backendRes.body, {
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      })
-    }
-
-    // ── Fallback: proveedor IA local (Gemini → Groq) ─────────────────────────
-    console.warn("[/api/chat] Usando proveedor IA local como fallback")
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          await chatCompletionStream(messages, systemPrompt, (chunk) =>
-            controller.enqueue(new TextEncoder().encode(chunk))
-          )
-        } catch (error) {
-          console.error("[/api/chat] Fallback IA local falló:", error)
-          const mensaje = error instanceof Error ? error.message : "Error desconocido"
-          controller.enqueue(
-            new TextEncoder().encode(
-              `Error de IA: ${mensaje}`
-            )
-          )
-        } finally {
-          controller.close()
-        }
-      },
+    const backendRes = await fetch(`${BACKEND_URL}/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, systemPrompt }),
     })
 
-    return new Response(stream, {
+    if (!backendRes.ok || !backendRes.body) {
+      const status = backendRes.status
+      console.error("[/api/chat] Backend respondió con error:", status)
+      const errorMsg =
+        status >= 500
+          ? "El servicio de IA no está disponible en este momento. Inténtalo en unos minutos."
+          : "No se pudo procesar la consulta. Inténtalo de nuevo."
+      return new Response(errorMsg, { status: 502 })
+    }
+
+    // Pipe directo: el stream del backend llega al cliente sin modificaciones
+    return new Response(backendRes.body, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     })
   } catch (error) {
     console.error("[/api/chat] Error:", error)
-    const mensaje = error instanceof Error ? error.message : "Error al procesar la consulta."
-    return new Response(mensaje, { status: 500 })
+    return new Response("Error al procesar la consulta.", { status: 500 })
   }
 }

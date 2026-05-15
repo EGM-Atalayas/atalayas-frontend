@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   FaBuilding,
   FaUsers,
@@ -16,7 +17,9 @@ import {
   FaRocket,
   FaStar,
 } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
 import { API_URL, apiFetch } from "@/lib/api";
+import { QK } from "@/lib/queryKeys";
 
 export interface Actividad {
   id: number;
@@ -94,9 +97,6 @@ const STORAGE_KEY = "superadmin-onboarding-completados";
 
 const AdminGeneral: React.FC = () => {
   const router = useRouter();
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const [completados, setCompletados] = useState<number[]>([]);
   const [expandido, setExpandido] = useState<number | null>(null);
 
@@ -107,25 +107,19 @@ const AdminGeneral: React.FC = () => {
     } catch {}
   }, []);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const response = await apiFetch(`${API_URL}/dashboard/superadmin`);
-        const json = await response.json().catch(() => ({}));
-        if (!response.ok || json.code === 403 || json.code === 401) {
-          throw new Error(`Acceso denegado (Error ${json.code || response.status}).`);
-        }
-        setData(json);
-      } catch (err: any) {
-        setError(err.message || "Error de conexión al obtener los datos del panel.");
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: QK.dashboardSuperadmin(),
+    queryFn: async () => {
+      const response = await apiFetch(`${API_URL}/dashboard/superadmin`);
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || json.code === 403 || json.code === 401) {
+        throw new Error(`Acceso denegado (Error ${json.code || response.status}).`);
       }
-    };
-    fetchDashboardData();
-  }, []);
+      return json as DashboardResponse;
+    },
+    staleTime: 60_000,
+  });
+  const error = queryError ? (queryError as Error).message : "";
 
   function toggleCompletado(id: number) {
     setCompletados((prev) => {
@@ -239,13 +233,13 @@ const AdminGeneral: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {stats.map((stat, i) => (
           <div key={i}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+            className="card card-hover p-5 flex items-center gap-4">
             <div className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
               {stat.icon}
             </div>
             <div>
-              <div className="text-2xl font-bold text-slate-800">{stat.value}</div>
-              <div className="text-sm text-slate-500">{stat.label}</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--texto-primario)" }}>{stat.value}</div>
+              <div className="text-sm" style={{ color: "var(--texto-muted)" }}>{stat.label}</div>
               <div className={`text-xs font-medium mt-0.5 ${stat.trendColor}`}>{stat.trend}</div>
             </div>
           </div>
@@ -259,8 +253,8 @@ const AdminGeneral: React.FC = () => {
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Guía de configuración</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Completa estos pasos para tener la plataforma lista</p>
+              <h2 className="text-lg font-bold" style={{ color: "var(--texto-primario)" }}>Guía de configuración</h2>
+              <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>Completa estos pasos para tener la plataforma lista</p>
             </div>
             {progreso === 100 && (
               <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
@@ -302,12 +296,12 @@ const AdminGeneral: React.FC = () => {
                     {/* Texto */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-semibold ${isCompleto ? "line-through text-slate-400" : "text-slate-800"}`}>
+                        <p className="text-sm font-semibold" style={{ color: isCompleto ? "var(--texto-placeholder)" : "var(--texto-primario)", textDecoration: isCompleto ? "line-through" : "none" }}>
                           {step.titulo}
                         </p>
                       </div>
                       {!isExp && (
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{step.descripcion}</p>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: "var(--texto-placeholder)" }}>{step.descripcion}</p>
                       )}
                     </div>
 
@@ -331,8 +325,8 @@ const AdminGeneral: React.FC = () => {
 
                   {/* Expandido */}
                   {isExp && (
-                    <div className="px-4 pb-4 pt-0 border-t border-slate-50">
-                      <p className="text-sm text-slate-600 mt-3 mb-4 leading-relaxed">
+                    <div className="px-4 pb-4 pt-0" style={{ borderTop: "1px solid var(--gris-superficie)" }}>
+                      <p className="text-sm mt-3 mb-4 leading-relaxed" style={{ color: "var(--texto-secundario)" }}>
                         {step.descripcion}
                       </p>
                       <div className="flex items-center gap-3">
@@ -371,60 +365,65 @@ const AdminGeneral: React.FC = () => {
         <div className="flex flex-col gap-4">
 
           {/* Accesos rápidos */}
-          <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="rounded-2xl p-6 text-white relative overflow-hidden" style={{ background: "var(--marino)" }}>
             <div className="absolute -right-6 -top-6 opacity-10">
               <FaBuilding size={100} />
             </div>
             <div className="relative z-10">
               <h3 className="text-base font-bold mb-1">Gestión de Empresas</h3>
-              <p className="text-sm text-slate-400 mb-4">Administra el estado y acceso de las empresas del área.</p>
+              <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>Administra el estado y acceso de las empresas del área.</p>
               <button
                 onClick={() => router.push("/superadmin/administracion")}
-                className="bg-white text-slate-900 font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 hover:bg-slate-100 transition-colors"
+                className="font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 transition-colors"
+                style={{ background: "var(--blanco)", color: "var(--texto-primario)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "var(--gris-pagina)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "var(--blanco)")}
               >
                 Ir a Empresas <FaArrowRight size={12} />
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+          <div className="card p-6">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: "var(--azul-accion-light)", color: "var(--azul-accion)" }}>
               <FaFileAlt size={18} />
             </div>
-            <h3 className="text-base font-bold text-slate-800 mb-1">Solicitudes Pendientes</h3>
-            <p className="text-sm text-slate-500 mb-4">Revisa y aprueba las nuevas empresas que han solicitado unirse.</p>
+            <h3 className="text-base font-bold mb-1" style={{ color: "var(--texto-primario)" }}>Solicitudes Pendientes</h3>
+            <p className="text-sm mb-4" style={{ color: "var(--texto-muted)" }}>Revisa y aprueba las nuevas empresas que han solicitado unirse.</p>
             <button
               onClick={() => router.push("/superadmin/administracion")}
-              className="text-blue-600 font-bold text-sm flex items-center gap-2 hover:text-blue-800 transition-colors"
+              className="font-bold text-sm flex items-center gap-2 transition-colors"
+              style={{ color: "var(--azul-accion)" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "var(--azul-accion-hover)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--azul-accion)")}
             >
               Ver solicitudes <FaArrowRight size={12} />
             </button>
           </div>
 
           {/* Actividad reciente */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <h2 className="text-base font-bold text-slate-800 mb-4">Actividad reciente</h2>
+          <div className="card p-6">
+            <h2 className="text-base font-bold mb-4" style={{ color: "var(--texto-primario)" }}>Actividad reciente</h2>
             <div className="flex flex-col gap-4">
               {!data?.actividadReciente || data.actividadReciente.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <div className="bg-slate-50 p-3 rounded-full mb-2">
-                    <FaFileAlt size={20} className="text-slate-300" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-500">Sin actividad reciente</p>
-                  <p className="text-xs text-slate-400 mt-1">El servidor aún no envía el log de acciones.</p>
-                </div>
+                <EmptyState
+                  size="sm"
+                  title="Sin actividad reciente"
+                  description="El servidor aún no envía el log de acciones."
+                  icon={<FaFileAlt size={20} />}
+                />
               ) : (
                 data.actividadReciente.map((item, index, array) => (
                   <div key={item.id || index} className="flex gap-3 items-start">
                     <div className="relative mt-1.5 shrink-0">
                       <div className={`w-2.5 h-2.5 rounded-full ${getDotColor(item.tipo)} ring-4 ring-slate-50 z-10 relative`} />
                       {index !== array.length - 1 && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-px h-8 bg-slate-100" />
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-px h-8" style={{ background: "var(--gris-superficie)" }} />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-slate-700 leading-snug">{item.texto}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.tiempo}</p>
+                      <p className="text-sm leading-snug" style={{ color: "var(--texto-secundario)" }}>{item.texto}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-placeholder)" }}>{item.tiempo}</p>
                     </div>
                   </div>
                 ))

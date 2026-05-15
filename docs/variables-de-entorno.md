@@ -8,7 +8,7 @@ El proyecto necesita **5 variables de entorno** para funcionar correctamente. Se
 
 | Variable | Ámbito | Obligatoria | Descripción |
 |---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | Cliente + Servidor | No* | URL base del backend REST. Si no se define, se usa `https://atalayas-backend-c25d.onrender.com/api/v1` como fallback. |
+| `NEXT_PUBLIC_API_URL` | Cliente + Servidor | No* | URL base del backend REST. Si no se define, se usa `https://atalayas-backend-1.onrender.com/api/v1` como fallback. |
 | `NEXT_PUBLIC_SUPABASE_URL` | Cliente + Servidor | Sí | URL del proyecto de Supabase. Se obtiene en Supabase → Settings → API. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente + Servidor | Sí | Clave anónima pública de Supabase. Se obtiene en el mismo lugar. |
 | `BACKEND_URL` | Solo servidor | No* | URL base del backend para las llamadas internas de servidor (chatbot proxy). Fallback igual que `NEXT_PUBLIC_API_URL`. |

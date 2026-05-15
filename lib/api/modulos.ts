@@ -5,13 +5,22 @@ import type { Modulo, ModuloConProgreso, ProgresoItem } from "@/lib/types/modulo
 // ── GET /api/v1/modulos ───────────────────────────────────────────────────────
 /**
  * Devuelve los módulos visibles para el usuario autenticado
- * El backend ya aplica el filtro por empresa y rol, no hay que pasar empresaId
+ * El backend ya aplica el filtro por empresa y rol.
+ * @param empresaId opcional — si se pasa, filtra client-side para mantener solo módulos
+ * de la empresa (empresaId === empresaId) o globales (empresaId === null).
  */
-export async function getModulos(): Promise<Modulo[]> {
-  const res = await apiFetch(`${API_URL}/modulos`);
+export async function getModulos(empresaId?: string | null): Promise<Modulo[]> {
+  const url = empresaId
+    ? `${API_URL}/modulos?empresaId=${empresaId}`
+    : `${API_URL}/modulos`;
+  const res = await apiFetch(url);
+
   if (!res.ok) throw new Error("Error al cargar módulos");
-  return res.json();
+  const modulos: Modulo[] = await res.json();
+  if (!empresaId) return modulos;
+  return modulos.filter((m) => m.empresaId === null || m.empresaId === empresaId);
 }
+
 
 
 // ── GET /api/v1/progreso/me ───────────────────────────────────────────────────
@@ -37,10 +46,10 @@ export async function getMiProgreso(): Promise<ProgresoItem[]> {
  *   - Sin datos de progreso - "pendiente"
  */
 
-export async function getModulosConProgreso(): Promise<ModuloConProgreso[]> {
+export async function getModulosConProgreso(empresaId?: string | null): Promise<ModuloConProgreso[]> {
   // Llamadas en paralelo para minimizar tiempo de carga
   const [modulos, progreso] = await Promise.all([
-    getModulos(),
+    getModulos(empresaId),
     getMiProgreso().catch(() => [] as ProgresoItem[]), // si falla el progreso no bloqueamos
   ]);
 

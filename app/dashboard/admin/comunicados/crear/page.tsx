@@ -2,6 +2,7 @@
 
 import { useState, useRef, type ReactNode, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, FileText, Upload } from "lucide-react";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { crearComunicado } from "@/lib/api/noticias";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
@@ -11,9 +12,13 @@ const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
 
 // ── IA helper ─────────────────────────────────────────────────────────
 async function llamarIA(prompt: string): Promise<string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null
   const res = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ messages: [{ role: "user", content: prompt }], context: {} }),
   });
   if (!res.ok || !res.body) throw new Error("IA no disponible");
@@ -189,9 +194,7 @@ export default function CrearComunicadoPage() {
             className="flex items-center gap-1.5 text-sm font-medium mb-6"
             style={{ color: "var(--azul-egm)" }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft size={16} strokeWidth={2} />
             Volver a comunicados
           </button>
 
@@ -318,9 +321,7 @@ export default function CrearComunicadoPage() {
                         </>
                       ) : (
                         <>
-                          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                          </svg>
+                          <Upload size={22} strokeWidth={1.5} />
                           <span>Haz clic para seleccionar una imagen</span>
                           <span className="text-xs">JPG, PNG, WebP — máx. 5 MB</span>
                         </>
@@ -413,9 +414,7 @@ export default function CrearComunicadoPage() {
                 <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
                 {form.adjuntoUrl ? (
                   <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ border: "1px solid #86efac", background: "#f0fdf4" }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <FileText size={16} strokeWidth={2} style={{ color: "#16a34a" }} />
                     <span className="text-sm flex-1 truncate" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
                     <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
                       className="text-xs px-2 py-0.5 rounded-full" style={{ color: "var(--error)", background: "var(--error-light)" }}>
@@ -427,7 +426,7 @@ export default function CrearComunicadoPage() {
                     className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-60"
                     style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--gris-superficie)", color: "var(--texto-muted)" }}
                   >
-                    {uploadingAdj ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></> : <><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>Adjuntar documento (PDF, Word...)</span></>}
+                    {uploadingAdj ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></> : <><FileText size={16} strokeWidth={1.5} /><span>Adjuntar documento (PDF, Word...)</span></>}
                   </button>
                 )}
               </div>

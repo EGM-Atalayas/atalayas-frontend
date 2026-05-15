@@ -1,0 +1,41 @@
+.viewer { width: 100%; }
+
+.progressBar {
+  width: 100%; height: 3px;
+  background: #e5e7eb; border-radius: 2px; margin-bottom: 0.6rem;
+}
+.progressFill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+
+.meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.5rem;
+}
+.slideLabel { font-size: 0.75rem; color: #6b7280; }
+.counter { font-size: 0.75rem; color: #6b7280; }
+
+.frame {
+  width: 100%; aspect-ratio: 16 / 9;
+  border-radius: 12px; overflow: hidden;
+  border: 0.5px solid #e5e7eb; position: relative;
+}
+
+.nav {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 0.6rem;
+}
+.navBtn {
+  background: #fff; border: 0.5px solid #d1d5db;
+  border-radius: 8px; padding: 0.35rem 0.9rem;
+  font-size: 0.78rem; color: #111; cursor: pointer;
+  font-family: inherit; transition: background 0.15s;
+}
+.navBtn:hover:not(:disabled) { background: #f9fafb; }
+.navBtn:disabled { opacity: 0.3; cursor: default; }
+.navBtnFinish { font-weight: 500; }
+
+.dots { display: flex; gap: 5px; align-items: center; }
+.dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #d1d5db; cursor: pointer; transition: all 0.2s;
+}
+.dotActive { width: 14px; border-radius: 3px; }

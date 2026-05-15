@@ -32,14 +32,14 @@ interface FeedItem {
   esNuevoItem: boolean;
   _raw: Comunicado | Noticia;
   // Nuevos campos
-  videoUrl?:      string | null;
-  adjuntoUrl?:    string | null;
+  videoUrl?: string | null;
+  adjuntoUrl?: string | null;
   adjuntoNombre?: string | null;
-  enlaceUrl?:     string | null;
-  enlaceTexto?:   string | null;
-  estado?:        string | null;
-  fijado?:        boolean;
-  vistas?:        number;
+  enlaceUrl?: string | null;
+  enlaceTexto?: string | null;
+  estado?: string | null;
+  fijado?: boolean;
+  vistas?: number;
 }
 
 type FiltroFuente = "todos" | "egm" | "empresa";
@@ -48,7 +48,7 @@ type Orden = "reciente" | "antiguo";
 // ── CONSTANTES ─────────────────────────────────────────────────────────────────
 const ORDEN_LABELS: Record<Orden, string> = {
   reciente: "Más reciente",
-  antiguo:  "Más antiguo",
+  antiguo: "Más antiguo",
 };
 
 const EMPTY_FORM_COMUNICADO: ComunicadoInput = {
@@ -64,15 +64,15 @@ const EMPTY_FORM: NoticiaInput = {
   categoria: null,
 };
 
-const GRAD_BTN  = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
-const GRAD_EGM  = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
-const GRAD_EMP  = "linear-gradient(135deg, #2d5a3d 0%, #1a3a26 100%)";
+const GRAD_BTN = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
+const GRAD_EGM = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
+const GRAD_EMP = "linear-gradient(135deg, #2d5a3d 0%, #1a3a26 100%)";
 
 // Colores activos por filtro (fondo, sombra)
 const FILTRO_STYLES: Record<FiltroFuente, { bg: string; shadow: string }> = {
-  todos:   { bg: GRAD_BTN,  shadow: "0 2px 8px rgba(37,99,235,0.25)" },
-  egm:     { bg: GRAD_EGM,  shadow: "0 2px 8px rgba(27,63,126,0.30)" },
-  empresa: { bg: GRAD_EMP,  shadow: "0 2px 8px rgba(45,90,61,0.30)"  },
+  todos: { bg: GRAD_BTN, shadow: "0 2px 8px rgba(37,99,235,0.25)" },
+  egm: { bg: GRAD_EGM, shadow: "0 2px 8px rgba(27,63,126,0.30)" },
+  empresa: { bg: GRAD_EMP, shadow: "0 2px 8px rgba(45,90,61,0.30)" },
 };
 const SHADOW_TXT = "0 2px 8px rgba(0,0,0,0.65)";
 
@@ -80,15 +80,15 @@ const MEGAPHONE = "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 
 
 // Colores para fondos OSCUROS (cards con overlay)
 const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: string }> = {
-  Aviso:   { bg: "rgba(220,38,38,0.22)",  text: "#fca5a5", border: "rgba(220,38,38,0.32)"  },
-  Evento:  { bg: "rgba(167,139,250,0.2)", text: "#ddd6fe", border: "rgba(167,139,250,0.3)" },
+  Aviso: { bg: "rgba(220,38,38,0.22)", text: "#fca5a5", border: "rgba(220,38,38,0.32)" },
+  Evento: { bg: "rgba(167,139,250,0.2)", text: "#ddd6fe", border: "rgba(167,139,250,0.3)" },
   General: { bg: "rgba(255,255,255,0.1)", text: "rgba(255,255,255,0.78)", border: "rgba(255,255,255,0.16)" },
 };
 
 // Colores para fondos CLAROS (feed list sobre blanco)
 const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
-  Aviso:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Evento:  { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
+  Aviso: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
+  Evento: { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
   General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
 };
 
@@ -100,18 +100,18 @@ function formatDate(iso?: string | null) {
 
 function formatRelative(iso?: string | null): string {
   if (!iso) return "";
-  const diff   = Date.now() - new Date(iso).getTime();
-  const min    = Math.floor(diff / 60000);
-  const hrs    = Math.floor(diff / 3600000);
-  const days   = Math.floor(diff / 86400000);
-  const weeks  = Math.floor(days / 7);
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  const weeks = Math.floor(days / 7);
   const months = Math.floor(days / 30);
-  if (min < 1)      return "Ahora mismo";
-  if (min < 60)     return `Hace ${min} min`;
-  if (hrs < 24)     return `Hace ${hrs} h`;
-  if (days < 7)     return `Hace ${days} día${days > 1 ? "s" : ""}`;
-  if (weeks < 5)    return `Hace ${weeks} semana${weeks > 1 ? "s" : ""}`;
-  if (months < 12)  return `Hace ${months} mes${months > 1 ? "es" : ""}`;
+  if (min < 1) return "Ahora mismo";
+  if (min < 60) return `Hace ${min} min`;
+  if (hrs < 24) return `Hace ${hrs} h`;
+  if (days < 7) return `Hace ${days} día${days > 1 ? "s" : ""}`;
+  if (weeks < 5) return `Hace ${weeks} semana${weeks > 1 ? "s" : ""}`;
+  if (months < 12) return `Hace ${months} mes${months > 1 ? "es" : ""}`;
   return formatDate(iso);
 }
 
@@ -213,16 +213,20 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
   return (
     <>
       {fuente === "egm" ? (
-        <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(27,63,126,0.55)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }
-          : { background: "#dbeafe", color: "#1e3a8a", border: "1px solid #93c5fd" }) }}>
+        <span className={cls} style={{
+          ...pill, ...(dark
+            ? { background: "rgba(27,63,126,0.55)", color: "#bfdbfe", border: "1px solid rgba(147,197,253,0.3)" }
+            : { background: "#dbeafe", color: "#1e3a8a", border: "1px solid #93c5fd" })
+        }}>
           EGM Atalayas
         </span>
       ) : (
         /* Empresa — verde esmeralda, corporativo */
-        <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(16,185,129,0.22)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.32)" }
-          : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" }) }}>
+        <span className={cls} style={{
+          ...pill, ...(dark
+            ? { background: "rgba(16,185,129,0.22)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.32)" }
+            : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" })
+        }}>
           {nombreEmpresa ?? "Empresa"}
         </span>
       )}
@@ -235,17 +239,21 @@ function Badge({ fuente, nombreEmpresa, categoria, destacado, esNuevoItem, size 
         );
       })()}
       {destacado && (
-        <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
-          : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" }) }}>
+        <span className={cls} style={{
+          ...pill, ...(dark
+            ? { background: "rgba(251,191,36,0.22)", color: "#fde68a", border: "1px solid rgba(251,191,36,0.32)" }
+            : { background: "#fef9c3", color: "#854d0e", border: "1px solid #fde047" })
+        }}>
           ★ Destacado
         </span>
       )}
       {esNuevoItem && (
         /* "Nuevo" — verde menta, fresco y positivo */
-        <span className={cls} style={{ ...pill, ...(dark
-          ? { background: "rgba(52,211,153,0.22)", color: "#a7f3d0", border: "1px solid rgba(52,211,153,0.32)" }
-          : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" }) }}>
+        <span className={cls} style={{
+          ...pill, ...(dark
+            ? { background: "rgba(52,211,153,0.22)", color: "#a7f3d0", border: "1px solid rgba(52,211,153,0.32)" }
+            : { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" })
+        }}>
           Nuevo
         </span>
       )}
@@ -295,11 +303,11 @@ function BorradoresPanel({ borradores, show, onToggle, onEditar, onPublicar, onE
               {n.imagenUrl
                 ? <img src={n.imagenUrl} alt="" className="rounded-xl object-cover shrink-0" style={{ width: 44, height: 44 }} />
                 : <div className="rounded-xl shrink-0 flex items-center justify-center"
-                    style={{ width: 44, height: 44, background: "#eff6ff" }}>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  </div>
+                  style={{ width: 44, height: 44, background: "#eff6ff" }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
               }
 
               {/* Info */}
@@ -357,36 +365,36 @@ function BorradoresPanel({ borradores, show, onToggle, onEditar, onPublicar, onE
 export default function ComunicacionPage() {
   const { usuario } = useAuth();
 
-  const esAdmin        = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
+  const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
   const esAdminGeneral = usuario?.codigoRol === "ROLE_ADMIN";
 
   // Datos
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
-  const [anuncios, setAnuncios]       = useState<Noticia[]>([]);
-  const [borradores, setBorradores]   = useState<Noticia[]>([]);
+  const [anuncios, setAnuncios] = useState<Noticia[]>([]);
+  const [borradores, setBorradores] = useState<Noticia[]>([]);
   const [loadingComunicados, setLoadingComunicados] = useState(true);
-  const [loadingAnuncios, setLoadingAnuncios]       = useState(true);
+  const [loadingAnuncios, setLoadingAnuncios] = useState(true);
 
   // UI
-  const [filtroFuente, setFiltroFuente]       = useState<FiltroFuente>("todos");
+  const [filtroFuente, setFiltroFuente] = useState<FiltroFuente>("todos");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("Todos");
-  const [orden, setOrden]                     = useState<Orden>("reciente");
-  const [showOrden, setShowOrden]       = useState(false);
-  const [modalItem, setModalItem]       = useState<FeedItem | null>(null);
-  const [esMobil, setEsMobil]           = useState(false);
-  const [visibles, setVisibles]         = useState(6);
-  const [busqueda, setBusqueda]         = useState("");
+  const [orden, setOrden] = useState<Orden>("reciente");
+  const [showOrden, setShowOrden] = useState(false);
+  const [modalItem, setModalItem] = useState<FeedItem | null>(null);
+  const [esMobil, setEsMobil] = useState(false);
+  const [visibles, setVisibles] = useState(6);
+  const [busqueda, setBusqueda] = useState("");
 
   // Formulario
-  const [showForm, setShowForm]               = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [showFormComunicado, setShowFormComunicado] = useState(false);
-  const [confirmDelete, setConfirmDelete]     = useState<{ id: string; tipo: "anuncio" | "comunicado" } | null>(null);
-  const [editando, setEditando]               = useState<Noticia | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; tipo: "anuncio" | "comunicado" } | null>(null);
+  const [editando, setEditando] = useState<Noticia | null>(null);
   const [editandoComunicado, setEditandoComunicado] = useState<Comunicado | null>(null);
-  const [initialForm, setInitialForm]         = useState<NoticiaInput>(EMPTY_FORM);
+  const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_FORM);
   const [initialFormComunicado, setInitialFormComunicado] = useState<ComunicadoInput>(EMPTY_FORM_COMUNICADO);
-  const [submitting, setSubmitting]           = useState(false);
-  const [formError, setFormError]             = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Preview antes de publicar
   const [previewItem, setPreviewItem] = useState<FeedItem | null>(null);
@@ -423,7 +431,7 @@ export default function ComunicacionPage() {
     cargarComunicados();
     if (usuario?.empresaId) cargarAnuncios();
     else setLoadingAnuncios(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.empresaId]);
 
   async function cargarComunicados() {
@@ -446,8 +454,11 @@ export default function ComunicacionPage() {
     setLoadingAnuncios(true);
     try {
       const data = await getNoticias(usuario?.empresaId);
-      setAnuncios(data.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado"));
-      setBorradores(data.filter((n) => n.activo && n.estado === "borrador"));
+      const filtrados = usuario?.empresaId
+        ? data.filter((n) => n.empresaId === usuario.empresaId)
+        : data.filter((n) => !n.empresaId);
+      setAnuncios(filtrados.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado"));
+      setBorradores(filtrados.filter((n) => n.activo && n.estado === "borrador"));
     } catch { setAnuncios([]); setBorradores([]); }
     finally { setLoadingAnuncios(false); }
   }
@@ -485,7 +496,7 @@ export default function ComunicacionPage() {
     setPreviewItem(null);
   }, []);
 
-  const cerrarModal   = useCallback(() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }, []);
+  const cerrarModal = useCallback(() => { setModalItem(null); setPreviewItem(null); setModalIndex(null); }, []);
   const confirmarEliminar = useCallback((id: string, tipo: "anuncio" | "comunicado" = "anuncio") => setConfirmDelete({ id, tipo }), []);
 
   async function handleSubmit(data: NoticiaInput) {
@@ -504,7 +515,7 @@ export default function ComunicacionPage() {
     try {
       if (tipo === "comunicado") { await desactivarComunicado(id); await cargarComunicados(); }
       else { await desactivarNoticia(id); await cargarAnuncios(); }
-    } catch {}
+    } catch { }
     finally { setConfirmDelete(null); }
   }
 
@@ -586,11 +597,11 @@ export default function ComunicacionPage() {
   const filtrarBusqueda = (items: FeedItem[]) =>
     q ? items.filter((i) => i.titulo.toLowerCase().includes(q) || i.descripcion.toLowerCase().includes(q)) : items;
 
-  const feedCompletoBuscado   = filtrarBusqueda(feedCompleto);
-  const feedEmpresaBuscado    = filtrarBusqueda(feedEmpresa);
+  const feedCompletoBuscado = filtrarBusqueda(feedCompleto);
+  const feedEmpresaBuscado = filtrarBusqueda(feedEmpresa);
 
   // "Todos": 3 tarjetas grandes siempre las más recientes, lista respeta orden
-  const todosTop   = feedCompletoBuscado.slice(0, 3);
+  const todosTop = feedCompletoBuscado.slice(0, 3);
   const todosResto = ordenarFeed(feedCompletoBuscado.slice(3), orden);
 
   // ── EGM: categorías únicas presentes ──────────────────────────────────────
@@ -655,8 +666,8 @@ export default function ComunicacionPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2 md:gap-3">
             <div className="flex items-center gap-2" style={{ overflowX: esMobil ? "auto" : "visible", scrollbarWidth: "none" }}>
               {([
-                { key: "todos",   label: "Todos" },
-                { key: "egm",     label: "EGM Atalayas" },
+                { key: "todos", label: "Todos" },
+                { key: "egm", label: "EGM Atalayas" },
                 ...(usuario?.empresaId ? [{ key: "empresa", label: usuario.nombreEmpresa ?? "Tu empresa" }] : []),
               ] as { key: FiltroFuente; label: string }[]).map(({ key, label }) => (
                 <button
@@ -665,9 +676,9 @@ export default function ComunicacionPage() {
                   className="shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all"
                   style={{
                     background: filtroFuente === key ? FILTRO_STYLES[key].bg : "var(--blanco)",
-                    color:      filtroFuente === key ? "#fff" : "var(--texto-secundario)",
-                    border:     `1.5px solid ${filtroFuente === key ? "transparent" : "var(--gris-borde)"}`,
-                    boxShadow:  filtroFuente === key ? FILTRO_STYLES[key].shadow : "none",
+                    color: filtroFuente === key ? "#fff" : "var(--texto-secundario)",
+                    border: `1.5px solid ${filtroFuente === key ? "transparent" : "var(--gris-borde)"}`,
+                    boxShadow: filtroFuente === key ? FILTRO_STYLES[key].shadow : "none",
                   }}
                 >
                   {label}
@@ -980,7 +991,7 @@ export default function ComunicacionPage() {
 
       {/* ── CONFIRMACIÓN ELIMINAR ────────────────────────────────────────── */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4"
+        <div className="fixed inset-0 z-160 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.62)", backdropFilter: "blur(6px)", animation: "modalBgIn 0.2s ease" }}
           onClick={() => setConfirmDelete(null)}>
           <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
@@ -1044,7 +1055,7 @@ export default function ComunicacionPage() {
 
       {/* ── TOAST ────────────────────────────────────────────────────────── */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[300] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
+        <div className="fixed bottom-6 left-1/2 z-300 flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg, #1b3f7e 0%, #2563eb 100%)", color: "#fff", animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -1062,7 +1073,7 @@ export default function ComunicacionPage() {
           navItems={feedNavegable}
           navIndex={modalIndex ?? feedNavegable.findIndex((i) => i.id === (previewItem ?? modalItem!).id)}
           nombreEmpresa={usuario?.nombreEmpresa}
-          puedeEditar={!previewItem && ((( previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
+          puedeEditar={!previewItem && (((previewItem ?? modalItem!).fuente === "empresa" && esAdmin) || ((previewItem ?? modalItem!).fuente === "egm" && esAdminGeneral))}
           onClose={cerrarModal}
           onNavigate={abrirDetalle}
           onEditar={(item) => {
@@ -1084,23 +1095,23 @@ export default function ComunicacionPage() {
 // ── DETALLE MODAL ─────────────────────────────────────────────────────────────
 const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, navIndex, nombreEmpresa, puedeEditar,
   onClose, onNavigate, onEditar, onEliminar }: {
-  item: FeedItem;
-  isPreview: boolean;
-  navItems: FeedItem[];
-  navIndex: number;
-  nombreEmpresa?: string | null;
-  puedeEditar: boolean;
-  onClose: () => void;
-  onNavigate: (item: FeedItem, idx: number) => void;
-  onEditar: (item: FeedItem) => void;
-  onEliminar: (id: string) => void;
-}) {
-  const embedUrl     = useMemo(() => item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null, [item.videoUrl]);
-  const contenidoMd  = useMemo(() => renderMarkdown(item.descripcion), [item.descripcion]);
-  const hasPrev   = !isPreview && navIndex > 0;
-  const hasNext   = !isPreview && navIndex < navItems.length - 1;
-  const zIdx      = isPreview ? 220 : 150;
-  const modalRef  = useRef<HTMLDivElement>(null);
+    item: FeedItem;
+    isPreview: boolean;
+    navItems: FeedItem[];
+    navIndex: number;
+    nombreEmpresa?: string | null;
+    puedeEditar: boolean;
+    onClose: () => void;
+    onNavigate: (item: FeedItem, idx: number) => void;
+    onEditar: (item: FeedItem) => void;
+    onEliminar: (id: string) => void;
+  }) {
+  const embedUrl = useMemo(() => item.videoUrl ? getVideoEmbedUrl(item.videoUrl) : null, [item.videoUrl]);
+  const contenidoMd = useMemo(() => renderMarkdown(item.descripcion), [item.descripcion]);
+  const hasPrev = !isPreview && navIndex > 0;
+  const hasNext = !isPreview && navIndex < navItems.length - 1;
+  const zIdx = isPreview ? 220 : 150;
+  const modalRef = useRef<HTMLDivElement>(null);
   const [dir, setDir] = useState<"next" | "prev" | null>(null);
 
   function goNext() { setDir(null); requestAnimationFrame(() => { setDir("next"); onNavigate(navItems[navIndex + 1], navIndex + 1); }); }
@@ -1111,11 +1122,11 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
     if (isPreview) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" && hasNext) goNext();
-      if (e.key === "ArrowLeft"  && hasPrev) goPrev();
+      if (e.key === "ArrowLeft" && hasPrev) goPrev();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navIndex, hasPrev, hasNext, isPreview]);
 
   // Focus trap
@@ -1126,11 +1137,11 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     const first = focusable[0];
-    const last  = focusable[focusable.length - 1];
+    const last = focusable[focusable.length - 1];
     function trap(e: KeyboardEvent) {
       if (e.key !== "Tab") return;
       if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last?.focus(); } }
-      else            { if (document.activeElement === last)  { e.preventDefault(); first?.focus(); } }
+      else { if (document.activeElement === last) { e.preventDefault(); first?.focus(); } }
     }
     document.addEventListener("keydown", trap);
     first?.focus();
@@ -1141,7 +1152,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
     <>
       <Modal onClose={onClose} zIndex={zIdx} maxWidth="42rem" modalRef={modalRef}
         navPrev={hasPrev ? goPrev : undefined}
-        navNext={hasNext  ? goNext : undefined}>
+        navNext={hasNext ? goNext : undefined}>
         {/* Imagen / cabecera — no scrollea */}
         {item.imagenUrl ? (
           /* ── Con imagen: aspect ratio normal ── */
@@ -1161,7 +1172,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
                 {item.fijado && (
                   <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                     style={{ background: "rgba(79,70,229,0.45)", color: "#c7d2fe", backdropFilter: "blur(6px)" }}>
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" /></svg>
                     Fijado
                   </span>
                 )}
@@ -1177,8 +1188,8 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
               <div className="absolute top-3 left-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
                 style={{ transform: "translateX(-50%)", background: "rgba(0,0,0,0.45)", color: "#fde68a", backdropFilter: "blur(8px)", border: "1px solid rgba(253,230,138,0.35)", whiteSpace: "nowrap" }}>
                 <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
                 Vista previa
               </div>
@@ -1192,7 +1203,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
                   {item.fijado && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                       style={{ background: "rgba(79,70,229,0.45)", color: "#c7d2fe", backdropFilter: "blur(6px)" }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" /></svg>
                       Fijado
                     </span>
                   )}
@@ -1231,7 +1242,7 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
               <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--gris-borde)", paddingTop: "1.25rem" }}>
 
                 <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                   <p className="text-xs font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.08em" }}>Recursos adjuntos</p>
                 </div>
 
@@ -1255,10 +1266,10 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}>
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       </div>
                       <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento adjunto"}</span>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     </a>
                   </div>
                 )}
@@ -1273,10 +1284,10 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; }}>
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                       </div>
                       <span className="text-sm font-medium flex-1 truncate" style={{ color: "#2563eb" }}>{item.enlaceTexto ?? "Ver enlace"}</span>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" /></svg>
                     </a>
                   </div>
                 )}
@@ -1293,51 +1304,51 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
 
           {/* Footer */}
           <div className="flex items-center gap-3 px-6 py-4 md:px-8" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-              {isPreview && (
-                <button onClick={onClose}
-                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-xl"
-                  style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1.04)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                  </svg>
-                  Volver a editar
+            {isPreview && (
+              <button onClick={onClose}
+                className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-xl"
+                style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Volver a editar
+              </button>
+            )}
+            {!isPreview && puedeEditar && item.vistas !== undefined && item.vistas > 0 && (
+              <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
+              </span>
+            )}
+            {puedeEditar && (
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Editar — pill azul con scale */}
+                <button onClick={() => { onClose(); onEditar(item); }}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-xl"
+                  style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
+                  Editar
                 </button>
-              )}
-              {!isPreview && puedeEditar && item.vistas !== undefined && item.vistas > 0 && (
-                <span className="flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                  {item.vistas} {item.vistas === 1 ? "vista" : "vistas"}
-                </span>
-              )}
-              {puedeEditar && (
-                <div className="flex items-center gap-2 ml-auto">
-                  {/* Editar — pill azul con scale */}
-                  <button onClick={() => { onClose(); onEditar(item); }}
-                    className="text-sm font-semibold px-4 py-1.5 rounded-xl"
-                    style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
-                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
-                    Editar
-                  </button>
-                  <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
-                    className="text-sm font-semibold px-4 py-1.5 rounded-xl"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.border = "1px solid #fca5a5"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(220,38,38,0.18)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.border = "1px solid var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
-                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
-                    Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
+                <button onClick={() => { onClose(); onEliminar((item._raw as Noticia).anuncioId); }}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-xl"
+                  style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.border = "1px solid #fca5a5"; e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(220,38,38,0.18)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.border = "1px solid var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.95)"; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}>
+                  Eliminar
+                </button>
+              </div>
+            )}
           </div>
+        </div>
       </Modal>
     </>
   );
@@ -1347,26 +1358,26 @@ const DetalleModal = memo(function DetalleModal({ item, isPreview, navItems, nav
 function SourceView({ items, orden, visibles, setVisibles, esAdmin, esMobil, nombreEmpresa,
   gradColor, seccionLabel, verMasLabel, onOpen, onEdit, onDelete, abrirEditar, handleDesactivar,
   borradoresSlot }: {
-  items: FeedItem[];
-  orden: Orden;
-  visibles: number;
-  setVisibles: React.Dispatch<React.SetStateAction<number>>;
-  esAdmin: boolean;
-  esMobil: boolean;
-  nombreEmpresa?: string | null;
-  gradColor: string;
-  seccionLabel: string;
-  verMasLabel: string;
-  onOpen: (item: FeedItem) => void;
-  onEdit: (item: FeedItem) => void;
-  onDelete: (item: FeedItem) => void;
-  abrirEditar: (n: Noticia) => void;
-  handleDesactivar: (id: string) => void;
-  borradoresSlot?: React.ReactNode;
-}) {
+    items: FeedItem[];
+    orden: Orden;
+    visibles: number;
+    setVisibles: React.Dispatch<React.SetStateAction<number>>;
+    esAdmin: boolean;
+    esMobil: boolean;
+    nombreEmpresa?: string | null;
+    gradColor: string;
+    seccionLabel: string;
+    verMasLabel: string;
+    onOpen: (item: FeedItem) => void;
+    onEdit: (item: FeedItem) => void;
+    onDelete: (item: FeedItem) => void;
+    abrirEditar: (n: Noticia) => void;
+    handleDesactivar: (id: string) => void;
+    borradoresSlot?: React.ReactNode;
+  }) {
   // Las tarjetas destacadas SIEMPRE muestran las más recientes
   const itemsByReciente = ordenarFeed(items, "reciente");
-  const top  = itemsByReciente.slice(0, 2);
+  const top = itemsByReciente.slice(0, 2);
   // El listado respeta el orden elegido por el usuario
   const rest = ordenarFeed(itemsByReciente.slice(2), orden);
 
@@ -1469,7 +1480,7 @@ const FeaturedCard = memo(function FeaturedCard({ item, size, onOpen, fill = fal
   item: FeedItem; size: "large" | "small"; onOpen: () => void; fill?: boolean;
   puedeEditar?: boolean; onEdit?: () => void; onDelete?: () => void; prominent?: boolean; compact?: boolean;
 }) {
-  const isLarge   = size === "large";
+  const isLarge = size === "large";
   const bgGradient = item.fuente === "egm" ? GRAD_EGM : GRAD_EMP;
 
   return (
@@ -1556,21 +1567,21 @@ const FeaturedCard = memo(function FeaturedCard({ item, size, onOpen, fill = fal
                 {item.videoUrl && (
                   <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
-                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21"/></svg>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21" /></svg>
                     Vídeo
                   </span>
                 )}
                 {item.adjuntoUrl && (
                   <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
-                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     PDF
                   </span>
                 )}
                 {item.enlaceUrl && (
                   <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(0,0,0,0.42)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(6px)" }}>
-                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1"/></svg>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1" /></svg>
                     Enlace
                   </span>
                 )}
@@ -1705,7 +1716,7 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
         <div className="flex items-center gap-1.5">
           {item.fijado && (
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth={2.5} className="shrink-0">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
           )}
           <h3 className="font-bold leading-snug line-clamp-2 transition-colors"
@@ -1726,21 +1737,21 @@ const FeedRow = memo(function FeedRow({ item, isLast, puedeEditar, esMobil, nomb
             {item.videoUrl && (
               <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                 style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}>
-                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21"/></svg>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polygon points="5,3 19,12 5,21" /></svg>
                 Vídeo
               </span>
             )}
             {item.adjuntoUrl && (
               <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                 style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #86efac" }}>
-                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 PDF
               </span>
             )}
             {item.enlaceUrl && (
               <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                 style={{ background: "#faf5ff", color: "#7c3aed", border: "1px solid #c4b5fd" }}>
-                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1"/></svg>
+                <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /><path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.1 1.1" /></svg>
                 Enlace
               </span>
             )}
@@ -1907,8 +1918,8 @@ function AccordionHeader({ label, open, badge, onClick }: {
         <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: label === "Multimedia" ? "#eff6ff" : "#f0fdf4", border: `1px solid ${label === "Multimedia" ? "#bfdbfe" : "#bbf7d0"}` }}>
           {label === "Multimedia"
-            ? <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke={label === "Multimedia" ? "#2563eb" : "#16a34a"} strokeWidth={1.8}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-5-5L5 21"/></svg>
-            : <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={1.8}><circle cx="12" cy="12" r="9"/><path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            ? <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke={label === "Multimedia" ? "#2563eb" : "#16a34a"} strokeWidth={1.8}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-5-5L5 21" /></svg>
+            : <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={1.8}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" /></svg>
           }
         </div>
         {/* Texto */}
@@ -2010,7 +2021,7 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
     <button type="button" onClick={onClick} disabled={loading || disabled}
       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all disabled:opacity-40"
       style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", color: "#1d4ed8", border: "1px solid #bfdbfe", boxShadow: "0 1px 6px rgba(37,99,235,0.15)" }}
-      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(37,99,235,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
+      onMouseEnter={(e) => { if (!loading && !disabled) { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(37,99,235,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
       onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)"; e.currentTarget.style.boxShadow = "0 1px 6px rgba(37,99,235,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}>
       {loading
         ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -2034,37 +2045,37 @@ function FormComunicado({
   onPreview: (item: FeedItem) => void;
 }) {
   type Tab = "contenido" | "multimedia" | "publicacion";
-  const [tab, setTab]         = useState<Tab>("contenido");
-  const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
+  const [tab, setTab] = useState<Tab>("contenido");
+  const visitedTabs = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<ComunicadoInput>({ ...EMPTY_FORM_COMUNICADO, ...initialValues });
-  const initialSnapshot       = useRef<string>(JSON.stringify(initialValues));
-  const isDirty               = JSON.stringify(form) !== initialSnapshot.current;
-  const canSubmit             = form.titulo.trim().length > 0 && form.mensaje.trim().length > 0;
+  const [form, setForm] = useState<ComunicadoInput>({ ...EMPTY_FORM_COMUNICADO, ...initialValues });
+  const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
+  const isDirty = JSON.stringify(form) !== initialSnapshot.current;
+  const canSubmit = form.titulo.trim().length > 0 && form.mensaje.trim().length > 0;
 
   const [confirmClose, setConfirmClose] = useState(false);
   const handleRequestClose = () => { if (isDirty) setConfirmClose(true); else onClose(); };
 
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
-  const [aiLoading, setAiLoading]       = useState<"titulo" | "mensaje" | null>(null);
-  const [localError, setLocalError]     = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState<"titulo" | "mensaje" | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const adjuntoRef   = useRef<HTMLInputElement>(null);
-  const errorMsg     = localError ?? formError;
+  const adjuntoRef = useRef<HTMLInputElement>(null);
+  const errorMsg = localError ?? formError;
 
-  const tituloError  = touched && !form.titulo.trim();
+  const tituloError = touched && !form.titulo.trim();
   const mensajeError = touched && !form.mensaje.trim();
 
   const badgeMult = useMemo(() => [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length, [form.imagenUrl, form.videoUrl, form.adjuntoUrl]);
-  const badgePub  = useMemo(() => [form.enlaceUrl, form.destacado].filter(Boolean).length, [form.enlaceUrl, form.destacado]);
+  const badgePub = useMemo(() => [form.enlaceUrl, form.destacado].filter(Boolean).length, [form.enlaceUrl, form.destacado]);
   const badgeCont = useMemo(() => touched ? [!form.titulo.trim(), !form.mensaje.trim()].filter(Boolean).length : 0, [touched, form.titulo, form.mensaje]);
-  const embedUrl  = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
+  const embedUrl = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
 
   const TABS = useMemo<{ id: Tab; label: string; badge?: number; error?: boolean }[]>(() => [
-    { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
-    { id: "multimedia",  label: "Multimedia",  badge: badgeMult || undefined },
-    { id: "publicacion", label: "Publicación", badge: badgePub  || undefined },
+    { id: "contenido", label: "Contenido", badge: badgeCont || undefined, error: badgeCont > 0 },
+    { id: "multimedia", label: "Multimedia", badge: badgeMult || undefined },
+    { id: "publicacion", label: "Publicación", badge: badgePub || undefined },
   ], [badgeCont, badgeMult, badgePub]);
 
   useEffect(() => {
@@ -2103,9 +2114,10 @@ function FormComunicado({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: campo === "titulo"
-            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
-            : `Mejora la redacción de este comunicado de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
+          messages: [{
+            role: "user", content: campo === "titulo"
+              ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un comunicado de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
+              : `Mejora la redacción de este comunicado de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
           }],
           context: {},
         }),
@@ -2137,443 +2149,443 @@ function FormComunicado({
 
   return (
     <>
-    {/* Overlay */}
-    <div className="fixed inset-0 flex items-start justify-center"
-      style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
-      onClick={handleRequestClose}>
+      {/* Overlay */}
+      <div className="fixed inset-0 flex items-start justify-center"
+        style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
+        onClick={handleRequestClose}>
 
-      <div className="relative w-full flex flex-col"
-        style={{
-          maxWidth: 660,
-          height: "auto",
-          maxHeight: "calc(100vh - 112px)",
-          background: "var(--blanco)",
-          borderRadius: 20,
-          boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
-          overflow: "hidden",
-          isolation: "isolate",
-          animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-        onClick={(e) => e.stopPropagation()}>
+        <div className="relative w-full flex flex-col"
+          style={{
+            maxWidth: 660,
+            height: "auto",
+            maxHeight: "calc(100vh - 112px)",
+            background: "var(--blanco)",
+            borderRadius: 20,
+            boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
+            overflow: "hidden",
+            isolation: "isolate",
+            animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+          onClick={(e) => e.stopPropagation()}>
 
-        {/* ── Cabecera ── */}
-        <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
-          <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1 min-w-0">
-              <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.65rem, 4vw, 2.1rem)", lineHeight: 1.1, letterSpacing: "-0.03em", color: "#ffffff", margin: 0, textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}>
-                {editando ? "Editar comunicado" : "Nuevo comunicado"}
-              </h3>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
-                {editando ? "Modifica el comunicado y guarda los cambios." : "Visible para todos los empleados de la plataforma."}
-              </p>
-            </div>
-            <button onClick={handleRequestClose}
-              className="shrink-0 flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
-              title="Cerrar (Esc)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ── Tabs ── */}
-        <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
-          <div className="flex">
-            {TABS.map(({ id, label, badge, error }) => (
-              <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
-                className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
-                style={{ color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)", background: "none" }}>
-                {label}
-                {badge ? (
-                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
-                    style={{ background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db", color: error || tab === id ? "#fff" : "var(--texto-muted)", minWidth: 18, textAlign: "center" }}>
-                    {badge}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-          <div style={{
-            position: "absolute", bottom: 0, left: 0,
-            width: `${100 / TABS.length}%`, height: 2,
-            borderRadius: "2px 2px 0 0",
-            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
-            transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
-            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
-          }} />
-        </div>
-
-        {/* ── Cuerpo con scroll ── */}
-        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
-
-          {/* ── TAB: Contenido ── */}
-          <div style={{ display: tab === "contenido" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div>
-              <FieldLabel label="Título" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
-                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
-                  </div>
-                }
-              />
-              <input type="text" value={form.titulo}
-                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                placeholder="Ej: Networking Day — Viernes 25 de abril"
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
-                onFocus={onFocus} onBlur={onBlur}
-              />
-              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
-            </div>
-
-            <div>
-              <FieldLabel label="Contenido" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.mensaje.length} car.</span>
-                    <AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />
-                  </div>
-                }
-              />
-              <textarea value={form.mensaje}
-                onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-                placeholder="Escribe el contenido. Puedes usar **negrita** y - listas."
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
-                style={{ ...inputStyle, minHeight: 180, lineHeight: 1.7, ...(mensajeError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
-                onFocus={onFocus} onBlur={onBlur}
-              />
-              {mensajeError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El contenido es obligatorio</p>}
-            </div>
-
-            <div>
-              <FieldLabel label="Categoría" />
-              <div className="flex gap-2 flex-wrap">
-                {CATS_COM.map((cat) => {
-                  const active = (form.categoria ?? "General") === cat;
-                  const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
-                  return (
-                    <button key={cat} type="button"
-                      onClick={() => setForm({ ...form, categoria: cat as ComunicadoInput["categoria"] })}
-                      className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
-                      style={{
-                        background: active ? col.bg : "var(--blanco)",
-                        color: active ? col.text : "var(--texto-muted)",
-                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
-                        boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
-                      }}>
-                      {cat}
-                    </button>
-                  );
-                })}
+          {/* ── Cabecera ── */}
+          <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
+            <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-1 min-w-0">
+                <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.65rem, 4vw, 2.1rem)", lineHeight: 1.1, letterSpacing: "-0.03em", color: "#ffffff", margin: 0, textShadow: "0 1px 12px rgba(0,0,0,0.18)" }}>
+                  {editando ? "Editar comunicado" : "Nuevo comunicado"}
+                </h3>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
+                  {editando ? "Modifica el comunicado y guarda los cambios." : "Visible para todos los empleados de la plataforma."}
+                </p>
               </div>
+              <button onClick={handleRequestClose}
+                className="shrink-0 flex items-center justify-center"
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
+                title="Cerrar (Esc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
-          </div></div>
+          </div>
 
-          {/* ── TAB: Multimedia ── */}
-          {visitedTabs.current.has("multimedia") && (
-          <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            {/* Imagen */}
-            <div>
-              <FieldLabel label="Imagen de portada" />
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              {form.imagenUrl ? (
-                <div className="relative mt-1">
-                  <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
-                  <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
-                  <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                    className="absolute top-2 right-2 flex items-center justify-center transition-all"
-                    style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    title="Quitar imagen"><IconX size={12} /></button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                  className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
-                  style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                  onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
-                  onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                  onDrop={(e) => {
-                    e.preventDefault(); e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)";
-                    const file = e.dataTransfer.files?.[0];
-                    if (file?.type.startsWith("image/")) handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
-                  }}>
-                  {uploadingImg
-                    ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                    : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+          {/* ── Tabs ── */}
+          <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
+            <div className="flex">
+              {TABS.map(({ id, label, badge, error }) => (
+                <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
+                  style={{ color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)", background: "none" }}>
+                  {label}
+                  {badge ? (
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
+                      style={{ background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db", color: error || tab === id ? "#fff" : "var(--texto-muted)", minWidth: 18, textAlign: "center" }}>
+                      {badge}
+                    </span>
+                  ) : null}
                 </button>
-              )}
+              ))}
             </div>
+            <div style={{
+              position: "absolute", bottom: 0, left: 0,
+              width: `${100 / TABS.length}%`, height: 2,
+              borderRadius: "2px 2px 0 0",
+              background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
+              transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
+              transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
+            }} />
+          </div>
 
-            {/* Vídeo */}
-            <div>
-              <FieldLabel label="Vídeo (YouTube o Vimeo)" />
-              {embedUrl ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                      <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
-                    </div>
-                    <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
-                      className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
-                      onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-                      onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
-                  </div>
-                  <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
-                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  <input type="url" value={form.videoUrl || ""}
-                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
-                    placeholder="https://youtube.com/watch?v=..."
-                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          {/* ── Cuerpo con scroll ── */}
+          <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
+
+            {/* ── TAB: Contenido ── */}
+            <div style={{ display: tab === "contenido" ? "block" : "none" }}>
+              <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                <div>
+                  <FieldLabel label="Título" required
+                    right={
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                        <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                      </div>
+                    }
                   />
-                  {form.videoUrl && (
-                    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                      Solo se pueden incrustar vídeos de YouTube o Vimeo
-                    </p>
-                  )}
+                  <input type="text" value={form.titulo}
+                    onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                    placeholder="Ej: Networking Day — Viernes 25 de abril"
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                    style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
                 </div>
-              )}
-            </div>
 
-            {/* Adjunto */}
-            <div>
-              <FieldLabel label="Documento adjunto" />
-              <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
-              {form.adjuntoUrl ? (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
-                  <span style={{ color: "#16a34a" }}><IconDoc /></span>
-                  <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
-                  <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
-                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
+                <div>
+                  <FieldLabel label="Contenido" required
+                    right={
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.mensaje.length} car.</span>
+                        <AIButton loading={aiLoading === "mensaje"} disabled={!form.mensaje.trim()} label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("mensaje")} />
+                      </div>
+                    }
+                  />
+                  <textarea value={form.mensaje}
+                    onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
+                    placeholder="Escribe el contenido. Puedes usar **negrita** y - listas."
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
+                    style={{ ...inputStyle, minHeight: 180, lineHeight: 1.7, ...(mensajeError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {mensajeError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El contenido es obligatorio</p>}
                 </div>
-              ) : (
-                <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
-                  style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                  onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
-                  {uploadingAdj
-                    ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                    : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
-                </button>
-              )}
-            </div>
-          </div></div>
-          )}
 
-          {/* ── TAB: Publicación ── */}
-          {visitedTabs.current.has("publicacion") && (
-          <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            {/* Enlace externo */}
-            <div>
-              <FieldLabel label="Enlace externo" />
-              <div className="flex flex-col gap-2">
-                <input type="url" value={form.enlaceUrl || ""}
-                  onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
-                  placeholder="https://..."
-                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                  style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                />
-                {form.enlaceUrl && (
-                  <>
-                    <input type="text" value={form.enlaceTexto || ""}
-                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
-                      placeholder='Texto del enlace — ej: "Más información"'
-                      className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                    />
-                    <div className="flex flex-col gap-1.5 pt-1">
-                      <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el comunicado</p>
-                      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                <div>
+                  <FieldLabel label="Categoría" />
+                  <div className="flex gap-2 flex-wrap">
+                    {CATS_COM.map((cat) => {
+                      const active = (form.categoria ?? "General") === cat;
+                      const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
+                      return (
+                        <button key={cat} type="button"
+                          onClick={() => setForm({ ...form, categoria: cat as ComunicadoInput["categoria"] })}
+                          className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
+                          style={{
+                            background: active ? col.bg : "var(--blanco)",
+                            color: active ? col.text : "var(--texto-muted)",
+                            border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
+                            boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
+                          }}>
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div></div>
+
+            {/* ── TAB: Multimedia ── */}
+            {visitedTabs.current.has("multimedia") && (
+              <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
+                <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                  {/* Imagen */}
+                  <div>
+                    <FieldLabel label="Imagen de portada" />
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    {form.imagenUrl ? (
+                      <div className="relative mt-1">
+                        <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
+                        <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                          className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                          style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          title="Quitar imagen"><IconX size={12} /></button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
+                        className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
+                        style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                        onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; } }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                        onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                        onDrop={(e) => {
+                          e.preventDefault(); e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)";
+                          const file = e.dataTransfer.files?.[0];
+                          if (file?.type.startsWith("image/")) handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                        }}>
+                        {uploadingImg
+                          ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                          : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Vídeo */}
+                  <div>
+                    <FieldLabel label="Vídeo (YouTube o Vimeo)" />
+                    {embedUrl ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
+                          <div className="flex items-center gap-2">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
                           </div>
-                          <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>{form.enlaceTexto?.trim() || "Ver enlace"}</span>
+                          <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
+                            className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                            style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
                         </div>
-                        <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
-                          className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                        <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
+                          <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        <input type="url" value={form.videoUrl || ""}
+                          onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                          placeholder="https://youtube.com/watch?v=..."
+                          className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                          style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                        />
+                        {form.videoUrl && (
+                          <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                            Solo se pueden incrustar vídeos de YouTube o Vimeo
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Adjunto */}
+                  <div>
+                    <FieldLabel label="Documento adjunto" />
+                    <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
+                    {form.adjuntoUrl ? (
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
+                        <span style={{ color: "#16a34a" }}><IconDoc /></span>
+                        <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>{form.adjuntoNombre ?? "Documento"}</span>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                          className="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                          style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
                           onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
                           onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+                    ) : (
+                      <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
+                        style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                        onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                        {uploadingAdj
+                          ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                          : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+                      </button>
+                    )}
+                  </div>
+                </div></div>
+            )}
 
-            {/* Estado: fijar + borrador */}
-            <div>
-              <FieldLabel label="Estado" />
-              <div className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${form.destacado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "border-color 0.18s" }}>
-                {/* Fila: Fijar */}
-                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.destacado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
-                  onClick={() => setForm({ ...form, destacado: !form.destacado })}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.destacado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.destacado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.destacado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
-                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+            {/* ── TAB: Publicación ── */}
+            {visitedTabs.current.has("publicacion") && (
+              <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
+                <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                  {/* Enlace externo */}
+                  <div>
+                    <FieldLabel label="Enlace externo" />
+                    <div className="flex flex-col gap-2">
+                      <input type="url" value={form.enlaceUrl || ""}
+                        onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                        placeholder="https://..."
+                        className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                        style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                      />
+                      {form.enlaceUrl && (
+                        <>
+                          <input type="text" value={form.enlaceTexto || ""}
+                            onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                            placeholder='Texto del enlace — ej: "Más información"'
+                            className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                          />
+                          <div className="flex flex-col gap-1.5 pt-1">
+                            <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el comunicado</p>
+                            <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                </div>
+                                <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>{form.enlaceTexto?.trim() || "Ver enlace"}</span>
+                              </div>
+                              <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
+                                className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                                style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>Quitar</button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <Toggle checked={form.destacado} onChange={(v) => setForm({ ...form, destacado: v })} color="#2563eb" />
-                </div>
 
-                {/* Separador */}
-                {!form.destacado && form.estado !== "borrador" && (
-                  <div style={{ height: 1, background: "var(--gris-borde)" }} />
-                )}
+                  {/* Estado: fijar + borrador */}
+                  <div>
+                    <FieldLabel label="Estado" />
+                    <div className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${form.destacado ? "#bfdbfe" : "var(--gris-borde)"}`, transition: "border-color 0.18s" }}>
+                      {/* Fila: Fijar */}
+                      <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                        style={{ background: form.destacado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
+                        onClick={() => setForm({ ...form, destacado: !form.destacado })}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: form.destacado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.destacado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold leading-tight" style={{ color: form.destacado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
+                            <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+                          </div>
+                        </div>
+                        <Toggle checked={form.destacado} onChange={(v) => setForm({ ...form, destacado: v })} color="#2563eb" />
+                      </div>
 
-                {/* Fila: Borrador — solo al crear, no al editar un publicado */}
-                {!(editando && editando.estado !== "borrador") && (
-                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
-                  onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
-                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                      {/* Separador */}
+                      {!form.destacado && form.estado !== "borrador" && (
+                        <div style={{ height: 1, background: "var(--gris-borde)" }} />
+                      )}
+
+                      {/* Fila: Borrador — solo al crear, no al editar un publicado */}
+                      {!(editando && editando.estado !== "borrador") && (
+                        <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                          style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
+                          onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                              <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                            </div>
+                          </div>
+                          <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
-                </div>
-                )}
-              </div>
+                </div></div>
+            )}
+
+          </div>{/* fin scroll */}
+
+          {/* ── Footer ── */}
+          <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
+            style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+            <div className="flex-1 min-w-0">
+              {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
             </div>
-          </div></div>
-          )}
-
-        </div>{/* fin scroll */}
-
-        {/* ── Footer ── */}
-        <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
-          style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-          <div className="flex-1 min-w-0">
-            {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleRequestClose}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-              Cancelar
-            </button>
-            <button type="button" onClick={handlePreview}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-              Previsualizar
-            </button>
-            {(() => {
-              const active = canSubmit && (!editando || isDirty);
-              const bg = active ? GRAD_EGM : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
-              return (
-                <button
-                  onClick={() => { if (!active) { setTouched(true); return; } onSubmit(form); }}
-                  disabled={submitting}
-                  title={!canSubmit ? "Título y contenido son obligatorios" : editando && !isDirty ? "No has cambiado nada aún" : undefined}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl"
-                  style={{ background: bg, color: "#fff", boxShadow: active ? "0 2px 8px rgba(27,63,126,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, transform 0.18s ease" }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; }}}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
-                </button>
-              );
-            })()}
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={handleRequestClose}
+                className="text-sm px-4 py-2 rounded-xl font-medium"
+                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={handlePreview}
+                className="text-sm px-4 py-2 rounded-xl font-medium"
+                style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                Previsualizar
+              </button>
+              {(() => {
+                const active = canSubmit && (!editando || isDirty);
+                const bg = active ? GRAD_EGM : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
+                return (
+                  <button
+                    onClick={() => { if (!active) { setTouched(true); return; } onSubmit(form); }}
+                    disabled={submitting}
+                    title={!canSubmit ? "Título y contenido son obligatorios" : editando && !isDirty ? "No has cambiado nada aún" : undefined}
+                    className="text-sm font-semibold px-5 py-2 rounded-xl"
+                    style={{ background: bg, color: "#fff", boxShadow: active ? "0 2px 8px rgba(27,63,126,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                    onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                    {submitting ? "Guardando..." : editando ? "Guardar cambios" : "Publicar comunicado"}
+                  </button>
+                );
+              })()}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {/* Diálogo confirmar cierre */}
-    {confirmClose && (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
-        <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
-          style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.22)", border: "1px solid var(--gris-borde)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+      {/* Diálogo confirmar cierre */}
+      {confirmClose && (
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+            style={{ background: "var(--blanco)", boxShadow: "0 32px 80px rgba(0,0,0,0.22)", border: "1px solid var(--gris-borde)", animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)" }}>
+            <div className="flex justify-center">
+              <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+              </div>
+            </div>
+            <div className="text-center flex flex-col gap-1">
+              <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
+              <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => setConfirmClose(false)}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold"
+                style={{ background: GRAD_EGM, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(27,63,126,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+                Seguir editando
+              </button>
+              <button onClick={onClose}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold"
+                style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+                Descartar cambios
+              </button>
             </div>
           </div>
-          <div className="text-center flex flex-col gap-1">
-            <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
-            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
-          </div>
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setConfirmClose(false)}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: GRAD_EGM, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(27,63,126,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
-              Seguir editando
-            </button>
-            <button onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
-              Descartar cambios
-            </button>
-          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
@@ -2592,25 +2604,25 @@ function FormAnuncio({
   onPreview: (item: FeedItem) => void;
 }) {
   type Tab = "contenido" | "multimedia" | "publicacion";
-  const [tab, setTab]         = useState<Tab>("contenido");
-  const visitedTabs           = useRef<Set<Tab>>(new Set(["contenido"]));
+  const [tab, setTab] = useState<Tab>("contenido");
+  const visitedTabs = useRef<Set<Tab>>(new Set(["contenido"]));
   const [touched, setTouched] = useState(false);
-  const [form, setForm]       = useState<NoticiaInput>({ ...EMPTY_FORM, ...initialValues });
+  const [form, setForm] = useState<NoticiaInput>({ ...EMPTY_FORM, ...initialValues });
   // Snapshot inmutable para detectar si el usuario cambió algo
   const initialSnapshot = useRef<string>(JSON.stringify(initialValues));
-  const isDirty   = JSON.stringify(form) !== initialSnapshot.current;
+  const isDirty = JSON.stringify(form) !== initialSnapshot.current;
   const canSubmit = form.titulo.trim().length > 0 && form.contenido.trim().length > 0;
 
   const [confirmClose, setConfirmClose] = useState(false);
   const handleRequestClose = () => { if (isDirty) setConfirmClose(true); else onClose(); };
 
-  const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
+  const [imagenModo, setImagenModo] = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
-  const [aiLoading, setAiLoading]       = useState<"titulo" | "contenido" | null>(null);
-  const [localError, setLocalError]     = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState<"titulo" | "contenido" | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const adjuntoRef   = useRef<HTMLInputElement>(null);
+  const adjuntoRef = useRef<HTMLInputElement>(null);
 
   const errorMsg = localError ?? formError;
 
@@ -2646,9 +2658,10 @@ function FormAnuncio({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: campo === "titulo"
-            ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un anuncio de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
-            : `Mejora la redacción de este anuncio de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
+          messages: [{
+            role: "user", content: campo === "titulo"
+              ? `Sugiere un título corto (máximo 80 caracteres), claro y atractivo para un anuncio de empresa con el siguiente contenido. Devuelve SOLO el título, sin comillas ni explicaciones.\n\nContenido: ${base}`
+              : `Mejora la redacción de este anuncio de empresa. Hazlo más claro y profesional. Devuelve SOLO el texto mejorado, sin comentarios adicionales.\n\nTexto original: ${base}`
           }],
           context: {},
         }),
@@ -2684,18 +2697,18 @@ function FormAnuncio({
     onPreview(item);
   }
 
-  const tituloError    = touched && !form.titulo.trim();
+  const tituloError = touched && !form.titulo.trim();
   const contenidoError = touched && !form.contenido.trim();
 
   const badgeMult = useMemo(() => [form.imagenUrl, form.videoUrl, form.adjuntoUrl].filter(Boolean).length, [form.imagenUrl, form.videoUrl, form.adjuntoUrl]);
-  const badgePub  = useMemo(() => [form.enlaceUrl, form.fijado, form.estado === "borrador"].filter(Boolean).length, [form.enlaceUrl, form.fijado, form.estado]);
-  const embedUrl  = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
+  const badgePub = useMemo(() => [form.enlaceUrl, form.fijado, form.estado === "borrador"].filter(Boolean).length, [form.enlaceUrl, form.fijado, form.estado]);
+  const embedUrl = useMemo(() => form.videoUrl ? getVideoEmbedUrl(form.videoUrl) : null, [form.videoUrl]);
   const badgeCont = useMemo(() => touched ? [!form.titulo.trim(), !form.contenido.trim()].filter(Boolean).length : 0, [touched, form.titulo, form.contenido]);
 
   const TABS = useMemo<{ id: Tab; label: string; badge?: number; error?: boolean }[]>(() => [
-    { id: "contenido",   label: "Contenido",   badge: badgeCont || undefined, error: badgeCont > 0 },
-    { id: "multimedia",  label: "Multimedia",  badge: badgeMult },
-    { id: "publicacion", label: "Publicación", badge: badgePub  },
+    { id: "contenido", label: "Contenido", badge: badgeCont || undefined, error: badgeCont > 0 },
+    { id: "multimedia", label: "Multimedia", badge: badgeMult },
+    { id: "publicacion", label: "Publicación", badge: badgePub },
   ], [badgeCont, badgeMult, badgePub]);
 
 
@@ -2716,596 +2729,596 @@ function FormAnuncio({
 
   return (
     <>
-    {/* Overlay */}
-    <div className="fixed inset-0 flex items-start justify-center"
-      style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
-      onClick={handleRequestClose}>
+      {/* Overlay */}
+      <div className="fixed inset-0 flex items-start justify-center"
+        style={{ zIndex: 160, background: "rgba(0,0,0,0.52)", paddingTop: 96, paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}
+        onClick={handleRequestClose}>
 
-      {/* Card — altura automática con límite máximo */}
-      <div className="relative w-full flex flex-col"
-        style={{
-          maxWidth: 660,
-          height: "auto",
-          maxHeight: "calc(100vh - 112px)",
-          background: "var(--blanco)",
-          borderRadius: 20,
-          boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
-          overflow: "hidden",
-          isolation: "isolate",
-        }}
-        onClick={(e) => e.stopPropagation()}>
+        {/* Card — altura automática con límite máximo */}
+        <div className="relative w-full flex flex-col"
+          style={{
+            maxWidth: 660,
+            height: "auto",
+            maxHeight: "calc(100vh - 112px)",
+            background: "var(--blanco)",
+            borderRadius: 20,
+            boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
+            overflow: "hidden",
+            isolation: "isolate",
+          }}
+          onClick={(e) => e.stopPropagation()}>
 
-        {/* ── Cabecera ── */}
-        <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
-          {/* Textura de profundidad — destello sutil arriba a la derecha */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
-          {/* Viñeta inferior izquierda */}
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
+          {/* ── Cabecera ── */}
+          <div className="relative shrink-0 overflow-hidden" style={{ background: GRAD_EGM }}>
+            {/* Textura de profundidad — destello sutil arriba a la derecha */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 90% 10%, rgba(255,255,255,0.07) 0%, transparent 55%)" }} />
+            {/* Viñeta inferior izquierda */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 0% 120%, rgba(37,99,235,0.18) 0%, transparent 50%)" }} />
 
-          <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1 min-w-0">
-              <h3 style={{
-                fontFamily: "var(--font-raleway), sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(1.65rem, 4vw, 2.1rem)",
-                lineHeight: 1.1,
-                letterSpacing: "-0.03em",
-                color: "#ffffff",
-                margin: 0,
-                textShadow: "0 1px 12px rgba(0,0,0,0.18)",
-              }}>
-                {editando ? "Editar anuncio" : "Nuevo anuncio"}
-              </h3>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
-                {editando ? "Modifica los datos y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
-              </p>
-            </div>
-            <button onClick={handleRequestClose}
-              className="shrink-0 flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
-              title="Cerrar (Esc)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ── Tabs ── */}
-        <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
-          <div className="flex">
-            {TABS.map(({ id, label, badge, error }) => (
-              <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
-                className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
-                style={{
-                  color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)",
-                  background: "none",
+            <div className="relative z-10 px-6 py-5 flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-1 min-w-0">
+                <h3 style={{
+                  fontFamily: "var(--font-raleway), sans-serif",
+                  fontWeight: 800,
+                  fontSize: "clamp(1.65rem, 4vw, 2.1rem)",
+                  lineHeight: 1.1,
+                  letterSpacing: "-0.03em",
+                  color: "#ffffff",
+                  margin: 0,
+                  textShadow: "0 1px 12px rgba(0,0,0,0.18)",
                 }}>
-                {label}
-                {badge ? (
-                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
-                    style={{
-                      background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db",
-                      color: error || tab === id ? "#fff" : "var(--texto-muted)",
-                      minWidth: 18, textAlign: "center",
-                    }}>
-                    {badge}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-          {/* Línea indicadora animada */}
-          <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            width: `${100 / TABS.length}%`,
-            height: 2,
-            borderRadius: "2px 2px 0 0",
-            background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
-            transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
-            transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
-          }} />
-        </div>
-
-        {/* ── Cuerpo con scroll ── */}
-        <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
-
-          {/* ── TAB: Contenido — siempre visible, es el default ── */}
-          <div style={{ display: tab === "contenido" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div>
-              <FieldLabel label="Título" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
-                    <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
-                  </div>
-                }
-              />
-              <input type="text" value={form.titulo}
-                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                placeholder="Ej: Recordatorio reunión de equipo"
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
-                onFocus={onFocus} onBlur={onBlur}
-              />
-              {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
-            </div>
-
-            <div>
-              <FieldLabel label="Descripción" required
-                right={
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
-                    <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
-                      label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("contenido")} />
-                  </div>
-                }
-              />
-              <textarea value={form.contenido}
-                onChange={(e) => setForm({ ...form, contenido: e.target.value })}
-                placeholder="Escribe la descripción. Puedes usar **negrita** y - listas."
-                className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
-                style={{ ...inputStyle, minHeight: 180, ...(contenidoError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
-                onFocus={onFocus} onBlur={onBlur}
-              />
-              {contenidoError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>La descripción es obligatoria</p>}
-            </div>
-
-            <div>
-              <FieldLabel label="Categoría" />
-              <div className="flex gap-2 flex-wrap">
-                {CATEGORIAS.map((cat) => {
-                  const active = (form.categoria ?? "General") === cat;
-                  const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
-                  return (
-                    <button key={cat} type="button"
-                      onClick={() => setForm({ ...form, categoria: cat === "General" ? null : cat })}
-                      className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
-                      style={{
-                        background: active ? col.bg : "var(--blanco)",
-                        color: active ? col.text : "var(--texto-muted)",
-                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
-                        boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
-                      }}>
-                      {cat}
-                    </button>
-                  );
-                })}
+                  {editando ? "Editar anuncio" : "Nuevo anuncio"}
+                </h3>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", marginTop: 3 }}>
+                  {editando ? "Modifica los datos y guarda los cambios." : "Visible para todos los empleados de tu empresa."}
+                </p>
               </div>
+              <button onClick={handleRequestClose}
+                className="shrink-0 flex items-center justify-center"
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", transition: "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.12)"; }}
+                title="Cerrar (Esc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
-          </div></div>
+          </div>
 
-          {/* ── TAB: Multimedia — montaje lazy ── */}
-          {visitedTabs.current.has("multimedia") && (
-          <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div>
-              <FieldLabel label="Imagen"
-                right={
-                  <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                    {(["url", "upload"] as const).map((m) => (
-                      <button key={m} type="button" onClick={() => setImagenModo(m)}
-                        className="text-xs px-3 py-1.5 font-semibold transition-all"
-                        style={{ background: imagenModo === m ? GRAD_BTN : "transparent", color: imagenModo === m ? "#fff" : "var(--texto-secundario)" }}>
-                        {m === "url" ? "URL" : "Subir"}
-                      </button>
-                    ))}
-                  </div>
-                }
-              />
-              {imagenModo === "url" ? (
-                <>
-                  <input type="url" value={form.imagenUrl || ""}
-                    onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
-                    placeholder="https://..."
-                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                  />
-                  {form.imagenUrl && (
-                    <div className="relative mt-3">
-                      <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
-                        style={{ height: "160px" }} onError={(e) => (e.currentTarget.style.display = "none")} />
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
-                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        title="Quitar imagen">
-                        <IconX size={12} />
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
-                    style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; }}}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = "var(--gris-borde)";
-                      e.currentTarget.style.background = "var(--blanco)";
-                      const file = e.dataTransfer.files?.[0];
-                      if (file && file.type.startsWith("image/")) {
-                        handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
-                      }
-                    }}>
-                    {uploadingImg
-                      ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                      : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
-                  </button>
-                  {form.imagenUrl && (
-                    <div className="relative mt-3">
-                      <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
-                      <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold"
-                        style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
-                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        title="Quitar imagen">
-                        <IconX size={12} />
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div>
-              <FieldLabel label="Vídeo (YouTube o Vimeo)" />
-              {embedUrl ? (
-                /* Vídeo válido — previsualización con chip y botón quitar */
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between px-3 py-2 rounded-xl"
-                    style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                      <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
-                    </div>
-                    <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
-                      className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                      style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
-                      onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-                      onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
-                      Quitar
-                    </button>
-                  </div>
-                  <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
-                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
-                  </div>
-                </div>
-              ) : (
-                /* Sin vídeo o URL inválida */
-                <div className="flex flex-col gap-1.5">
-                  <input type="url" value={form.videoUrl || ""}
-                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
-                    placeholder="https://youtube.com/watch?v=..."
-                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                    style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                  />
-                  {form.videoUrl && (
-                    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                      Solo se pueden incrustar vídeos de YouTube o Vimeo
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <FieldLabel label="Documento adjunto" />
-              <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
-              {form.adjuntoUrl ? (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                  style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
-                  <span style={{ color: "#16a34a" }}><IconDoc /></span>
-                  <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>
-                    {form.adjuntoNombre ?? "Documento"}
-                  </span>
-                  <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
-                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
-                    Quitar
-                  </button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
-                  style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                  onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
-                  {uploadingAdj
-                    ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                    : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+          {/* ── Tabs ── */}
+          <div className="shrink-0 relative" style={{ background: "var(--gris-superficie)", borderBottom: "1px solid var(--gris-borde)" }}>
+            <div className="flex">
+              {TABS.map(({ id, label, badge, error }) => (
+                <button key={id} type="button" onClick={() => { visitedTabs.current.add(id); setTab(id); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors"
+                  style={{
+                    color: tab === id ? (error ? "var(--error)" : "var(--azul-accion)") : "var(--texto-muted)",
+                    background: "none",
+                  }}>
+                  {label}
+                  {badge ? (
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none"
+                      style={{
+                        background: error ? "var(--error)" : tab === id ? "var(--azul-accion)" : "#d1d5db",
+                        color: error || tab === id ? "#fff" : "var(--texto-muted)",
+                        minWidth: 18, textAlign: "center",
+                      }}>
+                      {badge}
+                    </span>
+                  ) : null}
                 </button>
-              )}
+              ))}
             </div>
-          </div></div>
-          )}
+            {/* Línea indicadora animada */}
+            <div style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: `${100 / TABS.length}%`,
+              height: 2,
+              borderRadius: "2px 2px 0 0",
+              background: TABS.find((t) => t.id === tab)?.error ? "var(--error)" : "var(--azul-accion)",
+              transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
+              transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease",
+            }} />
+          </div>
 
-          {/* ── TAB: Publicación — montaje lazy ── */}
-          {visitedTabs.current.has("publicacion") && (
-          <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
-          <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
-            <div style={{ width: "100%" }}>
-              <FieldLabel label="Enlace externo" />
-              <div className="flex flex-col gap-2">
-                <input type="url" value={form.enlaceUrl || ""}
-                  onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
-                  placeholder="https://..."
-                  className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                  style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                />
-                {form.enlaceUrl && (
-                  <>
-                    <input type="text" value={form.enlaceTexto || ""}
-                      onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
-                      placeholder='Texto del enlace — ej: "Más información"'
-                      className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
-                      style={inputStyle} onFocus={onFocus} onBlur={onBlur}
-                    />
-                    {/* Previsualización de cómo quedará */}
-                    <div className="flex flex-col gap-1.5 pt-1">
-                      <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el anuncio</p>
-                      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
-                        style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                          </div>
-                          <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>
-                            {form.enlaceTexto?.trim() || "Ver enlace"}
-                          </span>
+          {/* ── Cuerpo con scroll ── */}
+          <div className="overflow-y-auto" style={{ background: "var(--gris-superficie)" }}>
+
+            {/* ── TAB: Contenido — siempre visible, es el default ── */}
+            <div style={{ display: tab === "contenido" ? "block" : "none" }}>
+              <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                <div>
+                  <FieldLabel label="Título" required
+                    right={
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs tabular-nums" style={{ color: form.titulo.length > 80 ? "var(--error)" : "var(--texto-muted)" }}>{form.titulo.length}/80</span>
+                        <AIButton loading={aiLoading === "titulo"} label="Sugerir título" loadingLabel="Generando..." onClick={() => sugerirConIA("titulo")} />
+                      </div>
+                    }
+                  />
+                  <input type="text" value={form.titulo}
+                    onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                    placeholder="Ej: Recordatorio reunión de equipo"
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                    style={{ ...inputStyle, ...(tituloError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {tituloError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>El título es obligatorio</p>}
+                </div>
+
+                <div>
+                  <FieldLabel label="Descripción" required
+                    right={
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs tabular-nums" style={{ color: "var(--texto-muted)" }}>{form.contenido.length} car.</span>
+                        <AIButton loading={aiLoading === "contenido"} disabled={!form.contenido.trim()}
+                          label="Mejorar con IA" loadingLabel="Mejorando..." onClick={() => sugerirConIA("contenido")} />
+                      </div>
+                    }
+                  />
+                  <textarea value={form.contenido}
+                    onChange={(e) => setForm({ ...form, contenido: e.target.value })}
+                    placeholder="Escribe la descripción. Puedes usar **negrita** y - listas."
+                    className="w-full rounded-xl px-4 py-3 text-base focus:outline-none resize-none"
+                    style={{ ...inputStyle, minHeight: 180, ...(contenidoError ? { borderColor: "var(--error)", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" } : {}) }}
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                  {contenidoError && <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>La descripción es obligatoria</p>}
+                </div>
+
+                <div>
+                  <FieldLabel label="Categoría" />
+                  <div className="flex gap-2 flex-wrap">
+                    {CATEGORIAS.map((cat) => {
+                      const active = (form.categoria ?? "General") === cat;
+                      const col = CATEGORIA_COLORS_LIGHT[cat] ?? CATEGORIA_COLORS_LIGHT.General;
+                      return (
+                        <button key={cat} type="button"
+                          onClick={() => setForm({ ...form, categoria: cat === "General" ? null : cat })}
+                          className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
+                          style={{
+                            background: active ? col.bg : "var(--blanco)",
+                            color: active ? col.text : "var(--texto-muted)",
+                            border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
+                            boxShadow: active ? `0 2px 8px ${col.border}60` : "none",
+                          }}>
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div></div>
+
+            {/* ── TAB: Multimedia — montaje lazy ── */}
+            {visitedTabs.current.has("multimedia") && (
+              <div style={{ display: tab === "multimedia" ? "block" : "none" }}>
+                <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                  <div>
+                    <FieldLabel label="Imagen"
+                      right={
+                        <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                          {(["url", "upload"] as const).map((m) => (
+                            <button key={m} type="button" onClick={() => setImagenModo(m)}
+                              className="text-xs px-3 py-1.5 font-semibold transition-all"
+                              style={{ background: imagenModo === m ? GRAD_BTN : "transparent", color: imagenModo === m ? "#fff" : "var(--texto-secundario)" }}>
+                              {m === "url" ? "URL" : "Subir"}
+                            </button>
+                          ))}
                         </div>
-                        <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
-                          className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
-                          style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                      }
+                    />
+                    {imagenModo === "url" ? (
+                      <>
+                        <input type="url" value={form.imagenUrl || ""}
+                          onChange={(e) => setForm({ ...form, imagenUrl: e.target.value || null })}
+                          placeholder="https://..."
+                          className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                          style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                        />
+                        {form.imagenUrl && (
+                          <div className="relative mt-3">
+                            <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
+                              style={{ height: "160px" }} onError={(e) => (e.currentTarget.style.display = "none")} />
+                            <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                              className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                              style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                              title="Quitar imagen">
+                              <IconX size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
+                          className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
+                          style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                          onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.background = "#f0f7ff"; } }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                          onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = "var(--gris-borde)";
+                            e.currentTarget.style.background = "var(--blanco)";
+                            const file = e.dataTransfer.files?.[0];
+                            if (file && file.type.startsWith("image/")) {
+                              handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                            }
+                          }}>
+                          {uploadingImg
+                            ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                            : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                        </button>
+                        {form.imagenUrl && (
+                          <div className="relative mt-3">
+                            <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
+                            <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold"
+                              style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
+                            <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
+                              className="absolute top-2 right-2 flex items-center justify-center transition-all"
+                              style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
+                              title="Quitar imagen">
+                              <IconX size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div>
+                    <FieldLabel label="Vídeo (YouTube o Vimeo)" />
+                    {embedUrl ? (
+                      /* Vídeo válido — previsualización con chip y botón quitar */
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+                          style={{ background: "#f0fdf4", border: "1.5px solid #86efac" }}>
+                          <div className="flex items-center gap-2">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            <span className="text-xs font-semibold truncate max-w-[220px]" style={{ color: "#166534" }}>{form.videoUrl}</span>
+                          </div>
+                          <button type="button" onClick={() => setForm((f) => ({ ...f, videoUrl: null }))}
+                            className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                            style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
+                            Quitar
+                          </button>
+                        </div>
+                        <div className="rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: 200 }}>
+                          <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
+                        </div>
+                      </div>
+                    ) : (
+                      /* Sin vídeo o URL inválida */
+                      <div className="flex flex-col gap-1.5">
+                        <input type="url" value={form.videoUrl || ""}
+                          onChange={(e) => setForm({ ...form, videoUrl: e.target.value || null })}
+                          placeholder="https://youtube.com/watch?v=..."
+                          className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                          style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                        />
+                        {form.videoUrl && (
+                          <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#b45309" }}>
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                            Solo se pueden incrustar vídeos de YouTube o Vimeo
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <FieldLabel label="Documento adjunto" />
+                    <input ref={adjuntoRef} type="file" accept=".pdf,.doc,.docx" onChange={handleAdjuntoUpload} className="hidden" />
+                    {form.adjuntoUrl ? (
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                        style={{ border: "1.5px solid #86efac", background: "#f0fdf4" }}>
+                        <span style={{ color: "#16a34a" }}><IconDoc /></span>
+                        <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>
+                          {form.adjuntoNombre ?? "Documento"}
+                        </span>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
+                          className="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                          style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
                           onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
                           onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
                           Quitar
                         </button>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+                    ) : (
+                      <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
+                        style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                        onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                        {uploadingAdj
+                          ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
+                          : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+                      </button>
+                    )}
+                  </div>
+                </div></div>
+            )}
 
-            {/* ── Visibilidad ── */}
-            <div>
-              <FieldLabel label="Estado" />
-              <div className="rounded-2xl overflow-hidden" style={{
-                border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`,
-                transition: "border-color 0.18s",
-              }}>
-
-                {/* Fila: Fijar */}
-                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.fijado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
-                  onClick={() => setForm({ ...form, fijado: !form.fijado })}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.fijado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.fijado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
-                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+            {/* ── TAB: Publicación — montaje lazy ── */}
+            {visitedTabs.current.has("publicacion") && (
+              <div style={{ display: tab === "publicacion" ? "block" : "none" }}>
+                <div className="flex flex-col gap-6" style={{ padding: "28px 32px" }}>
+                  <div style={{ width: "100%" }}>
+                    <FieldLabel label="Enlace externo" />
+                    <div className="flex flex-col gap-2">
+                      <input type="url" value={form.enlaceUrl || ""}
+                        onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value || null })}
+                        placeholder="https://..."
+                        className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                        style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                      />
+                      {form.enlaceUrl && (
+                        <>
+                          <input type="text" value={form.enlaceTexto || ""}
+                            onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value || null })}
+                            placeholder='Texto del enlace — ej: "Más información"'
+                            className="w-full rounded-xl px-4 py-3 text-base focus:outline-none"
+                            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+                          />
+                          {/* Previsualización de cómo quedará */}
+                          <div className="flex flex-col gap-1.5 pt-1">
+                            <p className="text-xs font-medium" style={{ color: "var(--texto-muted)" }}>Así se verá en el anuncio</p>
+                            <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
+                              style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                </div>
+                                <span className="text-sm font-medium truncate" style={{ color: "#2563eb" }}>
+                                  {form.enlaceTexto?.trim() || "Ver enlace"}
+                                </span>
+                              </div>
+                              <button type="button" onClick={() => setForm((f) => ({ ...f, enlaceUrl: null, enlaceTexto: null }))}
+                                className="text-xs px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                                style={{ color: "var(--texto-secundario)", background: "var(--blanco)", border: "1px solid var(--gris-borde)", transition: "background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
+                                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
+                                Quitar
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
-                </div>
 
-                {/* Separador — desaparece si alguno está activo o si la fila borrador está oculta */}
-                {!form.fijado && form.estado !== "borrador" && !(editando && editando.estado !== "borrador") && (
-                  <div style={{ height: 1, background: "var(--gris-borde)" }} />
-                )}
+                  {/* ── Visibilidad ── */}
+                  <div>
+                    <FieldLabel label="Estado" />
+                    <div className="rounded-2xl overflow-hidden" style={{
+                      border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`,
+                      transition: "border-color 0.18s",
+                    }}>
 
-                {/* Fila: Borrador — oculta cuando ya se editando un anuncio publicado */}
-                {!(editando && editando.estado !== "borrador") && (
-                <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
-                  style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
-                  onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
-                      <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                      {/* Fila: Fijar */}
+                      <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                        style={{ background: form.fijado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
+                        onClick={() => setForm({ ...form, fijado: !form.fijado })}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: form.fijado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold leading-tight" style={{ color: form.fijado ? "#1d4ed8" : "var(--texto-primario)" }}>Fijar en la parte superior</p>
+                            <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>Aparece siempre el primero en el listado</p>
+                          </div>
+                        </div>
+                        <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
+                      </div>
+
+                      {/* Separador — desaparece si alguno está activo o si la fila borrador está oculta */}
+                      {!form.fijado && form.estado !== "borrador" && !(editando && editando.estado !== "borrador") && (
+                        <div style={{ height: 1, background: "var(--gris-borde)" }} />
+                      )}
+
+                      {/* Fila: Borrador — oculta cuando ya se editando un anuncio publicado */}
+                      {!(editando && editando.estado !== "borrador") && (
+                        <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
+                          style={{ background: form.estado === "borrador" ? "#fffbeb" : "var(--blanco)", transition: "background 0.18s" }}
+                          onClick={() => setForm({ ...form, estado: form.estado === "borrador" ? "publicado" : "borrador" })}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
+                              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold leading-tight" style={{ color: form.estado === "borrador" ? "#92400e" : "var(--texto-primario)" }}>Guardar como borrador</p>
+                              <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--texto-muted)" }}>No visible hasta que lo publiques manualmente</p>
+                            </div>
+                          </div>
+                          <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
+                        </div>
+                      )}
+
                     </div>
                   </div>
-                  <Toggle checked={form.estado === "borrador"} onChange={(v) => setForm({ ...form, estado: v ? "borrador" : "publicado" })} color="#d97706" />
                 </div>
-                )}
+              </div>
+            )}
 
+          </div>
+
+          {/* ── Footer fijo ── */}
+          <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
+            style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+            <div className="flex-1 min-w-0">
+              {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={handleRequestClose}
+                className="text-sm px-4 py-2 rounded-xl font-medium"
+                style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={handlePreview}
+                className="text-sm px-4 py-2 rounded-xl font-medium"
+                style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
+                Previsualizar
+              </button>
+              {/* Guardar cambios — izquierda, editar borrador */}
+              {editando && editando.estado === "borrador" && (() => {
+                const active = isDirty && canSubmit;
+                return (
+                  <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
+                    disabled={submitting}
+                    title={!canSubmit ? "Título y contenido son obligatorios" : !isDirty ? "No has cambiado nada aún" : undefined}
+                    className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                    style={{
+                      background: active ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
+                      color: "#fff",
+                      boxShadow: active ? "0 2px 8px rgba(217,119,6,0.35)" : "none",
+                      cursor: active ? "pointer" : "not-allowed",
+                      opacity: submitting ? 0.5 : 1,
+                      transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease",
+                    }}
+                    onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                    onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                    {submitting ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                );
+              })()}
+
+              {/* Botón principal — crear o editar publicado */}
+              {!(editando && editando.estado === "borrador") && (() => {
+                const esBorrador = form.estado === "borrador" && !editando;
+                const active = canSubmit && (!editando || isDirty);
+                const bg = active
+                  ? esBorrador ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : GRAD_BTN
+                  : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
+                const shadow = active
+                  ? esBorrador ? "0 2px 8px rgba(217,119,6,0.35)" : "0 2px 8px rgba(37,99,235,0.3)"
+                  : "none";
+                const tip = !canSubmit
+                  ? "Título y contenido son obligatorios"
+                  : editando && !isDirty
+                    ? "No has cambiado nada aún"
+                    : undefined;
+                return (
+                  <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
+                    disabled={submitting}
+                    title={tip}
+                    className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                    style={{ background: bg, color: "#fff", boxShadow: shadow, cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                    onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                    {submitting ? "Guardando..." : editando ? "Guardar cambios" : esBorrador ? "Guardar borrador" : "Publicar anuncio"}
+                  </button>
+                );
+              })()}
+
+              {/* Publicar ahora — derecha, solo al editar borrador */}
+              {editando && editando.estado === "borrador" && (() => {
+                const active = canSubmit;
+                return (
+                  <button onClick={() => { if (!active) return; setTouched(true); onSubmit({ ...form, estado: "publicado" }); }}
+                    disabled={submitting}
+                    title={!canSubmit ? "Título y contenido son obligatorios" : undefined}
+                    className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
+                    style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: active ? "0 2px 8px rgba(22,163,74,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : !active ? 0.5 : 1, transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                    onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting || !active ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
+                    onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
+                    {submitting ? "Publicando..." : "Publicar ahora"}
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── Diálogo confirmar cierre con cambios ── */}
+      {confirmClose && (
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
+          <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
+            style={{
+              background: "var(--blanco)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
+              border: "1px solid var(--gris-borde)",
+              animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+            }}>
+            {/* Icono */}
+            <div className="flex justify-center">
+              <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
               </div>
             </div>
-          </div>
-          </div>
-          )}
-
-        </div>
-
-        {/* ── Footer fijo ── */}
-        <div className="px-8 py-5 flex items-center justify-between gap-3 shrink-0"
-          style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-          <div className="flex-1 min-w-0">
-            {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleRequestClose}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", background: "transparent", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-              Cancelar
-            </button>
-            <button type="button" onClick={handlePreview}
-              className="text-sm px-4 py-2 rounded-xl font-medium"
-              style={{ color: "#2563eb", border: "1px solid #bfdbfe", background: "#eff6ff", transition: "background 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}>
-              Previsualizar
-            </button>
-            {/* Guardar cambios — izquierda, editar borrador */}
-            {editando && editando.estado === "borrador" && (() => {
-              const active = isDirty && canSubmit;
-              return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
-                  disabled={submitting}
-                  title={!canSubmit ? "Título y contenido son obligatorios" : !isDirty ? "No has cambiado nada aún" : undefined}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{
-                    background: active ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
-                    color: "#fff",
-                    boxShadow: active ? "0 2px 8px rgba(217,119,6,0.35)" : "none",
-                    cursor: active ? "pointer" : "not-allowed",
-                    opacity: submitting ? 0.5 : 1,
-                    transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease",
-                  }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Guardando..." : "Guardar cambios"}
-                </button>
-              );
-            })()}
-
-            {/* Botón principal — crear o editar publicado */}
-            {!(editando && editando.estado === "borrador") && (() => {
-              const esBorrador = form.estado === "borrador" && !editando;
-              const active = canSubmit && (!editando || isDirty);
-              const bg = active
-                ? esBorrador ? "linear-gradient(135deg, #d97706 0%, #b45309 100%)" : GRAD_BTN
-                : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)";
-              const shadow = active
-                ? esBorrador ? "0 2px 8px rgba(217,119,6,0.35)" : "0 2px 8px rgba(37,99,235,0.3)"
-                : "none";
-              const tip = !canSubmit
-                ? "Título y contenido son obligatorios"
-                : editando && !isDirty
-                  ? "No has cambiado nada aún"
-                  : undefined;
-              return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit(form); }}
-                  disabled={submitting}
-                  title={tip}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{ background: bg, color: "#fff", boxShadow: shadow, cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : 1, transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease" }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Guardando..." : editando ? "Guardar cambios" : esBorrador ? "Guardar borrador" : "Publicar anuncio"}
-                </button>
-              );
-            })()}
-
-            {/* Publicar ahora — derecha, solo al editar borrador */}
-            {editando && editando.estado === "borrador" && (() => {
-              const active = canSubmit;
-              return (
-                <button onClick={() => { if (!active) return; setTouched(true); onSubmit({ ...form, estado: "publicado" }); }}
-                  disabled={submitting}
-                  title={!canSubmit ? "Título y contenido son obligatorios" : undefined}
-                  className="text-sm font-semibold px-5 py-2 rounded-xl transition-all"
-                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", boxShadow: active ? "0 2px 8px rgba(22,163,74,0.3)" : "none", cursor: active ? "pointer" : "not-allowed", opacity: submitting ? 0.5 : !active ? 0.5 : 1, transition: "opacity 0.18s ease, transform 0.18s ease" }}
-                  onMouseEnter={(e) => { if (active) { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.04)"; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = submitting || !active ? "0.5" : "1"; e.currentTarget.style.transform = "scale(1)"; }}
-                  onMouseDown={(e) => { if (active) e.currentTarget.style.transform = "scale(0.96)"; }}
-                  onMouseUp={(e) => { if (active) e.currentTarget.style.transform = "scale(1.04)"; }}>
-                  {submitting ? "Publicando..." : "Publicar ahora"}
-                </button>
-              );
-            })()}
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    {/* ── Diálogo confirmar cierre con cambios ── */}
-    {confirmClose && (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, background: "rgba(0,0,0,0.45)" }}>
-        <div className="w-full max-w-xs flex flex-col gap-5 p-6 rounded-2xl"
-          style={{
-            background: "var(--blanco)",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
-            border: "1px solid var(--gris-borde)",
-            animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-          }}>
-          {/* Icono */}
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "#fef9c3", border: "1.5px solid #fde047" }}>
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ca8a04" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-              </svg>
+            {/* Texto */}
+            <div className="text-center flex flex-col gap-1">
+              <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
+              <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
+            </div>
+            {/* Botones */}
+            <div className="flex flex-col gap-2">
+              <button onClick={() => setConfirmClose(false)}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold"
+                style={{ background: GRAD_BTN, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+                Seguir editando
+              </button>
+              <button onClick={onClose}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold"
+                style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
+                Descartar cambios
+              </button>
             </div>
           </div>
-          {/* Texto */}
-          <div className="text-center flex flex-col gap-1">
-            <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>¿Descartar los cambios?</p>
-            <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Tienes cambios sin guardar. Si sales ahora los perderás.</p>
-          </div>
-          {/* Botones */}
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setConfirmClose(false)}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: GRAD_BTN, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
-              Seguir editando
-            </button>
-            <button onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: "pointer", transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.03)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-              onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}>
-              Descartar cambios
-            </button>
-          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
