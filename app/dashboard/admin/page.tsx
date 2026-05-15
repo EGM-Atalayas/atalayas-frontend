@@ -29,7 +29,7 @@ import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type Fil
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
-import ExcelJS from "exceljs";
+// ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
 
 const EMPTY_ANUNCIO: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
@@ -1404,54 +1404,38 @@ function AdminContent() {
 
   const exportarEmpleadosExcel = async () => {
     setExportando(true);
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Empleados");
-
-    worksheet.columns = [
-      { header: "Nombre", key: "nombre", width: 20 },
-      { header: "Apellidos", key: "apellidos", width: 25 },
-      { header: "Email", key: "email", width: 30 },
-      { header: "Puesto", key: "puesto", width: 25 },
-      { header: "Departamento", key: "departamento", width: 20 },
-      { header: "Rol", key: "rol", width: 15 },
-      { header: "Estado", key: "estado", width: 12 },
-      { header: "Fecha de alta", key: "fechaAlta", width: 18 },
-    ];
-
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF2D5A3D" },
-      };
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-    });
-
-    empleados.forEach((e) => {
-      worksheet.addRow({
-        nombre: e.nombre,
-        apellidos: e.apellidos,
-        email: e.email,
-        puesto: e.puestoTrabajo ?? "",
+    try {
+      const payload = empleados.map((e) => ({
+        nombre:       e.nombre,
+        apellidos:    e.apellidos,
+        email:        e.email,
+        puesto:       e.puestoTrabajo ?? "",
         departamento: DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento ?? "",
-        rol: e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
-        estado: e.activo ? "Activo" : "Inactivo",
-        fechaAlta: formatFecha(e.fechaRegistro),
-      });
-    });
+        rol:          e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
+        estado:       e.activo ? "Activo" : "Inactivo",
+        fechaAlta:    formatFecha(e.fechaRegistro),
+      }));
 
-    const fecha = new Date().toISOString().split("T")[0];
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `empleados_${fecha}.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    setExportando(false);
-    mostrarToast(`Excel exportado con ${empleados.length} empleados`);
+      const res  = await fetch("/api/admin/export-empleados", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ empleados: payload }),
+      });
+      if (!res.ok) throw new Error("Error generando el archivo");
+
+      const blob = await res.blob();
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `empleados_${new Date().toISOString().split("T")[0]}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      mostrarToast(`Excel exportado con ${empleados.length} empleados`);
+    } catch {
+      mostrarToast("Error al exportar el archivo", "error");
+    } finally {
+      setExportando(false);
+    }
   };
 
   const importarEmpleados = async (file: File) => {
@@ -1460,16 +1444,14 @@ function AdminContent() {
     const errores: string[] = [];
     let ok = 0;
     try {
-      const workbook = new ExcelJS.Workbook();
-      const buffer = await file.arrayBuffer();
-      await workbook.xlsx.load(buffer);
-      const worksheet = workbook.worksheets[0];
-      const filas: { rowNum: number; values: string[] }[] = [];
-      worksheet.eachRow((row, rowIdx) => {
-        if (rowIdx === 1) return;
-        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
-        if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
-      });
+      // Parsear el Excel en el servidor
+      const formData = new FormData();
+      formData.append("file", file);
+      const parseRes = await fetch("/api/admin/import-empleados", { method: "POST", body: formData });
+      if (!parseRes.ok) { errores.push("El archivo no es un Excel válido"); throw new Error(); }
+
+      const { filas } = await parseRes.json() as { filas: { rowNum: number; values: string[] }[] };
+
       for (const { rowNum, values } of filas) {
         const [nombre, apellidos, email, puesto, dept] = values;
         if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
@@ -1495,7 +1477,8 @@ function AdminContent() {
           }
         } catch { errores.push(`${email}: Error de conexión`); }
       }
-    } catch { errores.push("El archivo no es un Excel válido"); }
+    } catch { if (errores.length === 0) errores.push("Error procesando el archivo"); }
+
     setImportando(false);
     setImportResult({ ok, errors: errores });
     queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
