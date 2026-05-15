@@ -45,14 +45,14 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Panel de ",
       titulo:       "Administración",
-      imagenFondo:  "/background-empresa.webp",
+      imagenFondo:  "/hero-administracion.webp",
       objectPosition: "center 30%",
     };
   } else if (pathname.includes("/superadmin/empresas")) {
     heroConfig = {
       prefijo:      "Gestiona las ",
       titulo:       "Empresas",
-      imagenFondo:  "/background-empresa.webp",
+      imagenFondo:  "/hero-administracion.webp",
       objectPosition: "center 50%",
     };
   } else if (pathname.includes("/superadmin/solicitudes")) {
@@ -73,7 +73,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Gestiona los ",
       titulo:       "Comunicados",
-      imagenFondo:  "/background-comunicacion-empleado.webp",
+      imagenFondo:  "/hero-comunicacion.webp",
       objectPosition: "center 40%",
     };
   }

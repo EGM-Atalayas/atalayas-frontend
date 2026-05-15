@@ -29,7 +29,7 @@ import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type Fil
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
-import ExcelJS from "exceljs";
+// ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
 
 const EMPTY_ANUNCIO: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
@@ -296,50 +296,59 @@ const StatsTab = React.memo(function StatsTab({
       </div>
 
       {/* ── Barra DESKTOP: una sola fila ── */}
-      <div className="hidden sm:flex sm:items-center sm:flex-wrap gap-2 mb-8">
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
-          {([{ n: 1, label: "1 mes" }, { n: 3, label: "3 meses" }, { n: 6, label: "6 meses" }, { n: 12, label: "1 año" }, { n: 24, label: "2 años" }] as const).map(({ n, label }) => (
-            <motion.button key={n} onClick={() => setStatsRangoT(n)}
-              className="relative text-sm font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
-              style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
-              whileTap={{ scale: 0.94 }}>
-              {statsRango === n && <motion.span layoutId="rango-pill-desktop" className="absolute inset-0 rounded-lg" style={{ background: "var(--azul-egm)", zIndex: -1 }} transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
-              {label}
-            </motion.button>
-          ))}
-        </div>
-        <div className="w-px h-5" style={{ background: "var(--surface-border)" }} />
-        <StatsSelect value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={148} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
-        <StatsSelect value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={110} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
-        <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
-        <AnimatePresence>
-          {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
-            <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
-              className="inline-flex items-center gap-2 text-sm font-semibold px-3 h-9 rounded-xl focus:outline-none cursor-pointer"
-              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid rgba(27,63,126,0.3)" }}>
-              <X size={13} strokeWidth={2.5} />Limpiar
-            </motion.button>
-          )}
-        </AnimatePresence>
-        <div className="ml-auto flex items-center gap-2">
-          {/* Restablecer */}
+      <div className="hidden sm:flex sm:items-center gap-3 mb-8 min-w-0">
+
+        {/* ── Grupo izquierdo: filtros scrollables ── */}
+        <div className="flex items-center gap-2 min-w-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <div className="flex gap-1 p-1 rounded-xl shrink-0" style={{ background: "var(--gris-superficie)", border: "1px solid var(--surface-border)" }}>
+            {([{ n: 1, label: "1 mes" }, { n: 3, label: "3 meses" }, { n: 6, label: "6 meses" }, { n: 12, label: "1 año" }, { n: 24, label: "2 años" }] as const).map(({ n, label }) => (
+              <motion.button key={n} onClick={() => setStatsRangoT(n)}
+                className="relative text-sm font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
+                style={{ color: statsRango === n ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1 }}
+                whileTap={{ scale: 0.94 }}>
+                {statsRango === n && <motion.span layoutId="rango-pill-desktop" className="absolute inset-0 rounded-lg" style={{ background: "var(--azul-egm)", zIndex: -1 }} transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
+                {label}
+              </motion.button>
+            ))}
+          </div>
+          <div className="w-px h-5 shrink-0" style={{ background: "var(--surface-border)" }} />
+          <StatsSelect value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={148} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
+          <StatsSelect value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={110} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
+          <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
           <AnimatePresence>
-            {hayPersonalizacion && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                onClick={resetVistaEstadisticas}
-                className="inline-flex items-center gap-2 text-sm font-semibold px-4 h-10 rounded-xl focus:outline-none cursor-pointer"
-                style={{ background: "transparent", color: "var(--azul-egm)", border: "1px solid rgba(0,0,0,0.12)" }}
-              >
-                <RefreshCw size={14} />
-                Restablecer
+            {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
+              <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-xl focus:outline-none cursor-pointer shrink-0 relative overflow-hidden"
+                title="Limpiar filtros"
+                style={{
+                  background:           "rgba(27,63,126,0.12)",
+                  backdropFilter:       "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  border:               "1px solid rgba(27,63,126,0.25)",
+                  boxShadow:            "inset 0 1px 1px rgba(255,255,255,0.35), 0 2px 8px rgba(27,63,126,0.15)",
+                  color:                "var(--azul-egm)",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background  = "rgba(27,63,126,0.22)";
+                  el.style.boxShadow   = "inset 0 1px 1px rgba(255,255,255,0.45), 0 4px 16px rgba(27,63,126,0.25)";
+                  el.style.borderColor = "rgba(27,63,126,0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background  = "rgba(27,63,126,0.12)";
+                  el.style.boxShadow   = "inset 0 1px 1px rgba(255,255,255,0.35), 0 2px 8px rgba(27,63,126,0.15)";
+                  el.style.borderColor = "rgba(27,63,126,0.25)";
+                }}>
+                <X size={14} strokeWidth={2.5} />
               </motion.button>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* ── Grupo derecho: acciones fijas ── */}
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           {/* Personalizar */}
           <div className="relative" ref={personalizarRef}>
             <Button
@@ -360,9 +369,23 @@ const StatsTab = React.memo(function StatsTab({
                   className="absolute right-0 top-full mt-2 w-64 rounded-2xl z-20"
                   style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wider px-4 pt-4 pb-2" style={{ color: "var(--texto-muted)" }}>
-                    Mostrar secciones
-                  </p>
+                  <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>
+                      Mostrar secciones
+                    </p>
+                    {hayPersonalizacion && (
+                      <button
+                        onClick={() => { resetVistaEstadisticas(); setShowPersonalizar(false); }}
+                        title="Restablecer vista por defecto"
+                        className="flex items-center justify-center w-6 h-6 rounded-lg cursor-pointer transition-colors"
+                        style={{ color: "var(--texto-muted)" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--error)"; (e.currentTarget as HTMLElement).style.background = "var(--error-light)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--texto-muted)"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                      >
+                        <RefreshCw size={12} />
+                      </button>
+                    )}
+                  </div>
                   {[
                     { label: "KPIs resumen",              value: showKpis,            set: setShowKpis },
                     { label: "Incorporaciones y salidas",  value: showMovimiento,      set: setShowMovimiento },
@@ -1404,54 +1427,38 @@ function AdminContent() {
 
   const exportarEmpleadosExcel = async () => {
     setExportando(true);
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Empleados");
-
-    worksheet.columns = [
-      { header: "Nombre", key: "nombre", width: 20 },
-      { header: "Apellidos", key: "apellidos", width: 25 },
-      { header: "Email", key: "email", width: 30 },
-      { header: "Puesto", key: "puesto", width: 25 },
-      { header: "Departamento", key: "departamento", width: 20 },
-      { header: "Rol", key: "rol", width: 15 },
-      { header: "Estado", key: "estado", width: 12 },
-      { header: "Fecha de alta", key: "fechaAlta", width: 18 },
-    ];
-
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF2D5A3D" },
-      };
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-    });
-
-    empleados.forEach((e) => {
-      worksheet.addRow({
-        nombre: e.nombre,
-        apellidos: e.apellidos,
-        email: e.email,
-        puesto: e.puestoTrabajo ?? "",
+    try {
+      const payload = empleados.map((e) => ({
+        nombre:       e.nombre,
+        apellidos:    e.apellidos,
+        email:        e.email,
+        puesto:       e.puestoTrabajo ?? "",
         departamento: DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento ?? "",
-        rol: e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
-        estado: e.activo ? "Activo" : "Inactivo",
-        fechaAlta: formatFecha(e.fechaRegistro),
-      });
-    });
+        rol:          e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
+        estado:       e.activo ? "Activo" : "Inactivo",
+        fechaAlta:    formatFecha(e.fechaRegistro),
+      }));
 
-    const fecha = new Date().toISOString().split("T")[0];
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `empleados_${fecha}.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    setExportando(false);
-    mostrarToast(`Excel exportado con ${empleados.length} empleados`);
+      const res  = await fetch("/api/admin/export-empleados", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ empleados: payload }),
+      });
+      if (!res.ok) throw new Error("Error generando el archivo");
+
+      const blob = await res.blob();
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `empleados_${new Date().toISOString().split("T")[0]}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      mostrarToast(`Excel exportado con ${empleados.length} empleados`);
+    } catch {
+      mostrarToast("Error al exportar el archivo", "error");
+    } finally {
+      setExportando(false);
+    }
   };
 
   const importarEmpleados = async (file: File) => {
@@ -1460,16 +1467,14 @@ function AdminContent() {
     const errores: string[] = [];
     let ok = 0;
     try {
-      const workbook = new ExcelJS.Workbook();
-      const buffer = await file.arrayBuffer();
-      await workbook.xlsx.load(buffer);
-      const worksheet = workbook.worksheets[0];
-      const filas: { rowNum: number; values: string[] }[] = [];
-      worksheet.eachRow((row, rowIdx) => {
-        if (rowIdx === 1) return;
-        const values = (row.values as unknown[]).slice(1).map((v) => String(v ?? "").trim());
-        if (values.some((v) => v)) filas.push({ rowNum: rowIdx, values });
-      });
+      // Parsear el Excel en el servidor
+      const formData = new FormData();
+      formData.append("file", file);
+      const parseRes = await fetch("/api/admin/import-empleados", { method: "POST", body: formData });
+      if (!parseRes.ok) { errores.push("El archivo no es un Excel válido"); throw new Error(); }
+
+      const { filas } = await parseRes.json() as { filas: { rowNum: number; values: string[] }[] };
+
       for (const { rowNum, values } of filas) {
         const [nombre, apellidos, email, puesto, dept] = values;
         if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
@@ -1495,7 +1500,8 @@ function AdminContent() {
           }
         } catch { errores.push(`${email}: Error de conexión`); }
       }
-    } catch { errores.push("El archivo no es un Excel válido"); }
+    } catch { if (errores.length === 0) errores.push("Error procesando el archivo"); }
+
     setImportando(false);
     setImportResult({ ok, errors: errores });
     queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
@@ -1578,7 +1584,7 @@ function AdminContent() {
       <DashboardHero
         prefijo="Panel de "
         titulo="Administración"
-        imagenFondo="/background-admin.webp"
+        imagenFondo="/hero-administracion.webp"
       />
 
       <div className="px-10 lg:px-16 pt-10 pb-16">
@@ -2595,21 +2601,54 @@ function AdminContent() {
         {/* ── TAB ANUNCIOS ── */}
         {activeTab === "anuncios" && (
           <>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                  Gestion de Anuncios
-                </h1>
-                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Comunica novedades a todos los empleados</p>
+            {/* Título */}
+            <div className="mb-8 text-center sm:text-left">
+              <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                Gestión de anuncios
+              </h1>
+              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                {(() => {
+                  const publicados = noticias.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado").length;
+                  const borradores = noticias.filter((n) => n.activo && n.estado === "borrador").length;
+                  if (publicados === 0 && borradores === 0) return "Sin anuncios publicados";
+                  return (
+                    <>
+                      {publicados} publicado{publicados !== 1 ? "s" : ""}
+                      {borradores > 0 && (
+                        <span style={{ color: "var(--advertencia)", fontWeight: 600 }}>
+                          {" "}· {borradores} borrador{borradores !== 1 ? "es" : ""}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
+              </p>
+            </div>
+
+            {/* Barra de herramientas */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
+              {/* Buscador */}
+              <div className="relative w-full sm:w-64 shrink-0">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                  <Search size={15} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar anuncio…"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                  style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "#0A8A96")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                />
               </div>
-              <button onClick={abrirCrear}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}>
-                <Plus size={14} />
-                Nuevo anuncio
-              </button>
+              {/* Botones */}
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <Button variant="primary" size="md" onClick={abrirCrear}>
+                  <Plus size={14} />
+                  <span className="hidden sm:inline">Nuevo anuncio</span>
+                  <span className="sm:hidden">Nuevo</span>
+                </Button>
+              </div>
             </div>
 
             {showFormAnuncio && (
