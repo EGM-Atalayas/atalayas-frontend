@@ -11,11 +11,13 @@ import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/l
 import { getModulos } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
 import { QK } from "@/lib/queryKeys";
-import { BarChart3, Check, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, EyeOff, FileText, GraduationCap, LibraryBig, Megaphone, Plus, RefreshCw, Search, SlidersHorizontal, TriangleAlert, Upload, Users, X } from "lucide-react";
+import { listarDocumentosEmpresa } from "@/lib/api/documentos";
+import type { Documento } from "@/lib/types/documentos";
+import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, EyeOff, FileText, GraduationCap, LibraryBig, Megaphone, Pencil, Plus, RefreshCw, Search, Send, SlidersHorizontal, Trash2, TriangleAlert, Upload, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import Grainient from "@/components/ui/Grainient";
 import FormAnuncio from "@/components/ui/FormAnuncio";
+import Grainient from "@/components/ui/Grainient";
 import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
 import type { Modulo } from "@/lib/types/modulos";
 import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
@@ -40,20 +42,21 @@ const EMPTY_ANUNCIO: NoticiaInput = {
 
 const ROL_EMPLEADO_ID = "ff7abc21-9380-4e51-a55c-e2427d2a4e2d";
 
-const GRAD_EMP = "linear-gradient(135deg, #2d5a3d 0%, #3b8256 100%)";
+const GRAD_ANN = "linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%)";
 const SHADOW_TXT = "0 1px 4px rgba(0,0,0,0.35), 0 0 2px rgba(0,0,0,0.5)";
 const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: string }> = {
   General: { bg: "rgba(255,255,255,0.15)", text: "#e5e7eb", border: "rgba(255,255,255,0.25)" },
   Formacion: { bg: "rgba(59,130,246,0.45)", text: "#bfdbfe", border: "rgba(59,130,246,0.55)" },
   Seguridad: { bg: "rgba(239,68,68,0.45)", text: "#fca5a5", border: "rgba(239,68,68,0.55)" },
-  Evento: { bg: "rgba(168,85,247,0.45)", text: "#d8b4fe", border: "rgba(168,85,247,0.55)" },
+  Evento: { bg: "rgba(234,88,12,0.45)", text: "#fed7aa", border: "rgba(234,88,12,0.55)" },
   Empresa: { bg: "rgba(52,211,153,0.45)", text: "#a7f3d0", border: "rgba(52,211,153,0.55)" },
 };
 const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
   General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
+  Aviso:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
+  Evento:  { bg: "#ffedd5", text: "#9a3412", border: "#fdba74" },
   Formacion: { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
   Seguridad: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Evento: { bg: "#ede9fe", text: "#6b21a8", border: "#c4b5fd" },
   Empresa: { bg: "#d1fae5", text: "#065f46", border: "#6ee7b7" },
 };
 
@@ -315,37 +318,41 @@ const StatsTab = React.memo(function StatsTab({
           <StatsSelect value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={148} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
           <StatsSelect value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={110} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
           <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
-          <AnimatePresence>
+        </div>
+        <AnimatePresence>
             {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
               <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
                 onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-xl focus:outline-none cursor-pointer shrink-0 relative overflow-hidden"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full focus:outline-none cursor-pointer shrink-0"
                 title="Limpiar filtros"
                 style={{
-                  background:           "rgba(27,63,126,0.12)",
-                  backdropFilter:       "blur(8px)",
-                  WebkitBackdropFilter: "blur(8px)",
-                  border:               "1px solid rgba(27,63,126,0.25)",
-                  boxShadow:            "inset 0 1px 1px rgba(255,255,255,0.35), 0 2px 8px rgba(27,63,126,0.15)",
+                  background:           "rgba(27,63,126,0.10)",
+                  border:               "1.5px solid rgba(27,63,126,0.22)",
                   color:                "var(--azul-egm)",
+                  position:             "relative",
+                  zIndex:               10,
+                  transition:           "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), transform 0.18s var(--ease-spring)",
                 }}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLElement;
-                  el.style.background  = "rgba(27,63,126,0.22)";
-                  el.style.boxShadow   = "inset 0 1px 1px rgba(255,255,255,0.45), 0 4px 16px rgba(27,63,126,0.25)";
-                  el.style.borderColor = "rgba(27,63,126,0.45)";
+                  el.style.background  = "rgba(27,63,126,0.18)";
+                  el.style.boxShadow   = "0 0 0 3px rgba(27,63,126,0.12)";
+                  el.style.borderColor = "rgba(27,63,126,0.40)";
+                  el.style.transform   = "scale(1.10)";
                 }}
                 onMouseLeave={(e) => {
                   const el = e.currentTarget as HTMLElement;
-                  el.style.background  = "rgba(27,63,126,0.12)";
-                  el.style.boxShadow   = "inset 0 1px 1px rgba(255,255,255,0.35), 0 2px 8px rgba(27,63,126,0.15)";
-                  el.style.borderColor = "rgba(27,63,126,0.25)";
-                }}>
+                  el.style.background  = "rgba(27,63,126,0.10)";
+                  el.style.boxShadow   = "none";
+                  el.style.borderColor = "rgba(27,63,126,0.22)";
+                  el.style.transform   = "scale(1)";
+                }}
+                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.88)"; }}
+                onMouseUp={(e)   => { (e.currentTarget as HTMLElement).style.transform = "scale(1.10)"; }}>
                 <X size={14} strokeWidth={2.5} />
               </motion.button>
             )}
           </AnimatePresence>
-        </div>
 
         {/* ── Grupo derecho: acciones fijas ── */}
         <div className="ml-auto flex items-center gap-2 shrink-0">
@@ -828,24 +835,13 @@ const StatsTab = React.memo(function StatsTab({
                 className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col"
                 style={{ background: "var(--blanco)", maxHeight: "92dvh" }}
               >
-                {/* Cabecera con Grainient verde */}
+                {/* Cabecera plana */}
                 <div className="flex items-center justify-between px-6 shrink-0"
-                  style={{ paddingTop: "20px", paddingBottom: "20px", position: "relative", background: "#10B981" }}>
-                  <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-                    <Grainient
-                      color1="#2D8653" color2="#10B981" color3="#059669"
-                      timeSpeed={0.18} warpStrength={1.2} warpFrequency={4.0}
-                      warpSpeed={1.5} warpAmplitude={60} grainAmount={0.08}
-                      contrast={1.2} saturation={1.0} zoom={0.85}
-                      style={{ width: "100%", height: "100%", display: "block" }}
-                    />
-                  </div>
-                  <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.25rem, 5vw, 1.6rem)", color: "#ffffff", letterSpacing: "-0.03em", lineHeight: 1.15, fontVariantNumeric: "lining-nums", position: "relative", zIndex: 1 }}>
+                  style={{ paddingTop: "20px", paddingBottom: "20px", background: "var(--tab-estadisticas)" }}>
+                  <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.25rem, 5vw, 1.6rem)", color: "#ffffff", letterSpacing: "-0.03em", lineHeight: 1.15, fontVariantNumeric: "lining-nums" }}>
                     {MESES_FULL[mesIdx] ?? drillMes} {anioMes}
                   </h3>
-                  <div style={{ position: "relative", zIndex: 1 }}>
-                    <IconButton variant="glass" size="sm" label="Cerrar" onClick={() => setDrillMes(null)} />
-                  </div>
+                  <IconButton variant="glass" size="sm" label="Cerrar" onClick={() => setDrillMes(null)} />
                 </div>
 
                 {/* KPIs + Buscador — zona gris fija */}
@@ -956,7 +952,7 @@ const StatsTab = React.memo(function StatsTab({
                                       )}
                                       {e.departamento && (
                                         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                                          style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
+                                          style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
                                           {e.departamento}
                                         </span>
                                       )}
@@ -1002,34 +998,41 @@ function AdminContent() {
   const queryClient = useQueryClient();
 
   // ── Queries ──────────────────────────────────────────────────────────────────
+  // Empleados — siempre activo (necesario en empleados, formaciones, estadísticas y documentos)
   const { data: _empleadosData, isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
     queryKey: QK.empleados(usuario?.empresaId),
     queryFn: () => apiFetch(`${API_URL}/users`).then((r) => r.json()),
-    enabled: !!usuario?.empresaId && (activeTab === "formaciones" || activeTab === "estadisticas"),
-    staleTime: 30_000,
+    enabled: !!usuario?.empresaId,
   });
   const empleados = useMemo(() => _empleadosData ?? [], [_empleadosData]);
 
-  const { data: noticias = [] } = useQuery({
+  // Noticias — siempre activo para que al cambiar a anuncios no haya espera
+  const { data: noticias = [], isLoading: cargandoNoticias } = useQuery({
     queryKey: QK.noticias(usuario?.empresaId),
     queryFn: () => getNoticias(usuario!.empresaId),
-    enabled: !!usuario?.empresaId && activeTab === "anuncios",
-    staleTime: 30_000,
+    enabled: !!usuario?.empresaId,
   });
 
-  const { data: _formacionesData } = useQuery<Modulo[]>({
+  // Módulos — siempre activo
+  const { data: _formacionesData, isLoading: cargandoModulos } = useQuery<Modulo[]>({
     queryKey: QK.modulos(usuario?.empresaId),
     queryFn: () => getModulos(usuario?.empresaId),
     enabled: !!usuario?.empresaId,
-    staleTime: 60_000,
   });
   const formaciones = useMemo(() => _formacionesData ?? [], [_formacionesData]);
 
+  // Documentos — pre-carga en caché compartida con DocumentosAdminTab (sin doble fetch)
+  useQuery<Documento[]>({
+    queryKey: QK.documentos(usuario?.empresaId),
+    queryFn: listarDocumentosEmpresa,
+    enabled: !!usuario?.empresaId,
+  });
+
+  // Progreso — siempre activo
   const { data: _progresoData, isLoading: cargandoProgreso } = useQuery({
     queryKey: QK.progresoEmpresa(usuario?.empresaId),
     queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
     enabled: !!usuario?.empresaId,
-    staleTime: 60_000,
   });
   const progresoEmpresa = useMemo(() => _progresoData ?? [], [_progresoData]);
 
@@ -1174,7 +1177,9 @@ function AdminContent() {
   };
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [showBorradores, setShowBorradores] = useState(true);
+  const [anuncioSearch, setAnuncioSearch] = useState("");
+  const [publicandoId, setPublicandoId] = useState<string | null>(null);
+  const [confirmAnuncio, setConfirmAnuncio] = useState<{ tipo: "desactivar" | "eliminar"; id: string } | null>(null);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -1353,15 +1358,27 @@ function AdminContent() {
     finally { setSubmitting(false); }
   }
 
+  async function handleEliminarBorrador(id: string) {
+    setConfirmAnuncio({ tipo: "eliminar", id });
+  }
+
   async function handleDesactivarAnuncio(id: string) {
+    setConfirmAnuncio({ tipo: "desactivar", id });
+  }
+
+  async function ejecutarConfirmAnuncio() {
+    if (!confirmAnuncio) return;
+    const { tipo, id } = confirmAnuncio;
+    setConfirmAnuncio(null);
     try {
       await desactivarNoticia(id);
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
-      mostrarToast("Anuncio desactivado");
-    } catch { }
+      mostrarToast(tipo === "eliminar" ? "Borrador eliminado" : "Anuncio desactivado");
+    } catch { mostrarToast(tipo === "eliminar" ? "Error al eliminar el borrador" : "Error al desactivar el anuncio", "error"); }
   }
 
   async function publicarBorrador(n: Noticia) {
+    setPublicandoId(n.anuncioId);
     try {
       await editarNoticia(n.anuncioId, {
         titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
@@ -1373,7 +1390,8 @@ function AdminContent() {
       });
       queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
       mostrarToast("Anuncio publicado correctamente");
-    } catch { mostrarToast("Error al publicar el anuncio"); }
+    } catch { mostrarToast("Error al publicar el anuncio", "error"); }
+    finally { setPublicandoId(null); }
   }
   const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
@@ -1519,15 +1537,13 @@ function AdminContent() {
   const [empSort, setEmpSort] = useState<{ col: EmpSortCol; dir: "asc" | "desc" }>({ col: null, dir: "asc" });
 
   const toggleEmpSort = (col: Exclude<EmpSortCol, null>) => {
-    setEmpSort(prev =>
-      prev.col === col
-        ? { col, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { col, dir: "asc" }
-    );
+    setEmpSort(prev => {
+      if (prev.col !== col) return { col, dir: "asc" };
+      if (prev.dir === "asc")  return { col, dir: "desc" };
+      return { col: null, dir: "asc" }; // tercer clic → sin orden
+    });
     setEmpPage(0);
   };
-
-  const resetEmpSort = () => { setEmpSort({ col: null, dir: "asc" }); setEmpPage(0); };
 
   // ── Empleados filtrados + ordenados (frontend) ───────────────────────────────
   const empleadosFiltrados = useMemo(() => {
@@ -1564,7 +1580,7 @@ function AdminContent() {
   const tabs = [
     { key: "empleados"   as const, label: "Empleados",         icon: <Users size={20} />,         accent: "#1B3F7E" },
     { key: "incidencias" as const, label: "Incidencias",        icon: <TriangleAlert size={20} />, accent: "#B45309" },
-    { key: "anuncios"    as const, label: "Anuncios",           icon: <Megaphone size={20} />,     accent: "#0A8A96" },
+    { key: "anuncios"    as const, label: "Anuncios",           icon: <Megaphone size={20} />,     accent: "#0EA5E9" },
     { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85" },
     { key: "estadisticas"as const, label: "Estadísticas",       icon: <BarChart3 size={20} />,     accent: "#2D8653" },
     { key: "documentos"  as const, label: "Documentos",         icon: <FileText size={20} />,      accent: "#4E6D7E" },
@@ -1606,6 +1622,12 @@ function AdminContent() {
                 >
                   {tab.icon}
                   {tab.label}
+                  {tab.badge > 0 && !isActive && (
+                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none"
+                      style={{ background: tab.accent, color: "#fff" }}>
+                      {tab.badge}
+                    </span>
+                  )}
                   {isActive && (
                     <motion.div
                       layoutId="admin-tab-underline"
@@ -1697,9 +1719,17 @@ function AdminContent() {
                       <span style={{ color: isActive ? tab.accent : "var(--texto-primario)" }}>
                         {tab.label}
                       </span>
-                      {isActive && (
-                        <span className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: tab.accent }} />
-                      )}
+                      <span className="ml-auto flex items-center gap-1.5">
+                        {tab.badge > 0 && (
+                          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none"
+                            style={{ background: tab.accent, color: "#fff" }}>
+                            {tab.badge}
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: tab.accent }} />
+                        )}
+                      </span>
                     </motion.button>
                   );
                 })}
@@ -1727,11 +1757,15 @@ function AdminContent() {
                 Gestión de equipo
               </h1>
               <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                {empleados.length} persona{empleados.length !== 1 ? "s" : ""}
-                {empleados.filter(e => !e.activo).length > 0 && (
-                  <span style={{ color: "var(--error)", fontWeight: 600 }}>
-                    {" "}· {empleados.filter(e => !e.activo).length} inactiva{empleados.filter(e => !e.activo).length !== 1 ? "s" : ""}
-                  </span>
+                {cargandoEmpleados ? "Cargando empleados…" : (
+                  <>
+                    {empleados.length} persona{empleados.length !== 1 ? "s" : ""}
+                    {empleados.filter(e => !e.activo).length > 0 && (
+                      <span style={{ color: "var(--error)", fontWeight: 600 }}>
+                        {" "}· {empleados.filter(e => !e.activo).length} inactiva{empleados.filter(e => !e.activo).length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </>
                 )}
               </p>
             </div>
@@ -1757,22 +1791,20 @@ function AdminContent() {
                   style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Cabecera */}
-                  <div className="flex items-center justify-between px-5 sm:px-6 shrink-0"
-                    style={{ paddingTop: "20px", paddingBottom: "20px", position: "relative", background: "#2563EB" }}>
-                    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                  {/* Cabecera con Grainient — azules EGM */}
+                  <div className="relative flex items-center justify-between px-5 sm:px-6 shrink-0 overflow-hidden"
+                    style={{ paddingTop: "20px", paddingBottom: "20px", background: "var(--tab-empleados)" }}>
+                    <div className="absolute inset-0">
                       <Grainient
-                        color1="#1B3F7E" color2="#2563EB" color3="#1D4ED8"
-                        timeSpeed={0.18} warpStrength={1.2} warpFrequency={4.0}
-                        warpSpeed={1.5} warpAmplitude={60} grainAmount={0.08}
-                        contrast={1.3} saturation={1.1} zoom={0.85}
-                        style={{ width: "100%", height: "100%", display: "block" }}
+                        color1="#1B3F7E" color2="#2A5298" color3="#1040A0"
+                        timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
+                        warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
                       />
                     </div>
-                    <h2 className="text-2xl font-bold" style={{ color: "#ffffff", position: "relative", zIndex: 1 }}>
+                    <h2 className="text-2xl font-bold relative z-10" style={{ color: "#ffffff" }}>
                       Nuevo empleado
                     </h2>
-                    <div style={{ position: "relative", zIndex: 1 }}>
+                    <div className="relative z-10">
                       <IconButton variant="glass" label="Cerrar" onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} />
                     </div>
                   </div>
@@ -1907,31 +1939,33 @@ function AdminContent() {
                       style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
                   </div>
                 ) : empleados.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-                      style={{ background: "var(--gris-pagina)" }}>
-                      <Users size={22} color="var(--texto-muted)" strokeWidth={1.5} />
+                  <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                      style={{ background: "var(--azul-egm-light)" }}>
+                      <Users size={30} style={{ color: "var(--azul-egm)" }} strokeWidth={1.5} />
                     </div>
-                    <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
-                    <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Añade el primer empleado a tu empresa</p>
-                    <button onClick={() => setShowFormEmpleado(true)}
-                      className="text-xs font-semibold px-4 py-2 rounded-xl"
-                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                      Añadir el primero →
-                    </button>
+                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
+                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Añade el primer empleado a tu empresa</p>
+                    <Button variant="primary" size="md" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
+                      <Plus size={14} /> Añadir empleado
+                    </Button>
                   </div>
                 ) : empleadosFiltrados.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-                      style={{ background: "var(--gris-pagina)" }}>
-                      <Users size={22} color="var(--texto-muted)" strokeWidth={1.5} />
+                  <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                      style={{ background: "rgba(27,63,126,0.08)" }}>
+                      <Users size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
                     </div>
-                    <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
-                    <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Ningún empleado coincide con tu búsqueda</p>
+                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
+                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>
+                      Ningún empleado coincide con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{empSearch}"</span>
+                    </p>
                     <button onClick={() => { setEmpSearch(""); setEmpSearchInput(""); }}
-                      className="text-xs font-semibold px-4 py-2 rounded-xl"
-                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                      Limpiar filtros
+                      className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                      style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
+                      Limpiar búsqueda
                     </button>
                   </div>
                 ) : (
@@ -1940,23 +1974,22 @@ function AdminContent() {
                     <div className="hidden md:block">
                       <table className="w-full table-fixed">
                         <colgroup>
-                          <col style={{ width: "30%" }} />
-                          <col style={{ width: "19%" }} />
-                          <col style={{ width: "19%" }} />
+                          <col style={{ width: "35%" }} />
+                          <col style={{ width: "21%" }} />
+                          <col style={{ width: "18%" }} />
                           <col style={{ width: "14%" }} />
                           <col style={{ width: "12%" }} />
-                          <col style={{ width: "48px" }} />
                         </colgroup>
                         <thead>
                           <tr style={{ background: "var(--azul-egm-light)", borderBottom: "1px solid var(--surface-border)" }}>
                             {([
-                              { label: "Empleado",     col: "nombre"       as EmpSortCol, pad: "pl-14 pr-6" },
-                              { label: "Puesto",       col: "puesto"        as EmpSortCol, pad: "px-6"       },
-                              { label: "Departamento", col: "departamento"  as EmpSortCol, pad: "px-6"       },
-                              { label: "Perfil",       col: "perfil"        as EmpSortCol, pad: "px-6"       },
-                              { label: "Estado",       col: "estado"        as EmpSortCol, pad: "pl-6 pr-6"  },
-                            ]).map(({ label, col, pad }) => (
-                              <th key={label} className={`text-left py-3.5 ${pad}`} style={{ color: "var(--azul-egm)" }}>
+                              { label: "Empleado",     col: "nombre"      as EmpSortCol, cls: "pl-16 pr-6 text-left" },
+                              { label: "Puesto",       col: "puesto"       as EmpSortCol, cls: "px-6    text-left"    },
+                              { label: "Departamento", col: "departamento" as EmpSortCol, cls: "px-6    text-left"    },
+                              { label: "Perfil",       col: "perfil"       as EmpSortCol, cls: "px-6    text-left"    },
+                              { label: "Estado",       col: "estado"       as EmpSortCol, cls: "px-6 text-left"        },
+                            ]).map(({ label, col, cls }) => (
+                              <th key={label} className={`py-3.5 ${cls}`} style={{ color: "var(--azul-egm)" }}>
                                 <button
                                   onClick={() => toggleEmpSort(col!)}
                                   className="inline-flex items-center gap-1 focus:outline-none select-none uppercase tracking-wider text-sm font-bold"
@@ -1969,34 +2002,11 @@ function AdminContent() {
                                     display: "flex",
                                     transform: empSort.col === col && empSort.dir === "asc" ? "rotate(180deg)" : "rotate(0deg)",
                                   }}>
-                                    <ChevronDown size={13} strokeWidth={2.5} />
+                                    <ChevronDown size={15} strokeWidth={2.5} />
                                   </span>
                                 </button>
                               </th>
                             ))}
-                            <th className="py-3.5 pr-3 text-right">
-                              <motion.button
-                                animate={{ opacity: empSort.col ? 1 : 0, scale: empSort.col ? 1 : 0.75 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                                onClick={resetEmpSort}
-                                title="Quitar orden"
-                                className="inline-flex items-center justify-center focus:outline-none"
-                                style={{
-                                  width: 30, height: 30, borderRadius: "50%",
-                                  background: "rgba(255,255,255,0.52)",
-                                  border: "1px solid rgba(255,255,255,0.80)",
-                                  backdropFilter: "blur(10px)",
-                                  WebkitBackdropFilter: "blur(10px)",
-                                  boxShadow: "0 2px 8px rgba(27,63,126,0.18)",
-                                  color: "var(--azul-egm)",
-                                  cursor: empSort.col ? "pointer" : "default",
-                                  flexShrink: 0,
-                                  pointerEvents: empSort.col ? "auto" : "none",
-                                }}
-                              >
-                                <RefreshCw size={14} strokeWidth={2.3} />
-                              </motion.button>
-                            </th>
                           </tr>
                         </thead>
                         <AnimatePresence mode="wait">
@@ -2010,10 +2020,10 @@ function AdminContent() {
                               className="cursor-pointer"
                               style={{
                                 borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--surface-border)" : "none",
-                                borderLeft: empleadoSeleccionado?.usuarioId === e.usuarioId ? "3px solid var(--azul-egm)" : "3px solid transparent",
+                                borderLeft: `3px solid ${empleadoSeleccionado?.usuarioId === e.usuarioId ? "var(--azul-egm)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa"}`,
                                 background: empleadoSeleccionado?.usuarioId === e.usuarioId
                                   ? "var(--azul-egm-light)"
-                                  : idx % 2 === 0 ? "#ffffff" : "#fafbfc",
+                                  : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
                                 transition: "border-left-color 0.15s, background 0.15s",
                               }}
                               onClick={() => setEmpleadoSeleccionado(
@@ -2025,10 +2035,10 @@ function AdminContent() {
                               }}
                               onMouseLeave={(el) => {
                                 if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
-                                  el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#fafbfc";
+                                  el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f5f7fa";
                               }}
                             >
-                              <td className="py-3.5 pl-14 pr-6">
+                              <td className="py-3.5 pl-16 pr-6">
                                 <div className="flex items-center gap-3">
                                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all duration-150"
                                     style={{
@@ -2043,7 +2053,7 @@ function AdminContent() {
                                     <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
                                       {e.nombre} {e.apellidos}
                                     </p>
-                                    <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{e.email}</p>
+                                    <p className="text-sm mt-0.5" style={{ color: "var(--texto-secundario)", opacity: 0.7 }}>{e.email}</p>
                                   </div>
                                 </div>
                               </td>
@@ -2053,7 +2063,7 @@ function AdminContent() {
                               <td className="py-3.5 px-6">
                                 {e.departamento ? (
                                   <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                    style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
+                                    style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
                                     {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
                                   </span>
                                 ) : (
@@ -2068,7 +2078,7 @@ function AdminContent() {
                                   {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
                                 </span>
                               </td>
-                              <td className="py-3.5 pl-6 pr-6">
+                              <td className="py-3.5 px-6">
                                 <span className="text-xs font-semibold px-3 py-1 rounded-full"
                                   style={e.activo
                                     ? { background: "var(--exito-light)", color: "var(--exito)" }
@@ -2076,7 +2086,6 @@ function AdminContent() {
                                   {e.activo ? "Activo" : "Inactivo"}
                                 </span>
                               </td>
-                              <td />
                             </motion.tr>
                           ))}
                         </tbody>
@@ -2153,7 +2162,7 @@ function AdminContent() {
                             padding: "12px 16px",
                             borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE_MOBILE) - 1 ? "1px solid var(--surface-border)" : "none",
                             borderLeft: `3px solid ${isSelected ? "var(--azul-egm)" : "transparent"}`,
-                            background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#fafbfc",
+                            background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
                             transition: "border-left-color 0.15s, background 0.15s",
                           }}
                         >
@@ -2357,7 +2366,7 @@ function AdminContent() {
                               <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
                                 <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
                                 {empleadoSeleccionado.departamento
-                                  ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(10,138,150,0.10)", color: "#0A8A96" }}>
+                                  ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
                                       {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
                                     </span>
                                   : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
@@ -2607,7 +2616,7 @@ function AdminContent() {
                 Gestión de anuncios
               </h1>
               <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                {(() => {
+                {cargandoNoticias ? "Cargando anuncios…" : (() => {
                   const publicados = noticias.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado").length;
                   const borradores = noticias.filter((n) => n.activo && n.estado === "borrador").length;
                   if (publicados === 0 && borradores === 0) return "Sin anuncios publicados";
@@ -2626,18 +2635,20 @@ function AdminContent() {
             </div>
 
             {/* Barra de herramientas */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
+            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-6">
               {/* Buscador */}
-              <div className="relative w-full sm:w-64 shrink-0">
+              <div className="relative flex-1 sm:w-64 sm:flex-none shrink-0">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
                   <Search size={15} />
                 </span>
                 <input
                   type="text"
                   placeholder="Buscar anuncio…"
+                  value={anuncioSearch}
+                  onChange={(e) => setAnuncioSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
                   style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#0A8A96")}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "#0EA5E9")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
                 />
               </div>
@@ -2665,220 +2676,173 @@ function AdminContent() {
               </div>
             )}
 
-            {/* Panel borradores */}
+            {/* Panel anuncios — tarjetas independientes */}
             {(() => {
-              const borradores = noticias.filter((n) => n.activo && n.estado === "borrador");
-              const publicados = noticias.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado");
-              if (borradores.length === 0 && publicados.length === 0) return null;
+              const q = anuncioSearch.toLowerCase().trim();
+              const todas = noticias.filter((n) => n.activo);
+              const borradores = todas.filter((n) => n.estado === "borrador" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)));
+              const publicados = todas
+                .filter((n) => (n.estado ?? "publicado") === "publicado" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)))
+                .sort((a, b) => (b.fijado ? 1 : 0) - (a.fijado ? 1 : 0));
+              const hayNoticias = todas.length > 0;
+              if (!hayNoticias) return (
+                <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-5"
+                    style={{ background: "var(--azul-accion-light)" }}>
+                    <Megaphone size={30} style={{ color: "var(--azul-accion)" }} strokeWidth={1.5} />
+                  </div>
+                  <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Todavía no hay anuncios</p>
+                  <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer anuncio para que lo vean tus empleados</p>
+                  <Button variant="primary" size="md" onClick={abrirCrear}>
+                    <Plus size={14} /> Nuevo anuncio
+                  </Button>
+                </div>
+              );
+              if (q && borradores.length === 0 && publicados.length === 0) return (
+                <div className="flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center rounded-2xl"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                    style={{ background: "rgba(27,63,126,0.08)" }}>
+                    <Search size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
+                  </div>
+                  <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
+                  <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>No hay anuncios que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{anuncioSearch}"</span></p>
+                  <button onClick={() => setAnuncioSearch("")} className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                    style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              );
+
+              /* Card compartida para borrador y publicado — misma estructura que TarjetaCurso */
+              const AnuncioCard = ({ n, esBorrador }: { n: typeof noticias[number]; esBorrador?: boolean }) => (
+                <div
+                  className="flex flex-col rounded-2xl overflow-hidden cursor-pointer"
+                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", borderTop: esBorrador ? "3px solid #d97706" : "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.2s, transform 0.2s" }}
+                  onClick={() => abrirEditar(n)}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                  {/* Cabecera — siempre aspect 16/6 para altura uniforme */}
+                  <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/6", background: esBorrador ? "linear-gradient(135deg, #92400e, #d97706)" : GRAD_ANN }}>
+                    {/* Icono fallback centrado */}
+                    <Megaphone size={32} strokeWidth={1} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: "white", opacity: 0.15 }} />
+                    {n.imagenUrl && (
+                      <img src={n.imagenUrl} alt={n.titulo} className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {/* Overlay sutil para badge */}
+                    <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.22) 0%, transparent 45%)" }} />
+                    {/* Badge estado */}
+                    <div className="absolute top-2 right-2">{
+                      esBorrador
+                        ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(253,230,138,0.96)", color: "#78350f", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>Borrador</span>
+                        : esNuevo(n.creadoEn)
+                          ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--exito)", color: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>Nuevo</span>
+                          : n.fijado
+                            ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FEF9C3", color: "#854D0E", boxShadow: "0 1px 4px rgba(0,0,0,0.1)", border: "1px solid #FDE047" }}>★ Fijado</span>
+                            : null
+                    }</div>
+                  </div>
+
+                  {/* Contenido inferior */}
+                  <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3 gap-2">
+                    {/* Fecha + categoría en una sola fila */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
+                        {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                      {n.categoria && n.categoria !== "General" && (() => {
+                        const col = CATEGORIA_COLORS_LIGHT[n.categoria] ?? CATEGORIA_COLORS_LIGHT.General;
+                        return <><span style={{ color: "#D1D5DB", fontSize: 10 }}>·</span><span className="text-[10px] font-semibold px-1.5 py-px rounded-md" style={{ background: col.bg, color: col.text }}>{n.categoria}</span></>;
+                      })()}
+                    </div>
+                    {/* Título */}
+                    <h3 className="font-bold leading-snug line-clamp-2"
+                      style={{ fontSize: "0.875rem", color: "#0F1923", minHeight: "2.6em" }}>
+                      {n.titulo || "(Sin título)"}
+                    </h3>
+                    {/* Preview contenido */}
+                    <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#6B7A8D", minHeight: "2.6em" }}>
+                      {n.contenido ? n.contenido.replace(/[#*_`>]/g, "").trim().slice(0, 110) + (n.contenido.length > 110 ? "…" : "") : "Sin contenido"}
+                    </p>
+                    {/* Botones — estilo sistema Button secondary/danger */}
+                    <div className="flex items-center gap-1.5 mt-auto pt-2 min-w-0" style={{}} onClick={(e) => e.stopPropagation()}>
+                      <Button variant="primary" size="sm" className="flex-1 justify-center" style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }} onClick={() => abrirEditar(n)}>
+                        Editar
+                      </Button>
+                      {esBorrador ? (
+                        <>
+                          <Button variant="primary" size="sm" className="flex-1 justify-center" style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)" }} disabled={publicandoId === n.anuncioId} onClick={() => publicarBorrador(n)}>
+                            {publicandoId === n.anuncioId
+                              ? <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                              : "Publicar"}
+                          </Button>
+                          <button
+                            title="Eliminar borrador"
+                            onClick={() => handleEliminarBorrador(n.anuncioId)}
+                            className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
+                            style={{ borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), transform 0.18s var(--ease-spring)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--error)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--error)"; e.currentTarget.style.transform = "scale(1.10)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--error-light)"; e.currentTarget.style.color = "var(--error)"; e.currentTarget.style.borderColor = "rgba(220,38,38,0.15)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                            onMouseDown={(e)  => { e.currentTarget.style.transform = "scale(0.88)"; e.currentTarget.style.boxShadow = "none"; }}
+                            onMouseUp={(e)    => { e.currentTarget.style.transform = "scale(1.10)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
+                          >
+                            <Trash2 size={13} strokeWidth={2.2} />
+                          </button>
+                        </>
+                      ) : (
+                        <Button variant="danger" size="sm" className="flex-1 justify-center" onClick={() => handleDesactivarAnuncio(n.anuncioId)}>
+                          Desactivar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+
               return (
                 <>
+                  {/* Borradores */}
                   {borradores.length > 0 && (
-                    <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: "1.5px solid #fcd34d", background: "#fffbeb" }}>
-                      <button onClick={() => setShowBorradores((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3"
-                        style={{ background: "none", border: "none", cursor: "pointer" }}>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-                          style={{ background: "#fde68a", color: "#92400e", border: "1px solid #fcd34d" }}>
-                          Borrador
-                        </span>
-                        <span className="text-sm font-semibold flex-1 text-left" style={{ color: "var(--texto-primario)" }}>
-                          {borradores.length} {borradores.length === 1 ? "anuncio pendiente" : "anuncios pendientes"}
-                        </span>
-                        <ChevronDown size={14} strokeWidth={2.5} style={{ color: "#d97706", transition: "transform 0.2s", transform: showBorradores ? "rotate(0deg)" : "rotate(-90deg)" }} />
-                      </button>
-                      {showBorradores && (
-                        <div className="flex flex-col" style={{ borderTop: "1px solid #bfdbfe" }}>
-                          {borradores.map((n, i) => (
-                            <div key={n.anuncioId} className="flex items-center gap-3 px-4 py-3"
-                              style={{ borderTop: i > 0 ? "1px solid #dbeafe" : undefined, background: "var(--blanco)" }}>
-                              {n.imagenUrl
-                                ? <img src={n.imagenUrl} alt="" className="rounded-xl object-cover shrink-0" style={{ width: 44, height: 44 }} />
-                                : <div className="rounded-xl shrink-0 flex items-center justify-center" style={{ width: 44, height: 44, background: "#eff6ff" }}>
-                                  <FileText size={18} strokeWidth={1.8} style={{ color: "#93c5fd" }} />
-                                </div>
-                              }
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
-                                  {n.titulo || "(Sin titulo)"}
-                                </p>
-                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>
-                                  {n.contenido ? n.contenido.replace(/[#*_`>]/g, "").slice(0, 90) + (n.contenido.length > 90 ? "…" : "") : "Sin contenido"}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button onClick={() => abrirEditar(n)}
-                                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-                                  style={{ background: "var(--blanco)", color: "#2563eb", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease" }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                                  Editar
-                                </button>
-                                <button onClick={() => publicarBorrador(n)}
-                                  className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-                                  style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)", color: "#fff", border: "none", boxShadow: "0 2px 6px rgba(22,163,74,0.25)", transition: "opacity 0.18s ease, transform 0.18s ease" }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}>
-                                  Publicar
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div className="mb-8">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#92400e" }}>Borradores</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#fde68a", color: "#78350f" }}>{borradores.length}</span>
+                        <div className="flex-1 h-px" style={{ background: "#fcd34d" }} />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {borradores.map((n) => <AnuncioCard key={n.anuncioId} n={n} esBorrador />)}
+                      </div>
                     </div>
                   )}
 
+                  {/* Publicados */}
                   {publicados.length === 0 ? (
-                    <div className="rounded-2xl flex flex-col items-center justify-center py-20 text-center"
+                    <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-24 px-6 text-center"
                       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                      <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>No hay anuncios publicados</p>
-                      <button onClick={abrirCrear}
-                        className="text-xs font-semibold px-4 py-2 rounded-xl mt-4"
-                        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                        Crear el primero →
-                      </button>
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                        style={{ background: "var(--azul-accion-light)" }}>
+                        <Megaphone size={30} style={{ color: "var(--azul-accion)" }} strokeWidth={1.5} />
+                      </div>
+                      <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay anuncios publicados</p>
+                      <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Publica uno de tus borradores o crea un anuncio nuevo</p>
+                      <Button variant="primary" size="md" onClick={abrirCrear}>
+                        <Plus size={14} /> Nuevo anuncio
+                      </Button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-4">
-                      {/* Tarjetas destacadas (2 primeras) */}
-                      {publicados.slice(0, 2).map((n) => (
-                        <div key={n.anuncioId}
-                          className="relative rounded-xl overflow-hidden cursor-pointer group"
-                          style={{ outline: "1.5px solid transparent", boxShadow: "0 0 0 rgba(0,0,0,0)", transition: "outline-color 0.25s, box-shadow 0.25s", isolation: "isolate", height: "180px" }}
-                          onClick={() => abrirEditar(n)}
-                          onMouseEnter={(e) => { e.currentTarget.style.outline = "1.5px solid rgba(0,0,0,0.15)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(0,0,0,0.12)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.outline = "1.5px solid transparent"; e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)"; }}>
-                          {n.imagenUrl ? (
-                            <>
-                              <img src={n.imagenUrl} alt={n.titulo} className="absolute inset-0 w-full h-full object-cover transition-transform duration-400 group-hover:scale-105" />
-                              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(3,10,28,0.92) 0%, rgba(3,10,28,0.25) 50%, transparent 100%)" }} />
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center" style={{ background: GRAD_EMP }}>
-                              <Megaphone size={48} strokeWidth={1} style={{ color: "white", opacity: 0.2 }} />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 flex flex-col justify-end p-5">
-                            <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden mb-1.5">
-                              {(() => {
-                                const sm = true;
-                                const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
-                                const col = CATEGORIA_COLORS_DARK[n.categoria ?? "General"] ?? CATEGORIA_COLORS_DARK.General;
-                                return (
-                                  <>
-                                    {n.categoria && n.categoria !== "General" && (
-                                      <span className={cls} style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>{n.categoria}</span>
-                                    )}
-                                    {n.fijado && (
-                                      <span className={cls} style={{ background: "rgba(79,70,229,0.45)", color: "#c7d2fe", border: "1px solid rgba(79,70,229,0.5)" }}>★ Fijado</span>
-                                    )}
-                                    {esNuevo(n.creadoEn) && (
-                                      <span className={cls} style={{ background: "rgba(52,211,153,0.22)", color: "#a7f3d0", border: "1px solid rgba(52,211,153,0.32)" }}>Nuevo</span>
-                                    )}
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            <h3 className="text-white leading-tight line-clamp-2"
-                              style={{ fontWeight: 800, fontSize: "clamp(0.95rem, 1.3vw, 1.1rem)", letterSpacing: "-0.02em", textShadow: SHADOW_TXT }}>
-                              {n.titulo}
-                            </h3>
-                          </div>
-                          <div className="absolute top-3 right-3 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <button onClick={() => abrirEditar(n)}
-                              className="text-xs font-semibold px-2 py-1 rounded-lg"
-                              style={{ color: "rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", transition: "background 0.18s ease, transform 0.18s ease" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(37,99,235,0.55)"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                              Editar
-                            </button>
-                            <button onClick={() => handleDesactivarAnuncio(n.anuncioId)}
-                              className="text-xs font-semibold px-2 py-1 rounded-lg"
-                              style={{ color: "rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", transition: "background 0.18s ease, transform 0.18s ease" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.6)"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                              Desactivar
-                            </button>
-                          </div>
+                    <div>
+                      {borradores.length > 0 && (
+                        <div className="flex items-center gap-2.5 mb-4">
+                          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Publicados</span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>{publicados.length}</span>
+                          <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
                         </div>
-                      ))}
-
-                      {/* Lista del resto */}
-                      {publicados.length > 2 && (
-                        <>
-                          <div className="flex items-center gap-3 mb-1">
-                            <span className="text-xs font-semibold uppercase" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
-                              Mas anuncios
-                            </span>
-                            <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
-                          </div>
-                          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-                            {publicados.slice(2).map((n, i) => (
-                              <div key={n.anuncioId}
-                                className="flex items-center gap-3 cursor-pointer transition-colors"
-                                style={{ borderBottom: i < publicados.slice(2).length - 1 ? "1px solid var(--gris-borde)" : "none", paddingTop: "12px", paddingBottom: "12px", paddingLeft: 0, paddingRight: "16px" }}
-                                onClick={() => abrirEditar(n)}
-                                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--gris-superficie)"; }}
-                                onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}>
-                                <div className="shrink-0 rounded-xl overflow-hidden" style={{ width: "120px", height: "80px" }}>
-                                  {n.imagenUrl ? (
-                                    <img src={n.imagenUrl} alt={n.titulo} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center" style={{ background: GRAD_EMP }}>
-                                      <Megaphone size={24} strokeWidth={1} style={{ color: "white", opacity: 0.2 }} />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col" style={{ gap: "4px" }}>
-                                  <div className="flex items-center gap-1.5 overflow-hidden flex-wrap">
-                                    <span className="text-[11px] font-medium shrink-0" style={{ color: "var(--texto-muted)" }}>{new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}</span>
-                                    <span className="shrink-0 text-xs" style={{ color: "var(--gris-borde)" }}>·</span>
-                                    {(() => {
-                                      const sm = true;
-                                      const cls = `font-semibold rounded-full shrink-0 ${sm ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2.5 py-0.5"}`;
-                                      const col = CATEGORIA_COLORS_LIGHT[n.categoria ?? "General"] ?? CATEGORIA_COLORS_LIGHT.General;
-                                      return (
-                                        <>
-                                          {n.categoria && n.categoria !== "General" && (
-                                            <span className={cls} style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>{n.categoria}</span>
-                                          )}
-                                          {n.fijado && (
-                                            <span className={cls} style={{ background: "#ede9fe", color: "#4c1d95", border: "1px solid #c4b5fd" }}>★ Fijado</span>
-                                          )}
-                                          {esNuevo(n.creadoEn) && (
-                                            <span className={cls} style={{ background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" }}>Nuevo</span>
-                                          )}
-                                        </>
-                                      );
-                                    })()}
-                                  </div>
-                                  <h3 className="font-bold leading-snug line-clamp-1" style={{ fontSize: "0.875rem", color: "var(--texto-primario)" }}>
-                                    {n.titulo}
-                                  </h3>
-                                  <p className="text-xs line-clamp-1" style={{ color: "var(--texto-muted)" }}>
-                                    {n.contenido ? n.contenido.replace(/[#*_`>]/g, "").slice(0, 100) + (n.contenido.length > 100 ? "…" : "") : "Sin contenido"}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                  <button onClick={() => abrirEditar(n)}
-                                    className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-                                    style={{ background: "var(--blanco)", color: "#2563eb", border: "1px solid #bfdbfe", transition: "background 0.18s ease, transform 0.18s ease" }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                                    Editar
-                                  </button>
-                                  <button onClick={() => handleDesactivarAnuncio(n.anuncioId)}
-                                    className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-                                    style={{ background: "var(--blanco)", color: "#dc2626", border: "1px solid #fca5a5", transition: "background 0.18s ease, transform 0.18s ease" }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                                    Desactivar
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </>
                       )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {publicados.map((n) => <AnuncioCard key={n.anuncioId} n={n} />)}
+                      </div>
                     </div>
                   )}
                 </>
@@ -2886,6 +2850,56 @@ function AdminContent() {
             })()}
           </>
         )}
+
+        {/* ── Modal confirmación anuncio ── */}
+        <AnimatePresence>
+          {confirmAnuncio && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center p-4"
+              style={{ zIndex: 1200, background: "rgba(0,0,0,0.45)" }}
+              onClick={() => setConfirmAnuncio(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                className="rounded-2xl p-6 flex flex-col items-center text-center gap-4 w-full max-w-xs"
+                style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.22)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Icono */}
+                <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                  style={{ background: confirmAnuncio.tipo === "eliminar" ? "var(--error-light)" : "#FEF9C3" }}>
+                  {confirmAnuncio.tipo === "eliminar"
+                    ? <Trash2 size={26} style={{ color: "var(--error)" }} />
+                    : <TriangleAlert size={26} style={{ color: "#D97706" }} />}
+                </div>
+                {/* Texto */}
+                <div>
+                  <p className="font-bold text-lg" style={{ color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                    {confirmAnuncio.tipo === "eliminar" ? "¿Eliminar borrador?" : "¿Desactivar anuncio?"}
+                  </p>
+                  <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
+                    {confirmAnuncio.tipo === "eliminar"
+                      ? "Se borrará permanentemente. Esta acción no se puede deshacer."
+                      : "El anuncio dejará de ser visible para los empleados. Esta acción no se puede deshacer."}
+                  </p>
+                </div>
+                {/* Botones */}
+                <div className="flex flex-col gap-2 w-full">
+                  <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmAnuncio(null)}>
+                    Cancelar
+                  </Button>
+                  <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarConfirmAnuncio}>
+                    {confirmAnuncio.tipo === "eliminar" ? "Eliminar borrador" : "Desactivar anuncio"}
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── TAB PROGRESO DEL EQUIPO — oculto hasta que formación esté operativa ── */}
 
@@ -2898,7 +2912,9 @@ function AdminContent() {
                 <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                   Gestión de Módulos
                 </h1>
-                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>Administra los módulos formativos de tu empresa</p>
+                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                  {cargandoModulos ? "Cargando módulos…" : `${formaciones.filter(f => f.activo).length} módulo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""} activo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""}`}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -2934,19 +2950,17 @@ function AdminContent() {
 
             {/* Grid de módulos */}
             {formaciones.length === 0 ? (
-              <div className="rounded-2xl flex flex-col items-center justify-center py-20 text-center mb-6"
+              <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center mb-6"
                 style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-                  style={{ background: "var(--gris-pagina)" }}>
-                  <LibraryBig size={24} strokeWidth={1.5} style={{ color: "var(--texto-muted)" }} />
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: "#EDE9FE" }}>
+                  <LibraryBig size={30} strokeWidth={1.5} style={{ color: "#7B4A85" }} />
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
-                <p className="text-xs mt-1 mb-4" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo formativo para tus empleados</p>
-                <button onClick={() => router.push("/dashboard/admin/modulos/crear")}
-                  className="text-xs font-semibold px-4 py-2 rounded-xl"
-                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                  Crear el primero →
-                </button>
+                <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
+                <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer módulo formativo para tus empleados</p>
+                <Button variant="primary" size="md" onClick={() => router.push("/dashboard/admin/modulos/crear")}>
+                  <Plus size={14} /> Crear módulo
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

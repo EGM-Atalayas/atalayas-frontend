@@ -11,7 +11,7 @@ import Grainient from "@/components/ui/Grainient";
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
 const GRAD_BTN  = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
 const GRAD_EGM  = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
-const TAB_COLOR = "#0A8A96"; // teal — mismo que el header del modal
+const TAB_COLOR = "#0EA5E9"; // sky blue — mismo que el header del modal
 
 const EMPTY_FORM: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
@@ -22,7 +22,7 @@ const EMPTY_FORM: NoticiaInput = {
 
 const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
   Aviso:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Evento:  { bg: "#ede9fe", text: "#4c1d95", border: "#c4b5fd" },
+  Evento:  { bg: "#ffedd5", text: "#9a3412", border: "#fdba74" },
   General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
 };
 
@@ -41,7 +41,7 @@ const textareaStyle: React.CSSProperties = {
 };
 function onFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = "var(--azul-egm)";
-  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.08)";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.10)";
 }
 function onBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
@@ -78,10 +78,10 @@ function IconX({ size = 16 }: { size?: number }) {
     </svg>
   );
 }
-function IconSparkle({ size = 14 }: { size?: number }) {
+function IconPin({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
     </svg>
   );
 }
@@ -94,7 +94,7 @@ function IconUpload() {
 }
 function IconDoc() {
   return (
-    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   );
@@ -103,8 +103,8 @@ function IconDoc() {
 // ── SUBCOMPONENTES ────────────────────────────────────────────────────────────
 function FieldLabel({ label, required, right }: { label: string; required?: boolean; right?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between mb-2.5" style={{ minHeight: 32 }}>
-      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)", letterSpacing: "0.07em" }}>
+    <div className="flex items-center justify-between mb-1.5" style={{ minHeight: 28 }}>
+      <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
         {label}
         {required && (
           <span className="relative inline-block ml-1 group" style={{ verticalAlign: "middle" }}>
@@ -158,7 +158,7 @@ function AIButton({ loading, disabled, label, loadingLabel, onClick }: {
       onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)"; e.currentTarget.style.boxShadow = "0 1px 6px rgba(79,70,229,0.12)"; e.currentTarget.style.transform = "translateY(0)"; }}>
       {loading
         ? <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        : <IconSparkle size={15} />}
+        : <IconPin size={15} />}
       {loading ? loadingLabel : label}
     </button>
   );
@@ -200,7 +200,8 @@ function Modal({ children, onClose, zIndex = 50, maxWidth = "42rem", modalRef }:
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    document.body.classList.add("drill-modal-open");
+    return () => { document.body.style.overflow = prev; document.body.classList.remove("drill-modal-open"); };
   }, []);
 
   return (
@@ -502,7 +503,8 @@ export default function FormAnuncio({
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    document.body.classList.add("drill-modal-open");
+    return () => { document.body.style.overflow = ""; document.body.classList.remove("drill-modal-open"); };
   }, []);
 
   useEffect(() => {
@@ -547,15 +549,15 @@ export default function FormAnuncio({
       >
 
         {/* Drag handle — solo móvil */}
-        <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0" style={{ background: "#0A8A96" }}>
+        <div className="flex justify-center pt-3 pb-1 sm:hidden shrink-0" style={{ background: "#0284C7" }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.35)" }} />
         </div>
 
-        {/* Cabecera con Grainient */}
-        <div className="relative shrink-0 overflow-hidden" style={{ background: "#0A8A96" }}>
+        {/* Cabecera con Grainient — azules claros */}
+        <div className="relative shrink-0 overflow-hidden" style={{ background: "#0284C7" }}>
           <div className="absolute inset-0">
             <Grainient
-              color1="#0A8A96" color2="#0D7A85" color3="#0B6B75"
+              color1="#0284C7" color2="#0EA5E9" color3="#0369A1"
               timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
               warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
             />
@@ -570,7 +572,6 @@ export default function FormAnuncio({
                 letterSpacing: "-0.03em",
                 color: "#ffffff",
                 margin: 0,
-                textShadow: "0 1px 12px rgba(0,0,0,0.18)",
               }}>
                 {editando ? "Editar anuncio" : "Nuevo anuncio"}
               </h3>
@@ -584,9 +585,7 @@ export default function FormAnuncio({
                     : "Se publicará inmediatamente para todos los empleados"}
               </p>
             </div>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <IconButton onClick={handleRequestClose} variant="glass" label="Cerrar" />
-            </div>
+            <IconButton onClick={handleRequestClose} variant="glass" label="Cerrar" />
           </div>
         </div>
 
@@ -765,14 +764,10 @@ export default function FormAnuncio({
                     <div className="relative mt-3">
                       <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover"
                         style={{ height: "160px" }} onError={(e) => (e.currentTarget.style.display = "none")} />
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
-                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        title="Quitar imagen">
-                        <IconX size={12} />
-                      </button>
+                      <IconButton variant="glass" size="sm" label="Quitar imagen"
+                        className="absolute top-2 right-2"
+                        style={{ borderRadius: "50%" }}
+                        onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))} />
                     </div>
                   )}
                   </motion.div>
@@ -784,7 +779,7 @@ export default function FormAnuncio({
                     transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60"
+                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60 cursor-pointer"
                     style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
                     onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#f0f7ff"; }}}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
@@ -801,21 +796,25 @@ export default function FormAnuncio({
                     }}>
                     {uploadingImg
                       ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                      : <><IconUpload /><span className="font-medium">Arrastra o selecciona imagen</span><span className="text-xs opacity-70">JPG, PNG, WebP</span></>}
+                      : <>
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)" }}>
+                            <IconUpload />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: "var(--azul-egm)" }}>selecciona imagen</span></p>
+                            <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WebP · Máximo 10 MB</p>
+                          </div>
+                        </>}
                   </button>
                   {form.imagenUrl && (
                     <div className="relative mt-3">
                       <img src={form.imagenUrl} alt="preview" className="rounded-xl w-full object-cover" style={{ height: "160px" }} />
                       <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold"
                         style={{ background: "rgba(22,163,74,0.9)", color: "#fff" }}>Subida correctamente</span>
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))}
-                        className="absolute top-2 right-2 flex items-center justify-center transition-all"
-                        style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,38,38,0.8)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.45)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        title="Quitar imagen">
-                        <IconX size={12} />
-                      </button>
+                      <IconButton variant="glass" size="sm" label="Quitar imagen"
+                        className="absolute top-2 right-2"
+                        style={{ borderRadius: "50%" }}
+                        onClick={() => setForm((f) => ({ ...f, imagenUrl: null }))} />
                     </div>
                   )}
                   </motion.div>
@@ -877,25 +876,27 @@ export default function FormAnuncio({
                   <span className="text-sm flex-1 truncate font-medium" style={{ color: "#166534" }}>
                     {form.adjuntoNombre ?? "Documento"}
                   </span>
-                  <button type="button" onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))}
-                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                    style={{ color: "var(--texto-secundario)", background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.06)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.color = "var(--texto-secundario)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.94)"; }}
-                    onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}>
-                    Quitar
-                  </button>
+                  <IconButton variant="surface" size="sm" label="Quitar adjunto"
+                    style={{ borderRadius: "50%" }}
+                    onClick={() => setForm((f) => ({ ...f, adjuntoUrl: null, adjuntoNombre: null }))} />
                 </div>
               ) : (
                 <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60"
-                  style={{ border: "1.5px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                  onMouseEnter={(e) => { if (!uploadingAdj) e.currentTarget.style.borderColor = "#93c5fd"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; }}>
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60 cursor-pointer"
+                  style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
+                  onMouseEnter={(e) => { if (!uploadingAdj) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#f0f7ff"; }}}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}>
                   {uploadingAdj
                     ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
-                    : <><IconDoc /><span className="font-medium">Adjuntar PDF o Word</span></>}
+                    : <>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--gris-superficie)" }}>
+                          <IconDoc />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Adjuntar PDF o Word</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PDF, DOC, DOCX · Máximo 10 MB</p>
+                        </div>
+                      </>}
                 </button>
               )}
             </div>
@@ -952,9 +953,8 @@ export default function FormAnuncio({
             {/* Visibilidad */}
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: "var(--texto-label)" }}>Estado</label>
-              <div className="rounded-2xl overflow-hidden" style={{
-                border: `1.5px solid ${form.fijado ? "#bfdbfe" : "var(--gris-borde)"}`,
-                transition: "border-color 0.18s",
+              <div className="rounded-xl overflow-hidden" style={{
+                border: "1.5px solid var(--gris-borde)",
               }}>
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer"
                   style={{ background: form.fijado ? "#dbeafe" : "var(--blanco)", transition: "background 0.18s" }}
@@ -962,8 +962,8 @@ export default function FormAnuncio({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                       style={{ background: form.fijado ? "#bfdbfe" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke={form.fijado ? "#1d4ed8" : "var(--texto-muted)"} strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                       </svg>
                     </div>
                     <div>
@@ -974,7 +974,7 @@ export default function FormAnuncio({
                   <Toggle checked={form.fijado ?? false} onChange={(v) => setForm({ ...form, fijado: v })} color="#2563eb" />
                 </div>
 
-                {!form.fijado && form.estado !== "borrador" && !(editando && editando.estado !== "borrador") && (
+                {!(editando && editando.estado !== "borrador") && (
                   <div style={{ height: 1, background: "var(--gris-borde)" }} />
                 )}
 
@@ -985,7 +985,7 @@ export default function FormAnuncio({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                       style={{ background: form.estado === "borrador" ? "#fde68a" : "var(--gris-superficie)", transition: "background 0.18s" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
+                      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke={form.estado === "borrador" ? "#d97706" : "var(--texto-muted)"} strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                       </svg>
                     </div>
