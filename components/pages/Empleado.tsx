@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getEventosComunidad, type ComunidadEvento } from "@/lib/api/comunidad";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
@@ -137,6 +138,7 @@ export default function Empleado() {
   const [noticias, setNoticias]               = useState<Noticia[]>([]);
   const [formaciones, setFormaciones]         = useState<ModuloConProgreso[]>([]);
   const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
+  const [eventosCom, setEventosCom]           = useState<ComunidadEvento[]>([]);
   const [cargando, setCargando]               = useState(true);
 
   // Ref al contenedor de scroll horizontal de "Mi formación" para los botones de navegación
@@ -152,9 +154,10 @@ export default function Empleado() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [noticiasData, modulosData] = await Promise.all([
+        const [noticiasData, modulosData, eventosData] = await Promise.all([
           getNoticias(usuario?.empresaId).catch(() => []),
           getModulosConProgreso(usuario?.empresaId).catch(() => []),
+          getEventosComunidad().catch(() => []),
         ]);
         const filtradas = usuario?.empresaId
           ? (noticiasData as Noticia[]).filter((n) => n.empresaId === usuario.empresaId)
@@ -166,6 +169,18 @@ export default function Empleado() {
         if (real.length === 0) {
           setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
         }
+        // Eventos: ordenar por fecha (futuros primero, luego pasados)
+        const ahora = Date.now();
+        const ordenados = [...eventosData].sort((a, b) => {
+          const ta = new Date(a.fechaInicio).getTime();
+          const tb = new Date(b.fechaInicio).getTime();
+          const futuroA = ta >= ahora;
+          const futuroB = tb >= ahora;
+          if (futuroA && !futuroB) return -1;
+          if (!futuroA && futuroB) return 1;
+          return futuroA ? ta - tb : tb - ta;  // futuros asc, pasados desc
+        });
+        setEventosCom(ordenados);
       } finally {
         setCargando(false);
       }
@@ -516,139 +531,164 @@ export default function Empleado() {
           )}
         </section>
 
-        {/* ── FILA 3: COMUNIDAD ── */}
-        <section>
-          <div className="mb-5">
-            <TituloSeccion noMargin>Comunidad</TituloSeccion>
-            <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
-          </div>
+        {/* ── COMUNIDAD — eventos reales del backend ── */}
+        {(() => {
+          const destacado = eventosCom[0];
+          const otros     = eventosCom.slice(1, 4);
+          const noHay     = eventosCom.length === 0;
 
-          {/* Evento destacado + iniciativas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 items-stretch">
+          // Helpers de formato
+          const fmtDia = (iso: string) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric" });
+          const fmtMes = (iso: string) => new Date(iso).toLocaleDateString("es-ES", { month: "short" }).replace(".", "");
+          const fmtHora = (iso: string, isoFin?: string | null) => {
+            const ini = new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+            if (!isoFin) return `${ini} h`;
+            const fin = new Date(isoFin).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+            return `${ini} – ${fin} h`;
+          };
+          const fmtFechaCorta = (iso: string) =>
+            new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 
-            {/* Evento destacado */}
-            <div
-              className="rounded-2xl overflow-hidden relative cursor-pointer"
-              style={{ background: "var(--marino)", minHeight: "200px" }}
-              onClick={() => router.push("/dashboard/eventos")}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.95"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-            >
-              {/* Fondo decorativo */}
-              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
-              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
-
-              <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
-                <div className="flex items-start justify-between mb-auto">
-                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "var(--verde-oliva-hover)" }}>
-                    Próximo evento
-                  </span>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-white leading-none">24</p>
-                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>May</p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
-                    Jornada de Networking EGM
-                  </h3>
-                  <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    Conecta con profesionales del parque empresarial. Ponencias, mesas redondas y espacio de networking libre.
-                  </p>
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-                    {[
-                      { icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z", text: "Sala Polivalente A" },
-                      { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "10:00 – 14:00 h" },
-                      { icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z", text: "42 inscritos" },
-                    ].map((d) => (
-                      <span key={d.text} className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={d.icon} />
-                        </svg>
-                        {d.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <Link
-                  href="/dashboard/eventos"
-                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
-                  style={{ background: "var(--verde-oliva-hover)", color: "#fff", textDecoration: "none" }}
-                >
-                  Ver evento
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+          return (
+            <section>
+              <div className="mb-5">
+                <TituloSeccion noMargin>Comunidad</TituloSeccion>
+                <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
               </div>
-            </div>
 
-            {/* Iniciativas */}
-            <div className="flex flex-col gap-4 h-full">
-              {[
-                {
-                  label: "Team building",
-                  desc:  "Integración y trabajo en equipo entre empresas del parque",
-                  fecha: "Jun 2025",
-                  inscritos: 18,
-                  color: "#7c3aed",
-                  bg:    "#ede9fe",
-                  icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
-                },
-                {
-                  label: "En Femenino",
-                  desc:  "Liderazgo, igualdad e inspiración en el entorno empresarial",
-                  fecha: "Jul 2025",
-                  inscritos: 31,
-                  color: "#be185d",
-                  bg:    "#fce7f3",
-                  icon:  "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
-                },
-                {
-                  label: "Eventos empresariales",
-                  desc:  "Actividades de networking entre las empresas del parque",
-                  fecha: "Mensual",
-                  inscritos: 60,
-                  color: "var(--azul-egm)",
-                  bg:    "var(--azul-egm-light)",
-                  icon:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-                },
-              ].map((ini) => (
-                <div
-                  key={ini.label}
-                  className="flex-1 flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-                  onClick={() => router.push("/dashboard/comunidad")}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)";
-                    (e.currentTarget as HTMLDivElement).style.borderColor = ini.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)";
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gris-borde)";
-                  }}
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ini.bg, color: ini.color }}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={ini.icon} />
+              {noHay ? (
+                /* Placeholder cuando no hay eventos */
+                <div className="rounded-2xl flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
+                  style={{ background: "var(--blanco)", border: "1px dashed var(--gris-borde)" }}>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{ini.label}</p>
-                    <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ini.desc}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold" style={{ color: ini.color }}>{ini.fecha}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>{ini.inscritos} inscritos</p>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no hay eventos programados</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Cuando se publiquen aparecerán aquí</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 items-stretch">
 
-        </section>
+                  {/* Evento destacado */}
+                  <div
+                    className="rounded-2xl overflow-hidden relative cursor-pointer"
+                    style={{ background: "var(--marino)", minHeight: "200px" }}
+                    onClick={() => router.push("/dashboard/eventos")}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.95"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                  >
+                    <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
+                    <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+
+                    <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
+                      <div className="flex items-start justify-between mb-auto">
+                        <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "var(--verde-oliva-hover)" }}>
+                          {new Date(destacado.fechaInicio).getTime() >= Date.now() ? "Próximo evento" : "Último evento"}
+                        </span>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-white leading-none">{fmtDia(destacado.fechaInicio)}</p>
+                          <p className="text-xs capitalize" style={{ color: "rgba(255,255,255,0.5)" }}>{fmtMes(destacado.fechaInicio)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
+                          {destacado.titulo}
+                        </h3>
+                        {destacado.descripcion && (
+                          <p className="text-sm mb-4 line-clamp-3" style={{ color: "rgba(255,255,255,0.55)" }}>
+                            {destacado.descripcion}
+                          </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
+                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {fmtHora(destacado.fechaInicio, destacado.fechaFin)}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {destacado.esGlobal ? "EGM Atalayas" : "Tu empresa"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/dashboard/eventos"
+                        className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
+                        style={{ background: "var(--verde-oliva-hover)", color: "#fff", textDecoration: "none" }}
+                      >
+                        Ver evento
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Otros eventos como iniciativas */}
+                  <div className="flex flex-col gap-4 h-full">
+                    {otros.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center rounded-xl px-6 py-8 text-center"
+                        style={{ background: "var(--blanco)", border: "1px dashed var(--gris-borde)" }}>
+                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                          No hay más eventos programados de momento
+                        </p>
+                      </div>
+                    ) : (
+                      otros.map((ev) => {
+                        const color = ev.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)";
+                        const bg    = ev.esGlobal ? "var(--azul-egm-light)" : "var(--verde-oliva-light)";
+                        return (
+                          <div
+                            key={ev.eventoId}
+                            className="flex-1 flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
+                            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+                            onClick={() => router.push("/dashboard/eventos")}
+                            onMouseEnter={(e) => {
+                              (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)";
+                              (e.currentTarget as HTMLDivElement).style.borderColor = color;
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)";
+                              (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gris-borde)";
+                            }}
+                          >
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: bg, color }}>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>{ev.titulo}</p>
+                              {ev.descripcion && (
+                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ev.descripcion}</p>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-xs font-semibold capitalize" style={{ color }}>{fmtFechaCorta(ev.fechaInicio)}</p>
+                              <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                                {ev.esGlobal ? "EGM" : "Empresa"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
       </div>
     </div>
