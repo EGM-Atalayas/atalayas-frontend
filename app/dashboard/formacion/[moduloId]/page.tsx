@@ -13,6 +13,7 @@ import { apiFetch, API_URL } from "@/lib/api";
 import { PresentationViewer } from "@/components/presentation/PresentationViewer";
 import { getBestSpanishVoice } from "@/lib/speech";
 import { generarCertificadoModulo } from "@/lib/api/documentos";
+import { guardarProgresoModulo, getMiProgresoModulo } from "@/lib/api/moduloProgreso";
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoContenido = "texto" | "video" | "pdf" | "quiz";
@@ -347,7 +348,20 @@ export default function Page() {
           const data: ModuloAPI = await res.json();
           setModuloApi(data);
           const base = apiToMock(data);
-          const { completados, activoId: savedActivo } = cargarEstado(id, esAdmin);
+          let { completados, activoId: savedActivo } = cargarEstado(id, esAdmin);
+
+          // Sincronizar con el backend: si el backend tiene MÁS progreso, lo respetamos
+          // (caso típico: el usuario lo completó en otro dispositivo).
+          if (!esAdmin) {
+            const remoto = await getMiProgresoModulo(id);
+            if (remoto && remoto.contenidosCompletados > completados.length) {
+              // Marcamos los primeros N ítems como completados
+              completados = base.contenidos.slice(0, remoto.contenidosCompletados).map((c) => c.id);
+              // Guardamos también en localStorage para mantener consistencia
+              guardarEstado(id, completados, savedActivo, base.totalItems, esAdmin);
+            }
+          }
+
           const moduloConEstado = aplicarEstado(base, completados);
           setModulo(moduloConEstado);
           const yaCompletado = completados.length >= moduloConEstado.totalItems;
@@ -393,12 +407,17 @@ export default function Page() {
           return c;
         }),
       }) : null);
+
+      // Sincronizar progreso al backend (no bloquea la UI si falla)
+      guardarProgresoModulo(id, nuevosCompletados, modulo.totalItems).catch(() => null);
+
       if (siguiente) {
         setActivoId(siguiente.id);
       } else {
         // Último ítem — módulo completado
         setModuloCompletado(true);
-        // Generar y guardar el certificado en el backend (aparece en "Mis documentos")
+        // Backend dispara el certificado automáticamente al recibir % = 100
+        // (pero llamamos también explícitamente para cubrir el caso de sincronización en frío)
         generarCertificadoModulo(id).catch(() => null);
       }
       setCompletando(false);
