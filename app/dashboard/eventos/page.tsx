@@ -307,6 +307,8 @@ export default function EventosPage() {
         titulo="Eventos"
         subtitulo="Actividades, jornadas y encuentros del área empresarial EGM Atalayas."
         variante="seccion"
+        imagenFondo="/eventos-banner.png"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
       {puedeEditar && (
         <div className="px-4 sm:px-6 lg:px-8 -mt-2 flex justify-end">
