@@ -10,6 +10,7 @@ import {
   type ComunidadEvento,
 } from "@/lib/api/comunidad";
 import { ModalEvento } from "@/components/eventos/ModalEvento";
+import { ModalUbicacion } from "@/components/eventos/ModalUbicacion";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type EstadoEvento = "PROXIMO" | "EN_CURSO" | "FINALIZADO";
@@ -44,10 +45,12 @@ function formatHoras(ev: ComunidadEvento) {
 
 // ── Card de evento ────────────────────────────────────────────────────────────
 function EventoCard({
-  evento, puedeEditar, onEditar, onDesactivar,
+  evento, puedeEditar, onEditar, onDesactivar, onVerUbicacion,
 }: {
   evento: ComunidadEvento; puedeEditar: boolean;
-  onEditar: (e: ComunidadEvento) => void; onDesactivar: (e: ComunidadEvento) => void;
+  onEditar: (e: ComunidadEvento) => void;
+  onDesactivar: (e: ComunidadEvento) => void;
+  onVerUbicacion: (e: ComunidadEvento) => void;
 }) {
   const [hovered,   setHovered]   = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
@@ -167,6 +170,34 @@ function EventoCard({
                 {evento.esGlobal ? "EGM Atalayas (global)" : "Tu empresa"}
               </span>
             </div>
+
+            {/* Lugar + botón Ver ubicación */}
+            {evento.lugar && (
+              <div className="flex items-start gap-1.5">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  style={{ color: "#9ca3af", flexShrink: 0, marginTop: 3 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-xs line-clamp-1" style={{ color: "#6b7280" }}>{evento.lugar}</span>
+              </div>
+            )}
+            {evento.latitud != null && evento.longitud != null && (
+              <button
+                type="button"
+                onClick={() => onVerUbicacion(evento)}
+                className="inline-flex items-center gap-1.5 self-start text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--azul-egm-light)"; }}
+              >
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Ver ubicación
+              </button>
+            )}
           </div>
         </>
       )}
@@ -218,11 +249,12 @@ export default function EventosPage() {
   const esAdminEmpresa = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
   const puedeEditar   = esSuperAdmin || esAdminEmpresa;
 
-  const [eventos,   setEventos]   = useState<ComunidadEvento[]>([]);
-  const [cargando,  setCargando]  = useState(true);
-  const [toast,     setToast]     = useState<{ msg: string; tipo: "ok" | "err" } | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editando,  setEditando]  = useState<ComunidadEvento | null>(null);
+  const [eventos,    setEventos]    = useState<ComunidadEvento[]>([]);
+  const [cargando,   setCargando]   = useState(true);
+  const [toast,      setToast]      = useState<{ msg: string; tipo: "ok" | "err" } | null>(null);
+  const [modalOpen,  setModalOpen]  = useState(false);
+  const [editando,   setEditando]   = useState<ComunidadEvento | null>(null);
+  const [verUbicacion, setVerUbicacion] = useState<ComunidadEvento | null>(null);
 
   const mostrarToast = useCallback((msg: string, tipo: "ok" | "err" = "ok") => {
     setToast({ msg, tipo });
@@ -310,6 +342,7 @@ export default function EventosPage() {
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
                   onDesactivar={handleDesactivar}
+                  onVerUbicacion={setVerUbicacion}
                 />
               ))}
             </div>
@@ -327,6 +360,7 @@ export default function EventosPage() {
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
                   onDesactivar={handleDesactivar}
+                  onVerUbicacion={setVerUbicacion}
                 />
               ))}
             </div>
@@ -341,6 +375,17 @@ export default function EventosPage() {
           esSuperAdmin={esSuperAdmin}
           onClose={() => { setModalOpen(false); setEditando(null); }}
           onGuardado={handleGuardado}
+        />
+      )}
+
+      {/* Modal Ver ubicación */}
+      {verUbicacion && verUbicacion.latitud != null && verUbicacion.longitud != null && (
+        <ModalUbicacion
+          titulo={verUbicacion.titulo}
+          lugar={verUbicacion.lugar}
+          latitud={verUbicacion.latitud}
+          longitud={verUbicacion.longitud}
+          onClose={() => setVerUbicacion(null)}
         />
       )}
 

@@ -7,13 +7,15 @@
 // ============================================================
 
 import { useState } from "react";
-import { Calendar, X, Loader2 } from "lucide-react";
+import { Calendar, X, Loader2, MapPin, Search, Check } from "lucide-react";
 import {
   crearEventoComunidad,
   actualizarEventoComunidad,
   type ComunidadEvento,
   type ComunidadEventoInput,
 } from "@/lib/api/comunidad";
+import { buscarDireccion, type GeocodingResult } from "@/lib/geocoding";
+import { MapaUbicacion } from "./MapaUbicacion";
 
 interface Props {
   /** Si es null → modo creación; si tiene datos → modo edición */
@@ -43,6 +45,43 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
   const [enviando,    setEnviando]    = useState(false);
   const [error,       setError]       = useState<string | null>(null);
 
+  // ── Ubicación ──────────────────────────────────────────────
+  const [lugar,    setLugar]    = useState(evento?.lugar ?? "");
+  const [latitud,  setLatitud]  = useState<number | null>(evento?.latitud ?? null);
+  const [longitud, setLongitud] = useState<number | null>(evento?.longitud ?? null);
+  const [buscandoMapa, setBuscandoMapa] = useState(false);
+  const [resultadosMapa, setResultadosMapa] = useState<GeocodingResult[]>([]);
+  const [erroresMapa, setErroresMapa] = useState<string | null>(null);
+
+  const buscar = async () => {
+    if (!lugar.trim()) return;
+    setBuscandoMapa(true);
+    setErroresMapa(null);
+    setResultadosMapa([]);
+    try {
+      const res = await buscarDireccion(lugar, 5);
+      if (res.length === 0) setErroresMapa("Sin resultados — prueba con más detalles");
+      else setResultadosMapa(res);
+    } finally {
+      setBuscandoMapa(false);
+    }
+  };
+
+  const seleccionar = (r: GeocodingResult) => {
+    setLatitud(r.latitud);
+    setLongitud(r.longitud);
+    setLugar(r.etiqueta);
+    setResultadosMapa([]);
+  };
+
+  const limpiarUbicacion = () => {
+    setLatitud(null);
+    setLongitud(null);
+    setLugar("");
+    setResultadosMapa([]);
+    setErroresMapa(null);
+  };
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!titulo.trim() || !fechaInicio) {
@@ -57,6 +96,9 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
         descripcion: descripcion.trim() || null,
         fechaInicio: new Date(fechaInicio).toISOString(),
         fechaFin:    fechaFin ? new Date(fechaFin).toISOString() : null,
+        lugar:       lugar.trim() || null,
+        latitud,
+        longitud,
         ...(esSuperAdmin && { esGlobal }),
       };
       const guardado = esNuevo
@@ -142,6 +184,79 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
+          </div>
+
+          {/* Ubicación (opcional) */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Ubicación (opcional)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={lugar ?? ""}
+                onChange={(e) => setLugar(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscar(); } }}
+                placeholder="Ej: Edificio Central EGM Atalayas, Alicante"
+                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={buscar}
+                disabled={!lugar.trim() || buscandoMapa}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                title="Buscar en el mapa"
+              >
+                {buscandoMapa ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                Buscar
+              </button>
+            </div>
+
+            {/* Resultados de búsqueda */}
+            {resultadosMapa.length > 0 && (
+              <ul className="mt-2 border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
+                {resultadosMapa.map((r, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => seleccionar(r)}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 flex items-start gap-2"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-blue-600 mt-0.5 shrink-0" />
+                      <span className="line-clamp-2">{r.etiqueta}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {erroresMapa && (
+              <p className="mt-1.5 text-xs text-amber-700">{erroresMapa}</p>
+            )}
+
+            {/* Preview del mapa cuando hay coordenadas */}
+            {latitud !== null && longitud !== null && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-emerald-700 inline-flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    Ubicación seleccionada
+                  </p>
+                  <button
+                    type="button"
+                    onClick={limpiarUbicacion}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Quitar
+                  </button>
+                </div>
+                <MapaUbicacion
+                  latitud={latitud}
+                  longitud={longitud}
+                  etiqueta={lugar ?? undefined}
+                  alturaPx={180}
+                />
+              </div>
+            )}
           </div>
 
           {/* Global (solo superadmin) */}
