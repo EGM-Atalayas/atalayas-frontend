@@ -4,44 +4,58 @@ import React, { useEffect, useState, useCallback } from "react";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { Button }    from "@/components/ui/Button";
 import { useAuth }   from "@/context/AuthContext";
-import { getEventos, desactivarEvento } from "@/lib/api/eventos";
-import type { Evento, EstadoEvento } from "@/lib/types/eventos";
+import {
+  getEventosComunidad,
+  desactivarEventoComunidad,
+  type ComunidadEvento,
+} from "@/lib/api/comunidad";
+import { ModalEvento } from "@/components/eventos/ModalEvento";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+type EstadoEvento = "PROXIMO" | "EN_CURSO" | "FINALIZADO";
+
 const ESTADO_CONFIG: Record<EstadoEvento, { label: string; bg: string; color: string }> = {
   PROXIMO:    { label: "Próximo",    bg: "rgba(59,130,246,0.09)",  color: "#2563eb" },
-  EN_CURSO:   { label: "En curso",   bg: "rgba(16,185,129,0.09)", color: "#059669" },
+  EN_CURSO:   { label: "Hoy",        bg: "rgba(16,185,129,0.09)",  color: "#059669" },
   FINALIZADO: { label: "Finalizado", bg: "rgba(0,0,0,0.06)",       color: "#6b7280" },
-  CANCELADO:  { label: "Cancelado",  bg: "rgba(239,68,68,0.09)",   color: "#dc2626" },
 };
 
-function calcEstado(evento: Evento): EstadoEvento {
-  if (evento.estado) return evento.estado;
-  const fecha = new Date(evento.fecha);
-  const hoyMs = new Date().setHours(0, 0, 0, 0);
-  if (fecha.getTime() > hoyMs) return "PROXIMO";
-  if (fecha.getTime() === hoyMs) return "EN_CURSO";
+function calcEstado(ev: ComunidadEvento): EstadoEvento {
+  const ahora    = Date.now();
+  const ini      = new Date(ev.fechaInicio).getTime();
+  const fin      = ev.fechaFin ? new Date(ev.fechaFin).getTime() : ini;
+  if (ini > ahora) return "PROXIMO";
+  if (ahora <= fin) return "EN_CURSO";
   return "FINALIZADO";
 }
 
 function formatFecha(iso: string) {
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("es-ES", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+}
+
+function formatHoras(ev: ComunidadEvento) {
+  const ini = new Date(ev.fechaInicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  if (!ev.fechaFin) return ini;
+  const fin = new Date(ev.fechaFin).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return `${ini} – ${fin}`;
 }
 
 // ── Card de evento ────────────────────────────────────────────────────────────
 function EventoCard({
-  evento, esSuperAdmin, onEditar, onDesactivar,
+  evento, puedeEditar, onEditar, onDesactivar,
 }: {
-  evento: Evento; esSuperAdmin: boolean;
-  onEditar: (e: Evento) => void; onDesactivar: (e: Evento) => void;
+  evento: ComunidadEvento; puedeEditar: boolean;
+  onEditar: (e: ComunidadEvento) => void; onDesactivar: (e: ComunidadEvento) => void;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered,   setHovered]   = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const estado  = calcEstado(evento);
   const cfg     = ESTADO_CONFIG[estado];
-  const pasado  = estado === "FINALIZADO" || estado === "CANCELADO";
+  const pasado  = estado === "FINALIZADO";
+  const fechaIni = new Date(evento.fechaInicio);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -70,10 +84,14 @@ function EventoCard({
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         {/* Bloque día */}
         <div className="shrink-0 rounded-xl flex flex-col items-center justify-center"
-          style={{ width: 46, height: 46, background: pasado ? "#f3f4f6" : "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)", color: pasado ? "#9ca3af" : "var(--azul-egm)" }}>
-          <span className="text-lg font-bold leading-none">{new Date(evento.fecha + "T00:00:00").getDate()}</span>
+          style={{
+            width: 46, height: 46,
+            background: pasado ? "#f3f4f6" : "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
+            color: pasado ? "#9ca3af" : "var(--azul-egm)",
+          }}>
+          <span className="text-lg font-bold leading-none">{fechaIni.getDate()}</span>
           <span className="text-[10px] font-semibold uppercase tracking-wide leading-none mt-0.5">
-            {new Date(evento.fecha + "T00:00:00").toLocaleDateString("es-ES", { month: "short" })}
+            {fechaIni.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
           </span>
         </div>
 
@@ -82,8 +100,7 @@ function EventoCard({
             {evento.titulo}
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
-            {formatFecha(evento.fecha)}
-            {evento.horaInicio && ` · ${evento.horaInicio}${evento.horaFin ? ` – ${evento.horaFin}` : ""}`}
+            {formatFecha(evento.fechaInicio)} · {formatHoras(evento)}
           </p>
         </div>
 
@@ -94,8 +111,8 @@ function EventoCard({
             {cfg.label}
           </span>
 
-          {/* Menú superadmin */}
-          {esSuperAdmin && (
+          {/* Menú admin */}
+          {puedeEditar && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button
                 onClick={() => setMenuOpen(p => !p)}
@@ -126,7 +143,7 @@ function EventoCard({
       </div>
 
       {/* Cuerpo */}
-      {(evento.descripcion || evento.lugar) && (
+      {(evento.descripcion || true) && (
         <>
           <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 16px" }} />
           <div className="px-4 py-3 flex flex-col gap-2">
@@ -135,30 +152,23 @@ function EventoCard({
                 {evento.descripcion}
               </p>
             )}
-            {evento.lugar && (
-              <div className="flex items-center gap-1.5">
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#9ca3af", flexShrink: 0 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span className="text-xs" style={{ color: "#9ca3af" }}>{evento.lugar}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                style={{ color: "#9ca3af", flexShrink: 0 }}>
+                {evento.esGlobal ? (
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                )}
+              </svg>
+              <span className="text-xs font-medium" style={{ color: evento.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)" }}>
+                {evento.esGlobal ? "EGM Atalayas (global)" : "Tu empresa"}
+              </span>
+            </div>
           </div>
         </>
-      )}
-
-      {/* Footer */}
-      {evento.urlInfo && (
-        <div className="px-4 pb-4 mt-auto">
-          <a href={evento.urlInfo} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold"
-            style={{ color: "var(--azul-egm)" }}>
-            Más información
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-            </svg>
-          </a>
-        </div>
       )}
     </div>
   );
@@ -204,27 +214,35 @@ function SkeletonCard() {
 // ── Página ────────────────────────────────────────────────────────────────────
 export default function EventosPage() {
   const { usuario } = useAuth();
-  const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
+  const esSuperAdmin  = usuario?.codigoRol === "ROLE_ADMIN";
+  const esAdminEmpresa = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA";
+  const puedeEditar   = esSuperAdmin || esAdminEmpresa;
 
-  const [eventos,   setEventos]   = useState<Evento[]>([]);
+  const [eventos,   setEventos]   = useState<ComunidadEvento[]>([]);
   const [cargando,  setCargando]  = useState(true);
   const [toast,     setToast]     = useState<{ msg: string; tipo: "ok" | "err" } | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editando,  setEditando]  = useState<ComunidadEvento | null>(null);
 
   const mostrarToast = useCallback((msg: string, tipo: "ok" | "err" = "ok") => {
     setToast({ msg, tipo });
     setTimeout(() => setToast(null), 2200);
   }, []);
 
-  useEffect(() => {
-    getEventos()
+  const cargar = useCallback(() => {
+    setCargando(true);
+    getEventosComunidad()
       .then(setEventos)
       .catch(() => mostrarToast("Error al cargar los eventos", "err"))
       .finally(() => setCargando(false));
   }, [mostrarToast]);
 
-  async function handleDesactivar(evento: Evento) {
+  useEffect(() => { cargar(); }, [cargar]);
+
+  async function handleDesactivar(evento: ComunidadEvento) {
+    if (!confirm(`¿Cancelar el evento "${evento.titulo}"?`)) return;
     try {
-      await desactivarEvento(evento.eventoId);
+      await desactivarEventoComunidad(evento.eventoId);
       setEventos(prev => prev.filter(e => e.eventoId !== evento.eventoId));
       mostrarToast("Evento cancelado");
     } catch {
@@ -232,9 +250,22 @@ export default function EventosPage() {
     }
   }
 
-  // Separar próximos de pasados
-  const proximos  = eventos.filter(e => calcEstado(e) !== "FINALIZADO" && calcEstado(e) !== "CANCELADO");
-  const pasados   = eventos.filter(e => calcEstado(e) === "FINALIZADO" || calcEstado(e) === "CANCELADO");
+  function handleEditar(ev: ComunidadEvento) { setEditando(ev); setModalOpen(true); }
+  function handleNuevo()                    { setEditando(null); setModalOpen(true); }
+  function handleGuardado() {
+    setModalOpen(false);
+    setEditando(null);
+    cargar();
+    mostrarToast("Evento guardado");
+  }
+
+  // Separar próximos/en curso de pasados
+  const activos  = eventos.filter(e => calcEstado(e) !== "FINALIZADO");
+  const pasados  = eventos.filter(e => calcEstado(e) === "FINALIZADO");
+
+  // Ordenar: futuros ascendente, pasados descendente
+  activos.sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime());
+  pasados.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
 
   return (
     <div className="flex flex-col gap-6 pb-10">
@@ -243,9 +274,9 @@ export default function EventosPage() {
         subtitulo="Actividades, jornadas y encuentros del área empresarial EGM Atalayas."
         variante="seccion"
       />
-      {esSuperAdmin && (
-        <div className="px-4 sm:px-6 lg:px-8 -mt-2">
-          <Button variant="primary" onClick={() => mostrarToast("Próximamente — modal de evento")}>
+      {puedeEditar && (
+        <div className="px-4 sm:px-6 lg:px-8 -mt-2 flex justify-end">
+          <Button variant="primary" onClick={handleNuevo}>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} className="mr-1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
@@ -256,7 +287,7 @@ export default function EventosPage() {
 
       <div className="px-4 sm:px-6 lg:px-8 flex flex-col gap-8">
 
-        {/* Próximos */}
+        {/* Próximos / en curso */}
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "#9ca3af" }}>
             Próximos
@@ -265,7 +296,7 @@ export default function EventosPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
             </div>
-          ) : proximos.length === 0 ? (
+          ) : activos.length === 0 ? (
             <div className="rounded-2xl flex flex-col items-center justify-center py-14 gap-3"
               style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)" }}>
               <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} style={{ color: "#d1d5db" }}>
@@ -275,9 +306,9 @@ export default function EventosPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {proximos.map(e => (
-                <EventoCard key={e.eventoId} evento={e} esSuperAdmin={esSuperAdmin}
-                  onEditar={() => mostrarToast("Próximamente — editar evento")}
+              {activos.map(e => (
+                <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
+                  onEditar={handleEditar}
                   onDesactivar={handleDesactivar}
                 />
               ))}
@@ -293,8 +324,8 @@ export default function EventosPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {pasados.map(e => (
-                <EventoCard key={e.eventoId} evento={e} esSuperAdmin={esSuperAdmin}
-                  onEditar={() => mostrarToast("Próximamente — editar evento")}
+                <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
+                  onEditar={handleEditar}
                   onDesactivar={handleDesactivar}
                 />
               ))}
@@ -302,6 +333,16 @@ export default function EventosPage() {
           </section>
         )}
       </div>
+
+      {/* Modal crear/editar */}
+      {modalOpen && (
+        <ModalEvento
+          evento={editando}
+          esSuperAdmin={esSuperAdmin}
+          onClose={() => { setModalOpen(false); setEditando(null); }}
+          onGuardado={handleGuardado}
+        />
+      )}
 
       {/* Toast */}
       {toast && (
