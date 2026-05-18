@@ -405,59 +405,81 @@ export default function FormacionPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {modulosOnboarding.map((m) => {
                       const img = getFormacionImg(m.moduloId, m.nombre, m.imagenPortadaUrl);
-                      const pct = m.porcentaje;
-                      const statusColor = m.status === "completado" ? "var(--exito)" : m.status === "en progreso" ? "var(--azul-egm)" : "var(--texto-muted)";
-                      const statusLabel = m.status === "completado" ? "Completado" : m.status === "en progreso" ? "En progreso" : "Pendiente";
                       const isCompletadoOnboarding = m.status === "completado";
+                      const isEnProgresoOnboarding = m.status === "en progreso";
                       return (
                         <div key={m.moduloId}
-                          className="rounded-2xl overflow-hidden group transition-all"
+                          className="rounded-2xl overflow-hidden group transition-all cursor-pointer flex flex-col"
                           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+                          onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
                           onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+
                           {/* Imagen */}
-                          <div className="relative overflow-hidden cursor-pointer" style={{ height: "140px" }}
-                            onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}>
+                          <div className="relative overflow-hidden aspect-[16/10]">
                             {img ? (
                               <img src={img} alt={m.nombre}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                                style={{ objectPosition: "center 30%" }} />
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
                             ) : (
                               <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #1B3F7E 0%, #2A5298 100%)" }} />
                             )}
-                            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
-                            <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-                              style={{ background: "rgba(163,181,53,0.85)", color: "#fff" }}>
-                              Onboarding
-                            </span>
+
+                            {/* Check verde si completado (esquina superior izquierda) */}
+                            {isCompletadoOnboarding && (
+                              <div className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center"
+                                style={{ background: "var(--exito, #16a34a)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
                           </div>
-                          {/* Info */}
-                          <div className="p-5">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <h3 className="text-sm font-bold leading-snug flex-1 cursor-pointer" style={{ color: "var(--texto-primario)" }}
-                                onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}>{m.nombre}</h3>
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5"
-                                style={{ background: m.status === "completado" ? "var(--exito-light)" : m.status === "en progreso" ? "var(--azul-egm-light)" : "var(--gris-superficie)", color: statusColor }}>
-                                {statusLabel}
+
+                          {/* Info debajo de la imagen */}
+                          <div className="p-4 flex flex-col flex-1 gap-2">
+                            {/* Fila: tipo (chip) + duración */}
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
+                                style={{ background: "var(--gris-superficie)", color: "var(--texto-primario)" }}>
+                                {isCompletadoOnboarding ? "Completado" : isEnProgresoOnboarding ? "En curso" : "Onboarding"}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path strokeLinecap="round" d="M12 6v6l4 2" />
+                                </svg>
+                                {m.duracion}
                               </span>
                             </div>
-                            {m.descripcion && (
-                              <p className="text-xs mb-4 line-clamp-2" style={{ color: "var(--texto-muted)" }}>{m.descripcion}</p>
-                            )}
-                            {/* Progreso */}
-                            <div className="flex items-center gap-2 mb-3">
-                              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
-                                <div className="h-full rounded-full transition-all duration-700"
-                                  style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--azul-egm), var(--verde-oliva))" }} />
+
+                            {/* Título */}
+                            <h3 className="text-base font-bold leading-snug line-clamp-2"
+                              style={{ color: "var(--texto-primario)", minHeight: "2.6em" }}>
+                              {m.nombre}
+                            </h3>
+
+                            {/* Barra de progreso si hay progreso */}
+                            {(isEnProgresoOnboarding || isCompletadoOnboarding) && (
+                              <div className="flex items-center gap-2 mt-auto pt-2">
+                                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+                                  <div className="h-full rounded-full transition-all duration-700"
+                                    style={{ width: `${m.porcentaje}%`, background: isCompletadoOnboarding ? "var(--exito)" : "var(--azul-egm)" }} />
+                                </div>
+                                <span className="text-[11px] font-semibold tabular-nums"
+                                  style={{ color: isCompletadoOnboarding ? "var(--exito)" : "var(--azul-egm)" }}>
+                                  {m.porcentaje}%
+                                </span>
                               </div>
-                              <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--texto-muted)" }}>{pct}%</span>
-                            </div>
+                            )}
+
                             {/* Botón certificado si completado */}
                             {isCompletadoOnboarding && (
-                              <OnboardingCertificadoBtn modulo={m} />
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <OnboardingCertificadoBtn modulo={m} />
+                              </div>
                             )}
                           </div>
                         </div>
@@ -529,9 +551,9 @@ export default function FormacionPage() {
             </div>
           )}
 
-          {/* ── Grid de módulos ──────────────────────────────────────── */}
+          {/* ── Grid de módulos (2 columnas estilo curso) ──────────────── */}
           {modulosFiltrados.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {modulosFiltrados.map((m) => (
                 <CourseCard key={m.moduloId} m={m} isAdmin={isAdmin} router={router} />
               ))}
@@ -662,15 +684,18 @@ function CourseCard({
     setDescargando(false);
   };
 
+  const img = getFormacionImg(m.moduloId, m.nombre, m.imagenPortadaUrl);
+
   return (
     <div
-      className="rounded-2xl overflow-hidden flex flex-col group relative transition-shadow hover:shadow-md"
+      className="rounded-2xl overflow-hidden flex group relative transition-shadow hover:shadow-md cursor-pointer"
       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+      onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
     >
       {/* Botón editar admin */}
       {isAdmin && (
         <button
-          onClick={() => router.push(`/dashboard/admin?tab=formaciones&edit=${m.moduloId}`)}
+          onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin?tab=formaciones&edit=${m.moduloId}`); }}
           className="absolute top-3 right-3 z-10 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "1px solid var(--gris-borde)" }}
         >
@@ -678,62 +703,58 @@ function CourseCard({
         </button>
       )}
 
-      {/* Thumbnail */}
-      {(() => {
-        const img = getFormacionImg(m.moduloId, m.nombre, m.imagenPortadaUrl);
-        return img ? (
-          <div className="w-full h-40 relative overflow-hidden">
-            <img src={img} alt={m.nombre} className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.30)" }} />
-          </div>
+      {/* Thumbnail — IZQUIERDA */}
+      <div className="shrink-0 relative overflow-hidden" style={{ width: "200px" }}>
+        {img ? (
+          <img src={img} alt={m.nombre} className="w-full h-full object-cover absolute inset-0" />
         ) : (
-          <div className="w-full h-40" style={{ background: TIPO_GRADIENT[m.tipoModulo] }} />
-        );
-      })()}
+          <div className="w-full h-full absolute inset-0" style={{ background: TIPO_GRADIENT[m.tipoModulo] }} />
+        )}
+        {/* Overlay sutil */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "rgba(10,20,40,0.15)" }} />
+        {/* Check si completado */}
+        {isCompletado && (
+          <div className="absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ background: "var(--exito, #16a34a)", boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}>
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        )}
+      </div>
 
-      {/* Contenido */}
-      <div className="flex flex-col flex-1 p-5 gap-3">
-        {/* Título y duración */}
-        <div>
-          <h3 className="text-base font-bold leading-snug mb-1" style={{ color: "var(--texto-primario)" }}>
-            {m.nombre}
-          </h3>
-          <div className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--texto-muted)" }}>
+      {/* Contenido — DERECHA */}
+      <div className="flex flex-col flex-1 p-4 gap-2 min-w-0">
+        {/* Título */}
+        <h3 className="text-base font-bold leading-snug line-clamp-2" style={{ color: "var(--texto-primario)" }}>
+          {m.nombre}
+        </h3>
+
+        {/* Descripción */}
+        {m.descripcion && (
+          <p className="text-sm leading-snug line-clamp-2" style={{ color: "var(--texto-muted)" }}>
+            {m.descripcion}
+          </p>
+        )}
+
+        {/* Metadata: duración + tipo + IA */}
+        <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: "var(--texto-muted)" }}>
+          <span className="inline-flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" />
             </svg>
-            <span className="text-sm" style={{ color: "var(--texto-muted)" }}>{m.duracion}</span>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${m.porcentaje}%`,
-                background: isCompletado ? "var(--exito, #16a34a)" : "var(--azul-egm)",
-              }}
-            />
-          </div>
-          <span className="text-sm font-medium shrink-0" style={{ color: "var(--texto-muted)" }}>
-            {m.porcentaje}%
+            {m.duracion}
           </span>
-        </div>
-
-        {/* Tipo badge */}
-        <div className="flex items-center gap-2 flex-wrap">
           {MODULO_TIPO_LABEL[m.tipoModulo] && (
-            <span
-              className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded self-start"
-              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-            >
-              {MODULO_TIPO_LABEL[m.tipoModulo]}
-            </span>
+            <>
+              <span>·</span>
+              <span className="font-semibold" style={{ color: "var(--azul-egm)" }}>
+                {MODULO_TIPO_LABEL[m.tipoModulo]}
+              </span>
+            </>
           )}
           {m.esEspecializadoIa && (
-            <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded self-start"
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded"
               style={{ background: "#f3e8ff", color: "#7c3aed" }}>
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2l2.09 7.26L22 12l-7.91 2.74L12 22l-2.09-7.26L2 12l7.91-2.74z" />
@@ -743,66 +764,69 @@ function CourseCard({
           )}
         </div>
 
-        {/* CTA buttons */}
-        {isCompletado ? (
-          <div className="mt-auto flex flex-col gap-2">
-            <button
-              onClick={handleDescargarCertificado}
-              disabled={descargando}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-              style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-              onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-            >
-              {descargando ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-              {descargando ? "Obteniendo certificado..." : "Descargar certificado"}
-            </button>
-            <button
-              className="w-full py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2"
-              onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
-              style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-borde)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-            >
-              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              Revisar módulo
-            </button>
+        {/* Progress bar */}
+        <div className="flex items-center gap-2 mt-1">
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${m.porcentaje}%`,
+                background: isCompletado ? "var(--exito, #16a34a)" : "var(--azul-egm)",
+              }}
+            />
           </div>
-        ) : (
-          <button
-            className="mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-            onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
-            style={
-              isEnProgreso
-                ? { background: "var(--blanco)", border: "1px solid var(--gris-borde)", color: "var(--texto-primario)" }
-                : { background: "var(--azul-egm)", color: "var(--blanco)" }
-            }
-            onMouseEnter={(e) => {
-              if (isEnProgreso) e.currentTarget.style.background = "var(--gris-superficie)";
-              else e.currentTarget.style.background = "var(--azul-egm-hover)";
-            }}
-            onMouseLeave={(e) => {
-              if (isEnProgreso) e.currentTarget.style.background = "var(--blanco)";
-              else e.currentTarget.style.background = "var(--azul-egm)";
-            }}
-          >
-            {isEnProgreso && (
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: isCompletado ? "var(--exito, #16a34a)" : "var(--azul-egm)" }}>
+            {m.porcentaje}%
+          </span>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-auto pt-2">
+          {isCompletado ? (
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDescargarCertificado(); }}
+                disabled={descargando}
+                className="flex-1 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-70"
+                style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                onMouseEnter={(e) => { if (!descargando) e.currentTarget.style.background = "var(--azul-egm-hover)"; }}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+              >
+                {descargando ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                {descargando ? "Obteniendo..." : "Descargar certificado"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/formacion/${m.moduloId}`); }}
+              className="w-full py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+              style={
+                isEnProgreso
+                  ? { background: "var(--blanco)", border: "1px solid var(--azul-egm)", color: "var(--azul-egm)" }
+                  : { background: "var(--azul-egm)", color: "var(--blanco)" }
+              }
+              onMouseEnter={(e) => {
+                if (isEnProgreso) e.currentTarget.style.background = "var(--azul-egm-light)";
+                else e.currentTarget.style.background = "var(--azul-egm-hover)";
+              }}
+              onMouseLeave={(e) => {
+                if (isEnProgreso) e.currentTarget.style.background = "var(--blanco)";
+                else e.currentTarget.style.background = "var(--azul-egm)";
+              }}
+            >
+              {isEnProgreso ? "Continuar" : "Empezar"}
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-            )}
-            {isEnProgreso ? "Continuar" : "Empezar"}
-          </button>
-        )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

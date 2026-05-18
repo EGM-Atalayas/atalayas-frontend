@@ -518,20 +518,13 @@ export default function Empleado() {
 
         {/* ── FILA 3: COMUNIDAD ── */}
         <section>
-          <div className="flex items-start justify-between mb-5 gap-4">
-            <div>
-              <TituloSeccion noMargin>Comunidad</TituloSeccion>
-              <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
-            </div>
-            <Link href="/dashboard/comunidad"
-              className="text-sm font-semibold shrink-0 hover:underline mt-1"
-              style={{ color: "var(--azul-egm)" }}>
-              Ver todo →
-            </Link>
+          <div className="mb-5">
+            <TituloSeccion noMargin>Comunidad</TituloSeccion>
+            <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
           </div>
 
           {/* Evento destacado + iniciativas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 items-stretch">
 
             {/* Evento destacado */}
             <div
@@ -593,7 +586,7 @@ export default function Empleado() {
             </div>
 
             {/* Iniciativas */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4 h-full">
               {[
                 {
                   label: "Team building",
@@ -625,7 +618,7 @@ export default function Empleado() {
               ].map((ini) => (
                 <div
                   key={ini.label}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
+                  className="flex-1 flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
                   style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
                   onClick={() => router.push("/dashboard/comunidad")}
                   onMouseEnter={(e) => {
