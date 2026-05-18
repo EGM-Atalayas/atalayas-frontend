@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 interface Props {
   empresaId: string;
@@ -170,7 +171,6 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
       setDocEditar(null);
       setEditForm(null);
     } catch (e: any) {
-      console.error("[guardarEdicion]", e);
       setEditError(e?.message ?? "Error al guardar");
     } finally {
       setEditando(false);
@@ -595,43 +595,15 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
       </AnimatePresence>
 
       {/* ── Modal: Confirmar eliminar ── */}
-      <AnimatePresence>
-        {confirmEliminar && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center p-4"
-            style={{ zIndex: 1200, background: "rgba(0,0,0,0.45)" }}
-            onClick={() => setConfirmEliminar(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 8 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              className="rounded-2xl p-6 w-full max-w-sm flex flex-col gap-4"
-              style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--error-light)" }}>
-                  <Trash2 size={22} style={{ color: "var(--error)" }} />
-                </div>
-                <div>
-                  <p className="font-bold text-base" style={{ color: "var(--texto-primario)" }}>¿Eliminar documento?</p>
-                  <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                    "<span className="font-semibold">{confirmEliminar.titulo}</span>" dejará de ser visible para los empleados. Esta acción no se puede deshacer.
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmEliminar(null)}>
-                  Cancelar
-                </Button>
-                <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarEliminar}>
-                  Eliminar documento
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
+      <ModalConfirm
+        abierto={!!confirmEliminar}
+        titulo="¿Eliminar documento?"
+        descripcion={confirmEliminar ? `"${confirmEliminar.titulo}" dejará de ser visible para los empleados. Esta acción no se puede deshacer.` : ""}
+        textoConfirmar="Eliminar documento"
+        variante="danger"
+        onConfirmar={ejecutarEliminar}
+        onCancelar={() => setConfirmEliminar(null)}
+      />
         )}
       </AnimatePresence>
 
