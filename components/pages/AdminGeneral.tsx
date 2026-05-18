@@ -140,6 +140,36 @@ const AdminGeneral: React.FC = () => {
     }
   };
 
+  const estadisticasResumen = [
+    { label: "Empresas adheridas", value: data?.empresasAdheridas || 0 },
+    { label: "Empleados registrados", value: data?.empleadosRegistrados || 0 },
+    { label: "Módulos publicados", value: data?.modulosPublicados || 0 },
+    { label: "Incidencias abiertas", value: data?.incidenciasAbiertas || 0 },
+    { label: "Nuevas empresas este mes", value: data?.empresasNuevasMes || 0 },
+    { label: "Nuevos empleados este mes", value: data?.empleadosNuevosMes || 0 },
+  ];
+
+  const handleExportStats = () => {
+    const rows = [
+      ["Métrica", "Valor"],
+      ["Empresas adheridas", String(data?.empresasAdheridas ?? 0)],
+      ["Empleados registrados", String(data?.empleadosRegistrados ?? 0)],
+      ["Módulos publicados", String(data?.modulosPublicados ?? 0)],
+      ["Incidencias abiertas", String(data?.incidenciasAbiertas ?? 0)],
+      ["Incidencias críticas", String(data?.incidenciasCriticas ?? 0)],
+      ["Nuevas empresas este mes", String(data?.empresasNuevasMes ?? 0)],
+      ["Nuevos empleados este mes", String(data?.empleadosNuevosMes ?? 0)],
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `estadisticas-superadmin-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const stats = [
     {
       label: "Empresas Adheridas",
@@ -229,21 +259,60 @@ const AdminGeneral: React.FC = () => {
         </div>
       </div>
 
-      {/* ── STATS ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {stats.map((stat, i) => (
-          <div key={i}
-            className="card card-hover p-5 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
-              {stat.icon}
-            </div>
-            <div>
-              <div className="text-2xl font-bold" style={{ color: "var(--texto-primario)" }}>{stat.value}</div>
-              <div className="text-sm" style={{ color: "var(--texto-muted)" }}>{stat.label}</div>
-              <div className={`text-xs font-medium mt-0.5 ${stat.trendColor}`}>{stat.trend}</div>
-            </div>
+      {/* ── ESTADÍSTICAS GENERALES ─────────────────────────────────────────────────── */}
+      <div className="mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Estadísticas</p>
+            <h2 className="text-2xl font-bold mt-1" style={{ color: "var(--texto-primario)" }}>
+              Visión general de la plataforma
+            </h2>
           </div>
-        ))}
+          <div className="flex flex-wrap gap-2 text-sm">
+            <button
+              type="button"
+              onClick={handleExportStats}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-slate-700 transition hover:bg-slate-200"
+            >
+              <FaFileAlt size={14} />
+              Exportar CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/superadmin/administracion")}
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700"
+            >
+              <FaChartBar size={14} />
+              Ver empresas
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-5">
+          {[
+            { value: data?.empresasAdheridas ?? 0, label: "Empresas adheridas", sub: "Ver empresas →", href: "/superadmin/administracion", color: "var(--azul-egm)" },
+            { value: data?.empresasNuevasMes ?? 0, label: "Empresas nuevas este mes", sub: null, href: null, color: "var(--texto-primario)" },
+            { value: data?.empleadosRegistrados ?? 0, label: "Empleados registrados", sub: "Ver empleados →", href: "/dashboard/admin?tab=empleados", color: "var(--verde-oliva)" },
+            { value: data?.empleadosNuevosMes ?? 0, label: "Empleados nuevos este mes", sub: null, href: null, color: "var(--texto-muted)" },
+            { value: data?.modulosPublicados ?? 0, label: "Módulos publicados", sub: "Ver formaciones →", href: "/dashboard/admin?tab=formaciones", color: "var(--texto-primario)" },
+            { value: data?.incidenciasCriticas ?? 0, label: "Incidencias críticas", sub: null, href: null, color: "var(--texto-muted)" },
+          ].map((stat, index) => (
+            <div
+              key={index}
+              onClick={() => stat.href && router.push(stat.href)}
+              className="rounded-2xl px-5 py-5 transition-colors"
+              style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: stat.href ? "pointer" : "default" }}
+              onMouseEnter={(e) => { if (stat.href) (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)"; }}
+              onMouseLeave={(e) => { if (stat.href) (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)"; }}
+            >
+              <p className="text-2xl font-semibold" style={{ color: stat.color }}>{stat.value}</p>
+              <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{stat.label}</p>
+              {stat.sub && (
+                <p className="text-xs mt-2" style={{ color: stat.href ? "var(--azul-egm)" : "var(--texto-muted)" }}>{stat.sub}</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── CONTENIDO PRINCIPAL ─────────────────────────────────────────────── */}

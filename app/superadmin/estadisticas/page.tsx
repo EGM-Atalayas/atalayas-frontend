@@ -325,32 +325,51 @@ const EstadisticasPage: React.FC = () => {
 
             {/* SECTORES */}
             {showSectores && (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-              <h2 className="text-lg font-bold text-slate-800 mb-1">Empresas por Sector</h2>
-              <p className="text-xs text-slate-400 mb-6">Solo empresas aprobadas</p>
-              <div className="flex-1 min-h-[350px] flex flex-col overflow-hidden">
-                <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Empresas por Sector</h2>
+                  <p className="text-xs text-slate-400">Solo empresas aprobadas</p>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {data?.sectores.length ?? 0} sectores
+                </span>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-4">
+                <div className="h-[320px] rounded-3xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
+                    <PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <Pie
                         data={data?.sectores}
-                        cx="50%" cy="45%"
-                        innerRadius={60} outerRadius={90}
-                        paddingAngle={5}
+                        cx="50%" cy="50%"
+                        innerRadius="40%" outerRadius="72%"
+                        paddingAngle={1}
                         dataKey="valor" nameKey="nombre"
-                        stroke="none"
+                        stroke="#fff"
+                        strokeWidth={1}
                       >
                         {data?.sectores.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                      <Legend 
-                        wrapperStyle={{ paddingTop: "16px", maxHeight: "120px", overflowY: "auto" }}
-                        iconType="circle" 
-                      />
                     </PieChart>
                   </ResponsiveContainer>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 max-h-[320px] overflow-y-auto">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Leyenda</p>
+                  <div className="grid gap-2">
+                    {data?.sectores.map((entry, index) => (
+                      <div key={entry.nombre ?? index} className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl bg-white p-3">
+                        <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 truncate">{entry.nombre}</p>
+                          <p className="text-[11px] text-slate-500">{entry.valor} empresas</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
