@@ -14,6 +14,11 @@ export interface ComunidadEvento {
   activo:        boolean;
   fechaInicio:   string;          // ISO datetime con timezone
   fechaFin:      string | null;
+  /** Dirección o nombre del lugar (texto libre) */
+  lugar?:        string | null;
+  /** Coordenada para mapa (decimales) */
+  latitud?:      number | null;
+  longitud?:     number | null;
   creadoEn:      string;
   actualizadoEn: string;
 }
@@ -38,6 +43,9 @@ export interface ComunidadEventoInput {
   fechaInicio:  string;          // ISO datetime
   fechaFin?:    string | null;
   esGlobal?:    boolean;         // solo aplica si quien crea es ROLE_ADMIN
+  lugar?:       string | null;
+  latitud?:     number | null;
+  longitud?:    number | null;
 }
 
 /**
