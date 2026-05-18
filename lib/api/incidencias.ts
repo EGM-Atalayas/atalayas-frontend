@@ -55,7 +55,7 @@ export async function getIncidencias(empresaId?: string | null): Promise<Inciden
     const res = await apiFetch(url);
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch {
     console.log("Backend de incidencias no disponible, usando localStorage");
@@ -128,4 +128,29 @@ export async function cambiarEstadoIncidencia(incidenciaId: string, estado: stri
     return all[idx];
   }
   throw new Error("Incidencia no encontrada");
+}
+
+export async function deleteIncidencia(incidenciaId: string): Promise<void> {
+  if (incidenciaId.startsWith("inc-local-")) {
+    const all = getLocalStorage();
+    const filtered = all.filter(i => i.incidenciaId !== incidenciaId);
+    saveLocalStorage(filtered);
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`${API_URL}/incidencias/${incidenciaId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) return;
+    const msg = await parseApiError(res);
+    throw new Error(msg);
+  } catch (err: any) {
+    if (err?.message && err.message !== "Failed to fetch") throw err;
+    console.log("Eliminando incidencia de localStorage");
+  }
+
+  const all = getLocalStorage();
+  const filtered = all.filter(i => i.incidenciaId !== incidenciaId);
+  saveLocalStorage(filtered);
 }

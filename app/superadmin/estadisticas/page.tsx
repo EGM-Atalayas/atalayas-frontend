@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getEstadisticasSuperadmin, EstadisticasResponse } from "@/lib/api/estadisticas";
+import { API_URL, apiFetch } from "@/lib/api";
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -25,6 +26,8 @@ const EstadisticasPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<EstadisticasResponse | null>(null);
+  const [empresasData, setEmpresasData] = useState<any[] | null>(null);
+  const [sectorModal, setSectorModal] = useState<{ visible: boolean; nombre: string; empresas: any[] }>({ visible: false, nombre: "", empresas: [] });
 
   useEffect(() => {
     try {
@@ -72,8 +75,50 @@ const EstadisticasPage: React.FC = () => {
         setIsLoading(false);
       }
     };
+
+    const fetchEmpresas = async () => {
+      try {
+        const res = await apiFetch(`${API_URL}/empresas`);
+        if (res.ok) {
+          const empresas: any[] = await res.json();
+          setEmpresasData(empresas);
+        }
+      } catch {
+        // no es crítico, abriremos modal con carga bajo demanda si falla
+      }
+    };
+
     fetchEstadisticas();
+    fetchEmpresas();
   }, []);
+
+  const openSectorModal = async (sectorNombre: string) => {
+    let empresasFiltradas: any[] = [];
+
+    if (empresasData) {
+      empresasFiltradas = empresasData.filter(
+        (emp) =>
+          emp.estadoSolicitud === "APROBADA" &&
+          (emp.sector || emp.sectorEmpresa || emp.industria || "Otros") === sectorNombre
+      );
+    } else {
+      try {
+        const res = await apiFetch(`${API_URL}/empresas`);
+        if (!res.ok) throw new Error("Error al obtener empresas");
+        const empresas: any[] = await res.json();
+        empresasFiltradas = empresas.filter(
+          (emp) =>
+            emp.estadoSolicitud === "APROBADA" &&
+            (emp.sector || emp.sectorEmpresa || emp.industria || "Otros") === sectorNombre
+        );
+      } catch (err) {
+        setToast("Error al cargar empresas del sector");
+        setTimeout(() => setToast(null), 2500);
+      }
+    }
+
+    setSectorModal({ visible: true, nombre: sectorNombre, empresas: empresasFiltradas });
+  };
 
   const crecimientoFiltrado = data?.crecimiento.slice(-statsRango) ?? [];
 
@@ -82,9 +127,9 @@ const EstadisticasPage: React.FC = () => {
     const sections: StatsSection[] = [
       {
         id: "crecimiento",
-        title: `Crecimiento de la plataforma (últimos ${statsRango} meses)`,
-        headers: ["Mes", "Empleados", "Empresas"],
-        rows: crecimientoFiltrado.map((i) => [i.mes, i.empleados, i.empresas]),
+        title: `Crecimiento de empleados (últimos ${statsRango} meses)`,
+        headers: ["Mes", "Empleados"],
+        rows: crecimientoFiltrado.map((i) => [i.mes, i.empleados]),
       },
       {
         id: "sectores",
@@ -216,7 +261,7 @@ const EstadisticasPage: React.FC = () => {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Mostrar secciones</p>
               {[
                 { label: "KPIs resumen",            value: showKpis,        set: setShowKpis },
-                { label: "Crecimiento de la plataforma", value: showCrecimiento, set: setShowCrecimiento },
+                { label: "Crecimiento de empleados", value: showCrecimiento, set: setShowCrecimiento },
                 { label: "Empresas por sector",      value: showSectores,    set: setShowSectores },
                 { label: "Distribución de usuarios", value: showUsuarios,    set: setShowUsuarios },
               ].map(({ label, value, set }) => (
@@ -292,7 +337,7 @@ const EstadisticasPage: React.FC = () => {
           {showCrecimiento && (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
             <div className="flex items-start justify-between mb-1">
-              <h2 className="text-lg font-bold text-slate-800">Crecimiento de la Plataforma</h2>
+              <h2 className="text-lg font-bold text-slate-800">Crecimiento de Empleados</h2>
             </div>
             <p className="text-xs text-slate-400 mb-6">Acumulado — últimos {statsRango} meses</p>
             <div className="h-[350px] w-full">
@@ -303,10 +348,6 @@ const EstadisticasPage: React.FC = () => {
                       <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}   />
                     </linearGradient>
-                    <linearGradient id="colorEmpresas" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#10B981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}   />
-                    </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 12 }} dy={10} />
@@ -314,7 +355,6 @@ const EstadisticasPage: React.FC = () => {
                   <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
                   <Legend verticalAlign="top" height={36} iconType="circle" />
                   <Area type="monotone" name="Empleados" dataKey="empleados" stroke="#3B82F6" strokeWidth={3} fill="url(#colorEmpleados)" />
-                  <Area type="monotone" name="Empresas"  dataKey="empresas"  stroke="#10B981" strokeWidth={3} fill="url(#colorEmpresas)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -325,32 +365,55 @@ const EstadisticasPage: React.FC = () => {
 
             {/* SECTORES */}
             {showSectores && (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-              <h2 className="text-lg font-bold text-slate-800 mb-1">Empresas por Sector</h2>
-              <p className="text-xs text-slate-400 mb-6">Solo empresas aprobadas</p>
-              <div className="flex-1 min-h-[350px] flex flex-col overflow-hidden">
-                <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Empresas por Sector</h2>
+                  <p className="text-xs text-slate-400">Solo empresas aprobadas</p>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {data?.sectores.length ?? 0} sectores
+                </span>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-4">
+                <div className="h-[320px] rounded-3xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
+                    <PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <Pie
                         data={data?.sectores}
-                        cx="50%" cy="45%"
-                        innerRadius={60} outerRadius={90}
-                        paddingAngle={5}
+                        cx="50%" cy="50%"
+                        innerRadius="40%" outerRadius="72%"
+                        paddingAngle={1}
                         dataKey="valor" nameKey="nombre"
-                        stroke="none"
+                        stroke="#fff"
+                        strokeWidth={1}
                       >
                         {data?.sectores.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
-                      <Legend 
-                        wrapperStyle={{ paddingTop: "16px", maxHeight: "120px", overflowY: "auto" }}
-                        iconType="circle" 
-                      />
                     </PieChart>
                   </ResponsiveContainer>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 max-h-[320px] overflow-y-auto">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Leyenda</p>
+                  <div className="grid gap-2">
+                    {data?.sectores.map((entry, index) => (
+                      <button
+                        key={entry.nombre ?? index}
+                        onClick={() => openSectorModal(entry.nombre)}
+                        className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl bg-white p-3 hover:bg-blue-50 transition-colors cursor-pointer"
+                      >
+                        <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <div className="min-w-0 text-left">
+                          <p className="text-sm font-semibold text-slate-900 truncate">{entry.nombre}</p>
+                          <p className="text-[11px] text-slate-500">{entry.valor} empresas</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -382,6 +445,66 @@ const EstadisticasPage: React.FC = () => {
 
           </div>
         </>
+      )}
+
+      {/* Modal Sector */}
+      {sectorModal.visible && (
+        <div
+          className="fixed inset-0 z-[500] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={() => setSectorModal({ ...sectorModal, visible: false })}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-slate-800">Empresas - {sectorModal.nombre}</h3>
+              <button
+                onClick={() => setSectorModal({ ...sectorModal, visible: false })}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {sectorModal.empresas.length > 0 ? (
+                <div className="grid gap-3">
+                  {sectorModal.empresas.map((emp) => (
+                    <div
+                      key={emp.empresaId || emp.id}
+                      className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                    >
+                      <p className="font-semibold text-slate-900">{emp.nombre || emp.nombreEmpresa}</p>
+                      <p className="text-sm text-slate-600">{emp.cif || emp.nif || "—"}</p>
+                      <p className="text-xs text-slate-500">{emp.localidad || emp.ciudad || "—"}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-slate-500">No hay empresas en este sector</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 px-6 py-3 flex justify-end">
+              <button
+                onClick={() => setSectorModal({ ...sectorModal, visible: false })}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}

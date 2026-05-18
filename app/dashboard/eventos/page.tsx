@@ -7,46 +7,6 @@ import { useAuth }   from "@/context/AuthContext";
 import { getEventos, desactivarEvento } from "@/lib/api/eventos";
 import type { Evento, EstadoEvento } from "@/lib/types/eventos";
 
-// ── Mock ──────────────────────────────────────────────────────────────────────
-const hoy = new Date();
-const fmt  = (d: Date) => d.toISOString().slice(0, 10);
-const add  = (days: number) => { const d = new Date(hoy); d.setDate(d.getDate() + days); return d; };
-
-const MOCK_EVENTOS: Evento[] = [
-  {
-    eventoId: "e1", titulo: "Semana de la Movilidad Sostenible",
-    descripcion: "Jornadas de concienciación sobre movilidad sostenible en el área empresarial: talleres, exhibiciones y actividades para fomentar el transporte verde.",
-    fecha: fmt(add(12)), horaInicio: "09:00", horaFin: "18:00",
-    lugar: "Edificio central EGM Atalayas", urlInfo: "https://atalayas.com/semana-de-la-movilidad/",
-    imagenUrl: null, estado: "PROXIMO",
-    creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
-  },
-  {
-    eventoId: "e2", titulo: "En Femenino — Mesa redonda de liderazgo",
-    descripcion: "Encuentro de referentes femeninas del área empresarial para debatir sobre el papel de la mujer en el desarrollo económico y social.",
-    fecha: fmt(add(25)), horaInicio: "10:30", horaFin: "13:00",
-    lugar: "Aula de formación EGM Atalayas", urlInfo: "https://atalayas.com/en-femenino/",
-    imagenUrl: null, estado: "PROXIMO",
-    creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
-  },
-  {
-    eventoId: "e3", titulo: "100 Estudiantes · 20 Empresarios",
-    descripcion: "Programa de networking entre jóvenes estudiantes y líderes empresariales del área. Una oportunidad para conectar talento emergente con el tejido empresarial.",
-    fecha: fmt(add(40)), horaInicio: "16:00", horaFin: "19:00",
-    lugar: "Polígono Industrial Las Atalayas", urlInfo: "https://atalayas.com/100-estudiantes-20-empresarios/",
-    imagenUrl: null, estado: "PROXIMO",
-    creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
-  },
-  {
-    eventoId: "e4", titulo: "Jornada de Empresas Solidarias",
-    descripcion: "Entrega anual de lotes solidarios a familias en situación de vulnerabilidad, organizada por las empresas del área.",
-    fecha: fmt(add(-15)), horaInicio: "11:00", horaFin: "14:00",
-    lugar: "Edificio central EGM Atalayas", urlInfo: "https://atalayas.com/empresas-solidarias/",
-    imagenUrl: null, estado: "FINALIZADO",
-    creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
-  },
-];
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const ESTADO_CONFIG: Record<EstadoEvento, { label: string; bg: string; color: string }> = {
   PROXIMO:    { label: "Próximo",    bg: "rgba(59,130,246,0.09)",  color: "#2563eb" },
@@ -256,11 +216,6 @@ export default function EventosPage() {
   }, []);
 
   useEffect(() => {
-    const useMock = true; // ← false cuando el backend esté listo
-    if (useMock) {
-      setTimeout(() => { setEventos(MOCK_EVENTOS); setCargando(false); }, 500);
-      return;
-    }
     getEventos()
       .then(setEventos)
       .catch(() => mostrarToast("Error al cargar los eventos", "err"))
