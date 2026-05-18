@@ -743,28 +743,6 @@ export default function Page() {
 }
 
 // ── SUBCOMPONENTES ────────────────────────────────────────────────────────────
-
-function ProgresoCircular({ pct }: { pct: number }) {
-  const r = 28;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  return (
-    <svg width="72" height="72" viewBox="0 0 72 72">
-      <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
-      <circle cx="36" cy="36" r={r} fill="none"
-        stroke="var(--verde-oliva-hover)" strokeWidth="5"
-        strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round" transform="rotate(-90 36 36)"
-        style={{ transition: "stroke-dashoffset 0.6s ease" }}
-      />
-      <text x="36" y="40" textAnchor="middle"
-        style={{ fontSize: "14px", fontWeight: 700, fill: "white", fontFamily: "'Playfair Display', serif" }}>
-        {pct}%
-      </text>
-    </svg>
-  );
-}
-
 function IconoTipo({ tipo, size = 16 }: { tipo: TipoContenido; size?: number }) {
   const s = { width: size, height: size };
   if (tipo === "texto") return (
