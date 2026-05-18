@@ -13,7 +13,7 @@ import { getProgresoEmpresa } from "@/lib/api/progreso";
 import { QK } from "@/lib/queryKeys";
 import { listarDocumentosEmpresa } from "@/lib/api/documentos";
 import type { Documento } from "@/lib/types/documentos";
-import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, EyeOff, FileText, GraduationCap, LibraryBig, Megaphone, Pencil, Plus, RefreshCw, Search, Send, SlidersHorizontal, Trash2, TriangleAlert, Upload, Users, X } from "lucide-react";
+import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, EyeOff, FileText, GraduationCap, LibraryBig, Megaphone, Plus, RefreshCw, Search, SlidersHorizontal, Trash2, TriangleAlert, Upload, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import FormAnuncio from "@/components/ui/FormAnuncio";
@@ -33,78 +33,11 @@ import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
 import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
 import { AnuncioCard } from "@/components/ui/AnuncioCard";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
+import type { Usuario, NuevoEmpleadoForm } from "@/lib/types/usuario";
+import { ROL_EMPLEADO_ID, DEPARTAMENTOS, EMPTY_ANUNCIO, EMPTY_EMPLEADO } from "@/lib/constants/admin";
 // ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
 
-const EMPTY_ANUNCIO: NoticiaInput = {
-  titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,
-  enlaceUrl: null, enlaceTexto: null, videoUrl: null,
-  adjuntoUrl: null, adjuntoNombre: null, estado: "publicado", fijado: false,
-  categoria: null,
-};
-
-const ROL_EMPLEADO_ID = "ff7abc21-9380-4e51-a55c-e2427d2a4e2d";
-
-const GRAD_ANN = "linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%)";
-const SHADOW_TXT = "0 1px 4px rgba(0,0,0,0.35), 0 0 2px rgba(0,0,0,0.5)";
-const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: string }> = {
-  General: { bg: "rgba(255,255,255,0.15)", text: "#e5e7eb", border: "rgba(255,255,255,0.25)" },
-  Formacion: { bg: "rgba(59,130,246,0.45)", text: "#bfdbfe", border: "rgba(59,130,246,0.55)" },
-  Seguridad: { bg: "rgba(239,68,68,0.45)", text: "#fca5a5", border: "rgba(239,68,68,0.55)" },
-  Evento: { bg: "rgba(234,88,12,0.45)", text: "#fed7aa", border: "rgba(234,88,12,0.55)" },
-  Empresa: { bg: "rgba(52,211,153,0.45)", text: "#a7f3d0", border: "rgba(52,211,153,0.55)" },
-};
-const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
-  General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
-  Aviso: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Evento: { bg: "#ffedd5", text: "#9a3412", border: "#fdba74" },
-  Formacion: { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
-  Seguridad: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Empresa: { bg: "#d1fae5", text: "#065f46", border: "#6ee7b7" },
-};
-
-function esNuevo(fecha: string) {
-  return Date.now() - new Date(fecha).getTime() < 48 * 3600000;
-}
-
-const DEPARTAMENTOS = [
-  { id: "PRODUCCION", label: "Producción" },
-  { id: "RRHH", label: "RRHH" },
-  { id: "LOGISTICA", label: "Logística" },
-  { id: "CALIDAD", label: "Calidad" },
-  { id: "MANTENIMIENTO", label: "Mantenimiento" },
-  { id: "VENTAS", label: "Ventas" },
-  { id: "ADMINISTRACION", label: "Administración" },
-  { id: "IT", label: "IT" },
-  { id: "SEGURIDAD", label: "Seguridad" },
-  { id: "FORMACION", label: "Formación" },
-];
-
-interface Usuario {
-  usuarioId: string;
-  nombre: string;
-  apellidos: string;
-  email: string;
-  codigoRol: string;
-  nombreRol: string;
-  puestoTrabajo: string | null;
-  departamento: string | null;
-  activo: boolean;
-  fechaRegistro: string;
-  fechaBaja?: string | null;
-}
-
-export interface NuevoEmpleadoForm {
-  nombre: string;
-  apellidos: string;
-  email: string;
-  password: string;
-  puestoTrabajo: string;
-  departamento: string;
-}
-
-const EMPTY_EMPLEADO: NuevoEmpleadoForm = {
-  nombre: "", apellidos: "", email: "", password: "", puestoTrabajo: "", departamento: "",
-};
 
 export default function AdminPage() {
   return (
@@ -1188,6 +1121,9 @@ function AdminContent() {
   const [anuncioSearch, setAnuncioSearch] = useState("");
   const [publicandoId, setPublicandoId] = useState<string | null>(null);
   const [confirmAnuncio, setConfirmAnuncio] = useState<{ tipo: "desactivar" | "eliminar"; id: string } | null>(null);
+  const [confirmEmpleado, setConfirmEmpleado] = useState<{ usuarioId: string; activo: boolean; nombre: string } | null>(null);
+  const [confirmModulo, setConfirmModulo] = useState<{ modulo: Modulo } | null>(null);
+  const [confirmEliminarModulo, setConfirmEliminarModulo] = useState<{ moduloId: string; nombre: string } | null>(null);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -1257,18 +1193,16 @@ function AdminContent() {
       });
 
       const data = await res.json();
-      console.log("Respuesta del servidor:", data); // ← ahora verás el error real
 
       if (!res.ok) {
         throw new Error(data.message ?? "Error al guardar el empleado");
       }
-      // Actualizar la ficha del empleado seleccionado al instante
       setEmpleadoSeleccionado((prev) => prev ? { ...prev, ...data } : prev);
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setEditandoEmpleado(false);
+      mostrarToast("Datos del empleado guardados correctamente");
     } catch (err) {
-      console.error("Error al guardar empleado:", err); // ← AÑADE
-
+      mostrarToast(err instanceof Error ? err.message : "Error al guardar los datos del empleado", "error");
     }
     finally { setGuardandoEditEmpleado(false); }
   };
@@ -1309,9 +1243,13 @@ function AdminContent() {
     }
   };
 
-  const handleToggleEmpleado = async (usuarioId: string, activo: boolean) => {
-    const accion = activo ? "desactivar" : "activar";
-    if (!confirm(`¿Seguro que quieres ${accion} este empleado?`)) return;
+  const handleToggleEmpleado = (usuarioId: string, activo: boolean, nombre: string) => {
+    setConfirmEmpleado({ usuarioId, activo, nombre });
+  };
+
+  const ejecutarToggleEmpleado = async () => {
+    if (!confirmEmpleado) return;
+    const { usuarioId, activo } = confirmEmpleado;
     try {
       if (activo) {
         await apiFetch(`${API_URL}/users/${usuarioId}/desactivar`, { method: "DELETE" });
@@ -1321,6 +1259,7 @@ function AdminContent() {
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
     } catch { }
+    finally { setConfirmEmpleado(null); }
   };
 
   function abrirCrear() {
@@ -1406,12 +1345,14 @@ function AdminContent() {
   }
   const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
 
-  const handleDesactivarModulo = async (modulo: Modulo) => {
+  const handleDesactivarModulo = (modulo: Modulo) => {
+    setConfirmModulo({ modulo });
+  };
+
+  const ejecutarToggleModulo = async () => {
+    if (!confirmModulo) return;
+    const { modulo } = confirmModulo;
     const estaActivo = modulo.activo;
-    const msg = estaActivo
-      ? "¿Desactivar este módulo? Dejará de ser visible para los empleados."
-      : "¿Activar este módulo? Volverá a ser visible para los empleados.";
-    if (!confirm(msg)) return;
     try {
       let res;
       if (estaActivo) {
@@ -1431,18 +1372,24 @@ function AdminContent() {
           }),
         });
       }
-      if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.message ?? "Error"); return; }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); mostrarToast(e.message ?? "Error al cambiar el estado del módulo", "error"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { alert("Error al cambiar el estado del módulo"); }
+    } catch { mostrarToast("Error al cambiar el estado del módulo", "error"); }
+    finally { setConfirmModulo(null); }
   };
 
-  const handleEliminarModulo = async (moduloId: string) => {
-    if (!confirm("¿Eliminar este módulo permanentemente? Esta acción no se puede deshacer.")) return;
+  const handleEliminarModulo = (moduloId: string, nombre: string) => {
+    setConfirmEliminarModulo({ moduloId, nombre });
+  };
+
+  const ejecutarEliminarModulo = async () => {
+    if (!confirmEliminarModulo) return;
     try {
-      const res = await apiFetch(`${API_URL}/modulos/${moduloId}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) { alert("Error al eliminar el módulo"); return; }
+      const res = await apiFetch(`${API_URL}/modulos/${confirmEliminarModulo.moduloId}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) { mostrarToast("Error al eliminar el módulo", "error"); return; }
       queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { alert("Error al eliminar el módulo"); }
+    } catch { mostrarToast("Error al eliminar el módulo", "error"); }
+    finally { setConfirmEliminarModulo(null); }
   };
 
   function getInitials(nombre: string, apellidos?: string | null) {
@@ -1921,14 +1868,14 @@ function AdminContent() {
                   <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
                     <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
-                    <Button variant="primary" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}
-                      style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
+                    <Button variant="success" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}
+                      style={{ flexShrink: 0 }}>
                       {importando
                         ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                         : <><Upload size={15} /><span className="hidden sm:inline">&nbsp;Importar Excel</span></>}
                     </Button>
-                    <Button variant="primary" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}
-                      style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
+                    <Button variant="success" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}
+                      style={{ flexShrink: 0 }}>
                       {exportando
                         ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                         : <><Download size={15} /><span className="hidden sm:inline">&nbsp;Exportar Excel</span></>}
@@ -2426,9 +2373,9 @@ function AdminContent() {
                                 Editar empleado
                               </Button>
                               <Button
-                                variant={empleadoSeleccionado.activo ? "danger" : "secondary"}
+                                variant={empleadoSeleccionado.activo ? "danger" : "success"}
                                 size="md"
-                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
+                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo, empleadoSeleccionado.nombre)}>
                                 {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
                               </Button>
                             </>
@@ -2568,8 +2515,8 @@ function AdminContent() {
                               <Button variant="primary" size="md" className="w-full" onClick={iniciarEditEmpleado}>
                                 Editar empleado
                               </Button>
-                              <Button variant={empleadoSeleccionado.activo ? "danger" : "secondary"} size="md" className="w-full"
-                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
+                              <Button variant={empleadoSeleccionado.activo ? "danger" : "success"} size="md" className="w-full"
+                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo, empleadoSeleccionado.nombre)}>
                                 {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
                               </Button>
                             </div>
@@ -2745,9 +2692,6 @@ function AdminContent() {
                                 n={n}
                                 esBorrador={true}
                                 publicandoId={publicandoId}
-                                GRAD_ANN={GRAD_ANN}
-                                CATEGORIA_COLORS_LIGHT={CATEGORIA_COLORS_LIGHT}
-                                esNuevo={esNuevo}
                                 abrirEditar={abrirEditar}
                                 publicarBorrador={publicarBorrador}
                                 handleEliminarBorrador={handleEliminarBorrador}
@@ -2788,9 +2732,6 @@ function AdminContent() {
                                 n={n}
                                 esBorrador={false}                    // ← importante
                                 publicandoId={publicandoId}
-                                GRAD_ANN={GRAD_ANN}
-                                CATEGORIA_COLORS_LIGHT={CATEGORIA_COLORS_LIGHT}
-                                esNuevo={esNuevo}
                                 abrirEditar={abrirEditar}
                                 publicarBorrador={publicarBorrador}
                                 handleEliminarBorrador={handleEliminarBorrador}
@@ -2856,6 +2797,47 @@ function AdminContent() {
               )}
             </AnimatePresence>
 
+
+        {/* ── Modal confirmación empleado ── */}
+        <ModalConfirm
+          abierto={!!confirmEmpleado}
+          titulo={confirmEmpleado?.activo ? "¿Desactivar empleado?" : "¿Activar empleado?"}
+          descripcion={
+            confirmEmpleado?.activo
+              ? `${confirmEmpleado.nombre} perderá el acceso a la plataforma.`
+              : `${confirmEmpleado?.nombre} recuperará el acceso a la plataforma.`
+          }
+          textoConfirmar={confirmEmpleado?.activo ? "Desactivar empleado" : "Activar empleado"}
+          variante={confirmEmpleado?.activo ? "danger" : "success"}
+          onConfirmar={ejecutarToggleEmpleado}
+          onCancelar={() => setConfirmEmpleado(null)}
+        />
+
+        {/* ── Modal confirmación toggle módulo ── */}
+        <ModalConfirm
+          abierto={!!confirmModulo}
+          titulo={confirmModulo?.modulo.activo ? "¿Desactivar módulo?" : "¿Activar módulo?"}
+          descripcion={
+            confirmModulo?.modulo.activo
+              ? "Dejará de ser visible para los empleados."
+              : "Volverá a ser visible para los empleados."
+          }
+          textoConfirmar={confirmModulo?.modulo.activo ? "Desactivar módulo" : "Activar módulo"}
+          variante={confirmModulo?.modulo.activo ? "warning" : "success"}
+          onConfirmar={ejecutarToggleModulo}
+          onCancelar={() => setConfirmModulo(null)}
+        />
+
+        {/* ── Modal confirmación eliminar módulo ── */}
+        <ModalConfirm
+          abierto={!!confirmEliminarModulo}
+          titulo="¿Eliminar módulo?"
+          descripcion={`"${confirmEliminarModulo?.nombre}" se eliminará permanentemente. Esta acción no se puede deshacer.`}
+          textoConfirmar="Eliminar módulo"
+          variante="danger"
+          onConfirmar={ejecutarEliminarModulo}
+          onCancelar={() => setConfirmEliminarModulo(null)}
+        />
 
         {/* ── TAB EVENTOS ── */}
         {activeTab === "eventos" && (
@@ -3005,7 +2987,7 @@ function AdminContent() {
                                     style={{ background: "#fef9c3", color: "#854d0e" }}>
                                     {f.activo ? "Desactivar" : "Activar"}
                                   </button>
-                                  <button onClick={() => handleEliminarModulo(f.moduloId)}
+                                  <button onClick={() => handleEliminarModulo(f.moduloId, f.nombre)}
                                     className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
                                     style={{ background: "var(--error-light)", color: "var(--error)" }}>
                                     Eliminar
@@ -3030,19 +3012,6 @@ function AdminContent() {
             {/* ── TAB INCIDENCIAS ── */}
             {activeTab === "incidencias" && (
               <GestionIncidencias empresaId={usuario?.empresaId} />
-            )}
-
-            {activeTab === "documentos" && usuario?.empresaId && (
-              <DocumentosAdminTab
-                empresaId={usuario.empresaId}
-                empleados={empleados.map((e) => ({
-                  usuarioId: e.usuarioId,
-                  nombre: e.nombre,
-                  apellidos: e.apellidos,
-                  departamento: e.departamento,
-                }))}
-                departamentos={DEPARTAMENTOS}
-              />
             )}
 
             {/* ── TAB ESTADÍSTICAS ── */}

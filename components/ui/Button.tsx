@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger" | "ghost";
+  variant?: "primary" | "secondary" | "danger" | "ghost" | "success";
   size?:    "sm" | "md" | "lg";
 }
 
@@ -40,6 +40,12 @@ const BASE: Record<string, React.CSSProperties> = {
     border:     "1px solid rgba(0,0,0,0.12)",
     boxShadow:  "none",
   },
+  success: {
+    background: "#16a34a",
+    color:      "#ffffff",
+    border:     "1px solid rgba(255,255,255,0.18)",
+    boxShadow:  "none",
+  },
 };
 
 const HOVER: Record<string, React.CSSProperties> = {
@@ -68,6 +74,12 @@ const HOVER: Record<string, React.CSSProperties> = {
     color:      "var(--azul-egm)",
     border:     "1px solid rgba(27,63,126,0.35)",
     boxShadow:  "0 4px 14px rgba(27,63,126,0.12), 0 0 0 3px rgba(27,63,126,0.08)",
+  },
+  success: {
+    background: "#15803d",
+    color:      "#ffffff",
+    border:     "1px solid rgba(255,255,255,0.22)",
+    boxShadow:  "0 8px 24px rgba(22,163,74,0.38), 0 0 0 3px rgba(22,163,74,0.18)",
   },
 };
 
@@ -98,13 +110,20 @@ const PRESSED: Record<string, React.CSSProperties> = {
     border:     "1px solid rgba(27,63,126,0.35)",
     boxShadow:  "none",
   },
+  success: {
+    background: "#14532d",
+    color:      "#ffffff",
+    border:     "1px solid rgba(255,255,255,0.14)",
+    boxShadow:  "inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 4px rgba(22,163,74,0.20)",
+  },
 };
 
 const DISABLED: Record<string, React.CSSProperties> = {
   primary:   { background: "rgba(38,82,158,0.90)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" },
-  secondary: { background: "transparent",                                        color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
-  danger:    { background: "transparent",                                        color: "#dc2626",            border: "1.5px solid #dc2626" },
-  ghost:     { background: "transparent",                                        color: "var(--azul-egm)",    border: "1px solid rgba(0,0,0,0.12)" },
+  secondary: { background: "transparent",          color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
+  danger:    { background: "transparent",          color: "#dc2626",            border: "1.5px solid #dc2626" },
+  ghost:     { background: "transparent",          color: "var(--azul-egm)",    border: "1px solid rgba(0,0,0,0.12)" },
+  success:   { background: "#16a34a",              color: "#ffffff",            border: "1px solid rgba(255,255,255,0.18)" },
 };
 
 export const Button: React.FC<ButtonProps> = ({

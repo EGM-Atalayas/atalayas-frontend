@@ -369,7 +369,7 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
             <div key={i} className="flex flex-col rounded-2xl overflow-hidden"
               style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
               {/* cabecera */}
-              <div className="animate-pulse" style={{ height: 80, background: "var(--gris-superficie)" }} />
+              <div className="animate-pulse" style={{ height: 88, background: "var(--gris-superficie)" }} />
               {/* cuerpo */}
               <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
                 <div className="animate-pulse h-3 w-20 rounded-full" style={{ background: "var(--gris-borde)" }} />
@@ -446,10 +446,34 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 {/* Cabecera coloreada */}
-                <div className="relative flex items-center justify-center overflow-hidden" style={{ height: 80, background: color.bg }}>
-                  <div className="absolute inset-0 opacity-20"
-                    style={{ backgroundImage: `radial-gradient(circle, ${color.text} 1px, transparent 1px)`, backgroundSize: "20px 20px" }} />
-                  <FileText size={32} strokeWidth={1} style={{ color: color.text, opacity: 0.18 }} />
+                <div className="relative flex items-center justify-center overflow-hidden" style={{
+                  height: 88,
+                  background: `linear-gradient(135deg, ${color.bg} 0%, ${color.text}22 100%)`,
+                }}>
+                  {/* Círculo decorativo grande — esquina inferior derecha */}
+                  <div className="absolute" style={{
+                    width: 110, height: 110,
+                    borderRadius: "50%",
+                    background: `${color.text}14`,
+                    bottom: -38, right: -28,
+                  }} />
+                  {/* Círculo decorativo pequeño — esquina superior izquierda */}
+                  <div className="absolute" style={{
+                    width: 56, height: 56,
+                    borderRadius: "50%",
+                    background: `${color.text}0e`,
+                    top: -20, left: -14,
+                  }} />
+                  {/* Icono en contenedor blanco semitransparente */}
+                  <div className="relative flex items-center justify-center rounded-2xl"
+                    style={{
+                      width: 44, height: 44,
+                      background: "rgba(255,255,255,0.72)",
+                      boxShadow: `0 2px 12px ${color.text}20`,
+                      backdropFilter: "blur(4px)",
+                    }}>
+                    <FileText size={22} strokeWidth={1.5} style={{ color: color.text }} />
+                  </div>
                   {/* Badge tipo */}
                   <span className="absolute top-2.5 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(255,255,255,0.88)", color: color.text }}>
