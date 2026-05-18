@@ -19,6 +19,8 @@ export interface ComunidadEvento {
   /** Coordenada para mapa (decimales) */
   latitud?:      number | null;
   longitud?:     number | null;
+  /** URL pública de la imagen de portada (subida a Supabase) */
+  imagenUrl?:    string | null;
   creadoEn:      string;
   actualizadoEn: string;
 }
@@ -46,6 +48,24 @@ export interface ComunidadEventoInput {
   lugar?:       string | null;
   latitud?:     number | null;
   longitud?:    number | null;
+  imagenUrl?:   string | null;
+}
+
+/**
+ * Sube una imagen al bucket de Supabase y devuelve la URL pública.
+ * Wrapper sobre el endpoint genérico POST /upload/imagen.
+ */
+export async function subirImagenEvento(file: File): Promise<string | null> {
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await apiFetch(`${API_URL}/upload/imagen`, { method: "POST", body: fd });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**

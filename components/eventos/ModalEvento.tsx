@@ -6,11 +6,12 @@
 // /dashboard/eventos.
 // ============================================================
 
-import { useState } from "react";
-import { Calendar, X, Loader2, MapPin, Search, Check } from "lucide-react";
+import { useRef, useState } from "react";
+import { Calendar, X, Loader2, MapPin, Search, Check, ImagePlus, Trash2 } from "lucide-react";
 import {
   crearEventoComunidad,
   actualizarEventoComunidad,
+  subirImagenEvento,
   type ComunidadEvento,
   type ComunidadEventoInput,
 } from "@/lib/api/comunidad";
@@ -52,6 +53,36 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
   const [buscandoMapa, setBuscandoMapa] = useState(false);
   const [resultadosMapa, setResultadosMapa] = useState<GeocodingResult[]>([]);
   const [erroresMapa, setErroresMapa] = useState<string | null>(null);
+
+  // ── Imagen ─────────────────────────────────────────────────
+  const [imagenUrl, setImagenUrl] = useState<string | null>(evento?.imagenUrl ?? null);
+  const [subiendoImg, setSubiendoImg] = useState(false);
+  const [errorImg, setErrorImg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onSeleccionarImagen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorImg("La imagen no puede pesar más de 5 MB");
+      return;
+    }
+    setSubiendoImg(true);
+    setErrorImg(null);
+    try {
+      const url = await subirImagenEvento(file);
+      if (!url) { setErrorImg("Error al subir la imagen"); return; }
+      setImagenUrl(url);
+    } finally {
+      setSubiendoImg(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const quitarImagen = () => {
+    setImagenUrl(null);
+    setErrorImg(null);
+  };
 
   const buscar = async () => {
     if (!lugar.trim()) return;
@@ -99,6 +130,7 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
         lugar:       lugar.trim() || null,
         latitud,
         longitud,
+        imagenUrl,
         ...(esSuperAdmin && { esGlobal }),
       };
       const guardado = esNuevo
@@ -130,7 +162,71 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
           </button>
         </div>
 
-        <form onSubmit={enviar} className="px-6 py-5 flex flex-col gap-4">
+        <form onSubmit={enviar} className="px-6 py-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+          {/* Imagen de portada (opcional) */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Imagen de portada (opcional)
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={onSeleccionarImagen}
+              className="hidden"
+            />
+            {imagenUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 group"
+                style={{ aspectRatio: "16 / 9", background: "#f1f5f9" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagenUrl} alt="Portada del evento" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: "rgba(0,0,0,0.45)" }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-white text-slate-700 hover:bg-slate-50"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5" />
+                    Cambiar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={quitarImagen}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-red-500 text-white hover:bg-red-600"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={subiendoImg}
+                className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/30 transition-colors text-sm font-medium text-slate-600 disabled:opacity-50"
+                style={{ aspectRatio: "16 / 9" }}
+              >
+                {subiendoImg ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                    <span>Subiendo imagen…</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-6 h-6 text-slate-400" />
+                    <span>Seleccionar imagen</span>
+                    <span className="text-xs text-slate-400">PNG, JPG o WebP · máx 5 MB</span>
+                  </>
+                )}
+              </button>
+            )}
+            {errorImg && (
+              <p className="mt-1.5 text-xs text-red-600">{errorImg}</p>
+            )}
+          </div>
+
           {/* Título */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">

@@ -83,6 +83,14 @@ function EventoCard({
         opacity:     pasado ? 0.72 : 1,
       }}
     >
+      {/* Imagen de portada */}
+      {evento.imagenUrl && (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16 / 9", background: "#f1f5f9" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={evento.imagenUrl} alt={evento.titulo} className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Franja de fecha */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         {/* Bloque día */}
