@@ -32,6 +32,7 @@ import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/s
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
 import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
+import { AnuncioCard } from "@/components/ui/AnuncioCard";
 // ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
 
 const EMPTY_ANUNCIO: NoticiaInput = {
@@ -54,8 +55,8 @@ const CATEGORIA_COLORS_DARK: Record<string, { bg: string; text: string; border: 
 };
 const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border: string }> = {
   General: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" },
-  Aviso:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
-  Evento:  { bg: "#ffedd5", text: "#9a3412", border: "#fdba74" },
+  Aviso: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
+  Evento: { bg: "#ffedd5", text: "#9a3412", border: "#fdba74" },
   Formacion: { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
   Seguridad: { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" },
   Empresa: { bg: "#d1fae5", text: "#065f46", border: "#6ee7b7" },
@@ -124,7 +125,7 @@ function DonutDepartamentos({ data, total, palette }: {
   palette: string[];
 }) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const active    = activeIdx !== null ? data[activeIdx]                  : null;
+  const active = activeIdx !== null ? data[activeIdx] : null;
   const activeColor = activeIdx !== null ? palette[activeIdx % palette.length] : null;
 
   return (
@@ -185,22 +186,28 @@ function DonutDepartamentos({ data, total, palette }: {
       {/* Leyenda */}
       <div className="flex flex-col gap-1.5 flex-1 min-w-0">
         {data.map((d, i) => {
-          const color    = palette[i % palette.length];
-          const pct      = Math.round(d.total / total * 100);
+          const color = palette[i % palette.length];
+          const pct = Math.round(d.total / total * 100);
           const isActive = activeIdx === i;
           return (
             <div key={d.nombre}
               className="flex items-center gap-2 min-w-0 rounded-lg px-2 py-1"
-              style={{ background: isActive ? `${color}12` : "transparent", cursor: "default",
-                transition: "background 0.15s ease" }}
+              style={{
+                background: isActive ? `${color}12` : "transparent", cursor: "default",
+                transition: "background 0.15s ease"
+              }}
               onMouseEnter={() => setActiveIdx(i)}
               onMouseLeave={() => setActiveIdx(null)}>
               <span className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ background: color, transform: isActive ? "scale(1.35)" : "scale(1)",
-                  transition: "transform 0.15s ease" }} />
+                style={{
+                  background: color, transform: isActive ? "scale(1.35)" : "scale(1)",
+                  transition: "transform 0.15s ease"
+                }} />
               <span className="text-xs truncate flex-1"
-                style={{ color: isActive ? "var(--texto-primario)" : "var(--texto-secundario)",
-                  fontWeight: isActive ? 600 : 500, transition: "color 0.15s ease, font-weight 0.15s ease" }}>
+                style={{
+                  color: isActive ? "var(--texto-primario)" : "var(--texto-secundario)",
+                  fontWeight: isActive ? 600 : 500, transition: "color 0.15s ease, font-weight 0.15s ease"
+                }}>
                 {d.nombre}
               </span>
               <span className="text-xs font-bold shrink-0" style={{ minWidth: 18, textAlign: "right", color: isActive ? color : "var(--texto-primario)", transition: "color 0.15s ease" }}>{d.total}</span>
@@ -318,42 +325,42 @@ const StatsTab = React.memo(function StatsTab({
           <div className="w-px h-5 shrink-0" style={{ background: "var(--surface-border)" }} />
           <StatsSelect value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={148} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
           <StatsSelect value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={110} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
-          <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
+          <StatsSelect value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={152} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
         </div>
         <AnimatePresence>
-            {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
-              <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full focus:outline-none cursor-pointer shrink-0"
-                title="Limpiar filtros"
-                style={{
-                  background:           "rgba(27,63,126,0.10)",
-                  border:               "1.5px solid rgba(27,63,126,0.22)",
-                  color:                "var(--azul-egm)",
-                  position:             "relative",
-                  zIndex:               10,
-                  transition:           "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), transform 0.18s var(--ease-spring)",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background  = "rgba(27,63,126,0.18)";
-                  el.style.boxShadow   = "0 0 0 3px rgba(27,63,126,0.12)";
-                  el.style.borderColor = "rgba(27,63,126,0.40)";
-                  el.style.transform   = "scale(1.10)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background  = "rgba(27,63,126,0.10)";
-                  el.style.boxShadow   = "none";
-                  el.style.borderColor = "rgba(27,63,126,0.22)";
-                  el.style.transform   = "scale(1)";
-                }}
-                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.88)"; }}
-                onMouseUp={(e)   => { (e.currentTarget as HTMLElement).style.transform = "scale(1.10)"; }}>
-                <X size={14} strokeWidth={2.5} />
-              </motion.button>
-            )}
-          </AnimatePresence>
+          {(statsDpto || statsEstado !== "activos" || statsTipoMod) && (
+            <motion.button initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              onClick={() => { setStatsDptoT(null); setStatsEstadoT("activos"); setStatsTipoModT(null); }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full focus:outline-none cursor-pointer shrink-0"
+              title="Limpiar filtros"
+              style={{
+                background: "rgba(27,63,126,0.10)",
+                border: "1.5px solid rgba(27,63,126,0.22)",
+                color: "var(--azul-egm)",
+                position: "relative",
+                zIndex: 10,
+                transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), transform 0.18s var(--ease-spring)",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "rgba(27,63,126,0.18)";
+                el.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.12)";
+                el.style.borderColor = "rgba(27,63,126,0.40)";
+                el.style.transform = "scale(1.10)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "rgba(27,63,126,0.10)";
+                el.style.boxShadow = "none";
+                el.style.borderColor = "rgba(27,63,126,0.22)";
+                el.style.transform = "scale(1)";
+              }}
+              onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.88)"; }}
+              onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.10)"; }}>
+              <X size={14} strokeWidth={2.5} />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* ── Grupo derecho: acciones fijas ── */}
         <div className="ml-auto flex items-center gap-2 shrink-0">
@@ -395,8 +402,8 @@ const StatsTab = React.memo(function StatsTab({
                     )}
                   </div>
                   {[
-                    { label: "KPIs resumen",              value: showKpis,            set: setShowKpis },
-                    { label: "Incorporaciones y salidas",  value: showMovimiento,      set: setShowMovimiento },
+                    { label: "KPIs resumen", value: showKpis, set: setShowKpis },
+                    { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
                     { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
                   ].map(({ label, value, set }, idx) => (
                     <label key={label}
@@ -457,7 +464,7 @@ const StatsTab = React.memo(function StatsTab({
         <div className="flex flex-col gap-2">
           <StatsSelect fullWidth value={statsDpto ?? ""} onChange={(v) => setStatsDptoT(v === "" ? null : v)} placeholder="Todos los dptos." minWidth={0} options={(() => { const p = new Set(empleados.map(e => e.departamento).filter((d): d is string => !!d)); return DEPARTAMENTOS.filter(d => p.has(d.id)).map(d => ({ id: d.id, label: `${d.label} (${empleados.filter(e => e.departamento === d.id).length})` })); })()} />
           <StatsSelect fullWidth value={statsEstado === "activos" ? "" : statsEstado} onChange={(v) => setStatsEstadoT((v === "" ? "activos" : v) as "activos" | "inactivos" | "todos")} placeholder="Activos" minWidth={0} options={[{ id: "inactivos", label: "Inactivos" }, { id: "todos", label: "Todos" }]} />
-          <StatsSelect fullWidth value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={0} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string,string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
+          <StatsSelect fullWidth value={statsTipoMod ?? ""} onChange={(v) => setStatsTipoModT(v === "" ? null : v)} placeholder="Todos los módulos" minWidth={0} options={(() => { const t = new Set(formaciones.map((m: Modulo) => m.tipoModulo).filter((t): t is ModuloTipo => !!t)); return Array.from(t).map(t => ({ id: t, label: `${(MODULO_TIPO_LABEL as Record<string, string>)[t] ?? t} (${formaciones.filter((m: Modulo) => m.tipoModulo === t).length})` })); })()} />
         </div>
         {/* Acciones móvil */}
         <div className="flex flex-col gap-2">
@@ -493,8 +500,8 @@ const StatsTab = React.memo(function StatsTab({
                       Mostrar secciones
                     </p>
                     {[
-                      { label: "KPIs resumen",              value: showKpis,            set: setShowKpis },
-                      { label: "Incorporaciones y salidas",  value: showMovimiento,      set: setShowMovimiento },
+                      { label: "KPIs resumen", value: showKpis, set: setShowKpis },
+                      { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
                       { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
                     ].map(({ label, value, set }, idx) => (
                       <label key={label}
@@ -592,12 +599,12 @@ const StatsTab = React.memo(function StatsTab({
           {showKpis && (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
               {([
-                { label: "Total empleados",                value: String(statsEmpresa.kpis.totalEmpleados),                                                                                                                                                       accent: "#3B82F6", bg: "rgba(59,130,246,0.08)",  icon: <Users         size={22} strokeWidth={1.8} /> },
-                { label: `Altas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.altas, 0)),      accent: "#10B981", bg: "rgba(16,185,129,0.08)", icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg> },
-                { label: `Bajas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.bajas, 0)),      accent: "#F43F5E", bg: "rgba(244,63,94,0.08)",  icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm8-5h6" /></svg> },
-                { label: "Rotación anualizada",           value: `${statsEmpresa.kpis.tasaRotacion}%`,                                                            accent: "#F59E0B", bg: "rgba(245,158,11,0.08)", icon: <RefreshCw     size={22} strokeWidth={1.8} /> },
-                { label: "Completitud de formación",      value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`,                                                    accent: "#8B5CF6", bg: "rgba(139,92,246,0.08)", icon: <GraduationCap size={22} strokeWidth={1.8} /> },
-                { label: "Módulos con progreso",          value: String(statsEmpresa.kpis.modulosConProgreso),                                                    accent: "#06B6D4", bg: "rgba(6,182,212,0.08)",  icon: <LibraryBig    size={22} strokeWidth={1.8} /> },
+                { label: "Total empleados", value: String(statsEmpresa.kpis.totalEmpleados), accent: "#3B82F6", bg: "rgba(59,130,246,0.08)", icon: <Users size={22} strokeWidth={1.8} /> },
+                { label: `Altas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.altas, 0)), accent: "#10B981", bg: "rgba(16,185,129,0.08)", icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg> },
+                { label: `Bajas - ${statsRangoLabelMin}`, value: String(statsEmpresa.movimientoMensual.reduce((s, m) => s + m.bajas, 0)), accent: "#F43F5E", bg: "rgba(244,63,94,0.08)", icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm8-5h6" /></svg> },
+                { label: "Rotación anualizada", value: `${statsEmpresa.kpis.tasaRotacion}%`, accent: "#F59E0B", bg: "rgba(245,158,11,0.08)", icon: <RefreshCw size={22} strokeWidth={1.8} /> },
+                { label: "Completitud de formación", value: `${statsEmpresa.kpis.pctCompletitudGlobal}%`, accent: "#8B5CF6", bg: "rgba(139,92,246,0.08)", icon: <GraduationCap size={22} strokeWidth={1.8} /> },
+                { label: "Módulos con progreso", value: String(statsEmpresa.kpis.modulosConProgreso), accent: "#06B6D4", bg: "rgba(6,182,212,0.08)", icon: <LibraryBig size={22} strokeWidth={1.8} /> },
               ] as { label: string; value: string; accent: string; bg: string; icon: React.ReactNode }[]).map(({ label, value, accent, bg, icon }) => (
                 <div
                   key={label}
@@ -640,103 +647,103 @@ const StatsTab = React.memo(function StatsTab({
                 const totalBajas = statsEmpresa.movimientoMensual.reduce((s, m) => s + m.bajas, 0);
                 const neto = totalAltas - totalBajas;
                 return (
-                <div className="p-6 rounded-2xl shadow-sm flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                  {/* Header */}
-                  <div className="pb-3 mb-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
-                    <div className="flex flex-col gap-2">
-                      {/* Título + subtítulo */}
-                      <div className="flex items-start justify-between gap-2">
-                        <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-                          Incorporaciones y salidas
-                        </h2>
-                        {/* Badges — al lado del título en desktop, misma fila */}
-                        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
+                  <div className="p-6 rounded-2xl shadow-sm flex flex-col" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                    {/* Header */}
+                    <div className="pb-3 mb-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                      <div className="flex flex-col gap-2">
+                        {/* Título + subtítulo */}
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                            Incorporaciones y salidas
+                          </h2>
+                          {/* Badges — al lado del título en desktop, misma fila */}
+                          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                          <span className="hidden sm:inline">Movimiento de plantilla - </span>{statsRangoLabelMin}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                            <span className="hidden sm:inline">Movimiento de plantilla - </span>{statsRangoLabelMin}
+                          </p>
+                          {/* Badges — debajo en móvil */}
+                          <div className="flex sm:hidden items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
+                          </div>
+                        </div>
+                        {/* Hint táctil — solo móvil */}
+                        <p className="flex sm:hidden items-center gap-1 text-[11px]" style={{ color: "var(--texto-muted)" }}>
+                          Toca un mes para ver el detalle
                         </p>
-                        {/* Badges — debajo en móvil */}
-                        <div className="flex sm:hidden items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(16,185,129,0.09)", color: "#10B981" }}>↑ {totalAltas}</span>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(244,63,94,0.09)", color: "#F43F5E" }}>↓ {totalBajas}</span>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: neto >= 0 ? "rgba(59,130,246,0.09)" : "rgba(244,63,94,0.09)", color: neto >= 0 ? "#3B82F6" : "#F43F5E" }}>{neto >= 0 ? "+" : ""}{neto}</span>
-                        </div>
                       </div>
-                      {/* Hint táctil — solo móvil */}
-                      <p className="flex sm:hidden items-center gap-1 text-[11px]" style={{ color: "var(--texto-muted)" }}>
-                        Toca un mes para ver el detalle
-                      </p>
+                    </div>
+                    {/* Gráfico */}
+                    <div className="flex-1 min-h-[240px]">
+                      {totalAltas === 0 && totalBajas === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                          <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Sin movimiento de personal en este periodo</p>
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart
+                            data={statsEmpresa.movimientoMensual}
+                            margin={{ top: 6, right: 16, left: 4, bottom: 4 }}
+                            onClick={(e) => { const label = e?.activeLabel; if (typeof label === "string") setDrillMes(label); }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <defs>
+                              <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.22} />
+                                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                              </linearGradient>
+                              <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.15} />
+                                <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--surface-border)" />
+                            <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} dy={8}
+                              interval={statsRango <= 6 ? 0 : statsRango === 12 ? 1 : 2}
+                              padding={{ left: 12, right: 12 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} allowDecimals={false}
+                              width={(() => { const mx = Math.max(...statsEmpresa.movimientoMensual.flatMap(m => [m.altas, m.bajas]), 0); return mx >= 1000 ? 44 : mx >= 100 ? 36 : 28; })()} />
+                            <RechartsTooltip
+                              animationDuration={120}
+                              animationEasing="ease-out"
+                              wrapperStyle={{ pointerEvents: "none" }}
+                              content={({ active, payload, label: mesLabel }) => {
+                                if (!active || !payload?.length) return null;
+                                const altas = (payload.find(p => p.dataKey === "altas")?.value as number) ?? 0;
+                                const bajas = (payload.find(p => p.dataKey === "bajas")?.value as number) ?? 0;
+                                const bal = altas - bajas;
+                                return (
+                                  <div style={{ borderRadius: 12, border: "1px solid var(--surface-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", background: "var(--blanco)", padding: "10px 14px", minWidth: 150 }}>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--texto-primario)", marginBottom: 6 }}>{mesLabel}</p>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↑ {altas} INCORPORACIONES</span>
+                                      <span style={{ fontSize: 11, color: "#F43F5E", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↓ {bajas} SALIDAS</span>
+                                      <span style={{ fontSize: 11, color: bal >= 0 ? "#3B82F6" : "#F43F5E", fontWeight: 700, marginTop: 2, paddingTop: 4, borderTop: "1px solid var(--surface-border)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                                        {bal >= 0 ? "+" : ""}{bal} NETO
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              }}
+                            />
+                            <Area type="monotone" name="Altas" dataKey="altas" stroke="#10B981" strokeWidth={2.5} fill="url(#gradAltas)"
+                              dot={{ r: 3, fill: "#10B981", strokeWidth: 0 }}
+                              activeDot={{ r: 5, fill: "#10B981", strokeWidth: 0 }} />
+                            <Area type="monotone" name="Bajas" dataKey="bajas" stroke="#F43F5E" strokeWidth={2.5} fill="url(#gradBajas)"
+                              dot={{ r: 3, fill: "#F43F5E", strokeWidth: 0 }}
+                              activeDot={{ r: 5, fill: "#F43F5E", strokeWidth: 0 }} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
                     </div>
                   </div>
-                  {/* Gráfico */}
-                  <div className="flex-1 min-h-[240px]">
-                    {totalAltas === 0 && totalBajas === 0 ? (
-                      <div className="h-full flex items-center justify-center">
-                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Sin movimiento de personal en este periodo</p>
-                      </div>
-                    ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={statsEmpresa.movimientoMensual}
-                        margin={{ top: 6, right: 16, left: 4, bottom: 4 }}
-                        onClick={(e) => { const label = e?.activeLabel; if (typeof label === "string") setDrillMes(label); }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <defs>
-                          <linearGradient id="gradAltas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.22} />
-                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="gradBajas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.15} />
-                            <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--surface-border)" />
-                        <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} dy={8}
-                          interval={statsRango <= 6 ? 0 : statsRango === 12 ? 1 : 2}
-                          padding={{ left: 12, right: 12 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--texto-muted)", fontSize: 11 }} allowDecimals={false}
-                          width={(() => { const mx = Math.max(...statsEmpresa.movimientoMensual.flatMap(m => [m.altas, m.bajas]), 0); return mx >= 1000 ? 44 : mx >= 100 ? 36 : 28; })()} />
-                        <RechartsTooltip
-                          animationDuration={120}
-                          animationEasing="ease-out"
-                          wrapperStyle={{ pointerEvents: "none" }}
-                          content={({ active, payload, label: mesLabel }) => {
-                            if (!active || !payload?.length) return null;
-                            const altas = (payload.find(p => p.dataKey === "altas")?.value as number) ?? 0;
-                            const bajas = (payload.find(p => p.dataKey === "bajas")?.value as number) ?? 0;
-                            const bal = altas - bajas;
-                            return (
-                              <div style={{ borderRadius: 12, border: "1px solid var(--surface-border)", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", background: "var(--blanco)", padding: "10px 14px", minWidth: 150 }}>
-                                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--texto-primario)", marginBottom: 6 }}>{mesLabel}</p>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                  <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↑ {altas} INCORPORACIONES</span>
-                                  <span style={{ fontSize: 11, color: "#F43F5E", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>↓ {bajas} SALIDAS</span>
-                                  <span style={{ fontSize: 11, color: bal >= 0 ? "#3B82F6" : "#F43F5E", fontWeight: 700, marginTop: 2, paddingTop: 4, borderTop: "1px solid var(--surface-border)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                                    {bal >= 0 ? "+" : ""}{bal} NETO
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          }}
-                        />
-                        <Area type="monotone" name="Altas" dataKey="altas" stroke="#10B981" strokeWidth={2.5} fill="url(#gradAltas)"
-                          dot={{ r: 3, fill: "#10B981", strokeWidth: 0 }}
-                          activeDot={{ r: 5, fill: "#10B981", strokeWidth: 0 }} />
-                        <Area type="monotone" name="Bajas" dataKey="bajas" stroke="#F43F5E" strokeWidth={2.5} fill="url(#gradBajas)"
-                          dot={{ r: 3, fill: "#F43F5E", strokeWidth: 0 }}
-                          activeDot={{ r: 5, fill: "#F43F5E", strokeWidth: 0 }} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                    )}
-                  </div>
-                </div>
                 );
               })()}
 
@@ -760,7 +767,7 @@ const StatsTab = React.memo(function StatsTab({
                     const conteoDptos: Record<string, number> = {};
                     for (const e of activos) { const d = e.departamento || "Sin dpto."; conteoDptos[d] = (conteoDptos[d] ?? 0) + 1; }
                     const distribucionDepartamentos = Object.entries(conteoDptos).map(([nombre, total]) => ({ nombre, total })).sort((a, b) => b.total - a.total);
-                    const PALETTE_RAW = ["#3B82F6","#10B981","#8B5CF6","#F59E0B","#F43F5E","#06B6D4","#84CC16","#EC4899","#F97316","#14B8A6","#6366F1","#EAB308"];
+                    const PALETTE_RAW = ["#3B82F6", "#10B981", "#8B5CF6", "#F59E0B", "#F43F5E", "#06B6D4", "#84CC16", "#EC4899", "#F97316", "#14B8A6", "#6366F1", "#EAB308"];
                     const total = activos.length;
                     return distribucionDepartamentos.length === 0 ? (
                       <div className="flex-1 flex items-center justify-center">
@@ -782,8 +789,8 @@ const StatsTab = React.memo(function StatsTab({
       {/* ── Modal drill-down mes — vive aquí para no tocar AdminContent ── */}
       <AnimatePresence>
         {drillMes && (() => {
-          const MESES      = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-          const MESES_FULL = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+          const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+          const MESES_FULL = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
           const mesIdx = MESES.indexOf(drillMes);
           const hoy = new Date();
           let anioMes = hoy.getFullYear();
@@ -792,7 +799,7 @@ const StatsTab = React.memo(function StatsTab({
             if (MESES[d.getMonth()] === drillMes) { anioMes = d.getFullYear(); break; }
           }
           let empFiltrados = empleados;
-          if (statsEstado === "activos")   empFiltrados = empFiltrados.filter((e) => e.activo !== false);
+          if (statsEstado === "activos") empFiltrados = empFiltrados.filter((e) => e.activo !== false);
           if (statsEstado === "inactivos") empFiltrados = empFiltrados.filter((e) => e.activo === false);
           if (statsDpto) empFiltrados = empFiltrados.filter((e) => e.departamento === statsDpto);
 
@@ -808,7 +815,7 @@ const StatsTab = React.memo(function StatsTab({
           const netoMes = altasDelMes.length - bajasDelMes.length;
           const seccionesLista = [
             { title: "Incorporaciones", list: altasDelMes.filter(e => !drillSearch || `${e.nombre} ${e.apellidos}`.toLowerCase().includes(drillSearch.toLowerCase())), color: "#10B981", dateKey: "fechaRegistro" as const, empty: "Sin incorporaciones este mes" },
-            { title: "Salidas",         list: bajasDelMes.filter(e => !drillSearch || `${e.nombre} ${e.apellidos}`.toLowerCase().includes(drillSearch.toLowerCase())), color: "#F43F5E", dateKey: "fechaBaja"     as const, empty: "Sin salidas este mes" },
+            { title: "Salidas", list: bajasDelMes.filter(e => !drillSearch || `${e.nombre} ${e.apellidos}`.toLowerCase().includes(drillSearch.toLowerCase())), color: "#F43F5E", dateKey: "fechaBaja" as const, empty: "Sin salidas este mes" },
           ];
           const totalEmps = altasDelMes.length + bajasDelMes.length;
 
@@ -826,8 +833,8 @@ const StatsTab = React.memo(function StatsTab({
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 28, scale: 0.94 },
-                  show:   { opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.3,  ease: [0.22, 1, 0.36, 1] } },
-                  exit:   { opacity: 0, y: 14, scale: 0.97, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
+                  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+                  exit: { opacity: 0, y: 14, scale: 0.97, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
                 }}
                 initial="hidden"
                 animate="show"
@@ -848,25 +855,25 @@ const StatsTab = React.memo(function StatsTab({
                 {/* KPIs + Buscador — zona gris fija */}
                 <div className="shrink-0 px-5 pt-4 pb-0" style={{ background: "var(--gris-panel)" }}>
                   <div className="grid grid-cols-3 rounded-2xl" style={{ border: "1px solid var(--surface-border)" }}>
-                  {([
-                    { label: "Incorporaciones", short: "Altas",  value: altasDelMes.length, color: "#10B981", bg: "rgba(16,185,129,0.07)", prefix: "↑" },
-                    { label: "Salidas",         short: "Bajas",  value: bajasDelMes.length, color: "#F43F5E", bg: "rgba(244,63,94,0.07)",  prefix: "↓" },
-                    { label: "Neto",            short: "Neto",   value: Math.abs(netoMes),  color: netoMes >= 0 ? "#3B82F6" : "#F43F5E",  bg: netoMes >= 0 ? "rgba(59,130,246,0.07)" : "rgba(244,63,94,0.07)", prefix: netoMes >= 0 ? "+" : "−" },
-                  ] as const).map(({ label, short, value, color, bg, prefix }, i) => (
-                    <div key={label} className="flex flex-col items-center justify-center py-4 sm:py-5 gap-1"
-                      style={{
-                        background: bg,
-                        borderRight: i < 2 ? "1px solid var(--surface-border)" : "none",
-                        borderRadius: i === 0 ? "16px 0 0 16px" : i === 2 ? "0 16px 16px 0" : 0,
-                      }}>
-                      <div className="flex items-baseline gap-0.5">
-                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color, lineHeight: 1 }}>{prefix}</span>
-                        <span style={{ fontSize: "clamp(1.4rem, 5vw, 1.9rem)", fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: "lining-nums" }}>{value}</span>
+                    {([
+                      { label: "Incorporaciones", short: "Altas", value: altasDelMes.length, color: "#10B981", bg: "rgba(16,185,129,0.07)", prefix: "↑" },
+                      { label: "Salidas", short: "Bajas", value: bajasDelMes.length, color: "#F43F5E", bg: "rgba(244,63,94,0.07)", prefix: "↓" },
+                      { label: "Neto", short: "Neto", value: Math.abs(netoMes), color: netoMes >= 0 ? "#3B82F6" : "#F43F5E", bg: netoMes >= 0 ? "rgba(59,130,246,0.07)" : "rgba(244,63,94,0.07)", prefix: netoMes >= 0 ? "+" : "−" },
+                    ] as const).map(({ label, short, value, color, bg, prefix }, i) => (
+                      <div key={label} className="flex flex-col items-center justify-center py-4 sm:py-5 gap-1"
+                        style={{
+                          background: bg,
+                          borderRight: i < 2 ? "1px solid var(--surface-border)" : "none",
+                          borderRadius: i === 0 ? "16px 0 0 16px" : i === 2 ? "0 16px 16px 0" : 0,
+                        }}>
+                        <div className="flex items-baseline gap-0.5">
+                          <span style={{ fontSize: "0.85rem", fontWeight: 700, color, lineHeight: 1 }}>{prefix}</span>
+                          <span style={{ fontSize: "clamp(1.4rem, 5vw, 1.9rem)", fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: "lining-nums" }}>{value}</span>
+                        </div>
+                        <span className="hidden sm:block" style={{ fontSize: "0.72rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</span>
+                        <span className="block sm:hidden" style={{ fontSize: "0.68rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.04em", textTransform: "uppercase" }}>{short}</span>
                       </div>
-                      <span className="hidden sm:block" style={{ fontSize: "0.72rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</span>
-                      <span className="block sm:hidden" style={{ fontSize: "0.68rem", fontWeight: 700, color, opacity: 0.75, letterSpacing: "0.04em", textTransform: "uppercase" }}>{short}</span>
-                    </div>
-                  ))}
+                    ))}
                   </div>
                 </div>
 
@@ -874,30 +881,30 @@ const StatsTab = React.memo(function StatsTab({
                 {totalEmps > 5 && (
                   <div className="px-5 pt-3 pb-3 shrink-0 flex justify-center" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--gris-panel)" }}>
                     <div className="w-full max-w-sm">
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                        <Search size={15} />
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Buscar empleado…"
-                        value={drillSearch}
-                        onChange={e => setDrillSearch(e.target.value)}
-                        className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
-                        style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                        onFocus={e => (e.currentTarget.style.borderColor = "var(--azul-egm)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
-                      />
-                      {drillSearch && (
-                        <button
-                          onClick={() => setDrillSearch("")}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
-                          style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
-                        >
-                          <X size={13} strokeWidth={2.5} />
-                        </button>
-                      )}
-                    </div>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                          <Search size={15} />
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Buscar empleado…"
+                          value={drillSearch}
+                          onChange={e => setDrillSearch(e.target.value)}
+                          className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                          style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                          onFocus={e => (e.currentTarget.style.borderColor = "var(--azul-egm)")}
+                          onBlur={e => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                        />
+                        {drillSearch && (
+                          <button
+                            onClick={() => setDrillSearch("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
+                            style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
+                          >
+                            <X size={13} strokeWidth={2.5} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1110,10 +1117,10 @@ function AdminContent() {
   const [isPendingStats, startStatsTransition] = useTransition();
   const cargandoStats = isPendingStats;
 
-  const setStatsRangoT  = useCallback((v: 1|3|6|12|24) => startStatsTransition(() => setStatsRango(v)),  [startStatsTransition]);
-  const setStatsDptoT   = useCallback((v: string|null)  => startStatsTransition(() => setStatsDpto(v)),   [startStatsTransition]);
-  const setStatsEstadoT = useCallback((v: "todos"|"activos"|"inactivos") => startStatsTransition(() => setStatsEstado(v)), [startStatsTransition]);
-  const setStatsTipoModT= useCallback((v: string|null)  => startStatsTransition(() => setStatsTipoMod(v)),[startStatsTransition]);
+  const setStatsRangoT = useCallback((v: 1 | 3 | 6 | 12 | 24) => startStatsTransition(() => setStatsRango(v)), [startStatsTransition]);
+  const setStatsDptoT = useCallback((v: string | null) => startStatsTransition(() => setStatsDpto(v)), [startStatsTransition]);
+  const setStatsEstadoT = useCallback((v: "todos" | "activos" | "inactivos") => startStatsTransition(() => setStatsEstado(v)), [startStatsTransition]);
+  const setStatsTipoModT = useCallback((v: string | null) => startStatsTransition(() => setStatsTipoMod(v)), [startStatsTransition]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const personalizarRef = useRef<HTMLDivElement>(null);
@@ -1451,27 +1458,27 @@ function AdminContent() {
     setExportando(true);
     try {
       const payload = empleados.map((e) => ({
-        nombre:       e.nombre,
-        apellidos:    e.apellidos,
-        email:        e.email,
-        puesto:       e.puestoTrabajo ?? "",
+        nombre: e.nombre,
+        apellidos: e.apellidos,
+        email: e.email,
+        puesto: e.puestoTrabajo ?? "",
         departamento: DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento ?? "",
-        rol:          e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
-        estado:       e.activo ? "Activo" : "Inactivo",
-        fechaAlta:    formatFecha(e.fechaRegistro),
+        rol: e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
+        estado: e.activo ? "Activo" : "Inactivo",
+        fechaAlta: formatFecha(e.fechaRegistro),
       }));
 
-      const res  = await fetch("/api/admin/export-empleados", {
-        method:  "POST",
+      const res = await fetch("/api/admin/export-empleados", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ empleados: payload }),
+        body: JSON.stringify({ empleados: payload }),
       });
       if (!res.ok) throw new Error("Error generando el archivo");
 
       const blob = await res.blob();
-      const url  = window.URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href     = url;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
       a.download = `empleados_${new Date().toISOString().split("T")[0]}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
@@ -1543,7 +1550,7 @@ function AdminContent() {
   const toggleEmpSort = (col: Exclude<EmpSortCol, null>) => {
     setEmpSort(prev => {
       if (prev.col !== col) return { col, dir: "asc" };
-      if (prev.dir === "asc")  return { col, dir: "desc" };
+      if (prev.dir === "asc") return { col, dir: "desc" };
       return { col: null, dir: "asc" }; // tercer clic → sin orden
     });
     setEmpPage(0);
@@ -1582,9 +1589,9 @@ function AdminContent() {
   }, [empleados, empSearch, empSort]);
 
   const tabs = [
-    { key: "empleados"   as const, label: "Empleados",         icon: <Users size={20} />,         accent: "#1B3F7E", badge: 0 },
-    { key: "incidencias" as const, label: "Incidencias",        icon: <TriangleAlert size={20} />, accent: "#B45309", badge: 0 },
-    { key: "anuncios"    as const, label: "Anuncios",           icon: <Megaphone size={20} />,     accent: "#0EA5E9", badge: 0 },
+    { key: "empleados" as const, label: "Empleados", icon: <Users size={20} />, accent: "#1B3F7E", badge: 0 },
+    { key: "incidencias" as const, label: "Incidencias", icon: <TriangleAlert size={20} />, accent: "#B45309", badge: 0 },
+    { key: "anuncios" as const, label: "Anuncios", icon: <Megaphone size={20} />, accent: "#0EA5E9", badge: 0 },
     { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85", badge: 0 },
     { key: "eventos"     as const, label: "Eventos",            icon: <Calendar size={20} />,      accent: "#0F766E", badge: 0 },
     { key: "estadisticas"as const, label: "Estadísticas",       icon: <BarChart3 size={20} />,     accent: "#2D8653", badge: 0 },
@@ -1745,1338 +1752,1109 @@ function AdminContent() {
 
         {/* ── Contenido de tabs con animación ── */}
         <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-        >
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
 
-        {/* ── TAB EMPLEADOS ── */}
-        {activeTab === "empleados" && (
-          <div className="relative">
-            {/* Título */}
-            <div className="mb-8 text-center sm:text-left">
-              <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                Gestión de equipo
-              </h1>
-              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                {cargandoEmpleados ? "Cargando empleados…" : (
-                  <>
-                    {empleados.length} persona{empleados.length !== 1 ? "s" : ""}
-                    {empleados.filter(e => !e.activo).length > 0 && (
-                      <span style={{ color: "var(--error)", fontWeight: 600 }}>
-                        {" "}· {empleados.filter(e => !e.activo).length} inactiva{empleados.filter(e => !e.activo).length !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </>
-                )}
-              </p>
-            </div>
-
-            {/* ── Modal nuevo empleado ── */}
-            <AnimatePresence>
-            {showFormEmpleado && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-                style={{ background: "var(--overlay, rgba(0,0,0,0.45))" }}
-                onClick={() => { if (!guardandoEmpleado) { setShowFormEmpleado(false); setErrorEmpleado(null); } }}
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 28, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 16, scale: 0.97 }}
-                  transition={{ duration: 0.26, ease: [0.34, 1.15, 0.64, 1] }}
-                  className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
-                  style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Cabecera con Grainient — azules EGM */}
-                  <div className="relative flex items-center justify-between px-5 sm:px-6 shrink-0 overflow-hidden"
-                    style={{ paddingTop: "20px", paddingBottom: "20px", background: "var(--tab-empleados)" }}>
-                    <div className="absolute inset-0">
-                      <Grainient
-                        color1="#1B3F7E" color2="#2A5298" color3="#1040A0"
-                        timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
-                        warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
-                      />
-                    </div>
-                    <h2 className="text-2xl font-bold relative z-10" style={{ color: "#ffffff" }}>
-                      Nuevo empleado
-                    </h2>
-                    <div className="relative z-10">
-                      <IconButton variant="glass" label="Cerrar" onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} />
-                    </div>
-                  </div>
-
-                  {/* Formulario scrollable */}
-                  <form
-                    id="form-nuevo-empleado"
-                    onSubmit={(e) => { e.preventDefault(); if (formEmpleado.nombre.trim() && formEmpleado.email.trim() && formEmpleado.password.trim()) handleCrearEmpleado(); }}
-                    className="flex flex-col gap-4 px-5 sm:px-6 py-5 overflow-y-auto"
-                    style={{ flex: 1, opacity: guardandoEmpleado ? 0.6 : 1, pointerEvents: guardandoEmpleado ? "none" : undefined, transition: "opacity 0.2s ease" }}
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Nombre */}
-                      <EmpCampo label="Nombre" required placeholder="María"
-                        value={formEmpleado.nombre} onChange={(v) => setFormEmpleado({ ...formEmpleado, nombre: v })} />
-                      {/* Apellidos */}
-                      <EmpCampo label="Apellidos" placeholder="García López"
-                        value={formEmpleado.apellidos} onChange={(v) => setFormEmpleado({ ...formEmpleado, apellidos: v })} />
-                    </div>
-                    {/* Email */}
-                    <EmpCampo label="Email" required type="email" placeholder="m.garcia@empresa.com"
-                      value={formEmpleado.email} onChange={(v) => setFormEmpleado({ ...formEmpleado, email: v })} />
-                    {/* Contraseña */}
-                    <EmpCampo label="Contraseña inicial" required type="password" placeholder="Mínimo 8 caracteres"
-                      hint="El empleado podrá cambiarla en su primer acceso"
-                      value={formEmpleado.password} onChange={(v) => setFormEmpleado({ ...formEmpleado, password: v })} />
-                    {/* Divisor secciones */}
-                    <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", margin: "2px 0" }} />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Puesto */}
-                      <EmpCampo label="Puesto de trabajo" placeholder="Ej: Técnico de producción"
-                        value={formEmpleado.puestoTrabajo} onChange={(v) => setFormEmpleado({ ...formEmpleado, puestoTrabajo: v })} />
-                      {/* Departamento */}
-                      <EmpSelect
-                        label="Departamento"
-                        value={formEmpleado.departamento}
-                        onChange={(v) => setFormEmpleado({ ...formEmpleado, departamento: v })}
-                        options={DEPARTAMENTOS}
-                      />
-                    </div>
-                    {errorEmpleado && (
-                      <p className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.07)", color: "var(--error)" }}>
-                        {errorEmpleado}
-                      </p>
-                    )}
-                  </form>
-
-                  {/* Footer */}
-                  <div className="flex flex-col sm:flex-row sm:justify-end gap-2.5 px-5 sm:px-6 py-4 shrink-0"
-                    style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
-                    <Button type="button" variant="secondary" className="w-full sm:w-auto order-2 sm:order-1"
-                      onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} disabled={guardandoEmpleado}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" form="form-nuevo-empleado" className="w-full sm:w-auto order-1 sm:order-2"
-                      disabled={guardandoEmpleado || !formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()}>
-                      {guardandoEmpleado ? "Creando…" : "Crear empleado"}
-                    </Button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-            </AnimatePresence>
-
-            {/* Barra de herramientas */}
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-8">
-              {/* Buscador */}
-              <div className="flex flex-col w-full sm:w-64 shrink-0" style={{ minHeight: 48 }}>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                    <Search size={15} />
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Buscar empleado…"
-                    value={empSearchInput}
-                    onChange={(e) => { setEmpSearchInput(e.target.value); setEmpPage(0); }}
-                    className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
-                    style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = "var(--tab-empleados)")}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
-                  />
-                  {empSearch && (
-                    <button
-                      onClick={() => { setEmpSearch(""); setEmpSearchInput(""); setEmpPage(0); }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full transition-colors"
-                      style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
-                    >
-                      <X size={13} strokeWidth={2.5} />
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs pl-1 mt-1.5 transition-opacity duration-150"
-                  style={{ color: "var(--texto-muted)", opacity: empSearch ? 1 : 0, pointerEvents: empSearch ? "auto" : "none" }}>
-                  {empleadosFiltrados.length === 0
-                    ? "Sin resultados"
-                    : `${empleadosFiltrados.length} resultado${empleadosFiltrados.length !== 1 ? "s" : ""} para "${empSearch}"`}
-                </p>
-              </div>
-
-              {/* Botones */}
-              <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
-                <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
-                <Button variant="primary" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}
-                  style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
-                  {importando
-                    ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    : <><Upload size={15} /><span className="hidden sm:inline">&nbsp;Importar Excel</span></>}
-                </Button>
-                <Button variant="primary" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}
-                  style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
-                  {exportando
-                    ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    : <><Download size={15} /><span className="hidden sm:inline">&nbsp;Exportar Excel</span></>}
-                </Button>
-                <Button variant="primary" size="md" className="flex-1 sm:flex-none" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
-                  <Plus size={15} />
-                  <span className="hidden sm:inline">Añadir empleado</span>
-                  <span className="sm:hidden">Añadir</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Tabla — ocupa todo el ancho */}
-            <div>
-              <div className="rounded-2xl overflow-hidden"
-                style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                {cargandoEmpleados ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="w-6 h-6 border-2 rounded-full animate-spin"
-                      style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-                  </div>
-                ) : empleados.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                      style={{ background: "var(--azul-egm-light)" }}>
-                      <Users size={30} style={{ color: "var(--azul-egm)" }} strokeWidth={1.5} />
-                    </div>
-                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
-                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Añade el primer empleado a tu empresa</p>
-                    <Button variant="primary" size="md" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
-                      <Plus size={14} /> Añadir empleado
-                    </Button>
-                  </div>
-                ) : empleadosFiltrados.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                      style={{ background: "rgba(27,63,126,0.08)" }}>
-                      <Users size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
-                    </div>
-                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
-                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>
-                      Ningún empleado coincide con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{empSearch}"</span>
-                    </p>
-                    <button onClick={() => { setEmpSearch(""); setEmpSearchInput(""); }}
-                      className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
-                      style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
-                      Limpiar búsqueda
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Vista desktop — tabla */}
-                    <div className="hidden md:block">
-                      <table className="w-full table-fixed">
-                        <colgroup>
-                          <col style={{ width: "35%" }} />
-                          <col style={{ width: "21%" }} />
-                          <col style={{ width: "18%" }} />
-                          <col style={{ width: "14%" }} />
-                          <col style={{ width: "12%" }} />
-                        </colgroup>
-                        <thead>
-                          <tr style={{ background: "var(--azul-egm-light)", borderBottom: "1px solid var(--surface-border)" }}>
-                            {([
-                              { label: "Empleado",     col: "nombre"      as EmpSortCol, cls: "pl-16 pr-6 text-left" },
-                              { label: "Puesto",       col: "puesto"       as EmpSortCol, cls: "px-6    text-left"    },
-                              { label: "Departamento", col: "departamento" as EmpSortCol, cls: "px-6    text-left"    },
-                              { label: "Perfil",       col: "perfil"       as EmpSortCol, cls: "px-6    text-left"    },
-                              { label: "Estado",       col: "estado"       as EmpSortCol, cls: "px-6 text-left"        },
-                            ]).map(({ label, col, cls }) => (
-                              <th key={label} className={`py-3.5 ${cls}`} style={{ color: "var(--azul-egm)" }}>
-                                <button
-                                  onClick={() => toggleEmpSort(col!)}
-                                  className="inline-flex items-center gap-1 focus:outline-none select-none uppercase tracking-wider text-sm font-bold"
-                                  style={{ cursor: "pointer", background: "none", border: "none", padding: 0, color: "inherit", fontFamily: "inherit" }}
-                                >
-                                  {label}
-                                  <span style={{
-                                    opacity: empSort.col === col ? 1 : 0.25,
-                                    transition: "opacity 0.15s, transform 0.2s",
-                                    display: "flex",
-                                    transform: empSort.col === col && empSort.dir === "asc" ? "rotate(180deg)" : "rotate(0deg)",
-                                  }}>
-                                    <ChevronDown size={15} strokeWidth={2.5} />
-                                  </span>
-                                </button>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <AnimatePresence mode="wait">
-                        <tbody key={empPage}>
-                          {empleadosFiltrados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
-                            <motion.tr
-                              key={e.usuarioId}
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.12, ease: "easeOut" }}
-                              className="cursor-pointer"
-                              style={{
-                                borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--surface-border)" : "none",
-                                borderLeft: `3px solid ${empleadoSeleccionado?.usuarioId === e.usuarioId ? "var(--azul-egm)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa"}`,
-                                background: empleadoSeleccionado?.usuarioId === e.usuarioId
-                                  ? "var(--azul-egm-light)"
-                                  : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
-                                transition: "border-left-color 0.15s, background 0.15s",
-                              }}
-                              onClick={() => setEmpleadoSeleccionado(
-                                empleadoSeleccionado?.usuarioId === e.usuarioId ? null : e
-                              )}
-                              onMouseEnter={(el) => {
-                                if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
-                                  el.currentTarget.style.background = "var(--gris-superficie)";
-                              }}
-                              onMouseLeave={(el) => {
-                                if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
-                                  el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f5f7fa";
-                              }}
-                            >
-                              <td className="py-3.5 pl-16 pr-6">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all duration-150"
-                                    style={{
-                                      background: "var(--azul-egm-light)",
-                                      color: "var(--azul-egm)",
-                                      outline: empleadoSeleccionado?.usuarioId === e.usuarioId ? "2px solid var(--azul-egm)" : "2px solid transparent",
-                                      outlineOffset: "2px",
-                                    }}>
-                                    {getInitials(e.nombre, e.apellidos)}
-                                  </div>
-                                  <div>
-                                    <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
-                                      {e.nombre} {e.apellidos}
-                                    </p>
-                                    <p className="text-sm mt-0.5" style={{ color: "var(--texto-secundario)", opacity: 0.7 }}>{e.email}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-3.5 px-6 text-base" style={{ color: "var(--texto-secundario)" }}>
-                                {e.puestoTrabajo ?? <span style={{ color: "var(--texto-muted)" }}>-</span>}
-                              </td>
-                              <td className="py-3.5 px-6">
-                                {e.departamento ? (
-                                  <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                    style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
-                                    {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
-                                  </span>
-                                ) : (
-                                  <span className="text-base" style={{ color: "var(--texto-muted)" }}>-</span>
-                                )}
-                              </td>
-                              <td className="py-3.5 px-6">
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
-                                    ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
-                                    : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                  {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
-                                </span>
-                              </td>
-                              <td className="py-3.5 px-6">
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={e.activo
-                                    ? { background: "var(--exito-light)", color: "var(--exito)" }
-                                    : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                                  {e.activo ? "Activo" : "Inactivo"}
-                                </span>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                        </AnimatePresence>
-                      </table>
-                      {/* Paginación desktop empleados */}
-                      {empleadosFiltrados.length > PAGE_SIZE && (() => {
-                        const totalPages = Math.ceil(empleadosFiltrados.length / PAGE_SIZE);
-                        const pages = Array.from({ length: totalPages }, (_, i) => i);
-                        return (
-                          <div className="flex items-center justify-center gap-1 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
-                            {/* Botón anterior */}
-                            <motion.button
-                              onClick={() => setEmpPage(p => Math.max(0, p - 1))}
-                              disabled={empPage === 0}
-                              whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
-                              whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
-                              className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
-                            >
-                              <ChevronLeft size={15} strokeWidth={2} />
-                              Anterior
-                            </motion.button>
-
-                            {/* Números */}
-                            <div className="flex items-center gap-1 mx-1">
-                              {pages.map(p => (
-                                <motion.button
-                                  key={p}
-                                  onClick={() => setEmpPage(p)}
-                                  whileHover={p !== empPage ? { scale: 1.08, background: "var(--gris-superficie)" } : {}}
-                                  whileTap={{ scale: 0.92 }}
-                                  animate={p === empPage
-                                    ? { background: "#1B3F7E", color: "#ffffff" }
-                                    : { background: "transparent", color: "var(--texto-secundario)" }
-                                  }
-                                  transition={{ duration: 0.18, ease: [0.34, 1.2, 0.64, 1] }}
-                                  className="w-9 h-9 rounded-xl text-sm font-semibold"
-                                  style={{ border: p === empPage ? "none" : "1px solid transparent", cursor: "pointer" }}
-                                >{p + 1}</motion.button>
-                              ))}
-                            </div>
-
-                            {/* Botón siguiente */}
-                            <motion.button
-                              onClick={() => setEmpPage(p => p + 1)}
-                              disabled={(empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length}
-                              whileHover={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
-                              whileTap={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
-                              className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                              style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length ? "default" : "pointer" }}
-                            >
-                              Siguiente
-                              <ChevronRight size={15} strokeWidth={2} />
-                            </motion.button>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Vista móvil — tarjetas */}
-                    <div className="md:hidden flex flex-col">
-                      {empleadosFiltrados.slice(empPage * PAGE_SIZE_MOBILE, (empPage + 1) * PAGE_SIZE_MOBILE).map((e, idx) => {
-                        const isSelected = empleadoSeleccionado?.usuarioId === e.usuarioId;
-                        return (
-                        <motion.div
-                          key={e.usuarioId}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.18, delay: idx * 0.04, ease: "easeOut" }}
-                          className="flex items-center gap-3 cursor-pointer"
-                          onClick={() => setEmpleadoSeleccionado(isSelected ? null : e)}
-                          style={{
-                            padding: "12px 16px",
-                            borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE_MOBILE) - 1 ? "1px solid var(--surface-border)" : "none",
-                            borderLeft: `3px solid ${isSelected ? "var(--azul-egm)" : "transparent"}`,
-                            background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
-                            transition: "border-left-color 0.15s, background 0.15s",
-                          }}
-                        >
-                          {/* Avatar con dot de estado */}
-                          <div className="relative shrink-0">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "2px solid var(--azul-egm)" }}>
-                              {getInitials(e.nombre, e.apellidos)}
-                            </div>
-                            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
-                              style={{ background: e.activo ? "var(--exito)" : "var(--texto-muted)" }} />
-                          </div>
-
-                          {/* Info */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <p className="text-sm font-semibold truncate min-w-0 flex-1" style={{ color: "var(--texto-primario)" }}>
-                                {e.nombre} {e.apellidos}
-                              </p>
-                              <span className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
-                                style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
-                                  ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
-                                  : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Admin" : "Emp."}
-                              </span>
-                            </div>
-                            <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                              {e.puestoTrabajo ? `${e.puestoTrabajo} · ${e.email}` : e.email}
-                            </p>
-                          </div>
-
-                          {/* Chevron */}
-                          <ChevronRight size={16} strokeWidth={2} style={{ color: "var(--texto-muted)", flexShrink: 0, opacity: isSelected ? 1 : 0.4 }} />
-                        </motion.div>
-                        );
-                      })}
-                      {/* Paginación móvil empleados */}
-                      {empleadosFiltrados.length > PAGE_SIZE_MOBILE && (
-                        <div className="flex items-center justify-center gap-2 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
-                          <motion.button
-                            onClick={() => setEmpPage(p => Math.max(0, p - 1))}
-                            disabled={empPage === 0}
-                            whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
-                            whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
-                            className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                            style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
-                          ><ChevronLeft size={15} strokeWidth={2} /></motion.button>
-                          <span className="text-sm font-semibold px-2" style={{ color: "var(--texto-secundario)" }}>
-                            {empPage + 1} / {Math.ceil(empleadosFiltrados.length / PAGE_SIZE_MOBILE)}
+            {/* ── TAB EMPLEADOS ── */}
+            {activeTab === "empleados" && (
+              <div className="relative">
+                {/* Título */}
+                <div className="mb-8 text-center sm:text-left">
+                  <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                    Gestión de equipo
+                  </h1>
+                  <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                    {cargandoEmpleados ? "Cargando empleados…" : (
+                      <>
+                        {empleados.length} persona{empleados.length !== 1 ? "s" : ""}
+                        {empleados.filter(e => !e.activo).length > 0 && (
+                          <span style={{ color: "var(--error)", fontWeight: 600 }}>
+                            {" "}· {empleados.filter(e => !e.activo).length} inactiva{empleados.filter(e => !e.activo).length !== 1 ? "s" : ""}
                           </span>
-                          <motion.button
-                            onClick={() => setEmpPage(p => p + 1)}
-                            disabled={(empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length}
-                            whileHover={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
-                            whileTap={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
-                            className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                            style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length ? "default" : "pointer" }}
-                          ><ChevronRight size={15} strokeWidth={2} /></motion.button>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-
-            </div>
-
-            {/* ── Slide-over desktop ── */}
-            <AnimatePresence>
-              {empleadoSeleccionado && (
-                <>
-                  {/* Backdrop sutil */}
-                  <motion.div
-                    className="hidden md:block fixed inset-0 z-40"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ background: "rgba(15,25,35,0.25)" }}
-                    onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
-                  />
-                  {/* Panel */}
-                  <motion.div
-                    className="hidden md:flex fixed top-0 right-0 h-full z-50 flex-col overflow-hidden"
-                    style={{
-                      width: 400,
-                      background: "var(--azul-egm)",
-                      borderLeft: "1px solid rgba(0,0,0,0.08)",
-                      boxShadow: "-8px 0 32px rgba(0,0,0,0.12)",
-                    }}
-                    initial={{ x: "100%" }}
-                    animate={{ x: 0 }}
-                    exit={{ x: "100%" }}
-                    transition={{ type: "spring", stiffness: 340, damping: 34 }}
-                  >
-                    {/* Header slide-over */}
-                    <div className="px-6 flex items-center justify-between shrink-0"
-                      style={{ height: 80, background: "var(--azul-egm)" }}>
-                      <h3 className="text-xl font-bold" style={{ color: "#ffffff" }}>Ficha de empleado</h3>
-                      <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
-                    </div>
-
-                    {/* Contenido scroll */}
-                    <div className="flex-1 overflow-y-auto" style={{ background: "var(--gris-pagina)" }}>
-                      <AnimatePresence mode="wait">
-                        {editandoEmpleado ? (
-                          <motion.div key="edit"
-                            initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            className="flex flex-col gap-6 px-6 py-6"
-                          >
-                            {/* Avatar mini — reactivo al formulario */}
-                            <div className="flex items-center gap-3 py-4 px-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                              <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold shrink-0"
-                                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "2px solid var(--azul-egm)" }}>
-                                {getInitials(
-                                  editEmpleadoForm.nombre || empleadoSeleccionado.nombre,
-                                  editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-bold truncate" style={{ color: "var(--texto-primario)" }}>
-                                  {(editEmpleadoForm.nombre || empleadoSeleccionado.nombre)}{" "}
-                                  {(editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos)}
-                                </p>
-                                <p className="text-xs mt-0.5 truncate" style={{ color: "var(--texto-muted)" }}>
-                                  {editEmpleadoForm.email || empleadoSeleccionado.email}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Campos */}
-                            <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                              {[
-                                { key: "nombre", label: "Nombre" },
-                                { key: "apellidos", label: "Apellidos" },
-                                { key: "email", label: "Email", type: "email" },
-                                { key: "puestoTrabajo", label: "Puesto" },
-                              ].map(({ key, label, type = "text" }) => (
-                                <EmpCampo key={key} label={label} type={type}
-                                  value={editEmpleadoForm[key as keyof NuevoEmpleadoForm]}
-                                  onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, [key]: v }))} />
-                              ))}
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Departamento</label>
-                                <EmpSelect label="" value={editEmpleadoForm.departamento}
-                                  onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, departamento: v }))}
-                                  options={DEPARTAMENTOS} placeholder="Sin departamento" />
-                              </div>
-                            </div>
-                          </motion.div>
-                        ) : (
-                          <motion.div key="view"
-                            initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            className="flex flex-col gap-6 px-6 py-6"
-                          >
-                            {/* Avatar + contacto */}
-                            <div className="flex flex-col items-center gap-3 py-6 px-4 rounded-2xl"
-                              style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                              {/* Avatar con dot de estado */}
-                              <div className="relative">
-                                <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shrink-0"
-                                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "3px solid var(--azul-egm)" }}>
-                                  {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
-                                </div>
-                                <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full border-2 border-white"
-                                  style={{ background: empleadoSeleccionado.activo ? "var(--exito)" : "var(--texto-muted)" }} />
-                              </div>
-                              <div className="text-center">
-                                <p className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>
-                                  {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
-                                </p>
-                                <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{empleadoSeleccionado.email}</p>
-                              </div>
-                            </div>
-
-                            {/* Datos */}
-                            <div className="flex flex-col gap-0" style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--surface-border)" }}>
-                              {/* Estado */}
-                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Estado</span>
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={empleadoSeleccionado.activo
-                                    ? { background: "var(--exito-light)", color: "var(--exito)" }
-                                    : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                                  {empleadoSeleccionado.activo ? "Activo" : "Inactivo"}
-                                </span>
-                              </div>
-                              {/* Perfil */}
-                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Perfil</span>
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA"
-                                    ? { background: "rgba(180,83,9,0.10)", color: "#B45309" }
-                                    : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                  {empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
-                                </span>
-                              </div>
-                              {/* Departamento */}
-                              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
-                                {empleadoSeleccionado.departamento
-                                  ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
-                                      {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
-                                    </span>
-                                  : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
-                              </div>
-                              {/* Puesto */}
-                              {empleadoSeleccionado.puestoTrabajo && (
-                                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto</span>
-                                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(78,109,126,0.10)", color: "#4E6D7E" }}>
-                                    {empleadoSeleccionado.puestoTrabajo}
-                                  </span>
-                                </div>
-                              )}
-                              {/* Alta */}
-                              <div className="flex items-center justify-between px-5 py-4" style={{ background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Alta</span>
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
-                                  {formatFecha(empleadoSeleccionado.fechaRegistro)}
-                                </span>
-                              </div>
-                            </div>
-                          </motion.div>
                         )}
-                      </AnimatePresence>
-                    </div>
+                      </>
+                    )}
+                  </p>
+                </div>
 
-                    {/* Footer acciones */}
-                    <div className="px-6 py-5 flex flex-col gap-2.5 shrink-0"
-                      style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
-                      {editandoEmpleado ? (
-                        <div className="flex gap-2.5">
-                          <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
+                {/* ── Modal nuevo empleado ── */}
+                <AnimatePresence>
+                  {showFormEmpleado && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+                      style={{ background: "var(--overlay, rgba(0,0,0,0.45))" }}
+                      onClick={() => { if (!guardandoEmpleado) { setShowFormEmpleado(false); setErrorEmpleado(null); } }}
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+                        transition={{ duration: 0.26, ease: [0.34, 1.15, 0.64, 1] }}
+                        className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Cabecera con Grainient — azules EGM */}
+                        <div className="relative flex items-center justify-between px-5 sm:px-6 shrink-0 overflow-hidden"
+                          style={{ paddingTop: "20px", paddingBottom: "20px", background: "var(--tab-empleados)" }}>
+                          <div className="absolute inset-0">
+                            <Grainient
+                              color1="#1B3F7E" color2="#2A5298" color3="#1040A0"
+                              timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
+                              warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
+                            />
+                          </div>
+                          <h2 className="text-2xl font-bold relative z-10" style={{ color: "#ffffff" }}>
+                            Nuevo empleado
+                          </h2>
+                          <div className="relative z-10">
+                            <IconButton variant="glass" label="Cerrar" onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} />
+                          </div>
+                        </div>
+
+                        {/* Formulario scrollable */}
+                        <form
+                          id="form-nuevo-empleado"
+                          onSubmit={(e) => { e.preventDefault(); if (formEmpleado.nombre.trim() && formEmpleado.email.trim() && formEmpleado.password.trim()) handleCrearEmpleado(); }}
+                          className="flex flex-col gap-4 px-5 sm:px-6 py-5 overflow-y-auto"
+                          style={{ flex: 1, opacity: guardandoEmpleado ? 0.6 : 1, pointerEvents: guardandoEmpleado ? "none" : undefined, transition: "opacity 0.2s ease" }}
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Nombre */}
+                            <EmpCampo label="Nombre" required placeholder="María"
+                              value={formEmpleado.nombre} onChange={(v) => setFormEmpleado({ ...formEmpleado, nombre: v })} />
+                            {/* Apellidos */}
+                            <EmpCampo label="Apellidos" placeholder="García López"
+                              value={formEmpleado.apellidos} onChange={(v) => setFormEmpleado({ ...formEmpleado, apellidos: v })} />
+                          </div>
+                          {/* Email */}
+                          <EmpCampo label="Email" required type="email" placeholder="m.garcia@empresa.com"
+                            value={formEmpleado.email} onChange={(v) => setFormEmpleado({ ...formEmpleado, email: v })} />
+                          {/* Contraseña */}
+                          <EmpCampo label="Contraseña inicial" required type="password" placeholder="Mínimo 8 caracteres"
+                            hint="El empleado podrá cambiarla en su primer acceso"
+                            value={formEmpleado.password} onChange={(v) => setFormEmpleado({ ...formEmpleado, password: v })} />
+                          {/* Divisor secciones */}
+                          <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", margin: "2px 0" }} />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Puesto */}
+                            <EmpCampo label="Puesto de trabajo" placeholder="Ej: Técnico de producción"
+                              value={formEmpleado.puestoTrabajo} onChange={(v) => setFormEmpleado({ ...formEmpleado, puestoTrabajo: v })} />
+                            {/* Departamento */}
+                            <EmpSelect
+                              label="Departamento"
+                              value={formEmpleado.departamento}
+                              onChange={(v) => setFormEmpleado({ ...formEmpleado, departamento: v })}
+                              options={DEPARTAMENTOS}
+                            />
+                          </div>
+                          {errorEmpleado && (
+                            <p className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.07)", color: "var(--error)" }}>
+                              {errorEmpleado}
+                            </p>
+                          )}
+                        </form>
+
+                        {/* Footer */}
+                        <div className="flex flex-col sm:flex-row sm:justify-end gap-2.5 px-5 sm:px-6 py-4 shrink-0"
+                          style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+                          <Button type="button" variant="secondary" className="w-full sm:w-auto order-2 sm:order-1"
+                            onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} disabled={guardandoEmpleado}>
                             Cancelar
                           </Button>
-                          <Button variant="primary" size="md" className="flex-1" onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}>
-                            {guardandoEditEmpleado
-                              ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />&nbsp;Guardando…</>
-                              : "Guardar cambios"}
+                          <Button type="submit" form="form-nuevo-empleado" className="w-full sm:w-auto order-1 sm:order-2"
+                            disabled={guardandoEmpleado || !formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()}>
+                            {guardandoEmpleado ? "Creando…" : "Crear empleado"}
                           </Button>
                         </div>
-                      ) : (
-                        <>
-                          <Button variant="primary" size="md" onClick={iniciarEditEmpleado}>
-                            Editar empleado
-                          </Button>
-                          <Button
-                            variant={empleadoSeleccionado.activo ? "danger" : "secondary"}
-                            size="md"
-                            onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
-                            {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
-                          </Button>
-                        </>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Barra de herramientas */}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-8">
+                  {/* Buscador */}
+                  <div className="flex flex-col w-full sm:w-64 shrink-0" style={{ minHeight: 48 }}>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                        <Search size={15} />
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Buscar empleado…"
+                        value={empSearchInput}
+                        onChange={(e) => { setEmpSearchInput(e.target.value); setEmpPage(0); }}
+                        className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                        style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = "var(--tab-empleados)")}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                      />
+                      {empSearch && (
+                        <button
+                          onClick={() => { setEmpSearch(""); setEmpSearchInput(""); setEmpPage(0); }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full transition-colors"
+                          style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
+                        >
+                          <X size={13} strokeWidth={2.5} />
+                        </button>
                       )}
                     </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-
-            {/* Bottom sheet móvil */}
-            <AnimatePresence>
-            {empleadoSeleccionado && (
-              <>
-                {/* Backdrop */}
-                <motion.div
-                  className="md:hidden fixed inset-0"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  style={{ background: "rgba(15,25,35,0.35)", zIndex: 1090 }}
-                  onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
-                />
-                <motion.div
-                  className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl flex flex-col"
-                  initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                  transition={{ type: "spring", stiffness: 380, damping: 36 }}
-                  style={{ background: "var(--gris-pagina)", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", maxHeight: "88vh", zIndex: 1100 }}>
-
-                  {/* Header mobile bottom sheet */}
-                  <div className="rounded-t-3xl shrink-0"
-                    style={{ background: "var(--azul-egm)" }}>
-                    <div className="px-5 pt-2 pb-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
-                          {editandoEmpleado ? "Editando empleado" : "Ficha de empleado"}
-                        </p>
-                        <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="relative shrink-0">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold"
-                            style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "2px solid rgba(255,255,255,0.4)" }}>
-                            {getInitials(
-                              editandoEmpleado ? (editEmpleadoForm.nombre || empleadoSeleccionado.nombre) : empleadoSeleccionado.nombre,
-                              editandoEmpleado ? (editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos) : empleadoSeleccionado.apellidos
-                            )}
-                          </div>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-base font-bold truncate" style={{ color: "#fff" }}>
-                            {editandoEmpleado
-                              ? `${editEmpleadoForm.nombre || empleadoSeleccionado.nombre} ${editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos}`
-                              : `${empleadoSeleccionado.nombre} ${empleadoSeleccionado.apellidos}`}
-                          </p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
-                            {editandoEmpleado ? (editEmpleadoForm.email || empleadoSeleccionado.email) : empleadoSeleccionado.email}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-xs pl-1 mt-1.5 transition-opacity duration-150"
+                      style={{ color: "var(--texto-muted)", opacity: empSearch ? 1 : 0, pointerEvents: empSearch ? "auto" : "none" }}>
+                      {empleadosFiltrados.length === 0
+                        ? "Sin resultados"
+                        : `${empleadosFiltrados.length} resultado${empleadosFiltrados.length !== 1 ? "s" : ""} para "${empSearch}"`}
+                    </p>
                   </div>
 
-                  {/* Contenido scrollable */}
-                  <div className="flex-1 overflow-y-auto">
-                    <AnimatePresence mode="wait">
-                      {editandoEmpleado ? (
-                        <motion.div key="edit"
-                          initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
-                          transition={{ duration: 0.18, ease: "easeOut" }}
-                          className="px-4 py-4">
-                          <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
-                            {/* Nombre + Apellidos en fila */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <EmpCampo label="Nombre"
-                                value={editEmpleadoForm.nombre}
-                                onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, nombre: v }))} />
-                              <EmpCampo label="Apellidos"
-                                value={editEmpleadoForm.apellidos}
-                                onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, apellidos: v }))} />
+                  {/* Botones */}
+                  <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
+                    <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
+                    <Button variant="primary" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}
+                      style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
+                      {importando
+                        ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : <><Upload size={15} /><span className="hidden sm:inline">&nbsp;Importar Excel</span></>}
+                    </Button>
+                    <Button variant="primary" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}
+                      style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)", flexShrink: 0 }}>
+                      {exportando
+                        ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : <><Download size={15} /><span className="hidden sm:inline">&nbsp;Exportar Excel</span></>}
+                    </Button>
+                    <Button variant="primary" size="md" className="flex-1 sm:flex-none" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
+                      <Plus size={15} />
+                      <span className="hidden sm:inline">Añadir empleado</span>
+                      <span className="sm:hidden">Añadir</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Tabla — ocupa todo el ancho */}
+                <div>
+                  <div className="rounded-2xl overflow-hidden"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                    {cargandoEmpleados ? (
+                      <div className="flex items-center justify-center py-20">
+                        <div className="w-6 h-6 border-2 rounded-full animate-spin"
+                          style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+                      </div>
+                    ) : empleados.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
+                        style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                          style={{ background: "var(--azul-egm-light)" }}>
+                          <Users size={30} style={{ color: "var(--azul-egm)" }} strokeWidth={1.5} />
+                        </div>
+                        <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
+                        <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Añade el primer empleado a tu empresa</p>
+                        <Button variant="primary" size="md" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
+                          <Plus size={14} /> Añadir empleado
+                        </Button>
+                      </div>
+                    ) : empleadosFiltrados.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
+                        style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                          style={{ background: "rgba(27,63,126,0.08)" }}>
+                          <Users size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
+                        </div>
+                        <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
+                        <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>
+                          Ningún empleado coincide con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{empSearch}"</span>
+                        </p>
+                        <button onClick={() => { setEmpSearch(""); setEmpSearchInput(""); }}
+                          className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                          style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
+                          Limpiar búsqueda
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Vista desktop — tabla */}
+                        <div className="hidden md:block">
+                          <table className="w-full table-fixed">
+                            <colgroup>
+                              <col style={{ width: "35%" }} />
+                              <col style={{ width: "21%" }} />
+                              <col style={{ width: "18%" }} />
+                              <col style={{ width: "14%" }} />
+                              <col style={{ width: "12%" }} />
+                            </colgroup>
+                            <thead>
+                              <tr style={{ background: "var(--azul-egm-light)", borderBottom: "1px solid var(--surface-border)" }}>
+                                {([
+                                  { label: "Empleado", col: "nombre" as EmpSortCol, cls: "pl-16 pr-6 text-left" },
+                                  { label: "Puesto", col: "puesto" as EmpSortCol, cls: "px-6    text-left" },
+                                  { label: "Departamento", col: "departamento" as EmpSortCol, cls: "px-6    text-left" },
+                                  { label: "Perfil", col: "perfil" as EmpSortCol, cls: "px-6    text-left" },
+                                  { label: "Estado", col: "estado" as EmpSortCol, cls: "px-6 text-left" },
+                                ]).map(({ label, col, cls }) => (
+                                  <th key={label} className={`py-3.5 ${cls}`} style={{ color: "var(--azul-egm)" }}>
+                                    <button
+                                      onClick={() => toggleEmpSort(col!)}
+                                      className="inline-flex items-center gap-1 focus:outline-none select-none uppercase tracking-wider text-sm font-bold"
+                                      style={{ cursor: "pointer", background: "none", border: "none", padding: 0, color: "inherit", fontFamily: "inherit" }}
+                                    >
+                                      {label}
+                                      <span style={{
+                                        opacity: empSort.col === col ? 1 : 0.25,
+                                        transition: "opacity 0.15s, transform 0.2s",
+                                        display: "flex",
+                                        transform: empSort.col === col && empSort.dir === "asc" ? "rotate(180deg)" : "rotate(0deg)",
+                                      }}>
+                                        <ChevronDown size={15} strokeWidth={2.5} />
+                                      </span>
+                                    </button>
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <AnimatePresence mode="wait">
+                              <tbody key={empPage}>
+                                {empleadosFiltrados.slice(empPage * PAGE_SIZE, (empPage + 1) * PAGE_SIZE).map((e, idx) => (
+                                  <motion.tr
+                                    key={e.usuarioId}
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.12, ease: "easeOut" }}
+                                    className="cursor-pointer"
+                                    style={{
+                                      borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--surface-border)" : "none",
+                                      borderLeft: `3px solid ${empleadoSeleccionado?.usuarioId === e.usuarioId ? "var(--azul-egm)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa"}`,
+                                      background: empleadoSeleccionado?.usuarioId === e.usuarioId
+                                        ? "var(--azul-egm-light)"
+                                        : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
+                                      transition: "border-left-color 0.15s, background 0.15s",
+                                    }}
+                                    onClick={() => setEmpleadoSeleccionado(
+                                      empleadoSeleccionado?.usuarioId === e.usuarioId ? null : e
+                                    )}
+                                    onMouseEnter={(el) => {
+                                      if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
+                                        el.currentTarget.style.background = "var(--gris-superficie)";
+                                    }}
+                                    onMouseLeave={(el) => {
+                                      if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
+                                        el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f5f7fa";
+                                    }}
+                                  >
+                                    <td className="py-3.5 pl-16 pr-6">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all duration-150"
+                                          style={{
+                                            background: "var(--azul-egm-light)",
+                                            color: "var(--azul-egm)",
+                                            outline: empleadoSeleccionado?.usuarioId === e.usuarioId ? "2px solid var(--azul-egm)" : "2px solid transparent",
+                                            outlineOffset: "2px",
+                                          }}>
+                                          {getInitials(e.nombre, e.apellidos)}
+                                        </div>
+                                        <div>
+                                          <p className="text-base font-semibold" style={{ color: "var(--texto-primario)" }}>
+                                            {e.nombre} {e.apellidos}
+                                          </p>
+                                          <p className="text-sm mt-0.5" style={{ color: "var(--texto-secundario)", opacity: 0.7 }}>{e.email}</p>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="py-3.5 px-6 text-base" style={{ color: "var(--texto-secundario)" }}>
+                                      {e.puestoTrabajo ?? <span style={{ color: "var(--texto-muted)" }}>-</span>}
+                                    </td>
+                                    <td className="py-3.5 px-6">
+                                      {e.departamento ? (
+                                        <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                          style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
+                                          {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
+                                        </span>
+                                      ) : (
+                                        <span className="text-base" style={{ color: "var(--texto-muted)" }}>-</span>
+                                      )}
+                                    </td>
+                                    <td className="py-3.5 px-6">
+                                      <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                        style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
+                                          ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
+                                          : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                        {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
+                                      </span>
+                                    </td>
+                                    <td className="py-3.5 px-6">
+                                      <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                        style={e.activo
+                                          ? { background: "var(--exito-light)", color: "var(--exito)" }
+                                          : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                                        {e.activo ? "Activo" : "Inactivo"}
+                                      </span>
+                                    </td>
+                                  </motion.tr>
+                                ))}
+                              </tbody>
+                            </AnimatePresence>
+                          </table>
+                          {/* Paginación desktop empleados */}
+                          {empleadosFiltrados.length > PAGE_SIZE && (() => {
+                            const totalPages = Math.ceil(empleadosFiltrados.length / PAGE_SIZE);
+                            const pages = Array.from({ length: totalPages }, (_, i) => i);
+                            return (
+                              <div className="flex items-center justify-center gap-1 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
+                                {/* Botón anterior */}
+                                <motion.button
+                                  onClick={() => setEmpPage(p => Math.max(0, p - 1))}
+                                  disabled={empPage === 0}
+                                  whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
+                                  whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
+                                  className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
+                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
+                                >
+                                  <ChevronLeft size={15} strokeWidth={2} />
+                                  Anterior
+                                </motion.button>
+
+                                {/* Números */}
+                                <div className="flex items-center gap-1 mx-1">
+                                  {pages.map(p => (
+                                    <motion.button
+                                      key={p}
+                                      onClick={() => setEmpPage(p)}
+                                      whileHover={p !== empPage ? { scale: 1.08, background: "var(--gris-superficie)" } : {}}
+                                      whileTap={{ scale: 0.92 }}
+                                      animate={p === empPage
+                                        ? { background: "#1B3F7E", color: "#ffffff" }
+                                        : { background: "transparent", color: "var(--texto-secundario)" }
+                                      }
+                                      transition={{ duration: 0.18, ease: [0.34, 1.2, 0.64, 1] }}
+                                      className="w-9 h-9 rounded-xl text-sm font-semibold"
+                                      style={{ border: p === empPage ? "none" : "1px solid transparent", cursor: "pointer" }}
+                                    >{p + 1}</motion.button>
+                                  ))}
+                                </div>
+
+                                {/* Botón siguiente */}
+                                <motion.button
+                                  onClick={() => setEmpPage(p => p + 1)}
+                                  disabled={(empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length}
+                                  whileHover={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
+                                  whileTap={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
+                                  className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
+                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length ? "default" : "pointer" }}
+                                >
+                                  Siguiente
+                                  <ChevronRight size={15} strokeWidth={2} />
+                                </motion.button>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Vista móvil — tarjetas */}
+                        <div className="md:hidden flex flex-col">
+                          {empleadosFiltrados.slice(empPage * PAGE_SIZE_MOBILE, (empPage + 1) * PAGE_SIZE_MOBILE).map((e, idx) => {
+                            const isSelected = empleadoSeleccionado?.usuarioId === e.usuarioId;
+                            return (
+                              <motion.div
+                                key={e.usuarioId}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.18, delay: idx * 0.04, ease: "easeOut" }}
+                                className="flex items-center gap-3 cursor-pointer"
+                                onClick={() => setEmpleadoSeleccionado(isSelected ? null : e)}
+                                style={{
+                                  padding: "12px 16px",
+                                  borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE_MOBILE) - 1 ? "1px solid var(--surface-border)" : "none",
+                                  borderLeft: `3px solid ${isSelected ? "var(--azul-egm)" : "transparent"}`,
+                                  background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
+                                  transition: "border-left-color 0.15s, background 0.15s",
+                                }}
+                              >
+                                {/* Avatar con dot de estado */}
+                                <div className="relative shrink-0">
+                                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "2px solid var(--azul-egm)" }}>
+                                    {getInitials(e.nombre, e.apellidos)}
+                                  </div>
+                                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
+                                    style={{ background: e.activo ? "var(--exito)" : "var(--texto-muted)" }} />
+                                </div>
+
+                                {/* Info */}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <p className="text-sm font-semibold truncate min-w-0 flex-1" style={{ color: "var(--texto-primario)" }}>
+                                      {e.nombre} {e.apellidos}
+                                    </p>
+                                    <span className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
+                                      style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
+                                        ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
+                                        : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                      {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Admin" : "Emp."}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                                    {e.puestoTrabajo ? `${e.puestoTrabajo} · ${e.email}` : e.email}
+                                  </p>
+                                </div>
+
+                                {/* Chevron */}
+                                <ChevronRight size={16} strokeWidth={2} style={{ color: "var(--texto-muted)", flexShrink: 0, opacity: isSelected ? 1 : 0.4 }} />
+                              </motion.div>
+                            );
+                          })}
+                          {/* Paginación móvil empleados */}
+                          {empleadosFiltrados.length > PAGE_SIZE_MOBILE && (
+                            <div className="flex items-center justify-center gap-2 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
+                              <motion.button
+                                onClick={() => setEmpPage(p => Math.max(0, p - 1))}
+                                disabled={empPage === 0}
+                                whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
+                                whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
+                                className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
+                                style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
+                              ><ChevronLeft size={15} strokeWidth={2} /></motion.button>
+                              <span className="text-sm font-semibold px-2" style={{ color: "var(--texto-secundario)" }}>
+                                {empPage + 1} / {Math.ceil(empleadosFiltrados.length / PAGE_SIZE_MOBILE)}
+                              </span>
+                              <motion.button
+                                onClick={() => setEmpPage(p => p + 1)}
+                                disabled={(empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length}
+                                whileHover={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
+                                whileTap={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
+                                className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
+                                style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length ? "default" : "pointer" }}
+                              ><ChevronRight size={15} strokeWidth={2} /></motion.button>
                             </div>
-                            <EmpCampo label="Email" type="email"
-                              value={editEmpleadoForm.email}
-                              onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, email: v }))} />
-                            <EmpCampo label="Puesto"
-                              value={editEmpleadoForm.puestoTrabajo}
-                              onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, puestoTrabajo: v }))} />
-                            <div className="flex flex-col gap-1.5">
-                              <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Departamento</label>
-                              <EmpSelect label="" value={editEmpleadoForm.departamento}
-                                onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, departamento: v }))}
-                                options={DEPARTAMENTOS} placeholder="Sin departamento" />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* ── Slide-over desktop ── */}
+                <AnimatePresence>
+                  {empleadoSeleccionado && (
+                    <>
+                      {/* Backdrop sutil */}
+                      <motion.div
+                        className="hidden md:block fixed inset-0 z-40"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ background: "rgba(15,25,35,0.25)" }}
+                        onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
+                      />
+                      {/* Panel */}
+                      <motion.div
+                        className="hidden md:flex fixed top-0 right-0 h-full z-50 flex-col overflow-hidden"
+                        style={{
+                          width: 400,
+                          background: "var(--azul-egm)",
+                          borderLeft: "1px solid rgba(0,0,0,0.08)",
+                          boxShadow: "-8px 0 32px rgba(0,0,0,0.12)",
+                        }}
+                        initial={{ x: "100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "100%" }}
+                        transition={{ type: "spring", stiffness: 340, damping: 34 }}
+                      >
+                        {/* Header slide-over */}
+                        <div className="px-6 flex items-center justify-between shrink-0"
+                          style={{ height: 80, background: "var(--azul-egm)" }}>
+                          <h3 className="text-xl font-bold" style={{ color: "#ffffff" }}>Ficha de empleado</h3>
+                          <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
+                        </div>
+
+                        {/* Contenido scroll */}
+                        <div className="flex-1 overflow-y-auto" style={{ background: "var(--gris-pagina)" }}>
+                          <AnimatePresence mode="wait">
+                            {editandoEmpleado ? (
+                              <motion.div key="edit"
+                                initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="flex flex-col gap-6 px-6 py-6"
+                              >
+                                {/* Avatar mini — reactivo al formulario */}
+                                <div className="flex items-center gap-3 py-4 px-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold shrink-0"
+                                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "2px solid var(--azul-egm)" }}>
+                                    {getInitials(
+                                      editEmpleadoForm.nombre || empleadoSeleccionado.nombre,
+                                      editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold truncate" style={{ color: "var(--texto-primario)" }}>
+                                      {(editEmpleadoForm.nombre || empleadoSeleccionado.nombre)}{" "}
+                                      {(editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos)}
+                                    </p>
+                                    <p className="text-xs mt-0.5 truncate" style={{ color: "var(--texto-muted)" }}>
+                                      {editEmpleadoForm.email || empleadoSeleccionado.email}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Campos */}
+                                <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                                  {[
+                                    { key: "nombre", label: "Nombre" },
+                                    { key: "apellidos", label: "Apellidos" },
+                                    { key: "email", label: "Email", type: "email" },
+                                    { key: "puestoTrabajo", label: "Puesto" },
+                                  ].map(({ key, label, type = "text" }) => (
+                                    <EmpCampo key={key} label={label} type={type}
+                                      value={editEmpleadoForm[key as keyof NuevoEmpleadoForm]}
+                                      onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, [key]: v }))} />
+                                  ))}
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Departamento</label>
+                                    <EmpSelect label="" value={editEmpleadoForm.departamento}
+                                      onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, departamento: v }))}
+                                      options={DEPARTAMENTOS} placeholder="Sin departamento" />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div key="view"
+                                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="flex flex-col gap-6 px-6 py-6"
+                              >
+                                {/* Avatar + contacto */}
+                                <div className="flex flex-col items-center gap-3 py-6 px-4 rounded-2xl"
+                                  style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                                  {/* Avatar con dot de estado */}
+                                  <div className="relative">
+                                    <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shrink-0"
+                                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "3px solid var(--azul-egm)" }}>
+                                      {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
+                                    </div>
+                                    <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full border-2 border-white"
+                                      style={{ background: empleadoSeleccionado.activo ? "var(--exito)" : "var(--texto-muted)" }} />
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>
+                                      {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
+                                    </p>
+                                    <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{empleadoSeleccionado.email}</p>
+                                  </div>
+                                </div>
+
+                                {/* Datos */}
+                                <div className="flex flex-col gap-0" style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--surface-border)" }}>
+                                  {/* Estado */}
+                                  <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Estado</span>
+                                    <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                      style={empleadoSeleccionado.activo
+                                        ? { background: "var(--exito-light)", color: "var(--exito)" }
+                                        : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                                      {empleadoSeleccionado.activo ? "Activo" : "Inactivo"}
+                                    </span>
+                                  </div>
+                                  {/* Perfil */}
+                                  <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Perfil</span>
+                                    <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                      style={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA"
+                                        ? { background: "rgba(180,83,9,0.10)", color: "#B45309" }
+                                        : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                      {empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
+                                    </span>
+                                  </div>
+                                  {/* Departamento */}
+                                  <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
+                                    {empleadoSeleccionado.departamento
+                                      ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
+                                        {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
+                                      </span>
+                                      : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
+                                  </div>
+                                  {/* Puesto */}
+                                  {empleadoSeleccionado.puestoTrabajo && (
+                                    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto</span>
+                                      <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(78,109,126,0.10)", color: "#4E6D7E" }}>
+                                        {empleadoSeleccionado.puestoTrabajo}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {/* Alta */}
+                                  <div className="flex items-center justify-between px-5 py-4" style={{ background: "var(--blanco)" }}>
+                                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Alta</span>
+                                    <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
+                                      {formatFecha(empleadoSeleccionado.fechaRegistro)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Footer acciones */}
+                        <div className="px-6 py-5 flex flex-col gap-2.5 shrink-0"
+                          style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                          {editandoEmpleado ? (
+                            <div className="flex gap-2.5">
+                              <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
+                                Cancelar
+                              </Button>
+                              <Button variant="primary" size="md" className="flex-1" onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}>
+                                {guardandoEditEmpleado
+                                  ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />&nbsp;Guardando…</>
+                                  : "Guardar cambios"}
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <Button variant="primary" size="md" onClick={iniciarEditEmpleado}>
+                                Editar empleado
+                              </Button>
+                              <Button
+                                variant={empleadoSeleccionado.activo ? "danger" : "secondary"}
+                                size="md"
+                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
+                                {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Bottom sheet móvil */}
+                <AnimatePresence>
+                  {empleadoSeleccionado && (
+                    <>
+                      {/* Backdrop */}
+                      <motion.div
+                        className="md:hidden fixed inset-0"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ background: "rgba(15,25,35,0.35)", zIndex: 1090 }}
+                        onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }}
+                      />
+                      <motion.div
+                        className="md:hidden fixed bottom-0 left-0 right-0 rounded-t-3xl flex flex-col"
+                        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                        transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                        style={{ background: "var(--gris-pagina)", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", maxHeight: "88vh", zIndex: 1100 }}>
+
+                        {/* Header mobile bottom sheet */}
+                        <div className="rounded-t-3xl shrink-0"
+                          style={{ background: "var(--azul-egm)" }}>
+                          <div className="px-5 pt-2 pb-5">
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+                                {editandoEmpleado ? "Editando empleado" : "Ficha de empleado"}
+                              </p>
+                              <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="relative shrink-0">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold"
+                                  style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "2px solid rgba(255,255,255,0.4)" }}>
+                                  {getInitials(
+                                    editandoEmpleado ? (editEmpleadoForm.nombre || empleadoSeleccionado.nombre) : empleadoSeleccionado.nombre,
+                                    editandoEmpleado ? (editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos) : empleadoSeleccionado.apellidos
+                                  )}
+                                </div>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-base font-bold truncate" style={{ color: "#fff" }}>
+                                  {editandoEmpleado
+                                    ? `${editEmpleadoForm.nombre || empleadoSeleccionado.nombre} ${editEmpleadoForm.apellidos || empleadoSeleccionado.apellidos}`
+                                    : `${empleadoSeleccionado.nombre} ${empleadoSeleccionado.apellidos}`}
+                                </p>
+                                <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+                                  {editandoEmpleado ? (editEmpleadoForm.email || empleadoSeleccionado.email) : empleadoSeleccionado.email}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </motion.div>
-                      ) : (
-                        <motion.div key="view"
-                          initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-                          transition={{ duration: 0.18, ease: "easeOut" }}
-                          className="px-4 py-4">
-                          <div className="flex flex-col gap-0 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--surface-border)" }}>
-                            {[
-                              { label: "Estado",       value: empleadoSeleccionado.activo ? "Activo" : "Inactivo",                                                                    badge: empleadoSeleccionado.activo ? { bg: "var(--exito-light)", color: "var(--exito)" } : { bg: "var(--gris-superficie)", color: "var(--texto-muted)" } },
-                              { label: "Perfil",       value: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",                                  badge: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? { bg: "rgba(180,83,9,0.10)", color: "#B45309" } : { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
-                              { label: "Departamento", value: DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label,                                              badge: { bg: "var(--lima-light)", color: "var(--verde-oliva)" } },
-                              { label: "Puesto",       value: empleadoSeleccionado.puestoTrabajo,                                                                                      badge: { bg: "rgba(78,109,126,0.10)", color: "#4E6D7E" } },
-                              { label: "Alta",         value: formatFecha(empleadoSeleccionado.fechaRegistro),                                                                         badge: { bg: "var(--gris-superficie)", color: "var(--texto-secundario)" } },
-                            ].map(({ label, value, badge }, idx, arr) => (
-                              <div key={label} className="flex items-center justify-between px-4 py-3"
-                                style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--surface-border)" : "none", background: "var(--blanco)" }}>
-                                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{label}</span>
-                                {value
-                                  ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{value}</span>
-                                  : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>-</span>}
-                              </div>
+                        </div>
+
+                        {/* Contenido scrollable */}
+                        <div className="flex-1 overflow-y-auto">
+                          <AnimatePresence mode="wait">
+                            {editandoEmpleado ? (
+                              <motion.div key="edit"
+                                initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="px-4 py-4">
+                                <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                                  {/* Nombre + Apellidos en fila */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <EmpCampo label="Nombre"
+                                      value={editEmpleadoForm.nombre}
+                                      onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, nombre: v }))} />
+                                    <EmpCampo label="Apellidos"
+                                      value={editEmpleadoForm.apellidos}
+                                      onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, apellidos: v }))} />
+                                  </div>
+                                  <EmpCampo label="Email" type="email"
+                                    value={editEmpleadoForm.email}
+                                    onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, email: v }))} />
+                                  <EmpCampo label="Puesto"
+                                    value={editEmpleadoForm.puestoTrabajo}
+                                    onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, puestoTrabajo: v }))} />
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Departamento</label>
+                                    <EmpSelect label="" value={editEmpleadoForm.departamento}
+                                      onChange={(v) => setEditEmpleadoForm((f) => ({ ...f, departamento: v }))}
+                                      options={DEPARTAMENTOS} placeholder="Sin departamento" />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div key="view"
+                                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="px-4 py-4">
+                                <div className="flex flex-col gap-0 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--surface-border)" }}>
+                                  {[
+                                    { label: "Estado", value: empleadoSeleccionado.activo ? "Activo" : "Inactivo", badge: empleadoSeleccionado.activo ? { bg: "var(--exito-light)", color: "var(--exito)" } : { bg: "var(--gris-superficie)", color: "var(--texto-muted)" } },
+                                    { label: "Perfil", value: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado", badge: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? { bg: "rgba(180,83,9,0.10)", color: "#B45309" } : { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
+                                    { label: "Departamento", value: DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label, badge: { bg: "var(--lima-light)", color: "var(--verde-oliva)" } },
+                                    { label: "Puesto", value: empleadoSeleccionado.puestoTrabajo, badge: { bg: "rgba(78,109,126,0.10)", color: "#4E6D7E" } },
+                                    { label: "Alta", value: formatFecha(empleadoSeleccionado.fechaRegistro), badge: { bg: "var(--gris-superficie)", color: "var(--texto-secundario)" } },
+                                  ].map(({ label, value, badge }, idx, arr) => (
+                                    <div key={label} className="flex items-center justify-between px-4 py-3"
+                                      style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--surface-border)" : "none", background: "var(--blanco)" }}>
+                                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{label}</span>
+                                      {value
+                                        ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{value}</span>
+                                        : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>-</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Footer fijo */}
+                        <div className="px-5 py-4 shrink-0"
+                          style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+                          {editandoEmpleado ? (
+                            <div className="flex gap-2.5">
+                              <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
+                                Cancelar
+                              </Button>
+                              <Button variant="primary" size="md" className="flex-1" onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}>
+                                {guardandoEditEmpleado
+                                  ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />&nbsp;Guardando…</>
+                                  : "Guardar cambios"}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              <Button variant="primary" size="md" className="w-full" onClick={iniciarEditEmpleado}>
+                                Editar empleado
+                              </Button>
+                              <Button variant={empleadoSeleccionado.activo ? "danger" : "secondary"} size="md" className="w-full"
+                                onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
+                                {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Import result notification */}
+                {importResult && (
+                  <div className="mt-6 rounded-2xl overflow-hidden fade-up" style={{ border: `1.5px solid ${importResult.errors.length === 0 ? "var(--exito)" : "#fcd34d"}`, background: importResult.errors.length === 0 ? "#f0fdf4" : "#fffbeb" }}>
+                    <div className="px-5 py-4 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                        style={{ background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
+                        {importResult.errors.length === 0 ? (
+                          <Check size={16} strokeWidth={2.5} style={{ color: "var(--exito)" }} />
+                        ) : (
+                          <TriangleAlert size={16} strokeWidth={2} style={{ color: "#d97706" }} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e" }}>
+                          Importación completada
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#b45309" }}>
+                          {importResult.ok} empleado{importResult.ok !== 1 ? "s" : ""} importado{importResult.ok !== 1 ? "s" : ""} correctamente
+                          {importResult.errors.length > 0 && ` · ${importResult.errors.length} error${importResult.errors.length !== 1 ? "es" : ""}`}
+                        </p>
+                        {importResult.errors.length > 0 && (
+                          <div className="mt-3 flex flex-col gap-1 max-h-24 overflow-y-auto">
+                            {importResult.errors.map((err, i) => (
+                              <p key={i} className="text-xs" style={{ color: "#dc2626" }}>• {err}</p>
                             ))}
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Footer fijo */}
-                  <div className="px-5 py-4 shrink-0"
-                    style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
-                    {editandoEmpleado ? (
-                      <div className="flex gap-2.5">
-                        <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
-                          Cancelar
-                        </Button>
-                        <Button variant="primary" size="md" className="flex-1" onClick={handleGuardarEditEmpleado} disabled={guardandoEditEmpleado}>
-                          {guardandoEditEmpleado
-                            ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />&nbsp;Guardando…</>
-                            : "Guardar cambios"}
-                        </Button>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <Button variant="primary" size="md" className="w-full" onClick={iniciarEditEmpleado}>
-                          Editar empleado
-                        </Button>
-                        <Button variant={empleadoSeleccionado.activo ? "danger" : "secondary"} size="md" className="w-full"
-                          onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo)}>
-                          {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </>
-            )}
-            </AnimatePresence>
-
-            {/* Import result notification */}
-            {importResult && (
-              <div className="mt-6 rounded-2xl overflow-hidden fade-up" style={{ border: `1.5px solid ${importResult.errors.length === 0 ? "var(--exito)" : "#fcd34d"}`, background: importResult.errors.length === 0 ? "#f0fdf4" : "#fffbeb" }}>
-                <div className="px-5 py-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
-                    {importResult.errors.length === 0 ? (
-                      <Check size={16} strokeWidth={2.5} style={{ color: "var(--exito)" }} />
-                    ) : (
-                      <TriangleAlert size={16} strokeWidth={2} style={{ color: "#d97706" }} />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e" }}>
-                      Importación completada
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#b45309" }}>
-                      {importResult.ok} empleado{importResult.ok !== 1 ? "s" : ""} importado{importResult.ok !== 1 ? "s" : ""} correctamente
-                      {importResult.errors.length > 0 && ` · ${importResult.errors.length} error${importResult.errors.length !== 1 ? "es" : ""}`}
-                    </p>
-                    {importResult.errors.length > 0 && (
-                      <div className="mt-3 flex flex-col gap-1 max-h-24 overflow-y-auto">
-                        {importResult.errors.map((err, i) => (
-                          <p key={i} className="text-xs" style={{ color: "#dc2626" }}>• {err}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => setImportResult(null)}
-                    className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors"
-                    style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e", background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
-                    ×
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TAB ANUNCIOS ── */}
-        {activeTab === "anuncios" && (
-          <>
-            {/* Título */}
-            <div className="mb-8 text-center sm:text-left">
-              <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                Gestión de anuncios
-              </h1>
-              <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                {cargandoNoticias ? "Cargando anuncios…" : (() => {
-                  const publicados = noticias.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado").length;
-                  const borradores = noticias.filter((n) => n.activo && n.estado === "borrador").length;
-                  if (publicados === 0 && borradores === 0) return "Sin anuncios publicados";
-                  return (
-                    <>
-                      {publicados} publicado{publicados !== 1 ? "s" : ""}
-                      {borradores > 0 && (
-                        <span style={{ color: "var(--advertencia)", fontWeight: 600 }}>
-                          {" "}· {borradores} borrador{borradores !== 1 ? "es" : ""}
-                        </span>
-                      )}
-                    </>
-                  );
-                })()}
-              </p>
-            </div>
-
-            {/* Barra de herramientas */}
-            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-6">
-              {/* Buscador */}
-              <div className="relative flex-1 sm:w-64 sm:flex-none shrink-0">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                  <Search size={15} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Buscar anuncio…"
-                  value={anuncioSearch}
-                  onChange={(e) => setAnuncioSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
-                  style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#0EA5E9")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
-                />
-              </div>
-              {/* Botones */}
-              <div className="flex items-center gap-2 sm:ml-auto">
-                <Button variant="primary" size="md" onClick={abrirCrear}>
-                  <Plus size={14} />
-                  <span className="hidden sm:inline">Nuevo anuncio</span>
-                  <span className="sm:hidden">Nuevo</span>
-                </Button>
-              </div>
-            </div>
-
-            {showFormAnuncio && (
-              <div className="mb-8">
-                <FormAnuncio
-                  initialValues={initialForm}
-                  editando={editando}
-                  submitting={submitting}
-                  formError={formError}
-                  onClose={cerrarForm}
-                  onSubmit={handleSubmitAnuncio}
-                  onPreview={() => { }}
-                />
-              </div>
-            )}
-
-            {/* Panel anuncios — tarjetas independientes */}
-            {(() => {
-              const q = anuncioSearch.toLowerCase().trim();
-              const todas = noticias.filter((n) => n.activo);
-              const borradores = todas.filter((n) => n.estado === "borrador" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)));
-              const publicados = todas
-                .filter((n) => (n.estado ?? "publicado") === "publicado" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)))
-                .sort((a, b) => (b.fijado ? 1 : 0) - (a.fijado ? 1 : 0));
-              const hayNoticias = todas.length > 0;
-              if (!hayNoticias) return (
-                <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-5"
-                    style={{ background: "var(--azul-accion-light)" }}>
-                    <Megaphone size={30} style={{ color: "var(--azul-accion)" }} strokeWidth={1.5} />
-                  </div>
-                  <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Todavía no hay anuncios</p>
-                  <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer anuncio para que lo vean tus empleados</p>
-                  <Button variant="primary" size="md" onClick={abrirCrear}>
-                    <Plus size={14} /> Nuevo anuncio
-                  </Button>
-                </div>
-              );
-              if (q && borradores.length === 0 && publicados.length === 0) return (
-                <div className="flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center rounded-2xl"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                    style={{ background: "rgba(27,63,126,0.08)" }}>
-                    <Search size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
-                  </div>
-                  <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
-                  <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>No hay anuncios que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{anuncioSearch}"</span></p>
-                  <button onClick={() => setAnuncioSearch("")} className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
-                    style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
-                    Limpiar búsqueda
-                  </button>
-                </div>
-              );
-
-              /* Card compartida para borrador y publicado — misma estructura que TarjetaCurso */
-              const AnuncioCard = ({ n, esBorrador }: { n: typeof noticias[number]; esBorrador?: boolean }) => (
-                <div
-                  className="flex flex-col rounded-2xl overflow-hidden cursor-pointer"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", borderTop: esBorrador ? "3px solid #d97706" : "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.2s, transform 0.2s" }}
-                  onClick={() => abrirEditar(n)}
-                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
-                >
-                  {/* Cabecera — siempre aspect 16/6 para altura uniforme */}
-                  <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/6", background: esBorrador ? "linear-gradient(135deg, #92400e, #d97706)" : GRAD_ANN }}>
-                    {/* Icono fallback centrado */}
-                    <Megaphone size={32} strokeWidth={1} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: "white", opacity: 0.15 }} />
-                    {n.imagenUrl && (
-                      <img src={n.imagenUrl} alt={n.titulo} className="absolute inset-0 w-full h-full object-cover" />
-                    )}
-                    {/* Overlay sutil para badge */}
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.22) 0%, transparent 45%)" }} />
-                    {/* Badge estado */}
-                    <div className="absolute top-2 right-2">{
-                      esBorrador
-                        ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(253,230,138,0.96)", color: "#78350f", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>Borrador</span>
-                        : esNuevo(n.creadoEn)
-                          ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--exito)", color: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>Nuevo</span>
-                          : n.fijado
-                            ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FEF9C3", color: "#854D0E", boxShadow: "0 1px 4px rgba(0,0,0,0.1)", border: "1px solid #FDE047" }}>★ Fijado</span>
-                            : null
-                    }</div>
-                  </div>
-
-                  {/* Contenido inferior */}
-                  <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3 gap-2">
-                    {/* Fecha + categoría en una sola fila */}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
-                        {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                      {n.categoria && n.categoria !== "General" && (() => {
-                        const col = CATEGORIA_COLORS_LIGHT[n.categoria] ?? CATEGORIA_COLORS_LIGHT.General;
-                        return <><span style={{ color: "#D1D5DB", fontSize: 10 }}>·</span><span className="text-[10px] font-semibold px-1.5 py-px rounded-md" style={{ background: col.bg, color: col.text }}>{n.categoria}</span></>;
-                      })()}
+                      <button onClick={() => setImportResult(null)}
+                        className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors"
+                        style={{ color: importResult.errors.length === 0 ? "var(--exito)" : "#92400e", background: importResult.errors.length === 0 ? "var(--exito-light)" : "#fde68a" }}>
+                        ×
+                      </button>
                     </div>
-                    {/* Título */}
-                    <h3 className="font-bold leading-snug line-clamp-2"
-                      style={{ fontSize: "0.875rem", color: "#0F1923", minHeight: "2.6em" }}>
-                      {n.titulo || "(Sin título)"}
-                    </h3>
-                    {/* Preview contenido */}
-                    <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#6B7A8D", minHeight: "2.6em" }}>
-                      {n.contenido ? n.contenido.replace(/[#*_`>]/g, "").trim().slice(0, 110) + (n.contenido.length > 110 ? "…" : "") : "Sin contenido"}
-                    </p>
-                    {/* Botones — estilo sistema Button secondary/danger */}
-                    <div className="flex items-center gap-1.5 mt-auto pt-2 min-w-0" style={{}} onClick={(e) => e.stopPropagation()}>
-                      <Button variant="primary" size="sm" className="flex-1 justify-center" style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }} onClick={() => abrirEditar(n)}>
-                        Editar
-                      </Button>
-                      {esBorrador ? (
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TAB ANUNCIOS ── */}
+            {activeTab === "anuncios" && (
+              <>
+                {/* Título */}
+                <div className="mb-8 text-center sm:text-left">
+                  <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                    Gestión de anuncios
+                  </h1>
+                  <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                    {cargandoNoticias ? "Cargando anuncios…" : (() => {
+                      const publicados = noticias.filter((n) => n.activo && (n.estado ?? "publicado") === "publicado").length;
+                      const borradores = noticias.filter((n) => n.activo && n.estado === "borrador").length;
+                      if (publicados === 0 && borradores === 0) return "Sin anuncios publicados";
+                      return (
                         <>
-                          <Button variant="primary" size="sm" className="flex-1 justify-center" style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)" }} disabled={publicandoId === n.anuncioId} onClick={() => publicarBorrador(n)}>
-                            {publicandoId === n.anuncioId
-                              ? <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                              : "Publicar"}
-                          </Button>
-                          <button
-                            title="Eliminar borrador"
-                            onClick={() => handleEliminarBorrador(n.anuncioId)}
-                            className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
-                            style={{ borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), transform 0.18s var(--ease-spring)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--error)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--error)"; e.currentTarget.style.transform = "scale(1.10)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--error-light)"; e.currentTarget.style.color = "var(--error)"; e.currentTarget.style.borderColor = "rgba(220,38,38,0.15)"; e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-                            onMouseDown={(e)  => { e.currentTarget.style.transform = "scale(0.88)"; e.currentTarget.style.boxShadow = "none"; }}
-                            onMouseUp={(e)    => { e.currentTarget.style.transform = "scale(1.10)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
-                          >
-                            <Trash2 size={13} strokeWidth={2.2} />
-                          </button>
+                          {publicados} publicado{publicados !== 1 ? "s" : ""}
+                          {borradores > 0 && (
+                            <span style={{ color: "var(--advertencia)", fontWeight: 600 }}>
+                              {" "}· {borradores} borrador{borradores !== 1 ? "es" : ""}
+                            </span>
+                          )}
                         </>
-                      ) : (
-                        <Button variant="danger" size="sm" className="flex-1 justify-center" onClick={() => handleDesactivarAnuncio(n.anuncioId)}>
-                          Desactivar
-                        </Button>
-                      )}
-                    </div>
+                      );
+                    })()}
+                  </p>
+                </div>
+
+                {/* Barra de herramientas */}
+                <div className="flex flex-row items-center gap-2 sm:gap-3 mb-6">
+                  {/* Buscador */}
+                  <div className="relative flex-1 sm:w-64 sm:flex-none shrink-0">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                      <Search size={15} />
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Buscar anuncio…"
+                      value={anuncioSearch}
+                      onChange={(e) => setAnuncioSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                      style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "#0EA5E9")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
+                    />
+                  </div>
+                  {/* Botones */}
+                  <div className="flex items-center gap-2 sm:ml-auto">
+                    <Button variant="primary" size="md" onClick={abrirCrear}>
+                      <Plus size={14} />
+                      <span className="hidden sm:inline">Nuevo anuncio</span>
+                      <span className="sm:hidden">Nuevo</span>
+                    </Button>
                   </div>
                 </div>
-              );
 
-              return (
-                <>
-                  {/* Borradores */}
-                  {borradores.length > 0 && (
-                    <div className="mb-8">
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#92400e" }}>Borradores</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#fde68a", color: "#78350f" }}>{borradores.length}</span>
-                        <div className="flex-1 h-px" style={{ background: "#fcd34d" }} />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {borradores.map((n) => <AnuncioCard key={n.anuncioId} n={n} esBorrador />)}
-                      </div>
-                    </div>
-                  )}
+                {showFormAnuncio && (
+                  <div className="mb-8">
+                    <FormAnuncio
+                      initialValues={initialForm}
+                      editando={editando}
+                      submitting={submitting}
+                      formError={formError}
+                      onClose={cerrarForm}
+                      onSubmit={handleSubmitAnuncio}
+                      onPreview={() => { }}
+                    />
+                  </div>
+                )}
 
-                  {/* Publicados */}
-                  {publicados.length === 0 ? (
-                    <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-24 px-6 text-center"
+                {/* Panel anuncios — tarjetas independientes */}
+                {(() => {
+                  const q = anuncioSearch.toLowerCase().trim();
+                  const todas = noticias.filter((n) => n.activo);
+                  const borradores = todas.filter((n) => n.estado === "borrador" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)));
+                  const publicados = todas
+                    .filter((n) => (n.estado ?? "publicado") === "publicado" && (!q || n.titulo?.toLowerCase().includes(q) || n.contenido?.toLowerCase().includes(q)))
+                    .sort((a, b) => (b.fijado ? 1 : 0) - (a.fijado ? 1 : 0));
+                  const hayNoticias = todas.length > 0;
+                  if (!hayNoticias) return (
+                    <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
                       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                      <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-5"
                         style={{ background: "var(--azul-accion-light)" }}>
                         <Megaphone size={30} style={{ color: "var(--azul-accion)" }} strokeWidth={1.5} />
                       </div>
-                      <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay anuncios publicados</p>
-                      <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Publica uno de tus borradores o crea un anuncio nuevo</p>
+                      <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Todavía no hay anuncios</p>
+                      <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer anuncio para que lo vean tus empleados</p>
                       <Button variant="primary" size="md" onClick={abrirCrear}>
                         <Plus size={14} /> Nuevo anuncio
                       </Button>
                     </div>
-                  ) : (
-                    <div>
-                      {borradores.length > 0 && (
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Publicados</span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>{publicados.length}</span>
-                          <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
-                        </div>
-                      )}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {publicados.map((n) => <AnuncioCard key={n.anuncioId} n={n} />)}
+                  );
+                  if (q && borradores.length === 0 && publicados.length === 0) return (
+                    <div className="flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center rounded-2xl"
+                      style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                        style={{ background: "rgba(27,63,126,0.08)" }}>
+                        <Search size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
                       </div>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </>
-        )}
-
-        {/* ── Modal confirmación anuncio ── */}
-        <AnimatePresence>
-          {confirmAnuncio && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 flex items-center justify-center p-4"
-              style={{ zIndex: 1200, background: "rgba(0,0,0,0.45)" }}
-              onClick={() => setConfirmAnuncio(null)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                className="rounded-2xl p-6 flex flex-col items-center text-center gap-4 w-full max-w-xs"
-                style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.22)" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Icono */}
-                <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                  style={{ background: confirmAnuncio.tipo === "eliminar" ? "var(--error-light)" : "#FEF9C3" }}>
-                  {confirmAnuncio.tipo === "eliminar"
-                    ? <Trash2 size={26} style={{ color: "var(--error)" }} />
-                    : <TriangleAlert size={26} style={{ color: "#D97706" }} />}
-                </div>
-                {/* Texto */}
-                <div>
-                  <p className="font-bold text-lg" style={{ color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
-                    {confirmAnuncio.tipo === "eliminar" ? "¿Eliminar borrador?" : "¿Desactivar anuncio?"}
-                  </p>
-                  <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
-                    {confirmAnuncio.tipo === "eliminar"
-                      ? "Se borrará permanentemente. Esta acción no se puede deshacer."
-                      : "El anuncio dejará de ser visible para los empleados. Esta acción no se puede deshacer."}
-                  </p>
-                </div>
-                {/* Botones */}
-                <div className="flex flex-col gap-2 w-full">
-                  <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmAnuncio(null)}>
-                    Cancelar
-                  </Button>
-                  <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarConfirmAnuncio}>
-                    {confirmAnuncio.tipo === "eliminar" ? "Eliminar borrador" : "Desactivar anuncio"}
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── TAB PROGRESO DEL EQUIPO — oculto hasta que formación esté operativa ── */}
-
-        {/* ── TAB MÓDULOS FORMATIVOS ── */}
-        {activeTab === "formaciones" && (
-          <>
-            {/* Header */}
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                  Gestión de Módulos
-                </h1>
-                <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                  {cargandoModulos ? "Cargando módulos…" : `${formaciones.filter(f => f.activo).length} módulo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""} activo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    for (let i = localStorage.length - 1; i >= 0; i--) {
-                      const key = localStorage.key(i);
-                      if (key?.startsWith("egm_modulo_admin_")) localStorage.removeItem(key);
-                    }
-                    queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-                    mostrarToast("Progreso de admin reiniciado");
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
-                  title="Reiniciar progreso de admin"
-                >
-                  < RefreshCw />
-                  Reiniciar
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard/admin/modulos/crear")}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-                >
-                  < Plus />
-                  Nuevo módulo
-                </button>
-              </div>
-            </div>
-
-            {/* Grid de módulos */}
-            {formaciones.length === 0 ? (
-              <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center mb-6"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                  style={{ background: "#EDE9FE" }}>
-                  <LibraryBig size={30} strokeWidth={1.5} style={{ color: "#7B4A85" }} />
-                </div>
-                <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
-                <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer módulo formativo para tus empleados</p>
-                <Button variant="primary" size="md" onClick={() => router.push("/dashboard/admin/modulos/crear")}>
-                  <Plus size={14} /> Crear módulo
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {formaciones.map((f) => {
-                  const accentColor = tipoAccentColor[f.tipoModulo] ?? "var(--azul-egm)";
-                  return (
-                    <div
-                      key={f.moduloId}
-                      className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
-                      style={{
-                        background: f.activo ? "var(--blanco)" : "var(--gris-pagina)",
-                        border: `1px solid ${f.activo ? "var(--gris-borde)" : "var(--gris-borde)"}`,
-                        opacity: f.activo ? 1 : 0.65,
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
-                    >
-                      {/* Imagen de portada o franja de color */}
-                      {f.imagenPortadaUrl ? (
-                        <div className="w-full h-36 relative overflow-hidden shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover"
-                            style={{ filter: f.activo ? "none" : "grayscale(100%)" }} />
-                          <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
-                        </div>
-                      ) : (
-                        <div className="w-full h-2 shrink-0"
-                          style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
-                      )}
-                      <div className="p-5 flex flex-col flex-1">
-                        {/* Badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {MODULO_TIPO_LABEL[f.tipoModulo] && (
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                              style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                              {MODULO_TIPO_LABEL[f.tipoModulo]}
-                            </span>
-                          )}
-                          {f.empresaId === null ? (
-                            <span className="text-xs px-2.5 py-1 rounded-full italic"
-                              style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                              EGM Global
-                            </span>
-                          ) : (
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                              style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                              Tu empresa
-                            </span>
-                          )}
-                          {!f.activo && (
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                              style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
-                              Desactivado
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Title + description */}
-                        <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
-                          {f.nombre}
-                        </p>
-                        <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
-                          {f.descripcion}
-                        </p>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-end gap-2 mt-4 pt-3"
-                          style={{ borderTop: "1px solid var(--gris-borde)" }}>
-                          {f.empresaId !== null ? (
-                            <>
-                              <button onClick={() => router.push(`/dashboard/formacion/${f.moduloId}`)}
-                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                                style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                                Ver
-                              </button>
-                              <button onClick={() => handleEditModulo(f)}
-                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                Editar
-                              </button>
-                              <button onClick={() => handleDesactivarModulo(f)}
-                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                                style={{ background: "#fef9c3", color: "#854d0e" }}>
-                                {f.activo ? "Desactivar" : "Activar"}
-                              </button>
-                              <button onClick={() => handleEliminarModulo(f.moduloId)}
-                                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
-                                style={{ background: "var(--error-light)", color: "var(--error)" }}>
-                                Eliminar
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-xs font-medium px-2.5 py-1 rounded-lg"
-                              style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
-                              Solo lectura
-                            </span>
-                          )}
-                        </div>
-                      </div>{/* /p-5 */}
+                      <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Sin resultados</p>
+                      <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>No hay anuncios que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{anuncioSearch}"</span></p>
+                      <button onClick={() => setAnuncioSearch("")} className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                        style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
+                        Limpiar búsqueda
+                      </button>
                     </div>
                   );
-                })}
-              </div>
-            )}
-          </>
-        )}
 
-        {/* ── TAB INCIDENCIAS ── */}
-        {activeTab === "incidencias" && (
-          <GestionIncidencias empresaId={usuario?.empresaId} />
-        )}
+                  /* Card compartida para borrador y publicado — misma estructura que TarjetaCurso */
+                  return (
+                    <>
+                      {/* Borradores */}
+                      {borradores.length > 0 && (
+                        <div className="mb-8">
+                          <div className="flex items-center gap-2.5 mb-4">
+                            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#92400e" }}>Borradores</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#fde68a", color: "#78350f" }}>{borradores.length}</span>
+                            <div className="flex-1 h-px" style={{ background: "#fcd34d" }} />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {borradores.map((n) => (
+                              <AnuncioCard
+                                key={n.anuncioId}
+                                n={n}
+                                esBorrador={true}
+                                publicandoId={publicandoId}
+                                GRAD_ANN={GRAD_ANN}
+                                CATEGORIA_COLORS_LIGHT={CATEGORIA_COLORS_LIGHT}
+                                esNuevo={esNuevo}
+                                abrirEditar={abrirEditar}
+                                publicarBorrador={publicarBorrador}
+                                handleEliminarBorrador={handleEliminarBorrador}
+                                handleDesactivarAnuncio={handleDesactivarAnuncio}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Publicados */}
+                      {publicados.length === 0 ? (
+                        <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-24 px-6 text-center"
+                          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                            style={{ background: "var(--azul-accion-light)" }}>
+                            <Megaphone size={30} style={{ color: "var(--azul-accion)" }} strokeWidth={1.5} />
+                          </div>
+                          <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay anuncios publicados</p>
+                          <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Publica uno de tus borradores o crea un anuncio nuevo</p>
+                          <Button variant="primary" size="md" onClick={abrirCrear}>
+                            <Plus size={14} /> Nuevo anuncio
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          {borradores.length > 0 && (
+                            <div className="flex items-center gap-2.5 mb-4">
+                              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Publicados</span>
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>{publicados.length}</span>
+                              <div className="flex-1 h-px" style={{ background: "var(--gris-borde)" }} />
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {publicados.map((n) => (
+                              <AnuncioCard
+                                key={n.anuncioId}
+                                n={n}
+                                esBorrador={false}                    // ← importante
+                                publicandoId={publicandoId}
+                                GRAD_ANN={GRAD_ANN}
+                                CATEGORIA_COLORS_LIGHT={CATEGORIA_COLORS_LIGHT}
+                                esNuevo={esNuevo}
+                                abrirEditar={abrirEditar}
+                                publicarBorrador={publicarBorrador}
+                                handleEliminarBorrador={handleEliminarBorrador}
+                                handleDesactivarAnuncio={handleDesactivarAnuncio}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* ── Modal confirmación anuncio ── */}
+            <AnimatePresence>
+              {confirmAnuncio && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 flex items-center justify-center p-4"
+                  style={{ zIndex: 1200, background: "rgba(0,0,0,0.45)" }}
+                  onClick={() => setConfirmAnuncio(null)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                    className="rounded-2xl p-6 flex flex-col items-center text-center gap-4 w-full max-w-xs"
+                    style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.22)" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Icono */}
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{ background: confirmAnuncio.tipo === "eliminar" ? "var(--error-light)" : "#FEF9C3" }}>
+                      {confirmAnuncio.tipo === "eliminar"
+                        ? <Trash2 size={26} style={{ color: "var(--error)" }} />
+                        : <TriangleAlert size={26} style={{ color: "#D97706" }} />}
+                    </div>
+                    {/* Texto */}
+                    <div>
+                      <p className="font-bold text-lg" style={{ color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                        {confirmAnuncio.tipo === "eliminar" ? "¿Eliminar borrador?" : "¿Desactivar anuncio?"}
+                      </p>
+                      <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
+                        {confirmAnuncio.tipo === "eliminar"
+                          ? "Se borrará permanentemente. Esta acción no se puede deshacer."
+                          : "El anuncio dejará de ser visible para los empleados. Esta acción no se puede deshacer."}
+                      </p>
+                    </div>
+                    {/* Botones */}
+                    <div className="flex flex-col gap-2 w-full">
+                      <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmAnuncio(null)}>
+                        Cancelar
+                      </Button>
+                      <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarConfirmAnuncio}>
+                        {confirmAnuncio.tipo === "eliminar" ? "Eliminar borrador" : "Desactivar anuncio"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
 
         {/* ── TAB EVENTOS ── */}
@@ -3084,42 +2862,225 @@ function AdminContent() {
           <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
         )}
 
-        {/* ── TAB ESTADÍSTICAS ── */}
-        {activeTab === "estadisticas" && (
-          <StatsTab
-            statsEmpresa={statsEmpresa}
-            cargandoStats={cargandoStats}
-            statsRango={statsRango}
-            setStatsRangoT={setStatsRangoT}
-            statsDpto={statsDpto}
-            setStatsDptoT={setStatsDptoT}
-            statsEstado={statsEstado}
-            setStatsEstadoT={setStatsEstadoT}
-            statsTipoMod={statsTipoMod}
-            setStatsTipoModT={setStatsTipoModT}
-            startStatsTransition={startStatsTransition}
-            statsRangoLabel={statsRangoLabel}
-            statsRangoLabelMin={statsRangoLabelMin}
-            showKpis={showKpis}
-            setShowKpis={setShowKpis}
-            showMovimiento={showMovimiento}
-            setShowMovimiento={setShowMovimiento}
-            showEstadoFormacion={showEstadoFormacion}
-            setShowEstadoFormacion={setShowEstadoFormacion}
-            hayPersonalizacion={hayPersonalizacion}
-            resetVistaEstadisticas={resetVistaEstadisticas}
-            showPersonalizar={showPersonalizar}
-            setShowPersonalizar={setShowPersonalizar}
-            personalizarRef={personalizarRef}
-            exportFormat={exportFormat}
-            setExportFormat={setExportFormat}
-            handleExportEstadisticas={handleExportEstadisticas}
-            empleados={empleados}
-            formaciones={formaciones}
-          />
-        )}
+            {/* ── TAB MÓDULOS FORMATIVOS ── */}
+            {activeTab === "formaciones" && (
+              <>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-8">
+                  <div>
+                    <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                      Gestión de Módulos
+                    </h1>
+                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                      {cargandoModulos ? "Cargando módulos…" : `${formaciones.filter(f => f.activo).length} módulo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""} activo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        for (let i = localStorage.length - 1; i >= 0; i--) {
+                          const key = localStorage.key(i);
+                          if (key?.startsWith("egm_modulo_admin_")) localStorage.removeItem(key);
+                        }
+                        queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
+                        mostrarToast("Progreso de admin reiniciado");
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                      style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
+                      title="Reiniciar progreso de admin"
+                    >
+                      < RefreshCw />
+                      Reiniciar
+                    </button>
+                    <button
+                      onClick={() => router.push("/dashboard/admin/modulos/crear")}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                      style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                    >
+                      < Plus />
+                      Nuevo módulo
+                    </button>
+                  </div>
+                </div>
 
-        </motion.div>
+                {/* Grid de módulos */}
+                {formaciones.length === 0 ? (
+                  <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center mb-6"
+                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                      style={{ background: "#EDE9FE" }}>
+                      <LibraryBig size={30} strokeWidth={1.5} style={{ color: "#7B4A85" }} />
+                    </div>
+                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
+                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer módulo formativo para tus empleados</p>
+                    <Button variant="primary" size="md" onClick={() => router.push("/dashboard/admin/modulos/crear")}>
+                      <Plus size={14} /> Crear módulo
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    {formaciones.map((f) => {
+                      const accentColor = tipoAccentColor[f.tipoModulo] ?? "var(--azul-egm)";
+                      return (
+                        <div
+                          key={f.moduloId}
+                          className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
+                          style={{
+                            background: f.activo ? "var(--blanco)" : "var(--gris-pagina)",
+                            border: `1px solid ${f.activo ? "var(--gris-borde)" : "var(--gris-borde)"}`,
+                            opacity: f.activo ? 1 : 0.65,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+                        >
+                          {/* Imagen de portada o franja de color */}
+                          {f.imagenPortadaUrl ? (
+                            <div className="w-full h-36 relative overflow-hidden shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover"
+                                style={{ filter: f.activo ? "none" : "grayscale(100%)" }} />
+                              <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
+                            </div>
+                          ) : (
+                            <div className="w-full h-2 shrink-0"
+                              style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
+                          )}
+                          <div className="p-5 flex flex-col flex-1">
+                            {/* Badges */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {MODULO_TIPO_LABEL[f.tipoModulo] && (
+                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                  {MODULO_TIPO_LABEL[f.tipoModulo]}
+                                </span>
+                              )}
+                              {f.empresaId === null ? (
+                                <span className="text-xs px-2.5 py-1 rounded-full italic"
+                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                                  EGM Global
+                                </span>
+                              ) : (
+                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                                  Tu empresa
+                                </span>
+                              )}
+                              {!f.activo && (
+                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                  style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
+                                  Desactivado
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title + description */}
+                            <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
+                              {f.nombre}
+                            </p>
+                            <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
+                              {f.descripcion}
+                            </p>
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-end gap-2 mt-4 pt-3"
+                              style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                              {f.empresaId !== null ? (
+                                <>
+                                  <button onClick={() => router.push(`/dashboard/formacion/${f.moduloId}`)}
+                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                    style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                                    Ver
+                                  </button>
+                                  <button onClick={() => handleEditModulo(f)}
+                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                    Editar
+                                  </button>
+                                  <button onClick={() => handleDesactivarModulo(f)}
+                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                    style={{ background: "#fef9c3", color: "#854d0e" }}>
+                                    {f.activo ? "Desactivar" : "Activar"}
+                                  </button>
+                                  <button onClick={() => handleEliminarModulo(f.moduloId)}
+                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                                    style={{ background: "var(--error-light)", color: "var(--error)" }}>
+                                    Eliminar
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-lg"
+                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
+                                  Solo lectura
+                                </span>
+                              )}
+                            </div>
+                          </div>{/* /p-5 */}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── TAB INCIDENCIAS ── */}
+            {activeTab === "incidencias" && (
+              <GestionIncidencias empresaId={usuario?.empresaId} />
+            )}
+
+            {activeTab === "documentos" && usuario?.empresaId && (
+              <DocumentosAdminTab
+                empresaId={usuario.empresaId}
+                empleados={empleados.map((e) => ({
+                  usuarioId: e.usuarioId,
+                  nombre: e.nombre,
+                  apellidos: e.apellidos,
+                  departamento: e.departamento,
+                }))}
+                departamentos={DEPARTAMENTOS}
+              />
+            )}
+
+            {/* ── TAB ESTADÍSTICAS ── */}
+            {activeTab === "estadisticas" && (
+              <StatsTab
+                statsEmpresa={statsEmpresa}
+                cargandoStats={cargandoStats}
+                statsRango={statsRango}
+                setStatsRangoT={setStatsRangoT}
+                statsDpto={statsDpto}
+                setStatsDptoT={setStatsDptoT}
+                statsEstado={statsEstado}
+                setStatsEstadoT={setStatsEstadoT}
+                statsTipoMod={statsTipoMod}
+                setStatsTipoModT={setStatsTipoModT}
+                startStatsTransition={startStatsTransition}
+                statsRangoLabel={statsRangoLabel}
+                statsRangoLabelMin={statsRangoLabelMin}
+                showKpis={showKpis}
+                setShowKpis={setShowKpis}
+                showMovimiento={showMovimiento}
+                setShowMovimiento={setShowMovimiento}
+                showEstadoFormacion={showEstadoFormacion}
+                setShowEstadoFormacion={setShowEstadoFormacion}
+                hayPersonalizacion={hayPersonalizacion}
+                resetVistaEstadisticas={resetVistaEstadisticas}
+                showPersonalizar={showPersonalizar}
+                setShowPersonalizar={setShowPersonalizar}
+                personalizarRef={personalizarRef}
+                exportFormat={exportFormat}
+                setExportFormat={setExportFormat}
+                handleExportEstadisticas={handleExportEstadisticas}
+                empleados={empleados}
+                formaciones={formaciones}
+              />
+            )}
+
+          </motion.div>
         </AnimatePresence>
 
         {/* DocumentosAdminTab FUERA del motion.div con key={activeTab} para que nunca
@@ -3297,9 +3258,9 @@ function StatsSelect({ value, onChange, options, placeholder, minWidth = 140, hi
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const wrapRef    = useRef<HTMLDivElement>(null);
-  const isActive   = value !== "";
-  const selected   = options.find(o => o.id === value);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const isActive = value !== "";
+  const selected = options.find(o => o.id === value);
 
   function calcPos() {
     if (!triggerRef.current) return;
