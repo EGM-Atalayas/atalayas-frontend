@@ -9,7 +9,11 @@ import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
+  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight,
 } from "lucide-react";
+import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
+import { getEmpresas } from "@/lib/api/empresas";
+import { getIncidencias } from "@/lib/api/incidencias";
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
 
@@ -148,6 +152,7 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
 
   const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
+  const isSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
 
   const [editando, setEditando] = useState(false);
   const [formNombre, setFormNombre] = useState("");
@@ -162,17 +167,34 @@ export default function PerfilPage() {
   const [sugerencia, setSugerencia]       = useState("");
   const [enviandoSug, setEnviandoSug]     = useState(false);
   const [estadoSug, setEstadoSug]         = useState<"idle" | "ok" | "error">("idle");
-  // Los admins (empresa y general) solo pueden enviar a EGM Atalayas; los empleados eligen
-  const [destinatarioSug, setDestinatarioSug] = useState<"EMPRESA" | "EGM">(
-    usuario && (usuario.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario.codigoRol === "ROLE_ADMIN")
-      ? "EGM"
-      : "EMPRESA"
-  );
+  const [destinatarioSug] = useState<"EGM">("EGM");
   const [dispOpen, setDispOpen] = useState(false);
   const dispRef = useRef<HTMLDivElement>(null);
 
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [savingBanner, setSavingBanner] = useState(false);
+
+  // ── Superadmin KPIs ──
+  const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
+  const [cargandoStats, setCargandoStats] = useState(false);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    setCargandoStats(true);
+    Promise.all([
+      getEstadisticasSuperadmin().catch(() => null),
+      getEmpresas().catch(() => []),
+      getIncidencias().catch(() => []),
+    ]).then(([stats, empresas, incidencias]) => {
+      const ultimo = stats?.crecimiento?.[stats.crecimiento.length - 1];
+      setStatsSuper({
+        empresas: ultimo?.empresas ?? 0,
+        empleados: ultimo?.empleados ?? 0,
+        pendientes: Array.isArray(empresas) ? empresas.filter((e: any) => e.estadoSolicitud === "PENDIENTE").length : 0,
+        incidenciasAbiertas: Array.isArray(incidencias) ? incidencias.filter((i: any) => i.estado === "ABIERTA" || i.estado === "EN_CURSO").length : 0,
+      });
+    }).finally(() => setCargandoStats(false));
+  }, [isSuperAdmin]);
 
   useEffect(() => {
     if (!showBannerPicker) return;
@@ -843,6 +865,7 @@ export default function PerfilPage() {
         </div>
 
         {/* ── Sección formación ── */}
+        {!isSuperAdmin && (
         <div className="flex flex-col gap-7">
         <h2 style={{
           fontFamily: "var(--font-raleway), sans-serif",
@@ -964,7 +987,8 @@ export default function PerfilPage() {
 
         </div>
 
-        </div>{/* fin sección formación */}
+        </div>
+        )}
 
 {/* ── Mis documentos (solo para empleados; admins no lo necesitan) ── */}
 {!esAdmin && (
@@ -974,7 +998,8 @@ export default function PerfilPage() {
 )}
 
 {/* ── Buzón de sugerencias ── */}
-        <div className="grid grid-cols-1 gap-8 items-start">
+  {!isSuperAdmin && (
+  <div className="grid grid-cols-1 gap-8 items-start">
 
           {/* ── Buzón ── */}
           <div className="flex flex-col gap-4">
@@ -997,43 +1022,17 @@ export default function PerfilPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
                   Enviar a
                 </p>
-                {esAdmin ? (
-                  // Admins solo pueden contactar con EGM Atalayas
-                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                    style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
-                    EGM Atalayas
-                  </span>
-                ) : (
-                  <div className="flex gap-2">
-                    {(["EMPRESA", "EGM"] as const).map((d) => {
-                      const label = d === "EMPRESA" ? "Mi empresa" : "EGM Atalayas";
-                      const selected = destinatarioSug === d;
-                      return (
-                        <button key={d} type="button"
-                          onClick={() => setDestinatarioSug(d)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold border"
-                          style={{
-                            background: selected ? "var(--azul-egm)" : "transparent",
-                            color: selected ? "#fff" : "var(--texto-secundario)",
-                            borderColor: selected ? "var(--azul-egm)" : "var(--gris-borde)",
-                            transition: "background 0.35s, color 0.35s, border-color 0.35s",
-                            boxShadow: selected ? "0 2px 8px rgba(27,63,126,0.25)" : "none",
-                          }}>
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                  style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
+                  EGM Atalayas
+                </span>
               </div>
 
               {/* Textarea */}
               <textarea
                 value={sugerencia}
                 onChange={(e) => { setSugerencia(e.target.value.slice(0, 500)); if (estadoSug !== "idle") setEstadoSug("idle"); }}
-                placeholder={destinatarioSug === "EMPRESA"
-                  ? "Escribe tu sugerencia para tu empresa…"
-                  : "Escribe tu mensaje a EGM Atalayas…"}
+                placeholder="Escribe tu sugerencia para EGM Atalayas…"
                 rows={3}
                 className="w-full px-5 py-4 text-base outline-none resize-none flex-1"
                 style={{ color: "var(--texto-primario)", lineHeight: 1.6, background: "transparent", border: "none", minHeight: "140px" }}
@@ -1087,7 +1086,9 @@ export default function PerfilPage() {
             </div>
           </div>
 
+
         </div>
+        )}
 
       </div>
 
