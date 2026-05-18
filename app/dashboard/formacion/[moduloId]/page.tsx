@@ -1081,8 +1081,15 @@ function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: s
     }
   }, [slides.length, onVerificado]);
 
+  // Reset idx si se queda fuera de rango al cambiar el array de slides
+  React.useEffect(() => {
+    if (idx >= slides.length && slides.length > 0) setIdx(0);
+  }, [slides.length, idx]);
+
   if (slides.length === 0) return <p className="text-sm" style={{ color: "var(--texto-muted)" }}>No hay slides disponibles.</p>;
-  const slide = slides[idx];
+  // Si idx queda fuera de rango (p. ej. cambió el array de slides) caemos al primero
+  const slide = slides[idx] ?? slides[0];
+  if (!slide) return <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Slide no disponible.</p>;
   return (
     <div>
       <div className="rounded-2xl overflow-hidden mb-4" style={{ border: "1px solid var(--gris-borde)" }}>
