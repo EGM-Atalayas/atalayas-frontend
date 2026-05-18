@@ -107,7 +107,28 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     ventana.push({ anio: d.getFullYear(), mes: d.getMonth(), label: MESES[d.getMonth()] });
   }
 
-  const conteoCrecimiento = ventana.map(({ anio, mes, label }) => {
+  const primerMes = ventana[0];
+
+  const empresasAntes = empresas.filter((emp) => {
+    if (emp.estadoSolicitud !== "APROBADA") return false;
+    const fechaStr = emp.fechaResolucion ?? emp.actualizadoEn ?? emp.fechaRegistro ?? emp.creadoEn ?? emp.fechaCreacion ?? emp.createdAt ?? emp.created_at;
+    if (!fechaStr) return false;
+    const fecha = new Date(fechaStr);
+    if (isNaN(fecha.getTime())) return false;
+    return fecha.getFullYear() < primerMes.anio || (fecha.getFullYear() === primerMes.anio && fecha.getMonth() < primerMes.mes);
+  }).length;
+
+  const empleadosAntes = usuarios.filter((u) => {
+    const fechaStr = u.fechaRegistro ?? u.creadoEn ?? u.fechaCreacion ?? u.createdAt ?? u.created_at;
+    if (!fechaStr) return false;
+    const rol = u.codigoRol ?? u.rol ?? u.role ?? "";
+    if (rol !== "ROLE_EMPLEADO") return false;
+    const fecha = new Date(fechaStr);
+    if (isNaN(fecha.getTime())) return false;
+    return fecha.getFullYear() < primerMes.anio || (fecha.getFullYear() === primerMes.anio && fecha.getMonth() < primerMes.mes);
+  }).length;
+
+  const conteoCrecimientoMensual = ventana.map(({ anio, mes, label }) => {
     const empresasNuevas = empresas.filter((emp) => {
       if (emp.estadoSolicitud !== "APROBADA") return false;
       // Para empresas, usar fechaResolucion (cuando se aprobó)
@@ -132,6 +153,18 @@ export async function getEstadisticasSuperadmin(): Promise<EstadisticasResponse>
     }).length;
 
     return { mes: label, empleados: empleadosNuevos, empresas: empresasNuevas };
+  });
+
+  let acumuladoEmpresas = empresasAntes;
+  let acumuladoEmpleados = empleadosAntes;
+  const conteoCrecimiento = conteoCrecimientoMensual.map((item) => {
+    acumuladoEmpresas += item.empresas;
+    acumuladoEmpleados += item.empleados;
+    return {
+      mes: item.mes,
+      empresas: acumuladoEmpresas,
+      empleados: acumuladoEmpleados,
+    };
   });
 
   return {
