@@ -73,15 +73,6 @@ export function ModalConfirm({
 
             <div className="flex flex-col gap-2 w-full">
               <Button
-                variant="primary"
-                size="md"
-                className="w-full justify-center"
-                onClick={onCancelar}
-                disabled={cargando}
-              >
-                Cancelar
-              </Button>
-              <Button
                 variant={variante === "success" ? "success" : "danger"}
                 size="md"
                 className="w-full justify-center"
@@ -89,6 +80,15 @@ export function ModalConfirm({
                 disabled={cargando}
               >
                 {cargando ? "Procesando..." : textoConfirmar}
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full justify-center"
+                onClick={onCancelar}
+                disabled={cargando}
+              >
+                Cancelar
               </Button>
             </div>
           </motion.div>

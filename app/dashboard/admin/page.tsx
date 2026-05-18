@@ -34,6 +34,7 @@ import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
 import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
 import { AnuncioCard } from "@/components/ui/AnuncioCard";
 import { ModalConfirm } from "@/components/ui/ModalConfirm";
+import { ModalResetPassword } from "@/components/ui/ModalResetPassword";
 import type { Usuario, NuevoEmpleadoForm } from "@/lib/types/usuario";
 import { ROL_EMPLEADO_ID, DEPARTAMENTOS, EMPTY_ANUNCIO, EMPTY_EMPLEADO } from "@/lib/constants/admin";
 // ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
@@ -1124,6 +1125,8 @@ function AdminContent() {
   const [confirmEmpleado, setConfirmEmpleado] = useState<{ usuarioId: string; activo: boolean; nombre: string } | null>(null);
   const [confirmModulo, setConfirmModulo] = useState<{ modulo: Modulo } | null>(null);
   const [confirmEliminarModulo, setConfirmEliminarModulo] = useState<{ moduloId: string; nombre: string } | null>(null);
+  const [resetPass, setResetPass] = useState<{ usuarioId: string; nombre: string } | null>(null);
+  const [guardandoResetPass, setGuardandoResetPass] = useState(false);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -1245,6 +1248,28 @@ function AdminContent() {
 
   const handleToggleEmpleado = (usuarioId: string, activo: boolean, nombre: string) => {
     setConfirmEmpleado({ usuarioId, activo, nombre });
+  };
+
+  const ejecutarResetPassword = async (nuevaPassword: string) => {
+    if (!resetPass) return;
+    setGuardandoResetPass(true);
+    try {
+      const res = await apiFetch(`${API_URL}/users/${resetPass.usuarioId}/reset-password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nuevaPassword }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.message ?? "Error al resetear la contraseña");
+      }
+      mostrarToast(`Contraseña de ${resetPass.nombre} actualizada correctamente`);
+      setResetPass(null);
+    } catch (err) {
+      mostrarToast(err instanceof Error ? err.message : "Error al resetear la contraseña", "error");
+    } finally {
+      setGuardandoResetPass(false);
+    }
   };
 
   const ejecutarToggleEmpleado = async () => {
@@ -2372,6 +2397,10 @@ function AdminContent() {
                               <Button variant="primary" size="md" onClick={iniciarEditEmpleado}>
                                 Editar empleado
                               </Button>
+                              <Button variant="ghost" size="md"
+                                onClick={() => setResetPass({ usuarioId: empleadoSeleccionado.usuarioId, nombre: empleadoSeleccionado.nombre })}>
+                                Resetear contraseña
+                              </Button>
                               <Button
                                 variant={empleadoSeleccionado.activo ? "danger" : "success"}
                                 size="md"
@@ -2514,6 +2543,10 @@ function AdminContent() {
                             <div className="flex flex-col gap-2">
                               <Button variant="primary" size="md" className="w-full" onClick={iniciarEditEmpleado}>
                                 Editar empleado
+                              </Button>
+                              <Button variant="ghost" size="md" className="w-full"
+                                onClick={() => setResetPass({ usuarioId: empleadoSeleccionado.usuarioId, nombre: empleadoSeleccionado.nombre })}>
+                                Resetear contraseña
                               </Button>
                               <Button variant={empleadoSeleccionado.activo ? "danger" : "success"} size="md" className="w-full"
                                 onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo, empleadoSeleccionado.nombre)}>
@@ -2837,6 +2870,15 @@ function AdminContent() {
           variante="danger"
           onConfirmar={ejecutarEliminarModulo}
           onCancelar={() => setConfirmEliminarModulo(null)}
+        />
+
+        {/* ── Modal reset contraseña empleado ── */}
+        <ModalResetPassword
+          abierto={!!resetPass}
+          nombreEmpleado={resetPass?.nombre ?? ""}
+          cargando={guardandoResetPass}
+          onConfirmar={ejecutarResetPassword}
+          onCancelar={() => setResetPass(null)}
         />
 
         {/* ── TAB EVENTOS ── */}
