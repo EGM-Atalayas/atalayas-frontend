@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getIncidencias, cambiarEstadoIncidencia } from "@/lib/api/incidencias";
+import { getIncidencias, cambiarEstadoIncidencia, deleteIncidencia } from "@/lib/api/incidencias";
 import type { Incidencia } from "@/lib/types/incidencias";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -50,6 +50,16 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
       setIncidencias(prev => prev.map(i => i.incidenciaId === id ? { ...i, estado: nuevoEstado as Incidencia['estado'] } : i));
     } catch (e: any) {
       alert(e.message || "Error al cambiar el estado de la incidencia");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Eliminar esta incidencia?")) return;
+    try {
+      await deleteIncidencia(id);
+      setIncidencias(prev => prev.filter(i => i.incidenciaId !== id));
+    } catch (e: any) {
+      alert(e.message || "Error al eliminar la incidencia");
     }
   };
 
@@ -123,7 +133,7 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
                       <span>{formatFecha(inc.creadoEn)}</span>
                     </div>
                   </div>
-                  <div className="shrink-0">
+                  <div className="shrink-0 flex items-center gap-2">
                     <select
                       value={inc.estado}
                       onChange={(e) => handleEstado(inc.incidenciaId, e.target.value)}
@@ -132,6 +142,18 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
                     >
                       {ESTADOS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
                     </select>
+                    <button
+                      onClick={() => handleDelete(inc.incidenciaId)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Eliminar incidencia"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
