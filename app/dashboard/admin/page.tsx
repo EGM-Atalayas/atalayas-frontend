@@ -1004,7 +1004,7 @@ function AdminContent() {
     queryFn: () => apiFetch(`${API_URL}/users`).then((r) => r.json()),
     enabled: !!usuario?.empresaId,
   });
-  const empleados = useMemo(() => _empleadosData ?? [], [_empleadosData]);
+  const empleados = useMemo(() => Array.isArray(_empleadosData) ? _empleadosData : [], [_empleadosData]);
 
   // Noticias — siempre activo para que al cambiar a anuncios no haya espera
   const { data: noticias = [], isLoading: cargandoNoticias } = useQuery({
@@ -1019,10 +1019,10 @@ function AdminContent() {
     queryFn: () => getModulos(usuario?.empresaId),
     enabled: !!usuario?.empresaId,
   });
-  const formaciones = useMemo(() => _formacionesData ?? [], [_formacionesData]);
+  const formaciones = useMemo(() => Array.isArray(_formacionesData) ? _formacionesData : [], [_formacionesData]);
 
-  // Documentos — pre-carga en caché compartida con DocumentosAdminTab (sin doble fetch)
-  useQuery<Documento[]>({
+  // Documentos — gestionado aquí igual que empleados para evitar re-loading al cambiar de tab
+  const { data: documentosData = [], isLoading: cargandoDocumentos } = useQuery<Documento[]>({
     queryKey: QK.documentos(usuario?.empresaId),
     queryFn: listarDocumentosEmpresa,
     enabled: !!usuario?.empresaId,
@@ -1034,7 +1034,7 @@ function AdminContent() {
     queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
     enabled: !!usuario?.empresaId,
   });
-  const progresoEmpresa = useMemo(() => _progresoData ?? [], [_progresoData]);
+  const progresoEmpresa = useMemo(() => Array.isArray(_progresoData) ? _progresoData : [], [_progresoData]);
 
   // Refs para el efecto de estadísticas
   const formacionesRef = useRef(formaciones);
@@ -1251,8 +1251,10 @@ function AdminContent() {
       console.log("Respuesta del servidor:", data); // ← ahora verás el error real
 
       if (!res.ok) {
-        throw new Error(data.message ?? "Error al guardar el empleado"); // ← usa data, no res.json()
+        throw new Error(data.message ?? "Error al guardar el empleado");
       }
+      // Actualizar la ficha del empleado seleccionado al instante
+      setEmpleadoSeleccionado((prev) => prev ? { ...prev, ...data } : prev);
       queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
       setEditandoEmpleado(false);
     } catch (err) {
@@ -3073,18 +3075,6 @@ function AdminContent() {
           <GestionIncidencias empresaId={usuario?.empresaId} />
         )}
 
-        {activeTab === "documentos" && usuario?.empresaId && (
-          <DocumentosAdminTab
-            empresaId={usuario.empresaId}
-            empleados={empleados.map((e) => ({
-              usuarioId: e.usuarioId,
-              nombre: e.nombre,
-              apellidos: e.apellidos,
-              departamento: e.departamento,
-            }))}
-            departamentos={DEPARTAMENTOS}
-          />
-        )}
 
         {/* ── TAB ESTADÍSTICAS ── */}
         {activeTab === "estadisticas" && (
@@ -3123,6 +3113,25 @@ function AdminContent() {
 
         </motion.div>
         </AnimatePresence>
+
+        {/* DocumentosAdminTab FUERA del motion.div con key={activeTab} para que nunca
+            se desmonte al cambiar de tab. CSS display lo muestra/oculta sin remount. */}
+        {usuario?.empresaId && (
+          <div style={{ display: activeTab === "documentos" ? "block" : "none" }}>
+            <DocumentosAdminTab
+              empresaId={usuario.empresaId}
+              documentosIniciales={documentosData}
+              cargandoInicial={cargandoDocumentos}
+              empleados={empleados.map((e) => ({
+                usuarioId: e.usuarioId,
+                nombre: e.nombre,
+                apellidos: e.apellidos,
+                departamento: e.departamento,
+              }))}
+              departamentos={DEPARTAMENTOS}
+            />
+          </div>
+        )}
       </div>
 
 
