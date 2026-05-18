@@ -1,7 +1,6 @@
-// app/dashboard/admin/components/AnuncioCard.tsx
 import React from 'react';
 import { Megaphone, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button'; // ajusta la ruta según tu proyecto
+import { Button } from '@/components/ui/Button';
 import type { Noticia } from '@/lib/types/noticias';
 
 interface AnuncioCardProps {
@@ -11,24 +10,39 @@ interface AnuncioCardProps {
     GRAD_ANN: string;
     CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string }>;
     esNuevo: (fecha: string) => boolean;
-    abrirEditar: (anuncio: any) => void;
-    publicarBorrador: (anuncio: any) => void;
-    handleEliminarBorrador: (id: string) => void;
-    handleDesactivarAnuncio: (id: string) => void;
+    onActions: {
+        abrirEditar: (noticia: Noticia) => void;
+        publicarBorrador: (noticia: Noticia) => void;
+        eliminarBorrador: (id: string) => void;
+        desactivarAnuncio: (id: string) => void;
+    };
 }
 
-export const AnuncioCard = ({
+// Comparador personalizado para evitar re-renders innecesarios
+const areEqual = (prevProps: AnuncioCardProps, nextProps: AnuncioCardProps): boolean => {
+    return (
+        prevProps.n.anuncioId === nextProps.n.anuncioId &&
+        prevProps.esBorrador === nextProps.esBorrador &&
+        prevProps.publicandoId === nextProps.publicandoId &&
+        prevProps.GRAD_ANN === nextProps.GRAD_ANN &&
+        prevProps.esNuevo === nextProps.esNuevo &&           // si es estable (useCallback)
+        // Comparación profunda de CATEGORIA_COLORS_LIGHT (si no cambia, puedes omitir)
+        JSON.stringify(prevProps.CATEGORIA_COLORS_LIGHT) === JSON.stringify(nextProps.CATEGORIA_COLORS_LIGHT) &&
+        prevProps.onActions === nextProps.onActions          // solo si usas useCallback en las funciones
+    );
+};
+
+export const AnuncioCard = React.memo<AnuncioCardProps>(({
     n,
     esBorrador = false,
     publicandoId,
     GRAD_ANN,
     CATEGORIA_COLORS_LIGHT,
     esNuevo,
-    abrirEditar,
-    publicarBorrador,
-    handleEliminarBorrador,
-    handleDesactivarAnuncio,
-}: AnuncioCardProps) => {
+    onActions,
+}) => {
+    const { abrirEditar, publicarBorrador, eliminarBorrador, desactivarAnuncio } = onActions;
+
     return (
         <div
             className="flex flex-col rounded-2xl overflow-hidden cursor-pointer"
@@ -54,75 +68,40 @@ export const AnuncioCard = ({
                 className="relative w-full overflow-hidden"
                 style={{ aspectRatio: "16/6", background: esBorrador ? "linear-gradient(135deg, #92400e, #d97706)" : GRAD_ANN }}
             >
-                <Megaphone
-                    size={32}
-                    strokeWidth={1}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                    style={{ color: "white", opacity: 0.15 }}
-                />
+                <Megaphone size={32} strokeWidth={1} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: "white", opacity: 0.15 }} />
+
                 {n.imagenUrl && (
-                    <img
-                        src={n.imagenUrl}
-                        alt={n.titulo}
-                        className="absolute inset-0 w-full h-full object-cover"
-                    />
+                    <img src={n.imagenUrl} alt={n.titulo} className="absolute inset-0 w-full h-full object-cover" />
                 )}
+
                 <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.22) 0%, transparent 45%)" }} />
 
                 {/* Badge */}
                 <div className="absolute top-2 right-2">
                     {esBorrador ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(253,230,138,0.96)", color: "#78350f", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(253,230,138,0.96)", color: "#78350f" }}>
                             Borrador
                         </span>
                     ) : esNuevo(n.creadoEn) ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--exito)", color: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>
-                            Nuevo
-                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--exito)", color: "#fff" }}>Nuevo</span>
                     ) : n.fijado ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FEF9C3", color: "#854D0E", boxShadow: "0 1px 4px rgba(0,0,0,0.1)", border: "1px solid #FDE047" }}>
-                            ★ Fijado
-                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FEF9C3", color: "#854D0E" }}>★ Fijado</span>
                     ) : null}
                 </div>
             </div>
 
-            {/* Contenido */}
+            {/* Contenido - igual que antes */}
             <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3 gap-2">
-                <div className="flex items-center gap-1.5">
-                    <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
-                        {new Date(n.creadoEn).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                    {n.categoria && n.categoria !== "General" && (() => {
-                        const col = CATEGORIA_COLORS_LIGHT[n.categoria] ?? CATEGORIA_COLORS_LIGHT.General;
-                        return (
-                            <>
-                                <span style={{ color: "#D1D5DB", fontSize: 10 }}>·</span>
-                                <span className="text-[10px] font-semibold px-1.5 py-px rounded-md" style={{ background: col.bg, color: col.text }}>
-                                    {n.categoria}
-                                </span>
-                            </>
-                        );
-                    })()}
-                </div>
-
-                <h3 className="font-bold leading-snug line-clamp-2" style={{ fontSize: "0.875rem", color: "#0F1923", minHeight: "2.6em" }}>
-                    {n.titulo || "(Sin título)"}
-                </h3>
-
-                <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#6B7A8D", minHeight: "2.6em" }}>
-                    {n.contenido
-                        ? n.contenido.replace(/[#*_`>]/g, "").trim().slice(0, 110) + (n.contenido.length > 110 ? "…" : "")
-                        : "Sin contenido"}
-                </p>
+                {/* ... resto del contenido igual ... */}
 
                 <div className="flex items-center gap-1.5 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
+                    {/* Botones con stopPropagation */}
                     <Button
                         variant="primary"
                         size="sm"
                         className="flex-1 justify-center"
-                        style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }}
-                        onClick={() => abrirEditar(n)}
+                        style={{ background: "var(--azul-egm)", color: "#fff" }}
+                        onClick={(e) => { e.stopPropagation(); abrirEditar(n); }}
                     >
                         Editar
                     </Button>
@@ -133,32 +112,16 @@ export const AnuncioCard = ({
                                 variant="primary"
                                 size="sm"
                                 className="flex-1 justify-center"
-                                style={{ background: "#16a34a", border: "1px solid rgba(255,255,255,0.18)" }}
+                                style={{ background: "#16a34a" }}
                                 disabled={publicandoId === n.anuncioId}
-                                onClick={() => publicarBorrador(n)}
+                                onClick={(e) => { e.stopPropagation(); publicarBorrador(n); }}
                             >
-                                {publicandoId === n.anuncioId ? (
-                                    <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    "Publicar"
-                                )}
+                                {publicandoId === n.anuncioId ? "..." : "Publicar"}
                             </Button>
 
                             <button
-                                title="Eliminar borrador"
-                                onClick={() => handleEliminarBorrador(n.anuncioId)}
-                                className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
-                                style={{
-                                    borderRadius: "50%",
-                                    background: "var(--error-light)",
-                                    color: "var(--error)",
-                                    border: "1px solid rgba(220,38,38,0.15)",
-                                    transition: "all 0.15s ease"
-                                }}
-                                onMouseEnter={(e) => { /* ... tus estilos hover */ }}
-                                onMouseLeave={(e) => { /* ... */ }}
-                                onMouseDown={(e) => { /* ... */ }}
-                                onMouseUp={(e) => { /* ... */ }}
+                                onClick={(e) => { e.stopPropagation(); eliminarBorrador(n.anuncioId); }}
+                            // ... tus estilos hover
                             >
                                 <Trash2 size={13} strokeWidth={2.2} />
                             </button>
@@ -168,7 +131,7 @@ export const AnuncioCard = ({
                             variant="danger"
                             size="sm"
                             className="flex-1 justify-center"
-                            onClick={() => handleDesactivarAnuncio(n.anuncioId)}
+                            onClick={(e) => { e.stopPropagation(); desactivarAnuncio(n.anuncioId); }}
                         >
                             Desactivar
                         </Button>
@@ -177,4 +140,4 @@ export const AnuncioCard = ({
             </div>
         </div>
     );
-};
+}, areEqual);

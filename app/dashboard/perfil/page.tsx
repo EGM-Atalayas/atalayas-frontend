@@ -12,7 +12,7 @@ import {
   BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight,
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
-import { getEmpresas } from "@/lib/api/empresas";
+import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
@@ -174,6 +174,17 @@ export default function PerfilPage() {
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [savingBanner, setSavingBanner] = useState(false);
 
+  // ── Datos de empresa ──
+  const [editandoEmpresa, setEditandoEmpresa] = useState(false);
+  const [empresaData, setEmpresaData] = useState<{ nombreEmpresa: string; cif: string; emailContacto: string; logoEmpresaUrl?: string } | null>(null);
+  const [formEmpNombre, setFormEmpNombre] = useState("");
+  const [formEmpCif, setFormEmpCif] = useState("");
+  const [formEmpEmail, setFormEmpEmail] = useState("");
+  const [savingEmpresa, setSavingEmpresa] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [empresaLoaded, setEmpresaLoaded] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   // ── Superadmin KPIs ──
   const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
   const [cargandoStats, setCargandoStats] = useState(false);
@@ -212,6 +223,26 @@ export default function PerfilPage() {
       window.scrollTo(0, scrollY);
     };
   }, [showBannerPicker]);
+
+  useEffect(() => {
+    if (!esAdmin || !usuario?.empresaId || empresaLoaded) return;
+    (async () => {
+      try {
+        const data = await getEmpresaById(usuario.empresaId!);
+        setEmpresaData({
+          nombreEmpresa: data.nombreEmpresa ?? "",
+          cif: data.cif ?? "",
+          emailContacto: data.emailContacto ?? "",
+          logoEmpresaUrl: usuario.logoEmpresaUrl,
+        });
+        setFormEmpNombre(data.nombreEmpresa ?? "");
+        setFormEmpCif(data.cif ?? "");
+        setFormEmpEmail(data.emailContacto ?? "");
+      } catch {} finally {
+        setEmpresaLoaded(true);
+      }
+    })();
+  }, [esAdmin, usuario?.empresaId, empresaLoaded]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -403,6 +434,66 @@ export default function PerfilPage() {
       setTimeout(() => setEstadoSug("idle"), 4000);
     } finally {
       setEnviandoSug(false);
+    }
+  };
+
+  const handleGuardarEmpresa = async () => {
+    if (!usuario?.empresaId) return;
+    const nombreFinal = formEmpNombre.trim();
+    const cifFinal = formEmpCif.trim();
+    const emailFinal = formEmpEmail.trim();
+    if (!nombreFinal) return;
+
+    setSavingEmpresa(true);
+    try {
+      const updated = await actualizarEmpresa(usuario.empresaId, {
+        nombreEmpresa: nombreFinal,
+        cif: cifFinal,
+        emailContacto: emailFinal,
+      });
+      setEmpresaData({
+        nombreEmpresa: updated.nombreEmpresa ?? "",
+        cif: updated.cif ?? "",
+        emailContacto: updated.emailContacto ?? "",
+        logoEmpresaUrl: empresaData?.logoEmpresaUrl,
+      });
+      setFormEmpNombre(updated.nombreEmpresa ?? "");
+      setFormEmpCif(updated.cif ?? "");
+      setFormEmpEmail(updated.emailContacto ?? "");
+      guardarUsuario({
+        ...usuario!,
+        nombreEmpresa: updated.nombreEmpresa,
+      });
+      setEditandoEmpresa(false);
+    } catch {
+      alert("Error al guardar los datos de la empresa");
+    } finally {
+      setSavingEmpresa(false);
+    }
+  };
+
+  const handleCancelarEmpresa = () => {
+    if (empresaData) {
+      setFormEmpNombre(empresaData.nombreEmpresa);
+      setFormEmpCif(empresaData.cif);
+      setFormEmpEmail(empresaData.emailContacto);
+    }
+    setEditandoEmpresa(false);
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !usuario?.empresaId) return;
+    e.target.value = "";
+    setUploadingLogo(true);
+    try {
+      const result = await subirLogoEmpresa(usuario.empresaId, file);
+      setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
+      guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
+    } catch {
+      alert("No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -863,6 +954,140 @@ export default function PerfilPage() {
           </div>
 
         </div>
+
+        {/* ── Datos de empresa (solo admin) ── */}
+        {esAdmin && (
+        <div className="flex flex-col gap-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 style={{
+              fontFamily:  "var(--font-raleway), sans-serif",
+              fontWeight:  800,
+              fontSize:    "clamp(1.6rem, 3vw, 2.2rem)",
+              lineHeight:  1.1,
+              color:       "var(--texto-primario)",
+              letterSpacing: "-0.02em",
+            }}>Datos de empresa</h2>
+            {!editandoEmpresa ? (
+              <button
+                onClick={() => setEditandoEmpresa(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+              >
+                <Pencil size={13} /> Editar
+              </button>
+            ) : (
+              <div className="flex gap-2 shrink-0">
+                <button onClick={handleCancelarEmpresa}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border"
+                  style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
+                  <X size={13} /> Cancelar
+                </button>
+                <button onClick={handleGuardarEmpresa} disabled={savingEmpresa}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity"
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: savingEmpresa ? 0.7 : 1 }}>
+                  <Check size={13} /> {savingEmpresa ? "Guardando…" : "Guardar"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 min-w-0">
+            {/* Logo empresa */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Logo</p>
+              <div className="flex items-center gap-4">
+                <div
+                  className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                  style={{
+                    width: 80, height: 80,
+                    background: "var(--gris-superficie)",
+                    border: "1px solid var(--gris-borde)",
+                  }}
+                >
+                  {uploadingLogo ? (
+                    <div className="w-6 h-6 rounded-full border-2 animate-spin"
+                      style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
+                  ) : empresaData?.logoEmpresaUrl ? (
+                    <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : (
+                    <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
+                  )}
+                </div>
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
+                >
+                  <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                </button>
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+              </div>
+            </div>
+
+            {/* Nombre empresa */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre de la empresa</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpNombre}
+                    onChange={(e) => setFormEmpNombre(e.target.value)}
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="Nombre de la empresa"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
+              )}
+            </div>
+
+            {/* CIF */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>CIF</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpCif}
+                    onChange={(e) => setFormEmpCif(e.target.value.toUpperCase())}
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="B12345678"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.cif || "—"}</p>
+              )}
+            </div>
+
+            {/* Email contacto */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email de contacto</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpEmail}
+                    onChange={(e) => setFormEmpEmail(e.target.value)}
+                    type="email"
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="empresa@ejemplo.com"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        )}
 
         {/* ── Sección formación ── */}
         {!isSuperAdmin && (
