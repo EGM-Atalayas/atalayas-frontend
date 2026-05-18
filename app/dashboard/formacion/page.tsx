@@ -528,66 +528,6 @@ export default function FormacionPage() {
               </div>
             )}
 
-            {/* ── Grid de módulos ──────────────────────────────────────── */}
-            {modulosFiltrados.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {modulosFiltrados.map((m) => (
-                  <CourseCard key={m.moduloId} m={m} isAdmin={isAdmin} router={router} />
-                ))}
-              </div>
-            )}
-
-            {/* ── Estado vacío ─────────────────────────────────────────── */}
-            {modulosFiltrados.length === 0 && !hayFiltrosActivos && (
-              <div
-                className="rounded-xl px-6 py-16 text-center flex flex-col items-center"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-              >
-                <p className="text-base font-medium mb-1" style={{ color: "var(--texto-primario)" }}>
-                  {isAdmin ? "Aún no hay módulos de formación" : "Sin módulos disponibles todavía"}
-                </p>
-                <p className="text-sm max-w-xs" style={{ color: "var(--texto-muted)" }}>
-                  {isAdmin
-                    ? "Crea el primer módulo formativo para que tu equipo pueda empezar."
-                    : "Tu empresa publicará próximamente los módulos de formación."}
-                </p>
-                {isAdmin && (
-                  <button
-                    onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-                    className="mt-4 text-sm font-semibold px-4 py-2 rounded-lg"
-                    style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                  >
-                    Crear primer módulo
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Sin resultados con filtros activos */}
-            {modulosFiltrados.length === 0 && hayFiltrosActivos && (
-              <div
-                className="rounded-xl px-6 py-14 text-center flex flex-col items-center gap-3"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-              >
-                <svg className="w-10 h-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: "var(--texto-muted)" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z" />
-                </svg>
-                <p className="text-base font-medium" style={{ color: "var(--texto-primario)" }}>
-                  Sin resultados
-                </p>
-                <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
-                  Prueba con otros filtros o{" "}
-                  <button
-                    onClick={() => { setBusqueda(""); setFiltroEstado("todos"); setFiltroTipo("todos"); }}
-                    className="underline font-medium"
-                    style={{ color: "var(--azul-egm)" }}
-                  >
-                    Limpia la búsqueda
-                  </button>
-                </p>
-              </div>
-            )}
-
           {/* ── Grid de módulos (2 columnas estilo curso) ──────────────── */}
           {modulosFiltrados.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
