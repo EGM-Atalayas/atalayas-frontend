@@ -349,6 +349,61 @@ export default function Empleado() {
       ════════════════════════════════════════════ */}
       <div className="px-5 sm:px-8 lg:px-16 pt-8 sm:pt-10 pb-16 flex flex-col gap-10 sm:gap-14">
 
+        {/* ── SERVICIOS DEL PARQUE — chips compactos justo debajo del onboarding ── */}
+        <section>
+          <div className="mb-4 text-center">
+            <TituloSeccion noMargin>Servicios del parque</TituloSeccion>
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-center">
+            {SERVICIOS_MOCK.filter((s) => s.activo).slice(0, 8).map((s) => {
+              const chip = (
+                <span
+                  className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full text-base font-semibold transition-all"
+                  style={{
+                    background: "var(--blanco)",
+                    border:     "1px solid var(--gris-borde)",
+                    color:      "var(--texto-primario)",
+                    boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--azul-egm)";
+                    (e.currentTarget as HTMLElement).style.background  = "var(--azul-egm-light)";
+                    (e.currentTarget as HTMLElement).style.transform   = "translateY(-2px)";
+                    (e.currentTarget as HTMLElement).style.boxShadow   = "0 4px 12px rgba(27,63,126,0.18)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
+                    (e.currentTarget as HTMLElement).style.background  = "var(--blanco)";
+                    (e.currentTarget as HTMLElement).style.transform   = "translateY(0)";
+                    (e.currentTarget as HTMLElement).style.boxShadow   = "0 1px 4px rgba(0,0,0,0.04)";
+                  }}
+                >
+                  <span className="flex items-center justify-center w-6 h-6 [&_svg]:w-5 [&_svg]:h-5" style={{ color: "var(--azul-egm)" }}>
+                    {ICONO_MAP[s.icono ?? ""] ?? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </span>
+                  {s.label}
+                </span>
+              );
+              return s.href ? (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ textDecoration: "none" }}>
+                  {chip}
+                </a>
+              ) : (
+                <button key={s.label} type="button" onClick={() => router.push("/dashboard/servicios")}
+                  style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ── COMUNICACIONES (ancho completo) ── */}
         <section>
           <div className="mb-5 flex items-end justify-between gap-4">
@@ -600,66 +655,6 @@ export default function Empleado() {
             </div>
           </div>
 
-        </section>
-
-        {/* ── SERVICIOS DEL PARQUE — chips finos al final ── */}
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <TituloSeccion noMargin>Servicios del parque</TituloSeccion>
-              <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
-                Coche compartido, parking, guardería y más
-              </p>
-            </div>
-            <Link href="/dashboard/servicios"
-              className="text-sm font-semibold shrink-0 hover:underline mb-1"
-              style={{ color: "var(--azul-egm)" }}>
-              Ver todos →
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {SERVICIOS_MOCK.filter((s) => s.activo).slice(0, 8).map((s) => {
-              const chip = (
-                <span
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-colors"
-                  style={{
-                    background: "var(--blanco)",
-                    border:     "1px solid var(--gris-borde)",
-                    color:      "var(--texto-primario)",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--azul-egm)";
-                    (e.currentTarget as HTMLElement).style.background  = "var(--azul-egm-light)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
-                    (e.currentTarget as HTMLElement).style.background  = "var(--blanco)";
-                  }}
-                >
-                  <span style={{ color: "var(--azul-egm)" }}>
-                    {ICONO_MAP[s.icono ?? ""] ?? (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                  </span>
-                  {s.label}
-                </span>
-              );
-              return s.href ? (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  style={{ textDecoration: "none" }}>
-                  {chip}
-                </a>
-              ) : (
-                <button key={s.label} type="button" onClick={() => router.push("/dashboard/servicios")}
-                  style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>
-                  {chip}
-                </button>
-              );
-            })}
-          </div>
         </section>
 
       </div>
