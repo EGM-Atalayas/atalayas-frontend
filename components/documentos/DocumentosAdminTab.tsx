@@ -29,6 +29,9 @@ interface Props {
   empresaId: string;
   empleados: Array<{ usuarioId: string; nombre: string; apellidos: string; departamento: string | null }>;
   departamentos: Array<{ id: string; label: string }>;
+  /** Datos precargados desde page.tsx — evita re-loading al cambiar de tab */
+  documentosIniciales?: Documento[];
+  cargandoInicial?: boolean;
 }
 
 const TIPOS: TipoDocumento[] = ["NOMINA", "CONTRATO", "CERTIFICADO", "POLITICA", "OTRO"];
@@ -68,11 +71,12 @@ const DPTO_PALETTES: Record<string, { bg: string; color: string; border: string 
 const dptoColorFull = (d: string) =>
   DPTO_PALETTES[normDpto(d)] ?? { bg: "var(--gris-superficie)", color: "var(--texto-muted)", border: "var(--gris-borde)" };
 
-export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Props) {
+export function DocumentosAdminTab({ empresaId, empleados, departamentos, documentosIniciales, cargandoInicial = false }: Props) {
   const queryClient = useQueryClient();
 
-  // React Query — datos cacheados, no recarga al volver al tab si aún son frescos
-  const { data: documentos = [], isLoading: cargando } = useQuery<Documento[]>({
+  // El componente nunca se desmonta (CSS display), así que isLoading solo es true
+  // en la primera carga real — igual que empleados en page.tsx
+  const { data: documentos = documentosIniciales ?? [], isLoading: cargando } = useQuery<Documento[]>({
     queryKey: QK.documentos(empresaId),
     queryFn: listarDocumentosEmpresa,
     enabled: !!empresaId,
