@@ -176,7 +176,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso1 = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Tu empresa
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Únete al área empresarial de Atalayas</p>
@@ -233,7 +233,7 @@ const RegisterEmpresa: React.FC = () => {
           maxLength={9}
         />
         {erroresValidacion.telefono && (
-          <p className="text-sm mt-1" style={{ color: "#EF4444" }}>{erroresValidacion.telefono}</p>
+          <p className="text-sm mt-1" style={{ color: "var(--error)" }}>{erroresValidacion.telefono}</p>
         )}
       </div>
 
@@ -249,7 +249,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso2 = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Administrador
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Crea la cuenta con la que gestionarás tu empresa</p>
@@ -305,7 +305,7 @@ const RegisterEmpresa: React.FC = () => {
   const renderPaso3 = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}>
           Verifica tus datos
         </h2>
         <p className="text-base mt-2 text-center" style={{ color: "#6B7A8D" }}>Revisa la información antes de enviar la solicitud</p>
@@ -481,7 +481,7 @@ const RegisterEmpresa: React.FC = () => {
 
       {/* ── PANEL DERECHO ── */}
       <div
-        className="flex-1 flex flex-col items-center justify-start lg:justify-center px-0 lg:px-24 pt-0 pb-10 lg:py-0 min-h-screen lg:min-h-0"
+        className="flex-1 flex flex-col items-center justify-start lg:justify-center px-0 lg:px-24 pt-0 pb-10 lg:py-10 min-h-screen lg:min-h-0 overflow-y-auto"
         style={{ background: "#ffffff" }}
       >
         {/* Branding móvil */}
@@ -523,7 +523,7 @@ const RegisterEmpresa: React.FC = () => {
           </div>
         </div>
 
-        <div className="w-full max-w-md px-6 lg:px-0 py-8 lg:py-0">
+        <div className="w-full max-w-md px-5 sm:px-6 lg:px-0 py-6 lg:py-0">
 
           {/* Volver */}
           {paso < 4 && (
@@ -534,15 +534,7 @@ const RegisterEmpresa: React.FC = () => {
             </div>
           )}
 
-          {/* Error */}
-          {errorMensaje && paso < 4 && (
-            <div className="text-sm text-center py-3 px-4 rounded-2xl mb-4"
-              style={{ background: "var(--error-light)", border: "1px solid var(--error)", color: "var(--error)" }}>
-              {errorMensaje}
-            </div>
-          )}
-
-          <form onSubmit={paso === 2 ? handleSubmit : (e) => e.preventDefault()} className="flex flex-col">
+          <form onSubmit={paso === 3 ? handleSubmit : (e) => e.preventDefault()} className="flex flex-col">
             {paso === 1 && renderPaso1()}
             {paso === 2 && renderPaso2()}
             {paso === 3 && renderPaso3()}

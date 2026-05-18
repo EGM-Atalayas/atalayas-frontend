@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import Link from "next/link";
 
 const LoginPage: React.FC = () => {
@@ -441,13 +442,17 @@ const LoginPage: React.FC = () => {
                 <div style={{
                   padding: "20px 24px 16px",
                   background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
                 }}>
-                  <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Recuperar contraseña
-                  </h3>
-                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
-                    Introduce tu correo y te enviaremos un enlace
-                  </p>
+                  <div>
+                    <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Recuperar contraseña
+                    </h3>
+                    <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                      Introduce tu correo y te enviaremos un enlace
+                    </p>
+                  </div>
+                  <IconButton variant="glass" label="Cerrar" onClick={() => setShowForgotModal(false)} style={{ flexShrink: 0 }} />
                 </div>
 
                 <div className="p-5 sm:p-8 flex flex-col gap-5">
@@ -462,10 +467,10 @@ const LoginPage: React.FC = () => {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         placeholder="tu@empresa.com"
-                        className="w-full pl-11 pr-4 py-3 text-sm rounded-lg outline-none transition-all"
-                        style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.22)", color: "#0f1923" }}
-                        onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
-                        onBlur={(e) => { e.target.style.borderColor = "rgba(27,63,126,0.22)"; e.target.style.boxShadow = "none"; }}
+                        className="w-full pl-11 pr-4 rounded-lg outline-none border transition-all duration-150"
+                        style={{ height: "44px", background: "#ffffff", borderColor: "rgba(0,0,0,0.12)", color: "var(--texto-primario)", fontSize: "0.875rem" }}
+                        onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.08)"; }}
+                        onBlur={(e) => { e.target.style.borderColor = "rgba(0,0,0,0.12)"; e.target.style.boxShadow = "none"; }}
                         onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
                       />
                     </div>

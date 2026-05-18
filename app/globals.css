@@ -124,6 +124,16 @@ body::-webkit-scrollbar,
   --info-light:       #E8EEF8;
 
   /* ════════════════════════════════════════════
+     TABS — ADMIN PANEL (acento por pestaña)
+  ════════════════════════════════════════════ */
+  --tab-empleados:    #1B3F7E;   /* = azul-egm, header */
+  --tab-anuncios:     #0EA5E9;   /* sky blue */
+  --tab-modulos:      #7B4A85;   /* púrpura */
+  --tab-incidencias:  #B45309;   /* ámbar oscuro */
+  --tab-estadisticas: #2D8653;   /* = exito, verde esmeralda */
+  --tab-documentos:   #4E6D7E;   /* azul pizarra */
+
+  /* ════════════════════════════════════════════
      IA (índigo)
   ════════════════════════════════════════════ */
   --ia:               #4F46E5;
@@ -347,6 +357,11 @@ body {
 .animate-float-orb-1 { animation: float-orb-1 18s ease-in-out infinite; }
 .animate-float-orb-2 { animation: float-orb-2 22s ease-in-out infinite; }
 .animate-float-orb-3 { animation: float-orb-3 25s ease-in-out infinite; }
+
+/* Ocultar chatbot FAB cuando hay un modal de drill abierto */
+body.drill-modal-open [data-chatbot-fab] {
+  display: none !important;
+}
 
 @keyframes prism-breathe {
   0%, 100% { opacity: 0.5; transform: scale(1); }

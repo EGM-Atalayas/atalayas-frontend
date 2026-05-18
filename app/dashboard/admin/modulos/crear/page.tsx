@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, CircleUser, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
 import { IAButton } from "@/components/ui/IAButton";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { subirImagenModulo, subirAdjunto } from "@/lib/supabase";
+import { mapTipoToBackend } from "@/lib/types/modulos";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { PresentationCreator } from "@/components/presentation/PresentationCreator";
@@ -16,6 +17,7 @@ import { BienvenidaTemplatePanel } from "@/components/bienvenida/BienvenidaTempl
 
 // ── TIPOS ─────────────────────────────────────────────────────────────────────
 type TipoPagina = "texto" | "archivo" | "test";
+type AiTipo = "descripcion" | "test" | "podcast" | "video" | "documento";
 
 interface PreguntaPagina {
   texto: string;
@@ -52,7 +54,7 @@ let _pid = 1;
 const newId = () => _pid++;
 const ROLES_BLOQUEADOS = ["ROLE_EMPLEADO", "INVITADO"];
 
-type AudienciaTipo = "todos" | "administradores" | "departamento";
+type AudienciaTipo = "todos" | "alumno" | "departamento";
 
 const DEPARTAMENTOS = [
   { id: "PRODUCCION", label: "Producción" },
@@ -213,6 +215,8 @@ export default function CrearModuloPage() {
   const [duracion, setDuracion] = useState("medio");
   const [audiencia, setAudiencia] = useState<AudienciaTipo>("todos");
   const [deptos, setDeptos] = useState<string[]>([]);
+  const [alumnosIds, setAlumnosIds] = useState<string[]>([]);
+  const [alumnosDisponibles, setAlumnosDisponibles] = useState<{ usuarioId: string; nombre: string; apellidos?: string }[]>([]);
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState<string>("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -234,7 +238,8 @@ export default function CrearModuloPage() {
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [aiLoading, setAiLoading] = useState<"descripcion" | "contenido" | "test" | "podcast" | "video" | "documento" | null>(null);
+  const [aiSeleccionadas, setAiSeleccionadas] = useState<Record<AiTipo, boolean>>({ descripcion: false, test: false, podcast: false, video: false, documento: false });
+  const [aiLoading, setAiLoading] = useState<AiTipo | null>(null);
   const [aiError, setAiError] = useState("");
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [presentacionPanelOpen, setPresentacionPanelOpen] = useState(false);
@@ -303,6 +308,24 @@ export default function CrearModuloPage() {
   }, [editId, usuario?.empresaId]);
 
   useEffect(() => {
+    if (audiencia === "alumno" && alumnosDisponibles.length === 0 && usuario?.empresaId) {
+      apiFetch(`${API_URL}/users`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((data) => {
+          const empleados = (Array.isArray(data) ? data : []).filter(
+            (u: any) => u.codigoRol === "ROLE_EMPLEADO" || u.codigoRol === "EMPLEADO"
+          );
+          setAlumnosDisponibles(empleados.map((u: any) => ({
+            usuarioId: u.usuarioId || u.id,
+            nombre: u.nombre || "",
+            apellidos: u.apellidos || "",
+          })));
+        })
+        .catch(() => { });
+    }
+  }, [audiencia, usuario?.empresaId, alumnosDisponibles.length]);
+
+  useEffect(() => {
     if (usuario && ROLES_BLOQUEADOS.includes(usuario.codigoRol)) router.replace("/dashboard");
   }, [usuario]);
   if (!usuario || ROLES_BLOQUEADOS.includes(usuario.codigoRol)) return null;
@@ -310,159 +333,7 @@ export default function CrearModuloPage() {
   const toggleDepto = (id: string) =>
     setDeptos((p) => p.includes(id) ? p.filter((d) => d !== id) : [...p, id]);
 
-  async function generarConIA(tipo: "descripcion" | "contenido" | "test" | "podcast" | "video" | "documento") {
-    setAiError("");
-    if (!nombre.trim() && !pdfFile) {
-      setAiError("Necesitas un título o un documento PDF para que la IA pueda generar contenido.");
-      return;
-    }
-    if ((tipo === "contenido" || tipo === "test") && !paginaActiva) return;
-    setAiLoading(tipo);
-    try {
-      const contenidoExistente = paginaActiva?.contenido || "";
-      const prompts: Record<string, string> = {
-        descripcion: `Genera una descripción corta y profesional (máximo 150 caracteres) para un módulo de formación llamado "${nombre}". Devuelve SOLO la descripción.`,
-        contenido: `Genera contenido educativo claro y estructurado para una página titulada "${paginaActiva?.titulo}" en un módulo sobre "${nombre}". ${contenidoExistente ? `Amplía o mejora este contenido existente: ${contenidoExistente}` : ""} Usa ## para títulos y - para listas. Máximo 600 palabras. Devuelve SOLO el contenido en formato markdown.`,
-        test: `Crea 5 preguntas de test de opción múltiple (4 opciones cada una) basadas en el módulo "${nombre}". ${contenidoExistente ? `Contexto adicional: ${contenidoExistente}` : ""} Devuelve el resultado estrictamente en formato JSON: [{"texto":"pregunta","opciones":["op1","op2","op3","op4"],"correcta":0}] sin texto adicional.`,
-        podcast: `Crea un podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 500 palabras. Devuelve SOLO el guion en español, listo para ser narrado en voz alta.`,
-        video: `Genera un array JSON de slides para un vídeo educativo sobre "${nombre}". Cada slide debe tener: numero (entero), titulo (string), contenido (string con viñetas separadas por \\n), notas (string opcional). Máximo 8 slides. Estructura: 1 slide intro, 4-5 slides de contenido, 1 slide resumen, 1 slide cierre. Devuelve SOLO el JSON, sin formato adicional. Ejemplo: [{"numero":1,"titulo":"Introducción","contenido":"Punto 1\\nPunto 2","notas":"Hablar pausado"}].`,
-        documento: `Crea un documento de formación completo y estructurado sobre "${nombre}". Incluye: resumen ejecutivo, introducción, 3-4 secciones con subtítulos (##), conclusiones y recursos adicionales. Usa viñetas (-) donde sea útil. Máximo 1000 palabras. Devuelve SOLO el documento en markdown.`,
-      };
 
-      // Usar /api/chat/generate-content para descripción y test (mejor para JSON estructurado)
-      // Usar /api/chat para contenido, podcast, video, documento (texto libre)
-      const usarGenerateContent = tipo === "descripcion" || tipo === "test";
-      const endpoint = usarGenerateContent ? "/api/chat/generate-content" : "/api/chat";
-
-      const body = usarGenerateContent
-        ? {
-          prompt: prompts[tipo],
-          systemPrompt: tipo === "test"
-            ? "Eres un asistente que genera preguntas de test. Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown. Ejemplo: [{\"texto\":\"Pregunta\",\"opciones\":[\"A\",\"B\",\"C\",\"D\"],\"correcta\":0}]"
-            : undefined,
-        }
-        : { messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`[IA] Error ${res.status}:`, errorText);
-        throw new Error("Error en la respuesta");
-      }
-
-      let textoLimpio = "";
-
-      if (usarGenerateContent) {
-        // Para generate-content, la respuesta es JSON
-        const data = await res.json();
-        if (tipo === "descripcion" && data.descripcion) {
-          textoLimpio = data.descripcion;
-        } else {
-          textoLimpio = JSON.stringify(data);
-        }
-      } else {
-        // Para chat normal, leer streaming
-        if (!res.body) throw new Error("No hay body");
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          textoLimpio += dec.decode(value);
-        }
-      }
-
-      textoLimpio = textoLimpio.trim();
-
-      if (!textoLimpio) throw new Error("Respuesta vacía");
-
-      // Aplicar el contenido generado según el tipo
-      if (tipo === "descripcion") {
-        setDescripcion(textoLimpio);
-      } else if (tipo === "contenido" && paginaActiva) {
-        actualizarPagina(paginaActiva.id, "contenido", textoLimpio);
-      } else if (tipo === "test" && paginaActiva) {
-        try {
-          const preguntas = JSON.parse(textoLimpio);
-          if (Array.isArray(preguntas) && preguntas.length > 0) {
-            const preguntasFormateadas = preguntas.map((p: any) => ({
-              texto: p.texto || p.text || "",
-              opciones: Array.isArray(p.opciones || p.options) ? (p.opciones || p.options) : ["", "", "", ""],
-              correcta: typeof p.correcta === "number" ? p.correcta : typeof p.correct === "number" ? p.correct : 0,
-            }));
-            setPaginas((p) => p.map((pg) => pg.id !== paginaActiva.id ? pg : { ...pg, tipo: "test", preguntas: preguntasFormateadas }));
-          } else {
-            throw new Error("Formato incorrecto");
-          }
-        } catch (e) {
-          console.error("[IA] Error parseando test:", e);
-          setAiError("Error al procesar el test generado. Intenta de nuevo.");
-        }
-      } else if (tipo === "documento") {
-        const nuevaPagina: PaginaModulo = {
-          id: newId(),
-          tipo: "texto",
-          titulo: `Documento: ${paginaActiva?.titulo || "Nueva página"}`,
-          contenido: textoLimpio,
-          archivoUrl: null,
-          archivoNombre: null,
-          archivoFile: null,
-          preguntas: [],
-        };
-        setPaginas((p) => [...p, nuevaPagina]);
-        setPaginaActivaId(nuevaPagina.id);
-      } else if (tipo === "podcast") {
-        setScriptPodcast(textoLimpio);
-        setTiposSalida((prev) => prev.includes("podcast") ? prev : [prev, "podcast"].filter(Boolean).join(","));
-        const nuevaPagina: PaginaModulo = {
-          id: newId(),
-          tipo: "texto",
-          titulo: `Podcast: ${paginaActiva?.titulo || "Nueva página"}`,
-          contenido: textoLimpio,
-          archivoUrl: null,
-          archivoNombre: null,
-          archivoFile: null,
-          preguntas: [],
-        };
-        setPaginas((p) => [...p, nuevaPagina]);
-        setPaginaActivaId(nuevaPagina.id);
-      } else if (tipo === "video") {
-        try {
-          const slides = JSON.parse(textoLimpio);
-          if (Array.isArray(slides) && slides.length > 0) {
-            setScriptVideo(textoLimpio);
-            setTiposSalida((prev) => prev.includes("video") ? prev : [prev, "video"].filter(Boolean).join(","));
-            const nuevaPagina: PaginaModulo = {
-              id: newId(),
-              tipo: "texto",
-              titulo: `Vídeo: ${paginaActiva?.titulo || "Nueva página"}`,
-              contenido: textoLimpio,
-              archivoUrl: null,
-              archivoNombre: null,
-              archivoFile: null,
-              preguntas: [],
-            };
-            setPaginas((p) => [...p, nuevaPagina]);
-            setPaginaActivaId(nuevaPagina.id);
-          } else {
-            throw new Error("Formato inválido");
-          }
-        } catch {
-          setAiError("Error al procesar los slides generados. Intenta de nuevo.");
-        }
-      }
-    } catch (err) {
-      console.error("[IA] Error:", err);
-      setAiError("La IA no está disponible. Verifica que el backend esté funcionando.");
-    } finally {
-      setAiLoading(null);
-    }
-  }
 
   const nuevaPagina = (tipo: TipoPagina) => {
     const nueva: PaginaModulo = {
@@ -529,10 +400,89 @@ export default function CrearModuloPage() {
 
   const paginaActiva = paginas.find((p) => p.id === paginaActivaId) ?? null;
 
+  async function generarAiSave(): Promise<PaginaModulo[]> {
+    const nuevas: PaginaModulo[] = [];
+    const activos = Object.entries(aiSeleccionadas).filter(([, v]) => v).map(([k]) => k as AiTipo);
+    if (activos.length === 0) return nuevas;
+    setAiError("");
+
+    const contenidoExistente = paginaActiva?.contenido || "";
+    const prompts: Record<AiTipo, string> = {
+      descripcion: `Genera una descripción corta y profesional (máximo 150 caracteres) para un módulo de formación llamado "${nombre}". Devuelve SOLO la descripción, sin JSON ni formato adicional.`,
+      test: `Crea 5 preguntas de test de opción múltiple (4 opciones cada una) basadas en el módulo "${nombre}". ${contenidoExistente ? `Contexto adicional: ${contenidoExistente}` : ""} Devuelve el resultado estrictamente en formato JSON: [{"texto":"pregunta","opciones":["op1","op2","op3","op4"],"correcta":0}] sin texto adicional.`,
+      podcast: `Crea un podcast de 5-7 minutos sobre "${nombre}". Estructura: introducción, 3 puntos clave desarrollados, conclusiones. Incluye notas para el locutor entre corchetes [ej: pausa]. Máximo 500 palabras. Devuelve SOLO el guion en español, listo para ser narrado en voz alta.`,
+      video: `Genera un array JSON de slides para un vídeo educativo sobre "${nombre}". Cada slide debe tener: numero (entero), titulo (string), contenido (string con viñetas separadas por \\n), notas (string opcional). Máximo 8 slides. Estructura: 1 slide intro, 4-5 slides de contenido, 1 slide resumen, 1 slide cierre. Devuelve SOLO el JSON, sin formato adicional. Ejemplo: [{"numero":1,"titulo":"Introducción","contenido":"Punto 1\\nPunto 2","notas":"Hablar pausado"}].`,
+      documento: `Crea un documento de formación completo y estructurado sobre "${nombre}". Incluye: resumen ejecutivo, introducción, 3-4 secciones con subtítulos (##), conclusiones y recursos adicionales. Usa viñetas (-) donde sea útil. Máximo 1000 palabras. Devuelve SOLO el documento en markdown.`,
+    };
+
+    for (const tipo of activos) {
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: [{ role: "user" as const, content: prompts[tipo] }], context: {} }),
+        });
+        if (!res.ok) { setAiError(`Error al generar ${tipo}: el servicio de IA no está disponible`); continue; }
+
+        let texto = "";
+        const reader = res.body!.getReader();
+        const dec = new TextDecoder();
+        while (true) { const { done, value } = await reader.read(); if (done) break; texto += dec.decode(value); }
+        texto = texto.trim();
+        if (!texto) { setAiError(`Error al generar ${tipo}: respuesta vacía`); continue; }
+
+        if (tipo === "descripcion") {
+          setDescripcion(texto);
+        } else if (tipo === "test") {
+          const jsonMatch = texto.match(/\[[\s\S]*?\]/);
+          if (!jsonMatch) { setAiError(`Error al generar test: la IA no devolvió un formato válido`); continue; }
+          try {
+            const preguntas = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(preguntas) && preguntas.length > 0) {
+              nuevas.push({
+                id: newId(), tipo: "test", titulo: `Test: ${nombre}`,
+                contenido: contenidoExistente || "Responde las siguientes preguntas:",
+                archivoUrl: null, archivoNombre: null, archivoFile: null,
+                preguntas: preguntas.map((p: any) => ({
+                  texto: p.texto || p.text || "",
+                  opciones: Array.isArray(p.opciones || p.options) ? (p.opciones || p.options) : ["", "", "", ""],
+                  correcta: typeof p.correcta === "number" ? p.correcta : typeof p.correct === "number" ? p.correct : 0,
+                })),
+              });
+            } else { setAiError("Error al generar test: formato de preguntas inválido"); }
+          } catch { setAiError("Error al generar test: la IA no devolvió JSON válido"); }
+        } else if (tipo === "podcast") {
+          setScriptPodcast(texto);
+          setTiposSalida((prev) => prev.includes("podcast") ? prev : [prev, "podcast"].filter(Boolean).join(","));
+          nuevas.push({ id: newId(), tipo: "texto", titulo: `Podcast: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+        } else if (tipo === "video") {
+          const jsonMatch = texto.match(/\[[\s\S]*?\]/);
+          if (!jsonMatch) { setAiError(`Error al generar vídeo: la IA no devolvió un formato válido`); continue; }
+          try {
+            const slides = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(slides) && slides.length > 0) {
+              setScriptVideo(texto);
+              setTiposSalida((prev) => prev.includes("video") ? prev : [prev, "video"].filter(Boolean).join(","));
+              nuevas.push({ id: newId(), tipo: "texto", titulo: `Vídeo: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+            } else { setAiError("Error al generar vídeo: formato de slides inválido"); }
+          } catch { setAiError("Error al generar vídeo: la IA no devolvió JSON válido"); }
+        } else if (tipo === "documento") {
+          nuevas.push({ id: newId(), tipo: "texto", titulo: `Documento: ${nombre}`, contenido: texto, archivoUrl: null, archivoNombre: null, archivoFile: null, preguntas: [] });
+        }
+      } catch { setAiError(`Error al generar ${tipo}: no se pudo conectar con la IA`); }
+    }
+    return nuevas;
+  }
+
   const guardarModulo = async () => {
     if (!nombre.trim()) { setErrorMsg("El nombre del módulo es obligatorio"); return; }
     setGuardando(true); setErrorMsg("");
     try {
+      // Generar contenido IA para tipos seleccionados
+      const paginasAI = await generarAiSave();
+      const paginasCompletas = [...paginas, ...paginasAI];
+      setPaginas(paginasCompletas);
+
       let imagenPortadaUrl: string | null = null;
       if (portadaFile) {
         try { imagenPortadaUrl = await subirImagenModulo(portadaFile); }
@@ -543,7 +493,7 @@ export default function CrearModuloPage() {
 
       // Subir archivos de las páginas tipo archivo
       const paginasConArchivos = await Promise.all(
-        paginas.map(async (p) => {
+        paginasCompletas.map(async (p) => {
           if (p.tipo === "archivo" && p.archivoFile) {
             try {
               const adjunto = await subirAdjunto(p.archivoFile);
@@ -572,13 +522,14 @@ export default function CrearModuloPage() {
         body: JSON.stringify({
           nombre: nombre.trim(),
           descripcion: descripcion.trim(),
-          tipoModulo: categoria,
+          tipoModulo: mapTipoToBackend(categoria),
           activo,
           empresaId: usuario?.empresaId ?? null,
           idioma,
           duracion,
           audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
+          usuariosIds: audiencia === "alumno" ? alumnosIds : [],
           contenidoMarkdown: contenidoJson,
           imagenPortadaUrl,
           testPreguntas: null,
@@ -614,7 +565,9 @@ export default function CrearModuloPage() {
       const data = await res.json();
       setNombre(data.nombre || "");
       setDescripcion(data.descripcion || "");
-      if (data.categoria) setCategoria(data.categoria);
+      if (data.categoria && ["GENERAL", "ESPECIALIZADO", "ESPECIALIZADO_IA", "CUMPLIMIENTO", "ONBOARDING"].includes(data.categoria)) {
+        setCategoria(data.categoria);
+      }
 
       // Procesar páginas
       const paginasGeneradas: PaginaModulo[] = (data.paginas || []).map((p: any, i: number) => ({
@@ -660,10 +613,11 @@ export default function CrearModuloPage() {
 
   const resetear = () => {
     setNombre(""); setDescripcion(""); setCategoria("ESPECIALIZADO");
-    setIdioma("es"); setDuracion("medio"); setAudiencia("todos"); setDeptos([]);
+    setIdioma("es"); setDuracion("medio"); setAudiencia("todos"); setDeptos([]); setAlumnosIds([]);
     setPaginas([]); setPaginaActivaId(null); setPortadaFile(null); setPortadaPreview("");
     setScriptPodcast(""); setTiposSalida("documentacion");
     setGuardado(false); setErrorMsg(""); setActivo(true); setMostrarSelectorTipo(false);
+    setAiSeleccionadas({ descripcion: false, test: false, podcast: false, video: false, documento: false });
   };
 
   const inputBase = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" };
@@ -689,7 +643,7 @@ export default function CrearModuloPage() {
 
   return (
     <div className="w-full min-h-screen pt-20" style={{ background: "var(--gris-pagina)" }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .28s ease both}`}</style>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.05)}to{transform:scale(1)}}.fade-up{animation:fadeUp .28s ease both}.ai-pop{animation:pop .25s ease both}`}</style>
 
       {/* ══ HEADER BREADCRUMBS ══ */}
       <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
@@ -702,11 +656,7 @@ export default function CrearModuloPage() {
                   style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
                   ← Volver
                 </Link>
-                {!editId && (
-                  <IAButton size="sm" onClick={() => setMostrarIA(true)}>
-                    Crear con IA
-                  </IAButton>
-                )}
+
               </div>
               <div>
                 <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
@@ -762,11 +712,6 @@ export default function CrearModuloPage() {
                         className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all"
                         style={inputBase} onFocus={onF} onBlur={onB} />
                     </div>
-                    <PdfUpload
-                      file={pdfFile}
-                      onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
-                      onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
-                    />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Categoría</label>
@@ -806,7 +751,7 @@ export default function CrearModuloPage() {
                       <div className="flex gap-2">
                         {([
                           { key: "todos" as AudienciaTipo, label: "Todos", icon: <UsersRound /> },
-                          { key: "administradores" as AudienciaTipo, label: "Admins", icon: <Shield /> },
+                          { key: "alumno" as AudienciaTipo, label: "Alumno", icon: <CircleUser /> },
                           { key: "departamento" as AudienciaTipo, label: "Departamento", icon: <Briefcase /> },
                         ]).map((op) => {
                           const sel = audiencia === op.key;
@@ -839,6 +784,32 @@ export default function CrearModuloPage() {
                               </button>
                             );
                           })}
+                        </div>
+                      )}
+                      {audiencia === "alumno" && (
+                        <div className="mt-3">
+                          {alumnosDisponibles.length === 0 ? (
+                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Cargando alumnos...</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {alumnosDisponibles.map((a) => {
+                                const sel = alumnosIds.includes(a.usuarioId);
+                                return (
+                                  <button key={a.usuarioId} type="button" onClick={() =>
+                                    setAlumnosIds((p) => p.includes(a.usuarioId) ? p.filter((id) => id !== a.usuarioId) : [...p, a.usuarioId])
+                                  }
+                                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                                    style={{
+                                      border: `1.5px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`,
+                                      background: sel ? "var(--azul-egm-light)" : "var(--blanco)",
+                                      color: sel ? "var(--azul-egm)" : "var(--texto-muted)",
+                                    }}>
+                                    {sel && <Check className="w-3 h-3 shrink-0" />}{a.nombre} {a.apellidos || ""}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -874,160 +845,129 @@ export default function CrearModuloPage() {
             />
           )}
 
-          {/* ══ PANEL IA ══ */}
+          {/* ══ PANEL IA UNIFICADO ══ */}
           <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
             <button type="button" onClick={() => setAiPanelOpen(!aiPanelOpen)}
               className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderBottom: aiPanelOpen ? "1px solid #bfdbfe" : "none" }}>
+              style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: aiPanelOpen ? "1px solid #ddd6fe" : "none" }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#2563eb", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
                 <div className="text-left">
-                  <p className="text-sm font-bold" style={{ color: "#1e40af" }}>Asistente IA</p>
-                  <p className="text-xs" style={{ color: "#3b82f6" }}>Genera contenido basado en el título: "{nombre || '...'}"</p>
+                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Asistente IA</p>
+                  <p className="text-xs" style={{ color: "#7c3aed" }}>Todas las herramientas de inteligencia artificial</p>
                 </div>
               </div>
               <div className="transition-transform" style={{ transform: aiPanelOpen ? "rotate(0)" : "rotate(-90deg)" }}>
-                <ChevronDown style={{ color: "#2563eb" }} />
+                <ChevronDown style={{ color: "#7c3aed" }} />
               </div>
             </button>
 
             {aiPanelOpen && (
               <div className="px-6 py-5 fade-up">
-                {!nombre.trim() && !pdfFile ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm font-semibold mb-1" style={{ color: "var(--texto-secundario)" }}>Define un título o sube un PDF primero</p>
-                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>La IA necesita el título o un documento PDF como referencia</p>
+                {/* Crear módulo completo */}
+                <button type="button" onClick={() => setMostrarIA(true)}
+                  className="w-full flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all mb-6"
+                  style={{ border: "1.5px solid #ddd6fe", background: "linear-gradient(135deg, #f5f3ff, #ede9fe)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
+                    <Sparkles className="w-5 h-5" />
                   </div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--texto-muted)" }}>Generar contenido</p>
-                    <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Basado en: "{nombre}"</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Crear módulo completo con IA</p>
+                    <p className="text-xs" style={{ color: "#7c3aed" }}>Describe el módulo y la IA lo generará automáticamente</p>
+                  </div>
+                </button>
 
-                    {/* Descripción */}
-                    <button type="button" onClick={() => generarConIA("descripcion")} disabled={aiLoading === "descripcion"}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "descripcion" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "descripcion" ? <Loader className="w-4 h-4 animate-spin" /> : "📝"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Descripción</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Genera una descripción corta y profesional</p>
-                      </div>
-                    </button>
+                {/* Generar contenido */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Generar contenido</span>
+                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
+                </div>
 
-                    {/* Contenido de página */}
-                    <button type="button" onClick={() => generarConIA("contenido")} disabled={aiLoading === "contenido" || !paginaActiva || paginaActiva?.tipo !== "texto"}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "contenido" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "contenido" ? <Loader className="w-4 h-4 animate-spin" /> : "📄"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Contenido de página</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Genera contenido educativo para la página activa</p>
-                      </div>
-                    </button>
+                <div className="mb-5">
+                  <PdfUpload
+                    file={pdfFile}
+                    onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
+                    onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
+                  />
+                </div>
 
-                    {/* Test */}
-                    <button type="button" onClick={() => generarConIA("test")} disabled={aiLoading === "test" || !paginaActiva}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "test" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "test" ? <Loader className="w-4 h-4 animate-spin" /> : "✅"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Test de evaluación</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Genera 5 preguntas de test en la página activa</p>
-                      </div>
-                    </button>
+                {nombre.trim() || pdfFile ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
+                    {[
+                      { key: "descripcion" as AiTipo, label: "Descripción", icon: "📝", desc: "Corta y profesional" },
+                      { key: "test" as AiTipo, label: "Test", icon: "✅", desc: "5 preguntas" },
+                      { key: "podcast" as AiTipo, label: "Podcast", icon: "🎙️", desc: "5-7 minutos" },
+                      { key: "video" as AiTipo, label: "Vídeo", icon: "🎬", desc: "Slides educativos" },
+                      { key: "documento" as AiTipo, label: "Documento", icon: "📑", desc: "Completo" },
+                    ].map((opt) => {
+                      const sel = aiSeleccionadas[opt.key];
+                      return (
+                        <button key={opt.key} type="button"
+                          onClick={() => setAiSeleccionadas((p) => ({ ...p, [opt.key]: !p[opt.key] }))}
+                          className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-center transition-all ${sel ? "ai-pop" : ""}`}
+                          style={{
+                            border: `1.5px solid ${sel ? "#7c3aed" : "var(--gris-borde)"}`,
+                            background: sel ? "#f5f3ff" : "var(--gris-pagina)",
+                            color: sel ? "#5b21b6" : "var(--texto-primario)",
+                          }}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-lg">{opt.icon}</span>
+                            {sel && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "#7c3aed" }} />}
+                          </div>
+                          <span className="text-xs font-semibold">{opt.label}</span>
+                          <span className="text-[10px]" style={{ color: sel ? "#7c3aed" : "var(--texto-muted)" }}>{opt.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
-                    {/* Podcast */}
-                    <button type="button" onClick={() => generarConIA("podcast")} disabled={aiLoading === "podcast"}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "podcast" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "podcast" ? <Loader className="w-4 h-4 animate-spin" /> : "🎙️"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Podcast</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un podcast de 5-7 minutos</p>
-                      </div>
-                    </button>
+                {/* Presentación */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Presentación</span>
+                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
+                </div>
 
-                    {/* Video */}
-                    <button type="button" onClick={() => generarConIA("video")} disabled={aiLoading === "video"}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "video" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "video" ? <Loader className="w-4 h-4 animate-spin" /> : "🎬"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Vídeo</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Crea un vídeo educativo de 3-5 min</p>
-                      </div>
-                    </button>
+                <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                  style={{ border: `1.5px solid ${presentacionPanelOpen ? "#ddd6fe" : "var(--gris-borde)"}`, background: presentacionPanelOpen ? "#f5f3ff" : "var(--gris-pagina)" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#7c3aed", color: "#fff" }}>
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
+                      {presentacionGuardada ? `Presentación lista — ${presentacionGuardada.slides.length} slides` : "Presentación con IA"}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>
+                      {presentacionGuardada ? "Generada desde PDF" : "Genera slides automáticamente desde un PDF"}
+                    </p>
+                  </div>
+                </button>
 
-                    {/* Documento */}
-                    <button type="button" onClick={() => generarConIA("documento")} disabled={aiLoading === "documento"}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
-                      style={{ border: "1.5px solid #bfdbfe", background: aiLoading === "documento" ? "#dbeafe" : "var(--blanco)" }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {aiLoading === "documento" ? <Loader className="w-4 h-4 animate-spin" /> : "📑"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Documento completo</p>
-                        <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>Genera un documento de formación estructurado</p>
-                      </div>
-                    </button>
+                {presentacionPanelOpen && (
+                  <div className="mt-3 px-4 py-4 rounded-xl" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+                    <PresentationCreator
+                      moduleTitle={nombre}
+                      onSave={(slides, themeId) => {
+                        setPresentacionGuardada({ slides, themeId });
+                        setPresentacionPanelOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {aiError && (
+                  <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                    <Sparkles size={16} strokeWidth={2} className="shrink-0" />
+                    <span className="flex-1">{aiError}</span>
+                    <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
                   </div>
                 )}
               </div>
             )}
           </div>
-
-          {/* ══ PANEL PRESENTACIÓN IA ══ */}
-          <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: presentacionPanelOpen ? "1px solid #ddd6fe" : "none" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
-                <div className="text-left">
-                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Presentación con IA</p>
-                  <p className="text-xs" style={{ color: "#7c3aed" }}>
-                    {presentacionGuardada
-                      ? `Presentación lista — ${presentacionGuardada.slides.length} slides`
-                      : "Genera slides automáticamente desde un PDF"}
-                  </p>
-                </div>
-              </div>
-              <div className="transition-transform" style={{ transform: presentacionPanelOpen ? "rotate(0)" : "rotate(-90deg)" }}>
-                <ChevronDown style={{ color: "#7c3aed" }} />
-              </div>
-            </button>
-
-            {presentacionPanelOpen && (
-              <div className="px-6 py-5 fade-up">
-                <PresentationCreator
-                  moduleTitle={nombre}
-                  onSave={(slides, themeId) => {
-                    setPresentacionGuardada({ slides, themeId });
-                    setPresentacionPanelOpen(false);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ══ MENSAJE ERROR IA ══ */}
-          {aiError && (
-            <div className="mb-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-              <Sparkles size={16} strokeWidth={2} className="shrink-0" />
-              <span className="flex-1">{aiError}</span>
-              <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
-            </div>
-          )}
 
           {/* ══ EDITOR DE PÁGINAS ══ */}
           <div className="rounded-2xl overflow-hidden fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", minHeight: "500px" }}>
@@ -1294,13 +1234,13 @@ export default function CrearModuloPage() {
               style={{ color: "var(--texto-muted)" }}>
               Cancelar
             </button>
-            <button type="button" onClick={guardarModulo} disabled={guardando || paginas.length === 0}
+            <button type="button" onClick={guardarModulo} disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all"
               style={{
-                background: guardando || paginas.length === 0 ? "var(--gris-superficie)" : "var(--verde-oliva)",
-                color: guardando || paginas.length === 0 ? "var(--texto-muted)" : "#fff",
-                boxShadow: guardando || paginas.length === 0 ? "none" : "0 4px 14px rgba(45,125,78,0.2)",
-                cursor: guardando || paginas.length === 0 ? "not-allowed" : "pointer",
+                background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--gris-superficie)" : "var(--verde-oliva)",
+                color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--texto-muted)" : "#fff",
+                boxShadow: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "none" : "0 4px 14px rgba(45,125,78,0.2)",
+                cursor: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "not-allowed" : "pointer",
               }}>
               {guardando ? (
                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</>

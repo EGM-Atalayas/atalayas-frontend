@@ -38,6 +38,52 @@ export async function listarAsignaciones(documentoId: string): Promise<Asignacio
   return res.json();
 }
 
+export async function desasignarDocumento(
+  documentoId: string,
+  asignacionIds: string[]
+): Promise<void> {
+  const res = await apiFetch(`${API_URL}/documentos/${documentoId}/asignaciones`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asignacionIds }),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || "No se pudo desasignar");
+  }
+}
+
+export async function asignarDocumento(
+  documentoId: string,
+  data: { asignarATodos: boolean; usuariosIds?: string[]; departamentos?: string[]; notificar: boolean }
+): Promise<void> {
+  const res = await apiFetch(`${API_URL}/documentos/${documentoId}/asignaciones`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || "No se pudo asignar el documento");
+  }
+}
+
+export async function editarDocumento(
+  documentoId: string,
+  data: { titulo: string; descripcion?: string | null; tipo: string; requiereFirma: boolean }
+): Promise<Documento> {
+  const res = await apiFetch(`${API_URL}/documentos/${documentoId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || "No se pudo editar el documento");
+  }
+  return res.json();
+}
+
 export async function desactivarDocumento(documentoId: string): Promise<void> {
   const res = await apiFetch(`${API_URL}/documentos/${documentoId}`, {
     method: "DELETE",

@@ -23,13 +23,42 @@ interface ModuloGenerado {
   portadaPrompt: string
 }
 
-function parseModulo(text: string): ModuloGenerado | null {
-  let jsonStr = text.trim()
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (jsonMatch) jsonStr = jsonMatch[1].trim()
-  const objectMatch = jsonStr.match(/\{[\s\S]*\}/)
-  if (objectMatch) jsonStr = objectMatch[0]
+function repararJson(texto: string): string {
+  let limpio = texto.trim()
+  // Quitar bloques de código markdown
+  const codeMatch = limpio.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeMatch) limpio = codeMatch[1].trim()
+  // Encontrar el primer { y trabajar desde ahí
+  const start = limpio.indexOf("{")
+  if (start === -1) return texto
+  limpio = limpio.slice(start)
+  // Eliminar comentarios de una línea (//...)
+  limpio = limpio.replace(/\/\/.*$/gm, "")
+  // Eliminar trailing commas antes de ] o }
+  limpio = limpio.replace(/,(\s*[}\]])/g, "$1")
+  // Balancear llaves y corchetes (por si la respuesta se truncó)
+  const abiertos = (limpio.match(/\{/g) || []).length
+  const cerrados = (limpio.match(/\}/g) || []).length
+  if (cerrados < abiertos) limpio += "}".repeat(abiertos - cerrados)
+  const arrayAbiertos = (limpio.match(/\[/g) || []).length
+  const arrayCerrados = (limpio.match(/\]/g) || []).length
+  if (arrayCerrados < arrayAbiertos) limpio += "]".repeat(arrayAbiertos - arrayCerrados)
+  // Cortar después del último } balanceado
+  const lastClose = limpio.lastIndexOf("}")
+  if (lastClose > 0) limpio = limpio.slice(0, lastClose + 1)
+  return limpio
+}
 
+function extraerCampo(texto: string, clave: string): string | null {
+  const re = new RegExp(`"${clave}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`)
+  const m = texto.match(re)
+  return m ? m[1] : null
+}
+
+function parseModulo(text: string): ModuloGenerado | null {
+  const jsonStr = repararJson(text)
+
+  // Intentar JSON.parse con el texto reparado
   try {
     const parsed = JSON.parse(jsonStr)
     if (parsed.nombre && Array.isArray(parsed.paginas)) {
@@ -53,9 +82,43 @@ function parseModulo(text: string): ModuloGenerado | null {
         portadaPrompt: parsed.portadaPrompt || parsed.nombre,
       }
     }
-  } catch {
-    return null
-  }
+  } catch { /* ignorar, intentar fallback */ }
+
+  // Fallback: extraer campos individuales por regex
+  try {
+    const nombre = extraerCampo(jsonStr, "nombre") || extraerCampo(jsonStr, "title")
+    if (!nombre) return null
+    const descripcion = extraerCampo(jsonStr, "descripcion") || extraerCampo(jsonStr, "description") || ""
+    const categoria = extraerCampo(jsonStr, "categoria") || "ESPECIFICA"
+    const scriptPodcast = extraerCampo(jsonStr, "scriptPodcast") || ""
+    const portadaPrompt = extraerCampo(jsonStr, "portadaPrompt") || nombre
+
+    // Extraer array de páginas
+    const pagesMatch = jsonStr.match(/"paginas"\s*:\s*(\[[\s\S]*?(?:\]\s*[,\}]|\]$))/)
+    let paginas: PaginaGenerada[] = []
+    if (pagesMatch) {
+      try {
+        const paginasRaw = JSON.parse(pagesMatch[1])
+        if (Array.isArray(paginasRaw)) {
+          paginas = paginasRaw.map((p: any) => ({
+            tipo: p.tipo === "test" ? "test" : "texto",
+            titulo: p.titulo || "Página",
+            contenido: p.contenido || "",
+            preguntas: Array.isArray(p.preguntas)
+              ? p.preguntas.map((q: any) => ({
+                  texto: q.texto || "",
+                  opciones: Array.isArray(q.opciones) && q.opciones.length >= 2 ? q.opciones : ["Verdadero", "Falso"],
+                  correcta: typeof q.correcta === "number" ? q.correcta : 0,
+                }))
+              : undefined,
+          }))
+        }
+      } catch { /* intentar sin parsear cada página individual */ }
+    }
+
+    return { nombre, descripcion, categoria, paginas, scriptPodcast, portadaPrompt }
+  } catch { /* ignora */ }
+
   return null
 }
 
@@ -68,45 +131,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt requerido" }, { status: 400 })
     }
 
-    const systemPrompt = `Eres AtalaIA, asistente IA de Atalayas Ciudad Empresarial.
-Genera un módulo formativo completo en español a partir de la descripción del usuario.
+    const systemPrompt = `Eres AtalaIA y generas módulos formativos en español.
+Responde ÚNICAMENTE con JSON puro, sin markdown, sin texto adicional.
 
-Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown:
+CATEGORIAS validas (elige UNA): GENERAL, ESPECIALIZADO, ESPECIALIZADO_IA, CUMPLIMIENTO, ONBOARDING
+
 {
-  "nombre": "título del módulo (máx 12 palabras)",
-  "descripcion": "2-4 frases describiendo el módulo",
-  "categoria": "elegir UNA de: IDENTIDAD, BASICA, ESPECIFICA, DESARROLLO, RECOMPENSAS, COMUNIDAD, CUMPLIMIENTO, LIDERAZGO, TECNICO, SOFT_SKILLS, ONBOARDING",
+  "nombre": "título corto del módulo",
+  "descripcion": "2-3 frases",
+  "categoria": "GENERAL",
   "paginas": [
     {
       "tipo": "texto",
-      "titulo": "título de la página",
-      "contenido": "contenido extenso en español, mínimo 5 párrafos, tono profesional y didáctico. Incluye ejemplos prácticos y explicaciones detalladas."
+      "titulo": "título de página",
+      "contenido": "2-3 párrafos en español"
+    },
+    {
+      "tipo": "texto",
+      "titulo": "otro título",
+      "contenido": "2-3 párrafos en español"
     },
     {
       "tipo": "test",
-      "titulo": "Evaluación del módulo",
-      "contenido": "Responde las siguientes preguntas para evaluar tus conocimientos",
+      "titulo": "Evaluación",
+      "contenido": "Responde las preguntas",
       "preguntas": [
         {
           "texto": "pregunta con 4 opciones",
-          "opciones": ["opción A", "opción B", "opción C", "opción D"],
+          "opciones": ["A", "B", "C", "D"],
           "correcta": 0
         }
       ]
     }
   ],
-  "scriptPodcast": "guion extenso para podcast narrado en español, tono conversacional y didáctico. Debe presentar el módulo, explicar los conceptos clave de cada página y cerrar con un resumen. Mínimo 500 palabras, como si fuera un presentador hablando directamente al oyente.",
-  "portadaPrompt": "descripción visual en 10-15 palabras en inglés para una imagen de portada representativa del módulo. Ej: 'professional workplace safety training employees factory'"
+  "scriptPodcast": "guion corto para podcast, 2-3 párrafos en español",
+  "portadaPrompt": "keywords en inglés para imagen de portada"
 }
 
 REGLAS:
-- Genera SIEMPRE al menos 3 páginas de tipo "texto" y 1 página de tipo "test" al final
-- Cada página de texto debe tener contenido sustancial (mínimo 5 párrafos)
-- El test debe tener entre 3 y 5 preguntas con 4 opciones cada una
-- La categoría debe ser una del listado
-- El scriptPodcast debe ser un guion extenso y natural listo para locución
-- portadaPrompt son keywords en inglés para buscar una imagen
-- No incluyas markdown ni texto adicional, solo el JSON`
+- 2 páginas de texto y 1 test al final (mínimo)
+- Test: 3 preguntas, 4 opciones cada una
+- Sin markdown, sin texto adicional, SOLO el JSON`
 
     let fullText = ""
 

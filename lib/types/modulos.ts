@@ -20,24 +20,50 @@ export type ModuloTipo =
   | "ONBOARDING"
   | "GENERAL"
   | "ESPECIALIZADO"
-  | "ESPECIALIZADO_IA";
+  | "ESPECIALIZADO_IA"
+  // Variantes largas que devuelve el backend Java
+  | "IDENTIDAD_CORPORATIVA"
+  | "FORMACION_BASICA"
+  | "FORMACION_ESPECIFICA"
+  | "DESARROLLO_PROFESIONAL"
+  | "RECOMPENSAS_VENTAJAS";
+
+// Mapeo de valores del frontend a los que espera el backend (Java Enum)
+export const MODULO_TIPO_TO_BACKEND: Record<string, string> = {
+  IDENTIDAD: "IDENTIDAD_CORPORATIVA",
+  BASICA: "FORMACION_BASICA",
+  ESPECIFICA: "FORMACION_ESPECIFICA",
+  DESARROLLO: "DESARROLLO_PROFESIONAL",
+  RECOMPENSAS: "RECOMPENSAS_VENTAJAS",
+};
+
+export function mapTipoToBackend(value: string): string {
+  return MODULO_TIPO_TO_BACKEND[value] ?? value;
+}
 
 // Etiqueta legible para el frontend por cada tipo
 export const MODULO_TIPO_LABEL: Record<ModuloTipo, string> = {
-  IDENTIDAD:        "Identidad Corporativa",
-  BASICA:           "Formación Básica",
-  ESPECIFICA:       "Formación Específica",
-  DESARROLLO:       "Desarrollo Profesional",
-  RECOMPENSAS:      "Recompensas y Ventajas",
-  COMUNIDAD:        "Comunidad",
-  CUMPLIMIENTO:     "Cumplimiento",
-  LIDERAZGO:        "Liderazgo",
-  TECNICO:          "Técnico",
-  SOFT_SKILLS:      "Soft Skills",
-  ONBOARDING:       "Onboarding",
-  GENERAL:          "General",
-  ESPECIALIZADO:    "Especializado",
-  ESPECIALIZADO_IA: "Especializado IA",
+  // Claves cortas (frontend)
+  IDENTIDAD:              "Identidad Corporativa",
+  BASICA:                 "Formación Básica",
+  ESPECIFICA:             "Formación Específica",
+  DESARROLLO:             "Desarrollo Profesional",
+  RECOMPENSAS:            "Recompensas y Ventajas",
+  COMUNIDAD:              "Comunidad",
+  CUMPLIMIENTO:           "Cumplimiento",
+  LIDERAZGO:              "Liderazgo",
+  TECNICO:                "Técnico",
+  SOFT_SKILLS:            "Soft Skills",
+  ONBOARDING:             "Onboarding",
+  GENERAL:                "General",
+  ESPECIALIZADO:          "Especializado",
+  ESPECIALIZADO_IA:       "Especializado IA",
+  // Variantes largas del backend Java (mismo label)
+  IDENTIDAD_CORPORATIVA:  "Identidad Corporativa",
+  FORMACION_BASICA:       "Formación Básica",
+  FORMACION_ESPECIFICA:   "Formación Específica",
+  DESARROLLO_PROFESIONAL: "Desarrollo Profesional",
+  RECOMPENSAS_VENTAJAS:   "Recompensas y Ventajas",
 };
 
 // Respuesta de GET /api/v1/modulos

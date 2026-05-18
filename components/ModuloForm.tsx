@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import type { ModuloTipo } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
+import { MODULO_TIPO_LABEL, mapTipoToBackend } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import { subirImagenModulo } from "@/lib/supabase";
 
@@ -70,7 +70,7 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
       const payload = {
         nombre: nombre.trim(),
         descripcion: descripcion.trim(),
-        tipoModulo,
+        tipoModulo: mapTipoToBackend(tipoModulo),
         audiencia,
         activo,
         imagenPortadaUrl: imagenPortadaUrl || null,
