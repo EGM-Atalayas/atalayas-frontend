@@ -31,6 +31,7 @@ import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type Fil
 import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/statsExport";
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
+import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
 // ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
 
 const EMPTY_ANUNCIO: NoticiaInput = {
@@ -992,7 +993,7 @@ function AdminContent() {
   const searchParams = useSearchParams();
   const { usuario } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas" | "documentos">("empleados");
+  const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas" | "documentos" | "eventos">("empleados");
   const [tabMenuOpen, setTabMenuOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -1194,6 +1195,7 @@ function AdminContent() {
     if (tab === "empleados") setActiveTab("empleados");
     if (tab === "estadisticas") setActiveTab("estadisticas");
     if (tab === "documentos") setActiveTab("documentos");
+    if (tab === "eventos") setActiveTab("eventos");
     const editId = searchParams.get("edit");
     if (editId && formaciones.length > 0) {
       const f = formaciones.find((x) => x.moduloId === editId);
@@ -1582,6 +1584,7 @@ function AdminContent() {
     { key: "incidencias" as const, label: "Incidencias",        icon: <TriangleAlert size={20} />, accent: "#B45309", badge: 0 },
     { key: "anuncios"    as const, label: "Anuncios",           icon: <Megaphone size={20} />,     accent: "#0EA5E9", badge: 0 },
     { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85", badge: 0 },
+    { key: "eventos"     as const, label: "Eventos",            icon: <Calendar size={20} />,      accent: "#0F766E", badge: 0 },
     { key: "estadisticas"as const, label: "Estadísticas",       icon: <BarChart3 size={20} />,     accent: "#2D8653", badge: 0 },
     { key: "documentos"  as const, label: "Documentos",         icon: <FileText size={20} />,      accent: "#4E6D7E", badge: 0 },
   ];
@@ -3084,6 +3087,11 @@ function AdminContent() {
             }))}
             departamentos={DEPARTAMENTOS}
           />
+        )}
+
+        {/* ── TAB EVENTOS ── */}
+        {activeTab === "eventos" && (
+          <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
         )}
 
         {/* ── TAB ESTADÍSTICAS ── */}

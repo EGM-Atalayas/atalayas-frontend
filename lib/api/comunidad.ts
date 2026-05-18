@@ -31,3 +31,53 @@ export async function getEventosComunidad(): Promise<ComunidadEvento[]> {
     return [];
   }
 }
+
+export interface ComunidadEventoInput {
+  titulo:       string;
+  descripcion?: string | null;
+  fechaInicio:  string;          // ISO datetime
+  fechaFin?:    string | null;
+  esGlobal?:    boolean;         // solo aplica si quien crea es ROLE_ADMIN
+}
+
+/**
+ * Crea un nuevo evento de comunidad.
+ * - ADMIN_EMPRESA: lo crea para su empresa (esGlobal se ignora)
+ * - ADMIN (superadmin): puede crearlo global o por empresa
+ */
+export async function crearEventoComunidad(data: ComunidadEventoInput): Promise<ComunidadEvento> {
+  const res = await apiFetch(`${API_URL}/comunidad/eventos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || "Error al crear el evento");
+  }
+  return res.json();
+}
+
+/**
+ * Actualiza un evento existente. Mismas reglas de permisos que crear.
+ */
+export async function actualizarEventoComunidad(id: string, data: ComunidadEventoInput): Promise<ComunidadEvento> {
+  const res = await apiFetch(`${API_URL}/comunidad/eventos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error al actualizar el evento");
+  return res.json();
+}
+
+/**
+ * Desactiva (soft delete) un evento de comunidad.
+ */
+export async function desactivarEventoComunidad(id: string): Promise<ComunidadEvento> {
+  const res = await apiFetch(`${API_URL}/comunidad/eventos/${id}/desactivar`, {
+    method: "PATCH",
+  });
+  if (!res.ok) throw new Error("Error al desactivar el evento");
+  return res.json();
+}
