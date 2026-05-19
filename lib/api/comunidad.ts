@@ -39,6 +39,20 @@ export async function getEventosComunidad(): Promise<ComunidadEvento[]> {
   }
 }
 
+/**
+ * Devuelve el detalle de un evento. Lanza error si no existe o el usuario
+ * no tiene permiso (403/404).
+ */
+export async function getEventoComunidad(id: string): Promise<ComunidadEvento | null> {
+  try {
+    const res = await apiFetch(`${API_URL}/comunidad/eventos/${id}`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export interface ComunidadEventoInput {
   titulo:       string;
   descripcion?: string | null;
