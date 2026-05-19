@@ -83,132 +83,126 @@ function EventoCard({
         opacity:     pasado ? 0.72 : 1,
       }}
     >
-      {/* Imagen de portada */}
-      {evento.imagenUrl && (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16 / 9", background: "#f1f5f9" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={evento.imagenUrl} alt={evento.titulo} className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-      )}
-
-      {/* Franja de fecha */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        {/* Bloque día */}
-        <div className="shrink-0 rounded-xl flex flex-col items-center justify-center"
-          style={{
-            width: 46, height: 46,
-            background: pasado ? "#f3f4f6" : "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
-            color: pasado ? "#9ca3af" : "var(--azul-egm)",
-          }}>
-          <span className="text-lg font-bold leading-none">{fechaIni.getDate()}</span>
-          <span className="text-[10px] font-semibold uppercase tracking-wide leading-none mt-0.5">
-            {fechaIni.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
-          </span>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold leading-snug text-sm" style={{ color: "#111827" }}>
-            {evento.titulo}
-          </h3>
-          <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
-            {formatFecha(evento.fechaInicio)} · {formatHoras(evento)}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Badge estado */}
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: cfg.bg, color: cfg.color }}>
-            {cfg.label}
-          </span>
-
-          {/* Menú admin */}
-          {puedeEditar && (
-            <div ref={menuRef} style={{ position: "relative" }}>
-              <button
-                onClick={() => setMenuOpen(p => !p)}
-                className="flex items-center justify-center rounded-lg"
-                style={{ width: 30, height: 30, background: menuOpen ? "rgba(0,0,0,0.06)" : "transparent", border: "none", cursor: "pointer", color: "#9ca3af" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
-                onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "transparent"; }}
-              >
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
-                </svg>
-              </button>
-              {menuOpen && (
-                <div style={{
-                  position: "absolute", right: 0, top: "calc(100% + 6px)", width: "180px", zIndex: 20,
-                  background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "14px",
-                  boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px",
-                }}>
-                  <MenuBtn label="Editar" onClick={() => { setMenuOpen(false); onEditar(evento); }}
-                    icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
-                  <MenuBtn label="Cancelar" danger onClick={() => { setMenuOpen(false); onDesactivar(evento); }}
-                    icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>} />
-                </div>
-              )}
+      {/* Badge estado (esquina sup. izq.) + Menú admin (esquina sup. der.) */}
+      <div className="absolute top-3 left-3 z-10">
+        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+          style={{ background: cfg.bg, color: cfg.color }}>
+          {cfg.label}
+        </span>
+      </div>
+      {puedeEditar && (
+        <div ref={menuRef} className="absolute top-3 right-3 z-10" style={{ position: "absolute" }}>
+          <button
+            onClick={() => setMenuOpen(p => !p)}
+            className="flex items-center justify-center rounded-lg"
+            style={{ width: 30, height: 30, background: menuOpen ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.80)", border: "1px solid rgba(0,0,0,0.06)", cursor: "pointer", color: "#6b7280", backdropFilter: "blur(4px)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.95)"; }}
+            onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "rgba(255,255,255,0.80)"; }}
+          >
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+            </svg>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)", width: "180px", zIndex: 20,
+              background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "14px",
+              boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px", textAlign: "left",
+            }}>
+              <MenuBtn label="Editar" onClick={() => { setMenuOpen(false); onEditar(evento); }}
+                icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
+              <MenuBtn label="Cancelar" danger onClick={() => { setMenuOpen(false); onDesactivar(evento); }}
+                icon={<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>} />
             </div>
           )}
         </div>
-      </div>
-
-      {/* Cuerpo */}
-      {(evento.descripcion || true) && (
-        <>
-          <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 16px" }} />
-          <div className="px-4 py-3 flex flex-col gap-2">
-            {evento.descripcion && (
-              <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#6b7280" }}>
-                {evento.descripcion}
-              </p>
-            )}
-            <div className="flex items-center gap-1.5">
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                style={{ color: "#9ca3af", flexShrink: 0 }}>
-                {evento.esGlobal ? (
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                )}
-              </svg>
-              <span className="text-xs font-medium" style={{ color: evento.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)" }}>
-                {evento.esGlobal ? "EGM Atalayas (global)" : "Tu empresa"}
-              </span>
-            </div>
-
-            {/* Lugar + botón Ver ubicación */}
-            {evento.lugar && (
-              <div className="flex items-start gap-1.5">
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                  style={{ color: "#9ca3af", flexShrink: 0, marginTop: 3 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-xs line-clamp-1" style={{ color: "#6b7280" }}>{evento.lugar}</span>
-              </div>
-            )}
-            {evento.latitud != null && evento.longitud != null && (
-              <button
-                type="button"
-                onClick={() => onVerUbicacion(evento)}
-                className="inline-flex items-center gap-1.5 self-start text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
-                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--azul-egm-light)"; }}
-              >
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                Ver ubicación
-              </button>
-            )}
-          </div>
-        </>
       )}
+
+      <div className="flex flex-col items-start px-5 pt-12 pb-5 gap-3">
+        {/* 1+2. Fecha (bloque) + Título y fecha completa */}
+        <div className="flex items-center gap-3 w-full">
+          <div className="shrink-0 rounded-xl flex flex-col items-center justify-center px-3 py-2"
+            style={{
+              minWidth: 60,
+              background: pasado ? "#f3f4f6" : "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
+              color: pasado ? "#9ca3af" : "var(--azul-egm)",
+            }}>
+            <span className="text-2xl font-bold leading-none">{fechaIni.getDate()}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider leading-none mt-1">
+              {fechaIni.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+            </span>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-base leading-snug" style={{ color: "#111827" }}>
+              {evento.titulo}
+            </h3>
+            <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
+              {formatFecha(evento.fechaInicio)} · {formatHoras(evento)}
+            </p>
+          </div>
+        </div>
+
+        {/* 3. Imagen */}
+        {evento.imagenUrl && (
+          <div className="relative w-full overflow-hidden rounded-xl mt-1" style={{ aspectRatio: "16 / 9", background: "#f1f5f9" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={evento.imagenUrl} alt={evento.titulo} className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+        )}
+
+        {/* 4. Descripción */}
+        {evento.descripcion && (
+          <p className="text-xs leading-relaxed line-clamp-3 mt-1" style={{ color: "#6b7280" }}>
+            {evento.descripcion}
+          </p>
+        )}
+
+        {/* Scope global / empresa */}
+        <div className="flex items-center gap-1.5">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            style={{ color: evento.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)", flexShrink: 0 }}>
+            {evento.esGlobal ? (
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            )}
+          </svg>
+          <span className="text-xs font-medium" style={{ color: evento.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)" }}>
+            {evento.esGlobal ? "EGM Atalayas (global)" : "Tu empresa"}
+          </span>
+        </div>
+
+        {/* 5. Lugar + botón Ver ubicación */}
+        {evento.lugar && (
+          <p className="text-xs inline-flex items-center gap-1.5 line-clamp-1" style={{ color: "#6b7280" }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              style={{ color: "#9ca3af", flexShrink: 0 }}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>{evento.lugar}</span>
+          </p>
+        )}
+        {evento.latitud != null && evento.longitud != null && (
+          <button
+            type="button"
+            onClick={() => onVerUbicacion(evento)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--azul-egm-light)"; }}
+          >
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Ver ubicación
+          </button>
+        )}
+      </div>
     </div>
   );
 }
