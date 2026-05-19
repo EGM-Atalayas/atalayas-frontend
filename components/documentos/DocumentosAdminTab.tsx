@@ -604,8 +604,6 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
         onConfirmar={ejecutarEliminar}
         onCancelar={() => setConfirmEliminar(null)}
       />
-        )}
-      </AnimatePresence>
 
       {/* ── Toast ── */}
       <AnimatePresence>
