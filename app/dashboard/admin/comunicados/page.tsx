@@ -8,6 +8,7 @@ import {
   desactivarComunicado,
 } from "@/lib/api/noticias";
 import type { Comunicado } from "@/lib/types/noticias";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
@@ -19,6 +20,7 @@ export default function ComunicadosAdminPage() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState<"todos" | "activos" | "expirados">("activos");
+  const [confirmDesactivar, setConfirmDesactivar] = useState<string | null>(null);
 
   useEffect(() => { cargar(); }, []);
 
@@ -35,13 +37,17 @@ export default function ComunicadosAdminPage() {
     }
   }
 
-  async function handleDesactivar(id: string) {
-    if (!confirm("¿Desactivar este comunicado? Dejará de ser visible para los usuarios.")) return;
+  const handleDesactivar = (id: string) => setConfirmDesactivar(id);
+
+  const ejecutarDesactivar = async () => {
+    if (!confirmDesactivar) return;
     try {
-      await desactivarComunicado(id);
+      await desactivarComunicado(confirmDesactivar);
       await cargar();
-    } catch {}
-  }
+    } finally {
+      setConfirmDesactivar(null);
+    }
+  };
 
   const ahora = Date.now();
   const lista = comunicados.filter((c) => {
@@ -158,6 +164,15 @@ export default function ComunicadosAdminPage() {
           </div>
         )}
       </div>
+      <ModalConfirm
+        abierto={!!confirmDesactivar}
+        titulo="¿Desactivar comunicado?"
+        descripcion="Dejará de ser visible para todos los usuarios de la plataforma."
+        textoConfirmar="Desactivar"
+        variante="danger"
+        onConfirmar={ejecutarDesactivar}
+        onCancelar={() => setConfirmDesactivar(null)}
+      />
     </>
   );
 }

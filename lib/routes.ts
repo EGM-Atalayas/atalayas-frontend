@@ -27,4 +27,5 @@ export const SUPERADMIN_LINKS: { label: string; path: string }[] = [
 // Añade aquí cualquier ruta nueva que tenga fondo blanco/claro
 export const PAGINAS_FONDO_CLARO: string[] = [
   "/dashboard/admin/modulos/crear",
+  "/dashboard/eventos/",     // página de detalle de evento (no la lista)
 ];

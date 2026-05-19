@@ -1,26 +1,18 @@
 ﻿"use client";
 
 import React, { useEffect, useState, useRef, useMemo, useTransition, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { getNoticias, crearNoticia, editarNoticia, desactivarNoticia } from "@/lib/api/noticias";
 import { getModulos } from "@/lib/api/modulos";
 import { getProgresoEmpresa } from "@/lib/api/progreso";
 import { QK } from "@/lib/queryKeys";
 import { listarDocumentosEmpresa } from "@/lib/api/documentos";
 import type { Documento } from "@/lib/types/documentos";
-import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Download, Eye, EyeOff, FileText, GraduationCap, LibraryBig, Megaphone, Plus, RefreshCw, Search, SlidersHorizontal, Trash2, TriangleAlert, Upload, Users, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { IconButton } from "@/components/ui/IconButton";
-import FormAnuncio from "@/components/ui/FormAnuncio";
-import Grainient from "@/components/ui/Grainient";
-import type { Noticia, NoticiaInput } from "@/lib/types/noticias";
+import { BarChart3, Calendar, Check, ChevronDown, FileText, GraduationCap, Megaphone, TriangleAlert, Users, X } from "lucide-react";
 import type { Modulo } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL, type ModuloTipo } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { getEstadisticasAdminEmpresa, type EstadisticasEmpresaResponse, type FiltrosEstadisticas } from "@/lib/api/estadisticas";
@@ -28,13 +20,12 @@ import { exportStats, type ExportFormat, type StatsSection } from "@/lib/utils/s
 import GestionIncidencias from "@/components/pages/GestionIncidencias";
 import { DocumentosAdminTab } from "@/components/documentos/DocumentosAdminTab";
 import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
-import { AnuncioCard } from "@/components/ui/AnuncioCard";
-import { ModalConfirm } from "@/components/ui/ModalConfirm";
-import { ModalResetPassword } from "@/components/ui/ModalResetPassword";
+import { AnunciosAdminTab } from "@/components/anuncios/AnunciosAdminTab";
+import { FormacionesAdminTab } from "@/components/formaciones/FormacionesAdminTab";
+import { EmpleadosAdminTab } from "@/components/empleados/EmpleadosAdminTab";
 import { StatsTab } from "@/components/pages/StatsTab";
-import type { Usuario, NuevoEmpleadoForm } from "@/lib/types/usuario";
-import { ROL_EMPLEADO_ID, DEPARTAMENTOS, EMPTY_ANUNCIO, EMPTY_EMPLEADO } from "@/lib/constants/admin";
-// ExcelJS movido a API routes: /api/admin/export-empleados y /api/admin/import-empleados
+import type { Usuario } from "@/lib/types/usuario";
+import { DEPARTAMENTOS } from "@/lib/constants/admin";
 
 
 export default function AdminPage() {
@@ -58,8 +49,6 @@ function AdminContent() {
   const [activeTab, setActiveTab] = useState<"empleados" | "anuncios" | "formaciones" | "incidencias" | "estadisticas" | "documentos" | "eventos">("empleados");
   const [tabMenuOpen, setTabMenuOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-
   // ── Queries ──────────────────────────────────────────────────────────────────
   // Empleados — siempre activo (necesario en empleados, formaciones, estadísticas y documentos)
   const { data: _empleadosData, isLoading: cargandoEmpleados } = useQuery<Usuario[]>({
@@ -68,13 +57,6 @@ function AdminContent() {
     enabled: !!usuario?.empresaId,
   });
   const empleados = useMemo(() => Array.isArray(_empleadosData) ? _empleadosData : [], [_empleadosData]);
-
-  // Noticias — siempre activo para que al cambiar a anuncios no haya espera
-  const { data: noticias = [], isLoading: cargandoNoticias } = useQuery({
-    queryKey: QK.noticias(usuario?.empresaId),
-    queryFn: () => getNoticias(usuario!.empresaId),
-    enabled: !!usuario?.empresaId,
-  });
 
   // Módulos — siempre activo
   const { data: _formacionesData, isLoading: cargandoModulos } = useQuery<Modulo[]>({
@@ -92,75 +74,19 @@ function AdminContent() {
   });
 
   // Progreso — siempre activo
-  const { data: _progresoData, isLoading: cargandoProgreso } = useQuery({
+  const { data: _progresoData } = useQuery({
     queryKey: QK.progresoEmpresa(usuario?.empresaId),
     queryFn: () => getProgresoEmpresa(usuario!.empresaId!),
     enabled: !!usuario?.empresaId,
   });
   const progresoEmpresa = useMemo(() => Array.isArray(_progresoData) ? _progresoData : [], [_progresoData]);
 
-  // Refs para el efecto de estadísticas
-  const formacionesRef = useRef(formaciones);
-  useEffect(() => { formacionesRef.current = formaciones; }, [formaciones]);
-  const progresoEmpresaRef = useRef(progresoEmpresa);
-  useEffect(() => { progresoEmpresaRef.current = progresoEmpresa; }, [progresoEmpresa]);
-  const empleadosRef = useRef(empleados);
-  useEffect(() => { empleadosRef.current = empleados; }, [empleados]);
-
-  // ── Pagination ───────────────────────────────────────────────────────────────
-  const PAGE_SIZE = 25;
-  const PAGE_SIZE_MOBILE = 10;
-  const [empPage, setEmpPage] = useState(0);
-
-  // Resetear página al cruzar el breakpoint md (768px) para evitar slices vacíos
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const handler = () => setEmpPage(0);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  // ── Filtros empleados ────────────────────────────────────────────────────────
-  const [empSearch, setEmpSearch] = useState("");
-  const [empSearchInput, setEmpSearchInput] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setEmpSearch(empSearchInput), 180);
-    return () => clearTimeout(t);
-  }, [empSearchInput]);
-
-  // ── UI state ─────────────────────────────────────────────────────────────────
-  const [showFormEmpleado, setShowFormEmpleado] = useState(false);
-
-  const [formEmpleado, setFormEmpleado] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
-  const [guardandoEmpleado, setGuardandoEmpleado] = useState(false);
-  const [errorEmpleado, setErrorEmpleado] = useState<string | null>(null);
-  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Usuario | null>(null);
-  const [editandoEmpleado, setEditandoEmpleado] = useState(false);
-  const [editEmpleadoForm, setEditEmpleadoForm] = useState<NuevoEmpleadoForm>(EMPTY_EMPLEADO);
-
-  const inputImportRef = useRef<HTMLInputElement>(null);
-  const [importando, setImportando] = useState(false);
-  const [exportando, setExportando] = useState(false);
-  const [importResult, setImportResult] = useState<{ ok: number; errors: string[] } | null>(null);
-
-  // ── Scroll lock — modal y slide-over ─────────────────────────────────────────
-  useEffect(() => {
-    if (showFormEmpleado || !!empleadoSeleccionado) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = prev; };
-    }
-  }, [showFormEmpleado, empleadoSeleccionado]);
   const [toast, setToast] = useState<{ msg: string; tipo: "ok" | "error" } | null>(null);
 
   const mostrarToast = (msg: string, tipo: "ok" | "error" = "ok") => {
     setToast({ msg, tipo });
     setTimeout(() => setToast(null), 3500);
   };
-
-  const [showFormAnuncio, setShowFormAnuncio] = useState(false);
-  const [editando, setEditando] = useState<Noticia | null>(null);
-  const [initialForm, setInitialForm] = useState<NoticiaInput>(EMPTY_ANUNCIO);
 
   // ── Stats tab state ───────────────────────────────────────────────────────────
   const [statsRango, setStatsRango] = useState<1 | 3 | 6 | 12 | 24>(6);
@@ -238,16 +164,6 @@ function AdminContent() {
       sections,
     });
   };
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [anuncioSearch, setAnuncioSearch] = useState("");
-  const [publicandoId, setPublicandoId] = useState<string | null>(null);
-  const [confirmAnuncio, setConfirmAnuncio] = useState<{ tipo: "desactivar" | "eliminar"; id: string } | null>(null);
-  const [confirmEmpleado, setConfirmEmpleado] = useState<{ usuarioId: string; activo: boolean; nombre: string } | null>(null);
-  const [confirmModulo, setConfirmModulo] = useState<{ modulo: Modulo } | null>(null);
-  const [confirmEliminarModulo, setConfirmEliminarModulo] = useState<{ moduloId: string; nombre: string } | null>(null);
-  const [resetPass, setResetPass] = useState<{ usuarioId: string; nombre: string } | null>(null);
-  const [guardandoResetPass, setGuardandoResetPass] = useState(false);
 
   useEffect(() => {
     if (usuario && (usuario.codigoRol === "ROLE_EMPLEADO" || usuario.codigoRol === "INVITADO")) {
@@ -285,401 +201,6 @@ function AdminContent() {
     return getEstadisticasAdminEmpresa(empleados, formaciones, progresoEmpresa, filtros);
   }, [activeTab, empleados, formaciones, progresoEmpresa, statsRango, statsDpto, statsEstado, statsTipoMod]);
 
-  const [guardandoEditEmpleado, setGuardandoEditEmpleado] = useState(false);
-
-  const iniciarEditEmpleado = () => {
-    if (!empleadoSeleccionado) return;
-    setEditEmpleadoForm({
-      nombre: empleadoSeleccionado.nombre,
-      apellidos: empleadoSeleccionado.apellidos,
-      email: empleadoSeleccionado.email,
-      password: "",
-      puestoTrabajo: empleadoSeleccionado.puestoTrabajo ?? "",
-      departamento: empleadoSeleccionado.departamento ?? "",
-    });
-    setEditandoEmpleado(true);
-  };
-
-  const handleGuardarEditEmpleado = async () => {
-    if (!empleadoSeleccionado) return;
-    setGuardandoEditEmpleado(true);
-    try {
-      const res = await apiFetch(`${API_URL}/users/${empleadoSeleccionado.usuarioId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: editEmpleadoForm.nombre.trim(),
-          apellidos: editEmpleadoForm.apellidos.trim(),
-          email: editEmpleadoForm.email.trim() || undefined, // ← si está vacío no lo manda
-          puestoTrabajo: editEmpleadoForm.puestoTrabajo.trim() || null,
-          departamento: editEmpleadoForm.departamento || null,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message ?? "Error al guardar el empleado");
-      }
-      setEmpleadoSeleccionado((prev) => prev ? { ...prev, ...data } : prev);
-      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
-      setEditandoEmpleado(false);
-      mostrarToast("Datos del empleado guardados correctamente");
-    } catch (err) {
-      mostrarToast(err instanceof Error ? err.message : "Error al guardar los datos del empleado", "error");
-    }
-    finally { setGuardandoEditEmpleado(false); }
-  };
-
-  const handleCrearEmpleado = async () => {
-    if (!formEmpleado.nombre.trim() || !formEmpleado.email.trim() || !formEmpleado.password.trim()) {
-      setErrorEmpleado("Nombre, email y contraseña son obligatorios");
-      return;
-    }
-    setGuardandoEmpleado(true);
-    setErrorEmpleado(null);
-    try {
-      const res = await apiFetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: formEmpleado.nombre.trim(),
-          apellidos: formEmpleado.apellidos.trim(),
-          email: formEmpleado.email.trim(),
-          password: formEmpleado.password,
-          empresaId: usuario?.empresaId,
-          rolId: ROL_EMPLEADO_ID,
-          puestoTrabajo: formEmpleado.puestoTrabajo.trim() || null,
-          departamento: formEmpleado.departamento || null,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? "Error al crear el empleado");
-      }
-      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
-      setFormEmpleado(EMPTY_EMPLEADO);
-      setShowFormEmpleado(false);
-    } catch (e: unknown) {
-      setErrorEmpleado(e instanceof Error ? e.message : "Error al crear el empleado");
-    } finally {
-      setGuardandoEmpleado(false);
-    }
-  };
-
-  const handleToggleEmpleado = (usuarioId: string, activo: boolean, nombre: string) => {
-    setConfirmEmpleado({ usuarioId, activo, nombre });
-  };
-
-  const ejecutarResetPassword = async (nuevaPassword: string) => {
-    if (!resetPass) return;
-    setGuardandoResetPass(true);
-    try {
-      const res = await apiFetch(`${API_URL}/users/${resetPass.usuarioId}/reset-password`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nuevaPassword }),
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.message ?? "Error al resetear la contraseña");
-      }
-      mostrarToast(`Contraseña de ${resetPass.nombre} actualizada correctamente`);
-      setResetPass(null);
-    } catch (err) {
-      mostrarToast(err instanceof Error ? err.message : "Error al resetear la contraseña", "error");
-    } finally {
-      setGuardandoResetPass(false);
-    }
-  };
-
-  const ejecutarToggleEmpleado = async () => {
-    if (!confirmEmpleado) return;
-    const { usuarioId, activo } = confirmEmpleado;
-    try {
-      if (activo) {
-        await apiFetch(`${API_URL}/users/${usuarioId}/desactivar`, { method: "DELETE" });
-      } else {
-        await apiFetch(`${API_URL}/users/${usuarioId}/activar`, { method: "PATCH" });
-      }
-      queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
-      if (empleadoSeleccionado?.usuarioId === usuarioId) setEmpleadoSeleccionado(null);
-    } catch { }
-    finally { setConfirmEmpleado(null); }
-  };
-
-  function abrirCrear() {
-    setInitialForm({
-      titulo: "", contenido: "", esGlobal: false, empresaId: usuario?.empresaId ?? null, imagenUrl: null,
-      enlaceUrl: null, enlaceTexto: null, videoUrl: null,
-      adjuntoUrl: null, adjuntoNombre: null, estado: "publicado", fijado: false,
-      categoria: null,
-    });
-    setEditando(null);
-    setShowFormAnuncio(true);
-    setFormError(null);
-  }
-
-  function abrirEditar(n: Noticia) {
-    setInitialForm({
-      titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
-      empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
-      enlaceUrl: n.enlaceUrl ?? null, enlaceTexto: n.enlaceTexto ?? null,
-      videoUrl: n.videoUrl ?? null, adjuntoUrl: n.adjuntoUrl ?? null,
-      adjuntoNombre: n.adjuntoNombre ?? null, estado: n.estado ?? "publicado",
-      fijado: n.fijado ?? false, categoria: n.categoria ?? null,
-    });
-    setEditando(n);
-    setShowFormAnuncio(true);
-    setFormError(null);
-  }
-
-  function cerrarForm() {
-    setShowFormAnuncio(false);
-    setEditando(null);
-    setInitialForm(EMPTY_ANUNCIO);
-    setFormError(null);
-  }
-
-  async function handleSubmitAnuncio(data: NoticiaInput) {
-    setSubmitting(true);
-    setFormError(null);
-    try {
-      if (editando) await editarNoticia(editando.anuncioId, data);
-      else await crearNoticia({ ...data, empresaId: usuario?.empresaId ?? null });
-      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
-      cerrarForm();
-      mostrarToast(editando ? "Anuncio actualizado correctamente" : data.estado === "borrador" ? "Borrador guardado" : "Anuncio publicado correctamente");
-    } catch { setFormError("Error al guardar. Inténtalo de nuevo."); }
-    finally { setSubmitting(false); }
-  }
-
-  async function handleEliminarBorrador(id: string) {
-    setConfirmAnuncio({ tipo: "eliminar", id });
-  }
-
-  async function handleDesactivarAnuncio(id: string) {
-    setConfirmAnuncio({ tipo: "desactivar", id });
-  }
-
-  async function ejecutarConfirmAnuncio() {
-    if (!confirmAnuncio) return;
-    const { tipo, id } = confirmAnuncio;
-    setConfirmAnuncio(null);
-    try {
-      await desactivarNoticia(id);
-      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
-      mostrarToast(tipo === "eliminar" ? "Borrador eliminado" : "Anuncio desactivado");
-    } catch { mostrarToast(tipo === "eliminar" ? "Error al eliminar el borrador" : "Error al desactivar el anuncio", "error"); }
-  }
-
-  async function publicarBorrador(n: Noticia) {
-    setPublicandoId(n.anuncioId);
-    try {
-      await editarNoticia(n.anuncioId, {
-        titulo: n.titulo, contenido: n.contenido, esGlobal: n.esGlobal,
-        empresaId: n.empresaId, imagenUrl: n.imagenUrl ?? null,
-        enlaceUrl: n.enlaceUrl ?? null, enlaceTexto: n.enlaceTexto ?? null,
-        videoUrl: n.videoUrl ?? null, adjuntoUrl: n.adjuntoUrl ?? null,
-        adjuntoNombre: n.adjuntoNombre ?? null, fijado: n.fijado ?? false,
-        categoria: n.categoria ?? null, estado: "publicado",
-      });
-      queryClient.invalidateQueries({ queryKey: QK.noticias(usuario?.empresaId) });
-      mostrarToast("Anuncio publicado correctamente");
-    } catch { mostrarToast("Error al publicar el anuncio", "error"); }
-    finally { setPublicandoId(null); }
-  }
-  const handleEditModulo = (f: Modulo) => { router.push(`/dashboard/admin/modulos/crear?edit=${f.moduloId}`); };
-
-  const handleDesactivarModulo = (modulo: Modulo) => {
-    setConfirmModulo({ modulo });
-  };
-
-  const ejecutarToggleModulo = async () => {
-    if (!confirmModulo) return;
-    const { modulo } = confirmModulo;
-    const estaActivo = modulo.activo;
-    try {
-      let res;
-      if (estaActivo) {
-        res = await apiFetch(`${API_URL}/modulos/${modulo.moduloId}/desactivar`, { method: "PATCH" });
-      } else {
-        // Reactivar: PUT con activo: true preservando el resto de campos
-        res = await apiFetch(`${API_URL}/modulos/${modulo.moduloId}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            nombre: modulo.nombre,
-            descripcion: modulo.descripcion,
-            tipoModulo: modulo.tipoModulo,
-            audiencia: modulo.audiencia ?? "todos",
-            activo: true,
-            empresaId: modulo.empresaId,
-            imagenPortadaUrl: modulo.imagenPortadaUrl ?? null,
-          }),
-        });
-      }
-      if (!res.ok) { const e = await res.json().catch(() => ({})); mostrarToast(e.message ?? "Error al cambiar el estado del módulo", "error"); return; }
-      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { mostrarToast("Error al cambiar el estado del módulo", "error"); }
-    finally { setConfirmModulo(null); }
-  };
-
-  const handleEliminarModulo = (moduloId: string, nombre: string) => {
-    setConfirmEliminarModulo({ moduloId, nombre });
-  };
-
-  const ejecutarEliminarModulo = async () => {
-    if (!confirmEliminarModulo) return;
-    try {
-      const res = await apiFetch(`${API_URL}/modulos/${confirmEliminarModulo.moduloId}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) { mostrarToast("Error al eliminar el módulo", "error"); return; }
-      queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-    } catch { mostrarToast("Error al eliminar el módulo", "error"); }
-    finally { setConfirmEliminarModulo(null); }
-  };
-
-  function getInitials(nombre: string, apellidos?: string | null) {
-    return [nombre, apellidos].filter(Boolean).join(" ").split(" ")
-      .slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
-  }
-
-  function formatFecha(iso: string) {
-    return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
-  }
-
-  const exportarEmpleadosExcel = async () => {
-    setExportando(true);
-    try {
-      const payload = empleados.map((e) => ({
-        nombre: e.nombre,
-        apellidos: e.apellidos,
-        email: e.email,
-        puesto: e.puestoTrabajo ?? "",
-        departamento: DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento ?? "",
-        rol: e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado",
-        estado: e.activo ? "Activo" : "Inactivo",
-        fechaAlta: formatFecha(e.fechaRegistro),
-      }));
-
-      const res = await fetch("/api/admin/export-empleados", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ empleados: payload }),
-      });
-      if (!res.ok) throw new Error("Error generando el archivo");
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `empleados_${new Date().toISOString().split("T")[0]}.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      mostrarToast(`Excel exportado con ${empleados.length} empleados`);
-    } catch {
-      mostrarToast("Error al exportar el archivo", "error");
-    } finally {
-      setExportando(false);
-    }
-  };
-
-  const importarEmpleados = async (file: File) => {
-    setImportando(true);
-    setImportResult(null);
-    const errores: string[] = [];
-    let ok = 0;
-    try {
-      // Parsear el Excel en el servidor
-      const formData = new FormData();
-      formData.append("file", file);
-      const parseRes = await fetch("/api/admin/import-empleados", { method: "POST", body: formData });
-      if (!parseRes.ok) { errores.push("El archivo no es un Excel válido"); throw new Error(); }
-
-      const { filas } = await parseRes.json() as { filas: { rowNum: number; values: string[] }[] };
-
-      for (const { rowNum, values } of filas) {
-        const [nombre, apellidos, email, puesto, dept] = values;
-        if (!nombre || !email) { errores.push(`Fila ${rowNum}: nombre y email obligatorios`); continue; }
-        try {
-          const res = await apiFetch(`${API_URL}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              nombre,
-              apellidos: apellidos || "",
-              email,
-              password: "Atalayas123!",
-              empresaId: usuario?.empresaId,
-              rolId: ROL_EMPLEADO_ID,
-              puestoTrabajo: puesto || null,
-              departamento: dept ? DEPARTAMENTOS.find((d) => d.label.toUpperCase() === dept.toUpperCase())?.id ?? dept.toUpperCase() : null,
-            }),
-          });
-          if (res.ok) ok++;
-          else {
-            const err = await res.json().catch(() => ({}));
-            errores.push(`${email}: ${err.message ?? "Error del servidor"}`);
-          }
-        } catch { errores.push(`${email}: Error de conexión`); }
-      }
-    } catch { if (errores.length === 0) errores.push("Error procesando el archivo"); }
-
-    setImportando(false);
-    setImportResult({ ok, errors: errores });
-    queryClient.invalidateQueries({ queryKey: QK.empleados(usuario?.empresaId) });
-    if (errores.length === 0) {
-      mostrarToast(`${ok} empleado${ok !== 1 ? "s" : ""} importado${ok !== 1 ? "s" : ""} correctamente`);
-    } else if (ok > 0) {
-      mostrarToast(`${ok} importado${ok !== 1 ? "s" : ""}, ${errores.length} con error`, "error");
-    } else {
-      mostrarToast("Error al importar el archivo", "error");
-    }
-  };
-
-  // ── Ordenación tabla desktop ─────────────────────────────────────────────────
-  type EmpSortCol = "nombre" | "puesto" | "departamento" | "perfil" | "estado" | null;
-  const [empSort, setEmpSort] = useState<{ col: EmpSortCol; dir: "asc" | "desc" }>({ col: null, dir: "asc" });
-
-  const toggleEmpSort = (col: Exclude<EmpSortCol, null>) => {
-    setEmpSort(prev => {
-      if (prev.col !== col) return { col, dir: "asc" };
-      if (prev.dir === "asc") return { col, dir: "desc" };
-      return { col: null, dir: "asc" }; // tercer clic → sin orden
-    });
-    setEmpPage(0);
-  };
-
-  // ── Empleados filtrados + ordenados (frontend) ───────────────────────────────
-  const empleadosFiltrados = useMemo(() => {
-    const q = empSearch.toLowerCase();
-    const filtered = empleados.filter((e) =>
-      !q || [e.nombre, e.apellidos, e.email, e.puestoTrabajo ?? ""].some((v) => v.toLowerCase().includes(q))
-    );
-    if (!empSort.col) return filtered;
-    const dir = empSort.dir === "asc" ? 1 : -1;
-    return [...filtered].sort((a, b) => {
-      switch (empSort.col) {
-        case "nombre":
-          return dir * `${a.nombre} ${a.apellidos}`.localeCompare(`${b.nombre} ${b.apellidos}`, "es");
-        case "puesto":
-          return dir * (a.puestoTrabajo ?? "").localeCompare(b.puestoTrabajo ?? "", "es");
-        case "departamento": {
-          const da = DEPARTAMENTOS.find(d => d.id === a.departamento)?.label ?? "";
-          const db = DEPARTAMENTOS.find(d => d.id === b.departamento)?.label ?? "";
-          return dir * da.localeCompare(db, "es");
-        }
-        case "perfil": {
-          const pa = a.codigoRol === "ROLE_ADMIN_EMPRESA" ? 0 : 1;
-          const pb = b.codigoRol === "ROLE_ADMIN_EMPRESA" ? 0 : 1;
-          return dir * (pa - pb);
-        }
-        case "estado":
-          return dir * ((a.activo ? 0 : 1) - (b.activo ? 0 : 1));
-        default:
-          return 0;
-      }
-    });
-  }, [empleados, empSearch, empSort]);
 
   const tabs = [
     { key: "empleados" as const, label: "Empleados", icon: <Users size={20} />, accent: "#1B3F7E", badge: 0 },
@@ -690,14 +211,6 @@ function AdminContent() {
     { key: "estadisticas" as const, label: "Estadísticas", icon: <BarChart3 size={20} />, accent: "#2D8653", badge: 0 },
     { key: "documentos" as const, label: "Documentos", icon: <FileText size={20} />, accent: "#4E6D7E", badge: 0 },
   ];
-
-  // Accent colors per modulo tipo for top strip
-  const tipoAccentColor: Record<string, string> = {
-    PREVENCION: "var(--error)",
-    CALIDAD: "var(--azul-egm)",
-    MEDIO_AMBIENTE: "var(--verde-oliva)",
-    FORMACION_BASICA: "var(--exito)",
-  };
 
   return (
     <>
@@ -2212,11 +1725,15 @@ function AdminContent() {
               />
             )}
 
+            {/* ── TAB EVENTOS ── */}
+            {activeTab === "eventos" && (
+              <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
+            )}
+
               </motion.div>
         </AnimatePresence>
 
-        {/* DocumentosAdminTab FUERA del motion.div con key={activeTab} para que nunca
-            se desmonte al cambiar de tab. CSS display lo muestra/oculta sin remount. */}
+        {/* DocumentosAdminTab oculto con CSS display para evitar remount al cambiar de tab. */}
         {usuario?.empresaId && (
           <div style={{ display: activeTab === "documentos" ? "block" : "none" }}>
             <DocumentosAdminTab
@@ -2234,6 +1751,7 @@ function AdminContent() {
           </div>
         )}
       </div>
+
 
 
 

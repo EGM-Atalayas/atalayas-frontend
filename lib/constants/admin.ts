@@ -3,7 +3,7 @@ import type { NuevoEmpleadoForm } from "@/lib/types/usuario";
 
 export const ROL_EMPLEADO_ID = "ff7abc21-9380-4e51-a55c-e2427d2a4e2d";
 
-export const DEPARTAMENTOS = [
+export const DEPARTAMENTOS: { id: string; label: string }[] = [
   { id: "PRODUCCION",    label: "Producción" },
   { id: "RRHH",          label: "RRHH" },
   { id: "LOGISTICA",     label: "Logística" },
@@ -14,7 +14,7 @@ export const DEPARTAMENTOS = [
   { id: "IT",            label: "IT" },
   { id: "SEGURIDAD",     label: "Seguridad" },
   { id: "FORMACION",     label: "Formación" },
-] as const;
+];
 
 export const EMPTY_ANUNCIO: NoticiaInput = {
   titulo: "", contenido: "", esGlobal: false, empresaId: null, imagenUrl: null,

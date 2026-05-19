@@ -8,7 +8,7 @@ import { getIconoBeneficio } from "@/lib/iconosBeneficio";
 import { getServicios, crearServicio, editarServicio, desactivarServicio } from "@/lib/api/servicios";
 import type { Servicio, ServicioInput, CategoriaServicio } from "@/lib/types/servicios";
 import ServicioModal from "@/components/ui/ServicioModal";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 // ── Mock mientras no esté el backend conectado ───────────────────────────────
 const MOCK_SERVICIOS: Servicio[] = [
@@ -385,6 +385,8 @@ export default function ServiciosPage() {
         titulo="Servicios"
         subtitulo="Recursos y servicios del área empresarial EGM Atalayas disponibles para todos los trabajadores."
         variante="seccion"
+        imagenFondo="/servicios-banner.webp"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
       {esSuperAdmin && (
         <div className="px-4 sm:px-6 lg:px-8 -mt-2">
@@ -450,17 +452,15 @@ export default function ServiciosPage() {
         />
       )}
 
-      {/* Confirm desactivar */}
-      {confirmDes && (
-        <ConfirmDialog
-          titulo="¿Desactivar servicio?"
-          mensaje={`"${confirmDes.titulo}" dejará de ser visible para los empleados.`}
-          labelOk="Desactivar"
-          peligro
-          onOk={() => confirmarDesactivar(confirmDes)}
-          onCerrar={() => setConfirmDes(null)}
-        />
-      )}
+      <ModalConfirm
+        abierto={!!confirmDes}
+        titulo="¿Desactivar servicio?"
+        descripcion={confirmDes ? `"${confirmDes.titulo}" dejará de ser visible para los empleados.` : ""}
+        textoConfirmar="Desactivar"
+        variante="danger"
+        onConfirmar={() => { confirmarDesactivar(confirmDes!); setConfirmDes(null); }}
+        onCancelar={() => setConfirmDes(null)}
+      />
 
       {/* Toast */}
       {toast && (

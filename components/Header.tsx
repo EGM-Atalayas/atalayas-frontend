@@ -31,6 +31,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
+  const logoSrc = usuario?.logoEmpresaUrl || (typeof window !== "undefined" ? localStorage.getItem("empresa_logo_url") : null);
 
   // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
   useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
@@ -157,19 +158,32 @@ export default function Header() {
         {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
         <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 shrink-0 z-10">
           <Link href={linkLogo}>
-            <Image
-              src={logo}
-              alt="Atalayas EGM"
-              width={180}
-              height={50}
-              priority
-              style={{
-                height:     "clamp(40px, 6vw, 50px)",
-                width:      "auto",
-                transition: "opacity 0.15s ease",
-              }}
-              className="brightness-0 invert cursor-pointer hover:opacity-75"
-            />
+            {logoSrc ? (
+              <img
+                src={logoSrc}
+                alt="Logo empresa"
+                style={{
+                  height: "clamp(40px, 6vw, 50px)",
+                  width: "auto",
+                  transition: "opacity 0.15s ease",
+                }}
+                className="cursor-pointer hover:opacity-75"
+              />
+            ) : (
+              <Image
+                src={logo}
+                alt="Atalayas EGM"
+                width={180}
+                height={50}
+                priority
+                style={{
+                  height:     "clamp(40px, 6vw, 50px)",
+                  width:      "auto",
+                  transition: "opacity 0.15s ease",
+                }}
+                className="brightness-0 invert cursor-pointer hover:opacity-75"
+              />
+            )}
           </Link>
         </div>
 
@@ -257,11 +271,19 @@ export default function Header() {
           >
             {/* Logo — izquierda */}
             <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center flex-1">
-              <Image
-                src={logo} alt="Atalayas EGM" width={160} height={44}
-                style={{ height: "40px", width: "auto" }}
-                className="brightness-0 invert"
-              />
+              {logoSrc ? (
+                <img
+                  src={logoSrc}
+                  alt="Logo empresa"
+                  style={{ height: "40px", width: "auto" }}
+                />
+              ) : (
+                <Image
+                  src={logo} alt="Atalayas EGM" width={160} height={44}
+                  style={{ height: "40px", width: "auto" }}
+                  className="brightness-0 invert"
+                />
+              )}
             </Link>
 
             {/* Campana con dropdown completo (NotifMenu) */}
