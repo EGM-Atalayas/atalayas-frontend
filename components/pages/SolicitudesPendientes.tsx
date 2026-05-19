@@ -148,7 +148,7 @@ const SolicitudesPendientes: React.FC = () => {
           {solicitudes.map((solicitud) => (
             <div key={solicitud.empresaId} className="card card-hover overflow-hidden flex flex-col">
               
-              <div className="flex justify-between items-center p-5" style={{ borderBottom: "1px solid var(--gris-superficie)", background: "var(--gris-pagina)" }}>
+              <div className="flex justify-between items-center p-5" style={{ borderBottom: "1px solid var(--gris-superficie)", background: "var(--blanco)" }}>
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                   PENDIENTE
                 </span>
@@ -207,7 +207,7 @@ const SolicitudesPendientes: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-5" style={{ background: "var(--gris-pagina)", borderTop: "1px solid var(--gris-borde)" }}>
+              <div className="grid grid-cols-2 gap-3 p-5" style={{ background: "var(--blanco)", borderTop: "1px solid var(--gris-borde)" }}>
                 <button
                   onClick={() => procesarSolicitud(solicitud.empresaId, "RECHAZADA")}
                   disabled={procesando === solicitud.empresaId}

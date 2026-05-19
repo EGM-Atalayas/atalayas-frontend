@@ -124,7 +124,7 @@ const GestionEmpresas: React.FC = () => {
           </div>
         </div>
         <div className="card card-hover p-5 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+          <div className="h-12 w-12 rounded-full flex items-center justify-center" style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
             <FaBan size={20} />
           </div>
           <div>
@@ -147,7 +147,7 @@ const GestionEmpresas: React.FC = () => {
       <div className="bg-white p-4 rounded-t-2xl border-x border-t flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm" style={{ borderColor: "var(--gris-borde)" }}>
 
         {/* Tabs de Filtro */}
-        <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto" style={{ background: "var(--gris-superficie)" }}>
+        <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
           {["TODAS", "ACTIVA", "INACTIVA", "PENDIENTE"].map((tab) => (
             <button
               key={tab}
@@ -174,7 +174,7 @@ const GestionEmpresas: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none transition-all"
             style={{
-              background:  "var(--gris-pagina)",
+              background:  "var(--blanco)",
               border:      "1px solid var(--gris-borde)",
               color:       "var(--texto-primario)",
             }}
@@ -186,7 +186,7 @@ const GestionEmpresas: React.FC = () => {
       <div className="bg-white rounded-b-2xl shadow-sm overflow-hidden" style={{ border: "1px solid var(--gris-borde)", borderTop: "none" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm min-w-[800px]" style={{ color: "var(--texto-secundario)" }}>
-            <thead className="text-xs uppercase font-bold tracking-wider" style={{ background: "var(--gris-pagina)", color: "var(--texto-muted)", borderTop: "1px solid var(--gris-borde)", borderBottom: "1px solid var(--gris-borde)" }}>
+            <thead className="text-xs uppercase font-bold tracking-wider" style={{ background: "var(--blanco)", color: "var(--texto-muted)", borderTop: "1px solid var(--gris-borde)", borderBottom: "1px solid var(--gris-borde)" }}>
               <tr>
                 <th className="px-6 py-5">Empresa</th>
                 <th className="px-6 py-5">CIF</th>
