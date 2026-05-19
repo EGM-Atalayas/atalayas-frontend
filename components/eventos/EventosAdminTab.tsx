@@ -15,6 +15,7 @@ import {
   type ComunidadEvento,
 } from "@/lib/api/comunidad";
 import { ModalEvento } from "./ModalEvento";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 interface Props {
   /** Si quien usa el panel es ROLE_ADMIN (superadmin) → puede marcar eventos como globales */
@@ -27,6 +28,7 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
   const [error, setError]       = useState<string | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState<ComunidadEvento | null>(null);
+  const [confirmDesactivar, setConfirmDesactivar] = useState<ComunidadEvento | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -53,13 +55,17 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
 
   useEffect(() => { cargar(); }, []);
 
-  const handleDesactivar = async (ev: ComunidadEvento) => {
-    if (!confirm(`¿Desactivar el evento "${ev.titulo}"?`)) return;
+  const handleDesactivar = (ev: ComunidadEvento) => setConfirmDesactivar(ev);
+
+  const ejecutarDesactivar = async () => {
+    if (!confirmDesactivar) return;
     try {
-      await desactivarEventoComunidad(ev.eventoId);
-      setEventos((prev) => prev.filter((e) => e.eventoId !== ev.eventoId));
+      await desactivarEventoComunidad(confirmDesactivar.eventoId);
+      setEventos((prev) => prev.filter((e) => e.eventoId !== confirmDesactivar.eventoId));
     } catch {
-      alert("No se pudo desactivar el evento");
+      setError("No se pudo desactivar el evento. Inténtalo de nuevo.");
+    } finally {
+      setConfirmDesactivar(null);
     }
   };
 
@@ -181,6 +187,20 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
           onGuardado={handleGuardado}
         />
       )}
+
+      <ModalConfirm
+        abierto={!!confirmDesactivar}
+        titulo="¿Desactivar evento?"
+        descripcion={
+          confirmDesactivar
+            ? `"${confirmDesactivar.titulo}" dejará de ser visible para los empleados.`
+            : ""
+        }
+        textoConfirmar="Desactivar evento"
+        variante="danger"
+        onConfirmar={ejecutarDesactivar}
+        onCancelar={() => setConfirmDesactivar(null)}
+      />
     </section>
   );
 }

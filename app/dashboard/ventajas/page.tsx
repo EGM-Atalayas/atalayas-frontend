@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getBeneficios, crearBeneficio, editarBeneficio, desactivarBeneficio } from "@/lib/api/beneficios";
 import type { Beneficio, BeneficioInput } from "@/lib/types/beneficios";
 import BeneficioModal  from "@/components/ui/BeneficioModal";
-import ConfirmDialog   from "@/components/ui/ConfirmDialog";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 // ── Breadcrumb de vuelta ──────────────────────────────────────────────────────
 function BreadcrumbBack({ href, label }: { href: string; label: string }) {
@@ -632,17 +632,15 @@ export default function VentajasPage() {
         />
       )}
 
-      {/* Confirmación desactivar */}
-      {confirmando && (
-        <ConfirmDialog
-          titulo="Desactivar ventaja"
-          mensaje={`"${confirmando.titulo}" dejará de ser visible para los empleados. ¿Continuar?`}
-          labelOk="Desactivar"
-          peligro
-          onOk={confirmarDesactivar}
-          onCerrar={() => setConfirmando(null)}
-        />
-      )}
+      <ModalConfirm
+        abierto={!!confirmando}
+        titulo="¿Desactivar ventaja?"
+        descripcion={confirmando ? `"${confirmando.titulo}" dejará de ser visible para los empleados.` : ""}
+        textoConfirmar="Desactivar"
+        variante="danger"
+        onConfirmar={() => { confirmarDesactivar(); setConfirmando(null); }}
+        onCancelar={() => setConfirmando(null)}
+      />
 
       {/* Toast global */}
       {toast && (
