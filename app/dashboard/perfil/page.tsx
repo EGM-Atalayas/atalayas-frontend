@@ -6,7 +6,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import { MisDocumentos } from "@/components/documentos/MisDocumentos";
-import { removeBackground, preload as preloadBgRemoval } from "@imgly/background-removal";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
@@ -15,6 +14,8 @@ import {
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
 import { subirImagenBanner } from "@/lib/supabase";
 import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
+import { removeBackground } from "@imgly/background-removal";
+import toast, { Toaster } from "react-hot-toast";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";
@@ -40,11 +41,11 @@ interface PerfilCompleto {
 }
 
 const DISPONIBILIDAD_CONFIG: Record<Disponibilidad, { label: string; color: string; bg: string; dot: string }> = {
-  DISPONIBLE:  { label: "Disponible",  color: "#16a34a", bg: "#dcfce7", dot: "#16a34a" },
+  DISPONIBLE: { label: "Disponible", color: "#16a34a", bg: "#dcfce7", dot: "#16a34a" },
   TELETRABAJO: { label: "Teletrabajo", color: "#2563eb", bg: "#dbeafe", dot: "#2563eb" },
-  OCUPADO:     { label: "Ocupado",     color: "#dc2626", bg: "#fee2e2", dot: "#dc2626" },
-  VACACIONES:  { label: "Vacaciones",  color: "#d97706", bg: "#fef3c7", dot: "#d97706" },
-  AUSENTE:     { label: "Ausente",     color: "#6b7280", bg: "#f3f4f6", dot: "#9ca3af" },
+  OCUPADO: { label: "Ocupado", color: "#dc2626", bg: "#fee2e2", dot: "#dc2626" },
+  VACACIONES: { label: "Vacaciones", color: "#d97706", bg: "#fef3c7", dot: "#d97706" },
+  AUSENTE: { label: "Ausente", color: "#6b7280", bg: "#f3f4f6", dot: "#9ca3af" },
 };
 
 const BANNER_GRUPOS = [
@@ -137,7 +138,7 @@ const MAX_PUESTO = 60;
 
 export default function PerfilPage() {
   const { usuario, guardarUsuario } = useAuth();
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
 
   const [perfil, setPerfil] = useState<PerfilCompleto | null>(null);
@@ -158,9 +159,9 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errores, setErrores] = useState<{ nombre?: string; apellidos?: string; telefono?: string }>({});
-  const [sugerencia, setSugerencia]       = useState("");
-  const [enviandoSug, setEnviandoSug]     = useState(false);
-  const [estadoSug, setEstadoSug]         = useState<"idle" | "ok" | "error">("idle");
+  const [sugerencia, setSugerencia] = useState("");
+  const [enviandoSug, setEnviandoSug] = useState(false);
+  const [estadoSug, setEstadoSug] = useState<"idle" | "ok" | "error">("idle");
   const [destinatarioSug] = useState<"EGM">("EGM");
   const [dispOpen, setDispOpen] = useState(false);
   const dispRef = useRef<HTMLDivElement>(null);
@@ -178,7 +179,6 @@ export default function PerfilPage() {
   const [formEmpEmail, setFormEmpEmail] = useState("");
   const [savingEmpresa, setSavingEmpresa] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [procesandoLogo, setProcesandoLogo] = useState(false);
   const [empresaLoaded, setEmpresaLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -230,7 +230,7 @@ export default function PerfilPage() {
           nombreEmpresa: data.nombreEmpresa ?? "",
           cif: data.cif ?? "",
           emailContacto: data.emailContacto ?? "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) || undefined,
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
         });
         setFormEmpNombre(data.nombreEmpresa ?? "");
         setFormEmpCif(data.cif ?? "");
@@ -240,18 +240,13 @@ export default function PerfilPage() {
           nombreEmpresa: "",
           cif: "",
           emailContacto: "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) || undefined,
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
         });
       } finally {
         setEmpresaLoaded(true);
       }
     })();
   }, [esAdmin, usuario?.empresaId, empresaLoaded]);
-
-  // Precargar modelo de eliminación de fondo
-  useEffect(() => {
-    preloadBgRemoval().catch(() => {});
-  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -272,7 +267,7 @@ export default function PerfilPage() {
     setLoading(true);
     loadPerfil();
     loadProgreso();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, usuario?.email]);
 
   const loadPerfil = async () => {
@@ -324,7 +319,7 @@ export default function PerfilPage() {
       ]);
       setModulos(modulosCP);
       setProgresosModulo(progresosModuloData);
-    } catch {}
+    } catch { }
   };
 
   const patchPerfil = async (payload: Record<string, unknown>) => {
@@ -341,22 +336,22 @@ export default function PerfilPage() {
         // Actualizar contexto solo con los campos que usa la UI global (navbar, etc.)
         guardarUsuario({
           ...usuario!,
-          nombre:     updated.nombre,
-          apellidos:  updated.apellidos,
-          avatarUrl:  updated.avatarUrl,
-          bannerUrl:  updated.bannerUrl,
+          nombre: updated.nombre,
+          apellidos: updated.apellidos,
+          avatarUrl: updated.avatarUrl,
+          bannerUrl: updated.bannerUrl,
         });
         return true;
       }
-    } catch {}
+    } catch { }
     return false;
   };
 
   const handleGuardar = async () => {
-    const nombreFinal    = formNombre.trim().replace(/\s+/g, " ");
+    const nombreFinal = formNombre.trim().replace(/\s+/g, " ");
     const apellidosFinal = formApellidos.trim().replace(/\s+/g, " ");
-    const puestoFinal    = formPuesto.trim().replace(/\s+/g, " ");
-    const digits         = formTelefono.replace(/\D/g, "");
+    const puestoFinal = formPuesto.trim().replace(/\s+/g, " ");
+    const digits = formTelefono.replace(/\D/g, "");
     // formTelefono guarda solo dígitos sin +34, lo reconstruimos al guardar
     const telefonoFinal = formTelefono.trim() ? `+34 ${formTelefono.trim()}` : "";
     // Para comparar sin cambios: la versión almacenada en perfil también sin prefijo
@@ -364,10 +359,10 @@ export default function PerfilPage() {
 
     // Validación
     const nuevosErrores: typeof errores = {};
-    if (!nombreFinal)                    nuevosErrores.nombre    = "El nombre es obligatorio";
-    else if (nombreFinal.length < 2)     nuevosErrores.nombre    = "Mínimo 2 caracteres";
-    if (!apellidosFinal)                 nuevosErrores.apellidos = "Los apellidos son obligatorios";
-    else if (apellidosFinal.length < 2)  nuevosErrores.apellidos = "Mínimo 2 caracteres";
+    if (!nombreFinal) nuevosErrores.nombre = "El nombre es obligatorio";
+    else if (nombreFinal.length < 2) nuevosErrores.nombre = "Mínimo 2 caracteres";
+    if (!apellidosFinal) nuevosErrores.apellidos = "Los apellidos son obligatorios";
+    else if (apellidosFinal.length < 2) nuevosErrores.apellidos = "Mínimo 2 caracteres";
     if (digits.length > 0 && digits.length < 9) nuevosErrores.telefono = "Debe tener 9 dígitos";
 
     if (Object.keys(nuevosErrores).length > 0) {
@@ -379,31 +374,31 @@ export default function PerfilPage() {
 
     // Sin cambios reales → no llamar al backend
     const sinCambios = esAdmin
-      ? (nombreFinal        === (perfil?.nombre        ?? "")      &&
-         apellidosFinal     === (perfil?.apellidos      ?? "")      &&
-         puestoFinal        === (perfil?.puestoTrabajo  ?? "")      &&
-         formTelefono.trim() === telefonoOriginal                    &&
-         formDisponibilidad  === (perfil?.disponibilidad ?? "DISPONIBLE") &&
-         emailFinal         === (perfil?.email          ?? ""))
-      : (emailFinal         === (perfil?.email          ?? "")      &&
-         formTelefono.trim() === telefonoOriginal);
+      ? (nombreFinal === (perfil?.nombre ?? "") &&
+        apellidosFinal === (perfil?.apellidos ?? "") &&
+        puestoFinal === (perfil?.puestoTrabajo ?? "") &&
+        formTelefono.trim() === telefonoOriginal &&
+        formDisponibilidad === (perfil?.disponibilidad ?? "DISPONIBLE") &&
+        emailFinal === (perfil?.email ?? ""))
+      : (emailFinal === (perfil?.email ?? "") &&
+        formTelefono.trim() === telefonoOriginal);
 
     if (sinCambios) { setEditando(false); return; }
 
     setSaving(true);
     const payload: Record<string, unknown> = esAdmin
       ? {
-          nombre:         nombreFinal,
-          apellidos:      apellidosFinal,
-          puestoTrabajo:  puestoFinal,
-          telefono:       telefonoFinal,
-          disponibilidad: formDisponibilidad,
-          email:          emailFinal,
-        }
+        nombre: nombreFinal,
+        apellidos: apellidosFinal,
+        puestoTrabajo: puestoFinal,
+        telefono: telefonoFinal,
+        disponibilidad: formDisponibilidad,
+        email: emailFinal,
+      }
       : {
-          email:          emailFinal,
-          telefono:       telefonoFinal,
-        };
+        email: emailFinal,
+        telefono: telefonoFinal,
+      };
     const ok = await patchPerfil(payload);
     setSaving(false);
     if (ok) { setErrores({}); setEditando(false); }
@@ -504,7 +499,7 @@ export default function PerfilPage() {
         emailContacto: emailFinal,
       } : prev);
       setEditandoEmpresa(false);
-      localStorage.setItem(`empresa_nombre_${usuario.empresaId}`, nombreFinal);
+      localStorage.setItem("empresa_nombre", nombreFinal);
     } finally {
       setSavingEmpresa(false);
     }
@@ -523,21 +518,33 @@ export default function PerfilPage() {
     const file = e.target.files?.[0];
     if (!file || !usuario?.empresaId) return;
     e.target.value = "";
-    setProcesandoLogo(true);
+    setUploadingLogo(true);
+
     try {
-      const cleanedBlob = await removeBackground(file);
-      const cleanedFile = new File([cleanedBlob], file.name.replace(/\.[^.]+$/, ".png"), { type: "image/png" });
-      setProcesandoLogo(false);
-      setUploadingLogo(true);
-      const result = await subirLogoEmpresa(usuario.empresaId, cleanedFile);
+      let fileToUpload = file;
+
+      // === QUITAR FONDO AUTOMÁTICAMENTE ===
+      toast.loading("Quitando fondo…");
+      try {
+        const cleanBlob = await removeBackground(file);
+        fileToUpload = new File([cleanBlob], "logo-sinfondo.png", { type: "image/png" });
+        toast.dismiss();
+        toast.success("Fondo removido");
+      } catch (error) {
+        console.warn("No se pudo quitar el fondo, se sube original", error);
+        toast.dismiss();
+        toast.error("Se subirá con fondo");
+      }
+
+      const result = await subirLogoEmpresa(usuario.empresaId, fileToUpload);
       setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
       guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
       localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, result.logoEmpresaUrl);
+      toast.success("Logo subido correctamente");
     } catch (err) {
       console.error("[Perfil] Error subiendo logo:", err);
-      alert(err instanceof Error ? err.message : "No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
+      toast.error("Error al subir el logo");
     } finally {
-      setProcesandoLogo(false);
       setUploadingLogo(false);
     }
   };
@@ -569,8 +576,8 @@ export default function PerfilPage() {
     }
   };
 
-  const completados   = modulos.filter((m) => m.status === "completado").length;
-  const pendientes    = modulos.filter((m) => m.status === "pendiente").length;
+  const completados = modulos.filter((m) => m.status === "completado").length;
+  const pendientes = modulos.filter((m) => m.status === "pendiente").length;
   const pctOnboarding = modulos.length > 0 ? Math.round((completados / modulos.length) * 100) : 0;
 
   // Módulo actual: primero "en progreso", luego el primer pendiente
@@ -607,7 +614,9 @@ export default function PerfilPage() {
   const disp = DISPONIBILIDAD_CONFIG[perfil?.disponibilidad ?? "DISPONIBLE"];
   const initials = getInitials(perfil?.nombre ?? "", perfil?.apellidos ?? "");
   return (
-    <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
+    <>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+      <div className="min-h-screen pb-20" style={{ background: "var(--gris-pagina)" }}>
 
       <style>{`
         .buzon-card.buzon-focused {
@@ -639,7 +648,7 @@ export default function PerfilPage() {
               >
                 {uploadingAvatar ? (
                   <svg className="animate-spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5">
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round"/>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round" />
                   </svg>
                 ) : perfil?.avatarUrl ? (
                   <Image src={perfil.avatarUrl} alt="Avatar" width={90} height={90} className="object-cover rounded-full" />
@@ -666,20 +675,20 @@ export default function PerfilPage() {
               <div style={{ animation: "heroFadeUp 0.6s ease 0.08s both" }}>
                 <span
                   style={{
-                    fontFamily:           "'Instrument Serif', serif",
-                    fontStyle:            "italic",
-                    fontWeight:           700,
-                    fontSize:             "clamp(2.2rem, 5vw, 3.5rem)",
-                    lineHeight:           1.05,
-                    backgroundImage:      "linear-gradient(90deg, #ffffff, var(--verde-oliva-hover), #ffffff)",
-                    backgroundSize:       "300% auto",
+                    fontFamily: "'Instrument Serif', serif",
+                    fontStyle: "italic",
+                    fontWeight: 700,
+                    fontSize: "clamp(2.2rem, 5vw, 3.5rem)",
+                    lineHeight: 1.05,
+                    backgroundImage: "linear-gradient(90deg, #ffffff, var(--verde-oliva-hover), #ffffff)",
+                    backgroundSize: "300% auto",
                     WebkitBackgroundClip: "text",
-                    WebkitTextFillColor:  "transparent",
-                    backgroundClip:       "text",
-                    animation:            "heroFadeUp 0.6s ease 0.08s both, gradientShift 6s ease infinite",
-                    display:              "block",
-                    overflowWrap:         "break-word",
-                    wordBreak:            "break-word",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    animation: "heroFadeUp 0.6s ease 0.08s both, gradientShift 6s ease infinite",
+                    display: "block",
+                    overflowWrap: "break-word",
+                    wordBreak: "break-word",
                   }}
                 >
                   {perfil?.nombre} {perfil?.apellidos}
@@ -734,11 +743,11 @@ export default function PerfilPage() {
         <div className="flex flex-col gap-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 style={{
-              fontFamily:  "var(--font-raleway), sans-serif",
-              fontWeight:  800,
-              fontSize:    "clamp(1.6rem, 3vw, 2.2rem)",
-              lineHeight:  1.1,
-              color:       "var(--texto-primario)",
+              fontFamily: "var(--font-raleway), sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+              lineHeight: 1.1,
+              color: "var(--texto-primario)",
               letterSpacing: "-0.02em",
             }}>Datos personales</h2>
             {!editando ? (
@@ -945,7 +954,7 @@ export default function PerfilPage() {
                       style={{ color: "var(--texto-muted)", transform: dispOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
-                  </button>
+                  </button>bh
 
                   {/* Dropdown panel */}
                   {dispOpen && (
@@ -989,362 +998,362 @@ export default function PerfilPage() {
 
         {/* ── Datos de empresa (solo admin) ── */}
         {esAdmin && (
-        <div className="flex flex-col gap-7">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 style={{
-              fontFamily:  "var(--font-raleway), sans-serif",
-              fontWeight:  800,
-              fontSize:    "clamp(1.6rem, 3vw, 2.2rem)",
-              lineHeight:  1.1,
-              color:       "var(--texto-primario)",
-              letterSpacing: "-0.02em",
-            }}>Datos de empresa</h2>
-            {!editandoEmpresa ? (
-              <button
-                onClick={() => setEditandoEmpresa(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
-                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
-              >
-                <Pencil size={13} /> Editar
-              </button>
-            ) : (
-              <div className="flex gap-2 shrink-0">
-                <button onClick={handleCancelarEmpresa}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border"
-                  style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
-                  <X size={13} /> Cancelar
-                </button>
-                <button onClick={handleGuardarEmpresa} disabled={savingEmpresa}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity"
-                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: savingEmpresa ? 0.7 : 1 }}>
-                  <Check size={13} /> {savingEmpresa ? "Guardando…" : "Guardar"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 min-w-0">
-            {/* Logo empresa */}
-            <div className="flex flex-col gap-2 min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Logo</p>
-              <div className="flex items-center gap-4">
-                <div
-                  className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
-                  style={{
-                    width: 80, height: 80,
-                    background: empresaData?.logoEmpresaUrl ? "transparent" : "var(--gris-superficie)",
-                    border: empresaData?.logoEmpresaUrl ? "none" : "1px solid var(--gris-borde)",
-                  }}
-                >
-                  {(uploadingLogo || procesandoLogo) ? (
-                    <div className="w-6 h-6 rounded-full border-2 animate-spin"
-                      style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
-                  ) : empresaData?.logoEmpresaUrl ? (
-                    <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
-                  )}
-                </div>
+          <div className="flex flex-col gap-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 style={{
+                fontFamily: "var(--font-raleway), sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+                lineHeight: 1.1,
+                color: "var(--texto-primario)",
+                letterSpacing: "-0.02em",
+              }}>Datos de empresa</h2>
+              {!editandoEmpresa ? (
                 <button
-                  onClick={() => logoInputRef.current?.click()}
-                  disabled={uploadingLogo || procesandoLogo}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo || procesandoLogo ? 0.6 : 1 }}
+                  onClick={() => setEditandoEmpresa(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
+                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
                 >
-                  <Camera size={13} /> {procesandoLogo ? "Quitando fondo…" : uploadingLogo ? "Subiendo…" : empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                  <Pencil size={13} /> Editar
                 </button>
-                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+              ) : (
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={handleCancelarEmpresa}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
+                    <X size={13} /> Cancelar
+                  </button>
+                  <button onClick={handleGuardarEmpresa} disabled={savingEmpresa}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity"
+                    style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: savingEmpresa ? 0.7 : 1 }}>
+                    <Check size={13} /> {savingEmpresa ? "Guardando…" : "Guardar"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 min-w-0">
+              {/* Logo empresa */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Logo</p>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                    style={{
+                      width: 80, height: 80,
+                      background: empresaData?.logoEmpresaUrl ? "transparent" : "var(--gris-superficie)",
+                      border: empresaData?.logoEmpresaUrl ? "none" : "1px solid var(--gris-borde)",
+                    }}
+                  >
+                    {uploadingLogo ? (
+                      <div className="w-6 h-6 rounded-full border-2 animate-spin"
+                        style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
+                    ) : empresaData?.logoEmpresaUrl ? (
+                      <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover", mixBlendMode: "multiply" }} />
+                    ) : (
+                      <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
+                  >
+                    <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                  </button>
+                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </div>
+              </div>
+
+              {/* Nombre empresa */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre de la empresa</p>
+                {editandoEmpresa ? (
+                  <div className="flex flex-col gap-1">
+                    <input
+                      value={formEmpNombre}
+                      onChange={(e) => setFormEmpNombre(e.target.value)}
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                      onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                      placeholder="Nombre de la empresa"
+                      className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                      style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
+                )}
+              </div>
+
+              {/* CIF */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>CIF</p>
+                {editandoEmpresa ? (
+                  <div className="flex flex-col gap-1">
+                    <input
+                      value={formEmpCif}
+                      onChange={(e) => setFormEmpCif(e.target.value.toUpperCase())}
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                      onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                      placeholder="B12345678"
+                      className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                      style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.cif || "—"}</p>
+                )}
+              </div>
+
+              {/* Email contacto */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email de contacto</p>
+                {editandoEmpresa ? (
+                  <div className="flex flex-col gap-1">
+                    <input
+                      value={formEmpEmail}
+                      onChange={(e) => setFormEmpEmail(e.target.value)}
+                      type="email"
+                      onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                      onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                      placeholder="empresa@ejemplo.com"
+                      className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                      style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
+                )}
               </div>
             </div>
-
-            {/* Nombre empresa */}
-            <div className="flex flex-col gap-2 min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre de la empresa</p>
-              {editandoEmpresa ? (
-                <div className="flex flex-col gap-1">
-                  <input
-                    value={formEmpNombre}
-                    onChange={(e) => setFormEmpNombre(e.target.value)}
-                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
-                    placeholder="Nombre de la empresa"
-                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
-                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
-                  />
-                </div>
-              ) : (
-                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
-              )}
-            </div>
-
-            {/* CIF */}
-            <div className="flex flex-col gap-2 min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>CIF</p>
-              {editandoEmpresa ? (
-                <div className="flex flex-col gap-1">
-                  <input
-                    value={formEmpCif}
-                    onChange={(e) => setFormEmpCif(e.target.value.toUpperCase())}
-                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
-                    placeholder="B12345678"
-                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
-                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
-                  />
-                </div>
-              ) : (
-                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.cif || "—"}</p>
-              )}
-            </div>
-
-            {/* Email contacto */}
-            <div className="flex flex-col gap-2 min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email de contacto</p>
-              {editandoEmpresa ? (
-                <div className="flex flex-col gap-1">
-                  <input
-                    value={formEmpEmail}
-                    onChange={(e) => setFormEmpEmail(e.target.value)}
-                    type="email"
-                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
-                    placeholder="empresa@ejemplo.com"
-                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
-                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
-                  />
-                </div>
-              ) : (
-                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
-              )}
-            </div>
           </div>
-        </div>
         )}
 
         {/* ── Sección formación ── */}
         {!isSuperAdmin && (
-        <div className="flex flex-col gap-7">
-        <h2 style={{
-          fontFamily: "var(--font-raleway), sans-serif",
-          fontWeight: 800,
-          fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-          lineHeight: 1.1,
-          color: "var(--texto-primario)",
-          letterSpacing: "-0.02em",
-        }}>Formación</h2>
-
-        {/* ── Fila de estadísticas ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-          {/* Quesito formación — ocupa todo el ancho si no hay segunda tarjeta */}
-          <div className={`rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7 relative overflow-hidden${!haySegundaTarjeta && !moduloPreview ? " sm:col-span-2" : ""}`}
-            style={{ background: "var(--azul-egm)", border: "1px solid transparent" }}>
-            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 90% 20%, rgba(163,181,53,0.45) 0%, transparent 60%)", pointerEvents: "none" }} />
-            <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
-              <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
-                <path fill="none" strokeWidth="2.5" stroke="rgba(255,255,255,0.12)"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path fill="none" strokeWidth="2.5" stroke="var(--verde-oliva-hover)" strokeLinecap="round"
-                  strokeDasharray={`${pctOnboarding}, 100`}
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-bold" style={{ color: "#fff", fontSize: "1.2rem" }}>{pctOnboarding}%</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.5)" }}>Progreso formación</p>
-              <p className="font-bold leading-tight" style={{ color: "#fff", fontSize: "1.35rem" }}>
-                {completados} <span className="text-sm font-normal" style={{ color: "rgba(255,255,255,0.5)" }}>de {modulos.length} cursos</span>
-              </p>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
-                {pendientes > 0 ? `${pendientes} curso${pendientes !== 1 ? "s" : ""} pendiente${pendientes !== 1 ? "s" : ""}` : "¡Todo completado!"}
-              </p>
-            </div>
-          </div>
-
-          {/* Módulo actual / Preview / Completado */}
-          {moduloPreview ? (
-            <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
-              style={{ background: "var(--azul-egm-light)", border: "1px solid rgba(27,63,126,0.15)" }}>
-              <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
-                <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
-                  <path fill="none" strokeWidth="2.5" stroke="rgba(27,63,126,0.12)"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path fill="none" strokeWidth="2.5" stroke="var(--azul-egm)" strokeLinecap="round"
-                    strokeDasharray={`${pctPreview}, 100`}
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-bold" style={{ color: "var(--azul-egm)", fontSize: "1.2rem" }}>{pctPreview}%</span>
-                </div>
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>Continúa donde lo dejaste</p>
-                  <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloPreview.titulo}</p>
-                </div>
-                <button
-                  onClick={() => router.push("/dashboard/formacion")}
-                  className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
-                >
-                  Continuar <ChevronRight size={13} />
-                </button>
-              </div>
-            </div>
-          ) : pctOnboarding === 100 ? (
-            <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
-              style={{ background: "var(--azul-egm-light)", border: "1.5px solid var(--azul-egm)" }}>
-              <div className="shrink-0 flex items-center justify-center rounded-2xl"
-                style={{ width: 84, height: 84, background: "rgba(27,63,126,0.1)" }}>
-                <Award size={38} style={{ color: "var(--azul-egm)" }} />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>Formación completada</p>
-                <p className="font-bold leading-tight" style={{ color: "var(--texto-primario)", fontSize: "1.35rem" }}>¡Enhorabuena!</p>
-                <p className="text-sm" style={{ color: "var(--texto-secundario)" }}>Has completado todos los cursos</p>
-              </div>
-            </div>
-          ) : moduloActual ? (
-            <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
-              style={{ background: "var(--azul-egm-light)", border: "1px solid rgba(27,63,126,0.15)" }}>
-
-              {/* Quesito del módulo actual — mismo tamaño que el principal */}
-              <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
-                <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
-                  <path fill="none" strokeWidth="2.5" stroke="rgba(27,63,126,0.12)"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path fill="none" strokeWidth="2.5" stroke="var(--azul-egm)" strokeLinecap="round"
-                    strokeDasharray={`${pctModuloActual}, 100`}
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-bold" style={{ color: "var(--azul-egm)", fontSize: "1.2rem" }}>{pctModuloActual}%</span>
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-0 flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>
-                    {pctModuloActual > 0 ? "Continúa donde lo dejaste" : "Siguiente curso"}
-                  </p>
-                  <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloActual.nombre}</p>
-                </div>
-                <button
-                  onClick={() => router.push("/dashboard/formacion")}
-                  className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
-                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
-                >
-                  {pctModuloActual > 0 ? "Continuar" : "Empezar"} <ChevronRight size={13} />
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-        </div>
-
-        </div>
-        )}
-
-{/* ── Mis documentos (solo para empleados; admins no lo necesitan) ── */}
-{!esAdmin && (
-  <div id="mis-documentos" className="scroll-mt-20">
-    <MisDocumentos />
-  </div>
-)}
-
-{/* ── Buzón de sugerencias ── */}
-  {!isSuperAdmin && (
-  <div className="grid grid-cols-1 gap-8 items-start">
-
-          {/* ── Buzón ── */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-7">
             <h2 style={{
               fontFamily: "var(--font-raleway), sans-serif",
-              fontWeight: 700,
-              fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
-              lineHeight: 1.2,
+              fontWeight: 800,
+              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+              lineHeight: 1.1,
               color: "var(--texto-primario)",
-              letterSpacing: "-0.01em",
-            }}>Buzón de sugerencias</h2>
+              letterSpacing: "-0.02em",
+            }}>Formación</h2>
 
-            {/* Card unificada */}
-            <div className="buzon-card flex flex-col rounded-2xl overflow-hidden flex-1"
-              style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", transition: "border-color 0.15s" }}>
+            {/* ── Fila de estadísticas ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-              {/* Cabecera: destinatario */}
-              <div className="flex items-center gap-4 px-5 py-3"
-                style={{ borderBottom: "1px solid var(--gris-borde)" }}>
-                <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
-                  Enviar a
-                </p>
-                <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                  style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
-                  EGM Atalayas
-                </span>
+              {/* Quesito formación — ocupa todo el ancho si no hay segunda tarjeta */}
+              <div className={`rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7 relative overflow-hidden${!haySegundaTarjeta && !moduloPreview ? " sm:col-span-2" : ""}`}
+                style={{ background: "var(--azul-egm)", border: "1px solid transparent" }}>
+                <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 90% 20%, rgba(163,181,53,0.45) 0%, transparent 60%)", pointerEvents: "none" }} />
+                <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
+                  <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
+                    <path fill="none" strokeWidth="2.5" stroke="rgba(255,255,255,0.12)"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path fill="none" strokeWidth="2.5" stroke="var(--verde-oliva-hover)" strokeLinecap="round"
+                      strokeDasharray={`${pctOnboarding}, 100`}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-bold" style={{ color: "#fff", fontSize: "1.2rem" }}>{pctOnboarding}%</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.5)" }}>Progreso formación</p>
+                  <p className="font-bold leading-tight" style={{ color: "#fff", fontSize: "1.35rem" }}>
+                    {completados} <span className="text-sm font-normal" style={{ color: "rgba(255,255,255,0.5)" }}>de {modulos.length} cursos</span>
+                  </p>
+                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {pendientes > 0 ? `${pendientes} curso${pendientes !== 1 ? "s" : ""} pendiente${pendientes !== 1 ? "s" : ""}` : "¡Todo completado!"}
+                  </p>
+                </div>
               </div>
 
-              {/* Textarea */}
-              <textarea
-                value={sugerencia}
-                onChange={(e) => { setSugerencia(e.target.value.slice(0, 500)); if (estadoSug !== "idle") setEstadoSug("idle"); }}
-                placeholder="Escribe tu sugerencia para EGM Atalayas…"
-                rows={3}
-                className="w-full px-5 py-4 text-base outline-none resize-none flex-1"
-                style={{ color: "var(--texto-primario)", lineHeight: 1.6, background: "transparent", border: "none", minHeight: "140px" }}
-                onFocus={(e) => e.currentTarget.closest(".buzon-card")?.classList.add("buzon-focused")}
-                onBlur={(e) => e.currentTarget.closest(".buzon-card")?.classList.remove("buzon-focused")}
-              />
-
-              {/* Footer: barra de progreso + botón */}
-              <div className="flex flex-col gap-0"
-                style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-                {/* Barra de progreso */}
-                <div style={{ height: "2px", background: "var(--gris-borde)" }}>
-                  <div style={{
-                    height: "100%",
-                    width: `${(sugerencia.length / 500) * 100}%`,
-                    background: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--azul-egm)",
-                    transition: "width 0.2s, background 0.3s",
-                    borderRadius: "0 2px 2px 0",
-                  }} />
+              {/* Módulo actual / Preview / Completado */}
+              {moduloPreview ? (
+                <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
+                  style={{ background: "var(--azul-egm-light)", border: "1px solid rgba(27,63,126,0.15)" }}>
+                  <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
+                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
+                      <path fill="none" strokeWidth="2.5" stroke="rgba(27,63,126,0.12)"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path fill="none" strokeWidth="2.5" stroke="var(--azul-egm)" strokeLinecap="round"
+                        strokeDasharray={`${pctPreview}, 100`}
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-bold" style={{ color: "var(--azul-egm)", fontSize: "1.2rem" }}>{pctPreview}%</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>Continúa donde lo dejaste</p>
+                      <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloPreview.titulo}</p>
+                    </div>
+                    <button
+                      onClick={() => router.push("/dashboard/formacion")}
+                      className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
+                      style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
+                    >
+                      Continuar <ChevronRight size={13} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <p className="text-xs" style={{ color: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--texto-muted)", opacity: sugerencia.length === 0 ? 0.4 : 1, transition: "opacity 0.2s, color 0.3s" }}>
-                    {sugerencia.length}/500
+              ) : pctOnboarding === 100 ? (
+                <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
+                  style={{ background: "var(--azul-egm-light)", border: "1.5px solid var(--azul-egm)" }}>
+                  <div className="shrink-0 flex items-center justify-center rounded-2xl"
+                    style={{ width: 84, height: 84, background: "rgba(27,63,126,0.1)" }}>
+                    <Award size={38} style={{ color: "var(--azul-egm)" }} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>Formación completada</p>
+                    <p className="font-bold leading-tight" style={{ color: "var(--texto-primario)", fontSize: "1.35rem" }}>¡Enhorabuena!</p>
+                    <p className="text-sm" style={{ color: "var(--texto-secundario)" }}>Has completado todos los cursos</p>
+                  </div>
+                </div>
+              ) : moduloActual ? (
+                <div className="rounded-2xl p-5 sm:p-7 flex items-center gap-5 sm:gap-7"
+                  style={{ background: "var(--azul-egm-light)", border: "1px solid rgba(27,63,126,0.15)" }}>
+
+                  {/* Quesito del módulo actual — mismo tamaño que el principal */}
+                  <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
+                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
+                      <path fill="none" strokeWidth="2.5" stroke="rgba(27,63,126,0.12)"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path fill="none" strokeWidth="2.5" stroke="var(--azul-egm)" strokeLinecap="round"
+                        strokeDasharray={`${pctModuloActual}, 100`}
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-bold" style={{ color: "var(--azul-egm)", fontSize: "1.2rem" }}>{pctModuloActual}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>
+                        {pctModuloActual > 0 ? "Continúa donde lo dejaste" : "Siguiente curso"}
+                      </p>
+                      <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloActual.nombre}</p>
+                    </div>
+                    <button
+                      onClick={() => router.push("/dashboard/formacion")}
+                      className="w-fit flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold"
+                      style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff" }}
+                    >
+                      {pctModuloActual > 0 ? "Continuar" : "Empezar"} <ChevronRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ── Mis documentos (solo para empleados; admins no lo necesitan) ── */}
+        {!esAdmin && (
+          <div id="mis-documentos" className="scroll-mt-20">
+            <MisDocumentos />
+          </div>
+        )}
+
+        {/* ── Buzón de sugerencias ── */}
+        {!isSuperAdmin && (
+          <div className="grid grid-cols-1 gap-8 items-start">
+
+            {/* ── Buzón ── */}
+            <div className="flex flex-col gap-4">
+              <h2 style={{
+                fontFamily: "var(--font-raleway), sans-serif",
+                fontWeight: 700,
+                fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
+                lineHeight: 1.2,
+                color: "var(--texto-primario)",
+                letterSpacing: "-0.01em",
+              }}>Buzón de sugerencias</h2>
+
+              {/* Card unificada */}
+              <div className="buzon-card flex flex-col rounded-2xl overflow-hidden flex-1"
+                style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)", transition: "border-color 0.15s" }}>
+
+                {/* Cabecera: destinatario */}
+                <div className="flex items-center gap-4 px-5 py-3"
+                  style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--texto-muted)" }}>
+                    Enviar a
                   </p>
-                  <div>
-                    {estadoSug === "ok" ? (
-                      <div className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--exito)" }}>
-                        <Check size={14} strokeWidth={2.5} /> Enviado
-                      </div>
-                    ) : estadoSug === "error" ? (
-                      <p className="text-xs font-medium" style={{ color: "var(--error)" }}>Error al enviar, inténtalo de nuevo</p>
-                    ) : (
-                      <button
-                        onClick={handleEnviarSugerencia}
-                        disabled={!sugerencia.trim() || enviandoSug}
-                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold"
-                        style={{
-                          background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
-                          color: "#fff",
-                          opacity: (!sugerencia.trim() || enviandoSug) ? 0.45 : 1,
-                          transition: "opacity 0.2s",
-                          cursor: (!sugerencia.trim() || enviandoSug) ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {enviandoSug ? "Enviando…" : "Enviar"}
-                      </button>
-                    )}
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.25)" }}>
+                    EGM Atalayas
+                  </span>
+                </div>
+
+                {/* Textarea */}
+                <textarea
+                  value={sugerencia}
+                  onChange={(e) => { setSugerencia(e.target.value.slice(0, 500)); if (estadoSug !== "idle") setEstadoSug("idle"); }}
+                  placeholder="Escribe tu sugerencia para EGM Atalayas…"
+                  rows={3}
+                  className="w-full px-5 py-4 text-base outline-none resize-none flex-1"
+                  style={{ color: "var(--texto-primario)", lineHeight: 1.6, background: "transparent", border: "none", minHeight: "140px" }}
+                  onFocus={(e) => e.currentTarget.closest(".buzon-card")?.classList.add("buzon-focused")}
+                  onBlur={(e) => e.currentTarget.closest(".buzon-card")?.classList.remove("buzon-focused")}
+                />
+
+                {/* Footer: barra de progreso + botón */}
+                <div className="flex flex-col gap-0"
+                  style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+                  {/* Barra de progreso */}
+                  <div style={{ height: "2px", background: "var(--gris-borde)" }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${(sugerencia.length / 500) * 100}%`,
+                      background: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--azul-egm)",
+                      transition: "width 0.2s, background 0.3s",
+                      borderRadius: "0 2px 2px 0",
+                    }} />
+                  </div>
+                  <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <p className="text-xs" style={{ color: sugerencia.length >= 450 ? "var(--advertencia)" : "var(--texto-muted)", opacity: sugerencia.length === 0 ? 0.4 : 1, transition: "opacity 0.2s, color 0.3s" }}>
+                      {sugerencia.length}/500
+                    </p>
+                    <div>
+                      {estadoSug === "ok" ? (
+                        <div className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--exito)" }}>
+                          <Check size={14} strokeWidth={2.5} /> Enviado
+                        </div>
+                      ) : estadoSug === "error" ? (
+                        <p className="text-xs font-medium" style={{ color: "var(--error)" }}>Error al enviar, inténtalo de nuevo</p>
+                      ) : (
+                        <button
+                          onClick={handleEnviarSugerencia}
+                          disabled={!sugerencia.trim() || enviandoSug}
+                          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold"
+                          style={{
+                            background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
+                            color: "#fff",
+                            opacity: (!sugerencia.trim() || enviandoSug) ? 0.45 : 1,
+                            transition: "opacity 0.2s",
+                            cursor: (!sugerencia.trim() || enviandoSug) ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {enviandoSug ? "Enviando…" : "Enviar"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+
           </div>
-
-
-        </div>
         )}
 
       </div>
@@ -1352,7 +1361,7 @@ export default function PerfilPage() {
       {/* ── Modal selector de portada ── */}
       {showBannerPicker && (
         <div
-          className="fixed inset-0 z-[500] flex items-center justify-center p-6"
+          className="fixed inset-0 z-500 flex items-center justify-center p-6"
           style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowBannerPicker(false); }}
         >
@@ -1397,8 +1406,8 @@ export default function PerfilPage() {
                     background: uploadingBanner ? "var(--gris-pagina)" : "transparent",
                     cursor: uploadingBanner ? "not-allowed" : "pointer",
                   }}
-                  onMouseEnter={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; e.currentTarget.style.color = "var(--azul-egm)"; }}}
-                  onMouseLeave={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}}
+                  onMouseEnter={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; e.currentTarget.style.color = "var(--azul-egm)"; } }}
+                  onMouseLeave={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; } }}
                 >
                   {uploadingBanner ? (
                     <>
@@ -1456,6 +1465,7 @@ export default function PerfilPage() {
       )}
 
     </div>
+    </>
   );
 }
 
