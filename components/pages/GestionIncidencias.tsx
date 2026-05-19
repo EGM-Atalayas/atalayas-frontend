@@ -259,7 +259,7 @@ export default function GestionIncidencias({ empresaId, esSuperadmin }: Props) {
       {/* ── Filtros ── */}
       {!cargando && !isError && (
         <div className="mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
+          <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
             {/* Todas */}
             <motion.button
               onClick={() => setFiltro("todas")}

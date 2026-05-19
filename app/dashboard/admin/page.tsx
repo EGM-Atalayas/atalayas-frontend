@@ -1528,8 +1528,8 @@ function AdminContent() {
                                 onClick={() => handleToggleEmpleado(empleadoSeleccionado.usuarioId, empleadoSeleccionado.activo, empleadoSeleccionado.nombre)}>
                                 {empleadoSeleccionado.activo ? "Desactivar empleado" : "Activar empleado"}
                               </Button>
-                            </>
-                          )}
+                </>
+            )}
                         </div>
                       </motion.div>
                     </>
@@ -1898,6 +1898,8 @@ function AdminContent() {
                     </>
                   );
                 })()}
+               </>
+            )}
 
             {/* ── Modal confirmación anuncio ── */}
             <AnimatePresence>
@@ -2004,93 +2006,6 @@ function AdminContent() {
         {activeTab === "eventos" && (
           <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
         )}
-
-            {/* ── TAB MÓDULOS FORMATIVOS ── */}
-            {activeTab === "formaciones" && (
-              <>
-                {/* Header */}
-                <div className="flex items-start justify-between mb-8">
-                  <div>
-                    <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-                      Gestión de Módulos
-                    </h1>
-                    <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                      {cargandoModulos ? "Cargando módulos…" : `${formaciones.filter(f => f.activo).length} módulo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""} activo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        for (let i = localStorage.length - 1; i >= 0; i--) {
-                          const key = localStorage.key(i);
-                          if (key?.startsWith("egm_modulo_admin_")) localStorage.removeItem(key);
-                        }
-                        queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
-                        mostrarToast("Progreso de admin reiniciado");
-                      }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                      style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
-                      title="Reiniciar progreso de admin"
-                    >
-                      < RefreshCw />
-                      Reiniciar
-                    </button>
-                    <button
-                      onClick={() => router.push("/dashboard/admin/modulos/crear")}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                      style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.92, y: 12 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                        className="rounded-2xl p-6 flex flex-col items-center text-center gap-4 w-full max-w-xs"
-                        style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.22)" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Icono */}
-                        <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                          style={{ background: confirmAnuncio.tipo === "eliminar" ? "var(--error-light)" : "#FEF9C3" }}>
-                          {confirmAnuncio.tipo === "eliminar"
-                            ? <Trash2 size={26} style={{ color: "var(--error)" }} />
-                            : <TriangleAlert size={26} style={{ color: "#D97706" }} />}
-                        </div>
-                        {/* Texto */}
-                        <div>
-                          <p className="font-bold text-lg" style={{ color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
-                            {confirmAnuncio.tipo === "eliminar" ? "¿Eliminar borrador?" : "¿Desactivar anuncio?"}
-                          </p>
-                          <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
-                            {confirmAnuncio.tipo === "eliminar"
-                              ? "Se borrará permanentemente. Esta acción no se puede deshacer."
-                              : "El anuncio dejará de ser visible para los empleados. Esta acción no se puede deshacer."}
-                          </p>
-                        </div>
-                        {/* Botones */}
-                        <div className="flex flex-col gap-2 w-full">
-                          <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmAnuncio(null)}>
-                            Cancelar
-                          </Button>
-                          <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarConfirmAnuncio}>
-                            {confirmAnuncio.tipo === "eliminar" ? "Eliminar borrador" : "Desactivar anuncio"}
-                          </Button>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </>
-            )}
-
-                {/* ── TAB EVENTOS ── */}
-                {activeTab === "eventos" && (
-                  <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
-                )}
 
                 {/* ── TAB MÓDULOS FORMATIVOS ── */}
                 {activeTab === "formaciones" && (
@@ -2248,6 +2163,8 @@ function AdminContent() {
                                 </span>
                               )}
                             </div>
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -2354,7 +2271,7 @@ function EmpSelect({ label, value, onChange, options, placeholder = "Sin departa
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: { id: string; label: string }[];
+  options: readonly { id: string; label: string }[];
   placeholder?: string;
   hidePlaceholder?: boolean;
 }) {

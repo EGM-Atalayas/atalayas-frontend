@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
 import { subirImagenBanner } from "@/lib/supabase";
-import { getEmpresas } from "@/lib/api/empresas";
+import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";

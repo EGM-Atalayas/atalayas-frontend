@@ -178,7 +178,7 @@ const EstadisticasPage: React.FC = () => {
         {/* Rango temporal */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rango</span>
-          <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
+          <div className="flex gap-1 p-1 rounded-xl bg-white border border-slate-200">
             {([3, 6, 12] as const).map((n) => (
               <button
                 key={n}
@@ -242,7 +242,7 @@ const EstadisticasPage: React.FC = () => {
             onClick={() => setShowPersonalizar((v) => !v)}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
             style={{
-              background: showPersonalizar ? "var(--azul-egm)" : "var(--gris-superficie)",
+              background: showPersonalizar ? "var(--azul-egm)" : "var(--blanco)",
               color:      showPersonalizar ? "white" : "var(--texto-primario)",
             }}
           >
@@ -371,12 +371,12 @@ const EstadisticasPage: React.FC = () => {
                   <h2 className="text-lg font-bold text-slate-800">Empresas por Sector</h2>
                   <p className="text-xs text-slate-400">Solo empresas aprobadas</p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                <span className="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
                   {data?.sectores.length ?? 0} sectores
                 </span>
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-4">
-                <div className="h-[320px] rounded-3xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center">
+                <div className="h-[320px] rounded-3xl border border-slate-200 bg-white p-4 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <Pie
@@ -386,18 +386,14 @@ const EstadisticasPage: React.FC = () => {
                         paddingAngle={1}
                         dataKey="valor" nameKey="nombre"
                         stroke="#fff"
-                        strokeWidth={1}
                       >
-                        {data?.sectores.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
                       </Pie>
                       <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 max-h-[320px] overflow-y-auto">
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 max-h-[320px] overflow-y-auto">
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mb-3">Leyenda</p>
                   <div className="grid gap-2">
                     {data?.sectores.map((entry, index) => (

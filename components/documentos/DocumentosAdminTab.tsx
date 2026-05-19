@@ -29,7 +29,7 @@ import { ModalConfirm } from "@/components/ui/ModalConfirm";
 interface Props {
   empresaId: string;
   empleados: Array<{ usuarioId: string; nombre: string; apellidos: string; departamento: string | null }>;
-  departamentos: Array<{ id: string; label: string }>;
+  departamentos: readonly { id: string; label: string }[];
   /** Datos precargados desde page.tsx — evita re-loading al cambiar de tab */
   documentosIniciales?: Documento[];
   cargandoInicial?: boolean;
@@ -604,8 +604,6 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
         onConfirmar={ejecutarEliminar}
         onCancelar={() => setConfirmEliminar(null)}
       />
-        )}
-      </AnimatePresence>
 
       {/* ── Toast ── */}
       <AnimatePresence>
