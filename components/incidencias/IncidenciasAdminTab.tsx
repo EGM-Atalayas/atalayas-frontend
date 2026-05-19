@@ -707,16 +707,17 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                       onChange={handleEstado}
                     />
                     {!esDemo && (
-                      <button
+                      <motion.button
                         onClick={() => setConfirmEliminar(inc)}
-                        className="opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xl transition-all"
-                        style={{ width: 34, height: 34, background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", cursor: "pointer", transition: "opacity 0.15s, background 0.15s" }}
+                        whileTap={{ scale: 0.88 }}
+                        className="opacity-0 group-hover:opacity-100 flex items-center justify-center shrink-0 cursor-pointer"
+                        style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), opacity 0.15s" }}
                         title="Eliminar incidencia"
-                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = "#fecaca"}
-                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = "#fee2e2"}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error)"; el.style.color = "#fff"; el.style.borderColor = "var(--error)"; el.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error-light)"; el.style.color = "var(--error)"; el.style.borderColor = "rgba(220,38,38,0.15)"; el.style.boxShadow = "none"; }}
                       >
-                        <Trash2 size={14} strokeWidth={2} />
-                      </button>
+                        <Trash2 size={13} strokeWidth={2} />
+                      </motion.button>
                     )}
                   </div>
                 </div>
@@ -748,13 +749,16 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                       onChange={handleEstado}
                     />
                     {!esDemo && (
-                      <button
+                      <motion.button
                         onClick={() => setConfirmEliminar(inc)}
-                        className="flex items-center justify-center rounded-xl"
-                        style={{ width: 32, height: 32, background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", cursor: "pointer" }}
+                        whileTap={{ scale: 0.88 }}
+                        className="flex items-center justify-center shrink-0 cursor-pointer"
+                        style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring)" }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error)"; el.style.color = "#fff"; el.style.borderColor = "var(--error)"; el.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error-light)"; el.style.color = "var(--error)"; el.style.borderColor = "rgba(220,38,38,0.15)"; el.style.boxShadow = "none"; }}
                       >
                         <Trash2 size={13} strokeWidth={2} />
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                 </div>
