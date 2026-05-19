@@ -24,11 +24,15 @@ import {
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 interface Props {
   empresaId: string;
   empleados: Array<{ usuarioId: string; nombre: string; apellidos: string; departamento: string | null }>;
   departamentos: Array<{ id: string; label: string }>;
+  /** Datos precargados desde page.tsx — evita re-loading al cambiar de tab */
+  documentosIniciales?: Documento[];
+  cargandoInicial?: boolean;
 }
 
 const TIPOS: TipoDocumento[] = ["NOMINA", "CONTRATO", "CERTIFICADO", "POLITICA", "OTRO"];
@@ -68,11 +72,12 @@ const DPTO_PALETTES: Record<string, { bg: string; color: string; border: string 
 const dptoColorFull = (d: string) =>
   DPTO_PALETTES[normDpto(d)] ?? { bg: "var(--gris-superficie)", color: "var(--texto-muted)", border: "var(--gris-borde)" };
 
-export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Props) {
+export function DocumentosAdminTab({ empresaId, empleados, departamentos, documentosIniciales, cargandoInicial = false }: Props) {
   const queryClient = useQueryClient();
 
-  // React Query — datos cacheados, no recarga al volver al tab si aún son frescos
-  const { data: documentos = [], isLoading: cargando } = useQuery<Documento[]>({
+  // El componente nunca se desmonta (CSS display), así que isLoading solo es true
+  // en la primera carga real — igual que empleados en page.tsx
+  const { data: documentos = documentosIniciales ?? [], isLoading: cargando } = useQuery<Documento[]>({
     queryKey: QK.documentos(empresaId),
     queryFn: listarDocumentosEmpresa,
     enabled: !!empresaId,
@@ -166,7 +171,6 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Prop
       setDocEditar(null);
       setEditForm(null);
     } catch (e: any) {
-      console.error("[guardarEdicion]", e);
       setEditError(e?.message ?? "Error al guardar");
     } finally {
       setEditando(false);
@@ -365,7 +369,7 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Prop
             <div key={i} className="flex flex-col rounded-2xl overflow-hidden"
               style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
               {/* cabecera */}
-              <div className="animate-pulse" style={{ height: 80, background: "var(--gris-superficie)" }} />
+              <div className="animate-pulse" style={{ height: 88, background: "var(--gris-superficie)" }} />
               {/* cuerpo */}
               <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
                 <div className="animate-pulse h-3 w-20 rounded-full" style={{ background: "var(--gris-borde)" }} />
@@ -442,10 +446,34 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Prop
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 {/* Cabecera coloreada */}
-                <div className="relative flex items-center justify-center overflow-hidden" style={{ height: 80, background: color.bg }}>
-                  <div className="absolute inset-0 opacity-20"
-                    style={{ backgroundImage: `radial-gradient(circle, ${color.text} 1px, transparent 1px)`, backgroundSize: "20px 20px" }} />
-                  <FileText size={32} strokeWidth={1} style={{ color: color.text, opacity: 0.18 }} />
+                <div className="relative flex items-center justify-center overflow-hidden" style={{
+                  height: 88,
+                  background: `linear-gradient(135deg, ${color.bg} 0%, ${color.text}22 100%)`,
+                }}>
+                  {/* Círculo decorativo grande — esquina inferior derecha */}
+                  <div className="absolute" style={{
+                    width: 110, height: 110,
+                    borderRadius: "50%",
+                    background: `${color.text}14`,
+                    bottom: -38, right: -28,
+                  }} />
+                  {/* Círculo decorativo pequeño — esquina superior izquierda */}
+                  <div className="absolute" style={{
+                    width: 56, height: 56,
+                    borderRadius: "50%",
+                    background: `${color.text}0e`,
+                    top: -20, left: -14,
+                  }} />
+                  {/* Icono en contenedor blanco semitransparente */}
+                  <div className="relative flex items-center justify-center rounded-2xl"
+                    style={{
+                      width: 44, height: 44,
+                      background: "rgba(255,255,255,0.72)",
+                      boxShadow: `0 2px 12px ${color.text}20`,
+                      backdropFilter: "blur(4px)",
+                    }}>
+                    <FileText size={22} strokeWidth={1.5} style={{ color: color.text }} />
+                  </div>
                   {/* Badge tipo */}
                   <span className="absolute top-2.5 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(255,255,255,0.88)", color: color.text }}>
@@ -567,43 +595,15 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos }: Prop
       </AnimatePresence>
 
       {/* ── Modal: Confirmar eliminar ── */}
-      <AnimatePresence>
-        {confirmEliminar && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center p-4"
-            style={{ zIndex: 1200, background: "rgba(0,0,0,0.45)" }}
-            onClick={() => setConfirmEliminar(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 8 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              className="rounded-2xl p-6 w-full max-w-sm flex flex-col gap-4"
-              style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--error-light)" }}>
-                  <Trash2 size={22} style={{ color: "var(--error)" }} />
-                </div>
-                <div>
-                  <p className="font-bold text-base" style={{ color: "var(--texto-primario)" }}>¿Eliminar documento?</p>
-                  <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-                    "<span className="font-semibold">{confirmEliminar.titulo}</span>" dejará de ser visible para los empleados. Esta acción no se puede deshacer.
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmEliminar(null)}>
-                  Cancelar
-                </Button>
-                <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarEliminar}>
-                  Eliminar documento
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
+      <ModalConfirm
+        abierto={!!confirmEliminar}
+        titulo="¿Eliminar documento?"
+        descripcion={confirmEliminar ? `"${confirmEliminar.titulo}" dejará de ser visible para los empleados. Esta acción no se puede deshacer.` : ""}
+        textoConfirmar="Eliminar documento"
+        variante="danger"
+        onConfirmar={ejecutarEliminar}
+        onCancelar={() => setConfirmEliminar(null)}
+      />
         )}
       </AnimatePresence>
 

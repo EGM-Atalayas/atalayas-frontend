@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import DashboardHero from "@/components/ui/DashboardHero";
-import { Button }    from "@/components/ui/Button";
-import { useAuth }   from "@/context/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
 import { getIconoBeneficio } from "@/lib/iconosBeneficio";
 import { getServicios, crearServicio, editarServicio, desactivarServicio } from "@/lib/api/servicios";
 import type { Servicio, ServicioInput, CategoriaServicio } from "@/lib/types/servicios";
-import ServicioModal  from "@/components/ui/ServicioModal";
-import ConfirmDialog  from "@/components/ui/ConfirmDialog";
+import ServicioModal from "@/components/ui/ServicioModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ── Mock mientras no esté el backend conectado ───────────────────────────────
 const MOCK_SERVICIOS: Servicio[] = [
@@ -92,22 +92,22 @@ const CATEGORIAS: { value: CategoriaServicio; label: string; icono: React.ReactN
   {
     value: "MOVILIDAD",
     label: "Movilidad",
-    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM19.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>,
+    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><rect x="1" y="3" width="15" height="13" rx="2" /><path d="M16 8h4l3 3v5h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM19.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>,
   },
   {
     value: "INSTALACIONES",
     label: "Instalaciones",
-    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0H5m-2 0h2M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>,
+    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0H5m-2 0h2M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
   },
   {
     value: "INICIATIVAS",
     label: "Iniciativas",
-    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   },
   {
     value: "COMUNES",
     label: "Servicios comunes",
-    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+    icono: <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   },
 ];
 
@@ -119,7 +119,7 @@ function FilaServicio({
   onEditar: (s: Servicio) => void; onDesactivar: (s: Servicio) => void;
 }) {
   const [expandido, setExpandido] = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const iconoNode = getIconoBeneficio(servicio.iconoUrl);
 
@@ -169,7 +169,7 @@ function FilaServicio({
             </span>
           ) : (
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           )}
         </div>
@@ -201,7 +201,7 @@ function FilaServicio({
               onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "transparent"; }}
             >
               <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
               </svg>
             </button>
             {menuOpen && (
@@ -211,10 +211,10 @@ function FilaServicio({
                 boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px",
               }}>
                 <MenuBtn label="Editar" onClick={() => { setMenuOpen(false); onEditar(servicio); }}
-                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
+                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
                 />
                 <MenuBtn label="Desactivar" danger onClick={() => { setMenuOpen(false); onDesactivar(servicio); }}
-                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>}
+                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
                 />
               </div>
             )}
@@ -228,7 +228,7 @@ function FilaServicio({
             transform: expandido ? "rotate(90deg)" : "rotate(0deg)",
             transition: "transform 0.2s cubic-bezier(0.34,1.20,0.64,1)",
           }}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
@@ -247,7 +247,7 @@ function FilaServicio({
             <div className="flex items-start gap-2.5 rounded-xl px-3 py-2.5" style={{ background: "rgba(27,63,126,0.05)" }}>
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                 style={{ color: "var(--azul-egm)", flexShrink: 0, marginTop: "2px" }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-xs leading-relaxed" style={{ color: "var(--azul-egm)" }}>{servicio.comoAcceder}</p>
             </div>
@@ -259,7 +259,7 @@ function FilaServicio({
                 style={{ color: "var(--azul-egm)" }}>
                 Más información
                 <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
             )}
@@ -268,7 +268,7 @@ function FilaServicio({
                 className="inline-flex items-center gap-1.5 text-xs font-semibold"
                 style={{ color: "#6b7280" }}>
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 {servicio.telefono}
               </a>
@@ -304,7 +304,7 @@ function MenuBtn({ label, icon, danger = false, onClick }: {
       <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: danger ? "#ef4444" : "#111827" }}>{label}</span>
       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}
         style={{ color: danger ? "#ef4444" : "#9ca3af" }}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
     </button>
   );
@@ -328,12 +328,12 @@ export default function ServiciosPage() {
   const { usuario } = useAuth();
   const esSuperAdmin = usuario?.codigoRol === "ROLE_ADMIN";
 
-  const [servicios,  setServicios]  = useState<Servicio[]>([]);
-  const [cargando,   setCargando]   = useState(true);
-  const [modalOpen,  setModalOpen]  = useState(false);
-  const [editando,   setEditando]   = useState<Servicio | null>(null);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editando, setEditando] = useState<Servicio | null>(null);
   const [confirmDes, setConfirmDes] = useState<Servicio | null>(null);
-  const [toast,      setToast]      = useState<{ msg: string; tipo: "ok" | "err" } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; tipo: "ok" | "err" } | null>(null);
 
   const mostrarToast = useCallback((msg: string, tipo: "ok" | "err" = "ok") => {
     setToast({ msg, tipo });
@@ -343,8 +343,8 @@ export default function ServiciosPage() {
   useEffect(() => {
     const useMock = true; // ← cambiar a false cuando el backend esté conectado
     if (useMock) {
-      setTimeout(() => { setServicios(MOCK_SERVICIOS); setCargando(false); }, 600);
-      return;
+      const timer = setTimeout(() => { setServicios(MOCK_SERVICIOS); setCargando(false); }, 600);
+      return () => clearTimeout(timer);
     }
     getServicios()
       .then(setServicios)
@@ -390,7 +390,7 @@ export default function ServiciosPage() {
         <div className="px-4 sm:px-6 lg:px-8 -mt-2">
           <Button variant="primary" onClick={() => { setEditando(null); setModalOpen(true); }}>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} className="mr-1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo servicio
           </Button>
@@ -477,8 +477,8 @@ export default function ServiciosPage() {
         }}>
           <style>{`@keyframes toast-in { from { opacity:0; transform:translateX(-50%) translateY(12px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }`}</style>
           {toast.tipo === "ok"
-            ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+            : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           }
           {toast.msg}
         </div>
