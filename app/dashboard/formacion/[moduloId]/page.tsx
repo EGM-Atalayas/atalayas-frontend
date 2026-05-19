@@ -1043,7 +1043,20 @@ interface Slide { numero: number; titulo: string; contenido: string; notas?: str
 
 function ContenidoSlides({ scriptVideoJson, onVerificado }: { scriptVideoJson: string; onVerificado?: () => void }) {
   const slides: Slide[] = React.useMemo(() => {
-    try { return JSON.parse(scriptVideoJson) as Slide[]; } catch { return []; }
+    try {
+      const parsed = JSON.parse(scriptVideoJson);
+      const raw = Array.isArray(parsed)
+        ? parsed
+        : parsed?.slides && Array.isArray(parsed.slides)
+          ? parsed.slides
+          : [];
+      return raw.map((s: any, i: number) => ({
+        numero: s.numero ?? i + 1,
+        titulo: s.titulo ?? s.title ?? "",
+        contenido: s.contenido ?? (Array.isArray(s.points) ? s.points.join("\n") : s.body ?? s.subtitle ?? ""),
+        notas: s.notas ?? "",
+      }));
+    } catch { return []; }
   }, [scriptVideoJson]);
   const [idx, setIdx] = React.useState(0);
   const [narratingSlide, setNarratingSlide] = React.useState<number | null>(null);

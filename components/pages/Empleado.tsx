@@ -252,17 +252,12 @@ export default function Empleado() {
 
   const nombreCorto = usuario?.nombre?.split(" ")[0] ?? "Empleado";
 
-  // ── Estado del onboarding (desde localStorage; lo gestiona /dashboard/onboarding) ──
-  const onboardingProgreso = (() => {
-    try {
-      const raw = localStorage.getItem("egm_onboarding_progress");
-      if (!raw) return 0;
-      const data = JSON.parse(raw);
-      if (typeof data?.porcentaje === "number") return data.porcentaje;
-      return 0;
-    } catch { return 0; }
-  })();
-  const onboardingIncompleto = onboardingProgreso < 100;
+  // ── Progreso del onboarding calculado desde módulos de tipo ONBOARDING ──
+  const onboardingModules = formDisplay.filter((m) => m.tipoModulo === "ONBOARDING");
+  const onboardingProgreso = onboardingModules.length === 0
+    ? 0
+    : Math.round((onboardingModules.filter((m) => m.status === "completado").length / onboardingModules.length) * 100);
+  const onboardingIncompleto = onboardingModules.length > 0 && onboardingProgreso < 100;
 
   // ── Ordenamiento inteligente: en curso → pendientes → completados ──
   const formOrdenado = [...formDisplay].sort((a, b) => {
