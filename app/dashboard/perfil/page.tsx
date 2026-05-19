@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import { MisDocumentos } from "@/components/documentos/MisDocumentos";
+import { removeBackground, preload as preloadBgRemoval } from "@imgly/background-removal";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
@@ -177,6 +178,7 @@ export default function PerfilPage() {
   const [formEmpEmail, setFormEmpEmail] = useState("");
   const [savingEmpresa, setSavingEmpresa] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [procesandoLogo, setProcesandoLogo] = useState(false);
   const [empresaLoaded, setEmpresaLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,6 +247,11 @@ export default function PerfilPage() {
       }
     })();
   }, [esAdmin, usuario?.empresaId, empresaLoaded]);
+
+  // Precargar modelo de eliminación de fondo
+  useEffect(() => {
+    preloadBgRemoval().catch(() => {});
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -516,9 +523,13 @@ export default function PerfilPage() {
     const file = e.target.files?.[0];
     if (!file || !usuario?.empresaId) return;
     e.target.value = "";
-    setUploadingLogo(true);
+    setProcesandoLogo(true);
     try {
-      const result = await subirLogoEmpresa(usuario.empresaId, file);
+      const cleanedBlob = await removeBackground(file);
+      const cleanedFile = new File([cleanedBlob], file.name.replace(/\.[^.]+$/, ".png"), { type: "image/png" });
+      setProcesandoLogo(false);
+      setUploadingLogo(true);
+      const result = await subirLogoEmpresa(usuario.empresaId, cleanedFile);
       setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
       guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
       localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, result.logoEmpresaUrl);
@@ -526,6 +537,7 @@ export default function PerfilPage() {
       console.error("[Perfil] Error subiendo logo:", err);
       alert(err instanceof Error ? err.message : "No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
     } finally {
+      setProcesandoLogo(false);
       setUploadingLogo(false);
     }
   };
@@ -1024,7 +1036,7 @@ export default function PerfilPage() {
                     border: empresaData?.logoEmpresaUrl ? "none" : "1px solid var(--gris-borde)",
                   }}
                 >
-                  {uploadingLogo ? (
+                  {(uploadingLogo || procesandoLogo) ? (
                     <div className="w-6 h-6 rounded-full border-2 animate-spin"
                       style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
                   ) : empresaData?.logoEmpresaUrl ? (
@@ -1035,11 +1047,11 @@ export default function PerfilPage() {
                 </div>
                 <button
                   onClick={() => logoInputRef.current?.click()}
-                  disabled={uploadingLogo}
+                  disabled={uploadingLogo || procesandoLogo}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
+                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo || procesandoLogo ? 0.6 : 1 }}
                 >
-                  <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                  <Camera size={13} /> {procesandoLogo ? "Quitando fondo…" : uploadingLogo ? "Subiendo…" : empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
                 </button>
                 <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
               </div>
