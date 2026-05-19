@@ -442,8 +442,7 @@ function AdminContent() {
               </motion.div>
         </AnimatePresence>
 
-        {/* DocumentosAdminTab FUERA del motion.div con key={activeTab} para que nunca
-            se desmonte al cambiar de tab. CSS display lo muestra/oculta sin remount. */}
+        {/* DocumentosAdminTab oculto con CSS display para evitar remount al cambiar de tab. */}
         {usuario?.empresaId && (
           <div style={{ display: activeTab === "documentos" ? "block" : "none" }}>
             <DocumentosAdminTab
