@@ -19,20 +19,22 @@ function getInitials(nombre: string): string {
 }
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAvatarError, setMobileAvatarError] = useState(false);
-  const mobileOpenRef  = useRef(false);          // ref espejo para closures estables
-  const menuPanelRef   = useRef<HTMLDivElement>(null);
+  const mobileOpenRef = useRef(false);          // ref espejo para closures estables
+  const menuPanelRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
-  const menuItemsRef   = useRef<HTMLDivElement>(null);
-  const [noLeidas, setNoLeidas]       = useState(0);
-  const [scrolled, setScrolled]       = useState(false);
+  const menuItemsRef = useRef<HTMLDivElement>(null);
+  const [noLeidas, setNoLeidas] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
-  const logoSrc = usuario?.logoEmpresaUrl || (typeof window !== "undefined" && usuario?.empresaId ? localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) : null);
-
+  const logoSrc = usuario?.logoEmpresaUrl
+    || (typeof window !== "undefined" && usuario?.empresaId
+      ? localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`)
+      : null);
   // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
   useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
 
@@ -55,34 +57,34 @@ export default function Header() {
   }
 
   useLayoutEffect(() => {
-    if (menuPanelRef.current)   gsap.set(menuPanelRef.current,   { xPercent: 100 });
+    if (menuPanelRef.current) gsap.set(menuPanelRef.current, { xPercent: 100 });
     if (menuOverlayRef.current) gsap.set(menuOverlayRef.current, { opacity: 0, pointerEvents: "none" });
   }, []);
 
   const abrirMenu = () => {
     setMobileOpen(true);
     mobileOpenRef.current = true;
-    const panel   = menuPanelRef.current;
+    const panel = menuPanelRef.current;
     const overlay = menuOverlayRef.current;
-    const items   = menuItemsRef.current ? Array.from(menuItemsRef.current.children) as HTMLElement[] : [];
+    const items = menuItemsRef.current ? Array.from(menuItemsRef.current.children) as HTMLElement[] : [];
     if (!panel || !overlay) return;
-    gsap.set(items,   { xPercent: 40, opacity: 0 });
+    gsap.set(items, { xPercent: 40, opacity: 0 });
     gsap.set(overlay, { pointerEvents: "auto" });
     const tl = gsap.timeline();
-    tl.to(overlay, { opacity: 1, duration: 0.3,  ease: "power2.out" });
-    tl.to(panel,   { xPercent: 0, duration: 0.45, ease: "power4.out" }, 0);
-    tl.to(items,   { xPercent: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.07 }, 0.2);
+    tl.to(overlay, { opacity: 1, duration: 0.3, ease: "power2.out" });
+    tl.to(panel, { xPercent: 0, duration: 0.45, ease: "power4.out" }, 0);
+    tl.to(items, { xPercent: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.07 }, 0.2);
   };
 
   const cerrarMenu = () => {
-    const panel   = menuPanelRef.current;
+    const panel = menuPanelRef.current;
     const overlay = menuOverlayRef.current;
     if (!panel || !overlay) return;
     // Desactivar pointerEvents INMEDIATAMENTE para no bloquear clics durante la animación
     gsap.set(overlay, { pointerEvents: "none" });
     mobileOpenRef.current = false;
     const tl = gsap.timeline({ onComplete: () => setMobileOpen(false) });
-    tl.to(panel,   { xPercent: 100, duration: 0.35, ease: "power3.in" });
+    tl.to(panel, { xPercent: 100, duration: 0.35, ease: "power3.in" });
     tl.to(overlay, { opacity: 0, duration: 0.25, ease: "power2.in" }, 0);
   };
 
@@ -137,20 +139,20 @@ export default function Header() {
   const initials = usuario?.nombre ? getInitials(usuario.nombre) : "U";
   const nombreMostrado = usuario?.nombre ?? "Usuario";
 
-  const linkLogo           = isSuperAdmin ? "/superadmin" : "/dashboard";
-  const linkPerfil         = "/dashboard/perfil";
-  const linkConfiguracion  = "/dashboard/configuracion";
+  const linkLogo = isSuperAdmin ? "/superadmin" : "/dashboard";
+  const linkPerfil = "/dashboard/perfil";
+  const linkConfiguracion = "/dashboard/configuracion";
 
   return (
     <header
       className="w-full fixed top-0 left-0 right-0 z-50"
       style={{
-        background:         forceSolid || scrolled ? "rgba(22,50,105,0.97)" : "transparent",
-        borderBottom:       forceSolid || scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
-        backdropFilter:     forceSolid || scrolled ? "blur(14px)" : "none",
+        background: forceSolid || scrolled ? "rgba(22,50,105,0.97)" : "transparent",
+        borderBottom: forceSolid || scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
+        backdropFilter: forceSolid || scrolled ? "blur(14px)" : "none",
         WebkitBackdropFilter: forceSolid || scrolled ? "blur(14px)" : "none",
-        boxShadow:          forceSolid || scrolled ? "0 4px 28px rgba(0,0,0,0.30)" : "none",
-        transition:         "background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease",
+        boxShadow: forceSolid || scrolled ? "0 4px 28px rgba(0,0,0,0.30)" : "none",
+        transition: "background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease",
       }}
     >
       <div className="w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14 flex items-stretch h-20 relative">
@@ -159,17 +161,29 @@ export default function Header() {
         <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 shrink-0 z-10">
           <Link href={linkLogo}>
             {logoSrc ? (
-              <img
-                src={logoSrc}
-                alt="Logo empresa"
+              /* Logo personalizado → con fondo suave */
+              <div
+                className="rounded-xl p-2 flex items-center justify-center transition-all duration-200 hover:scale-105"
                 style={{
-                  height: "clamp(40px, 6vw, 50px)",
-                  width: "auto",
-                  transition: "opacity 0.15s ease",
+                  background: "rgba(255, 255, 255, 0.92)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
                 }}
-                className="cursor-pointer hover:opacity-75"
-              />
+              >
+                <img
+                  src={`${logoSrc}?t=${Date.now()}`}
+                  alt="Logo empresa"
+                  style={{
+                    height: "clamp(38px, 5.5vw, 48px)",
+                    width: "auto",
+                    maxWidth: "170px",
+                  }}
+                  className="cursor-pointer hover:opacity-75 transition-opacity"
+                />
+              </div>
             ) : (
+              /* Logo default de Atalayas → SIN fondo */
               <Image
                 src={logo}
                 alt="Atalayas EGM"
@@ -177,9 +191,8 @@ export default function Header() {
                 height={50}
                 priority
                 style={{
-                  height:     "clamp(40px, 6vw, 50px)",
-                  width:      "auto",
-                  transition: "opacity 0.15s ease",
+                  height: "clamp(38px, 5.5vw, 48px)",
+                  width: "auto",
                 }}
                 className="brightness-0 invert cursor-pointer hover:opacity-75"
               />
@@ -254,14 +267,14 @@ export default function Header() {
         <div
           ref={menuOverlayRef}
           onClick={cerrarMenu}
-          className="fixed inset-0 z-[57]"
+          className="fixed inset-0 z-57"
           style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
         />
 
         {/* Panel */}
         <div
           ref={menuPanelRef}
-          className="fixed top-0 right-0 h-full z-[58] flex flex-col"
+          className="fixed top-0 right-0 h-full z-58 flex flex-col"
           style={{ width: "100%", background: "rgba(14,34,82,1)" }}
         >
           {/* ── Barra superior del panel: logo + notif + X ── */}
@@ -319,9 +332,9 @@ export default function Header() {
                     onClick={() => { cerrarMenu(); handleNavClick(link.path); }}
                     className="text-left py-4 text-xl font-bold uppercase tracking-wider"
                     style={{
-                      color:        isActive ? "var(--lima)" : "rgba(255,255,255,0.85)",
+                      color: isActive ? "var(--lima)" : "rgba(255,255,255,0.85)",
                       borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      background:   "transparent",
+                      background: "transparent",
                     }}
                   >
                     {link.label}
@@ -342,11 +355,11 @@ export default function Header() {
                 onClick={() => { cerrarMenu(); router.push(linkPerfil); }}
                 className="w-full flex items-center gap-3.5 px-4 py-4 mt-4 rounded-2xl text-left active:scale-[0.98]"
                 style={{
-                  background:   "rgba(255,255,255,0.08)",
-                  border:       "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.14)",
                   backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
-                  transition:   "background 0.15s ease",
+                  transition: "background 0.15s ease",
                 }}
               >
                 <div className="shrink-0">
