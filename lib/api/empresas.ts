@@ -58,3 +58,54 @@ export async function toggleActivacionEmpresa(id: string): Promise<void> {
     throw new Error(errorData.message || "Error al cambiar la activación de la empresa");
   }
 }
+
+// Obtener datos de una empresa por ID
+export async function getEmpresaById(id: string): Promise<EmpresaDB> {
+  const response = await apiFetch(`${API_URL}/empresas/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Error al obtener los datos de la empresa");
+  }
+
+  return response.json();
+}
+
+// Actualizar datos de una empresa
+export async function actualizarEmpresa(
+  id: string,
+  data: Partial<{
+    nombreEmpresa: string;
+    cif: string;
+    emailContacto: string;
+  }>
+): Promise<EmpresaDB> {
+  const response = await apiFetch(`${API_URL}/empresas/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Error al actualizar la empresa");
+  }
+
+  return response.json();
+}
+
+// Subir logo de empresa
+export async function subirLogoEmpresa(id: string, file: File): Promise<{ logoEmpresaUrl: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiFetch(`${API_URL}/empresas/${id}/logo`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al subir el logo de la empresa");
+  }
+
+  return response.json();
+}

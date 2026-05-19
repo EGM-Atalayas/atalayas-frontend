@@ -686,9 +686,9 @@ function AdminContent() {
     { key: "incidencias" as const, label: "Incidencias", icon: <TriangleAlert size={20} />, accent: "#B45309", badge: 0 },
     { key: "anuncios" as const, label: "Anuncios", icon: <Megaphone size={20} />, accent: "#0EA5E9", badge: 0 },
     { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85", badge: 0 },
-    { key: "eventos"     as const, label: "Eventos",            icon: <Calendar size={20} />,      accent: "#0F766E", badge: 0 },
-    { key: "estadisticas"as const, label: "Estadísticas",       icon: <BarChart3 size={20} />,     accent: "#2D8653", badge: 0 },
-    { key: "documentos"  as const, label: "Documentos",         icon: <FileText size={20} />,      accent: "#4E6D7E", badge: 0 },
+    { key: "eventos" as const, label: "Eventos", icon: <Calendar size={20} />, accent: "#0F766E", badge: 0 },
+    { key: "estadisticas" as const, label: "Estadísticas", icon: <BarChart3 size={20} />, accent: "#2D8653", badge: 0 },
+    { key: "documentos" as const, label: "Documentos", icon: <FileText size={20} />, accent: "#4E6D7E", badge: 0 },
   ];
 
   // Accent colors per modulo tipo for top strip
@@ -1884,7 +1884,7 @@ function AdminContent() {
                               <AnuncioCard
                                 key={n.anuncioId}
                                 n={n}
-                                esBorrador={false}                    // ← importante
+                                esBorrador={false}
                                 publicandoId={publicandoId}
                                 abrirEditar={abrirEditar}
                                 publicarBorrador={publicarBorrador}
@@ -1898,8 +1898,6 @@ function AdminContent() {
                     </>
                   );
                 })()}
-              </>
-            )}
 
             {/* ── Modal confirmación anuncio ── */}
             <AnimatePresence>
@@ -2046,89 +2044,176 @@ function AdminContent() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
                     >
-                      < Plus />
-                      Nuevo módulo
-                    </button>
-                  </div>
-                </div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                        className="rounded-2xl p-6 flex flex-col items-center text-center gap-4 w-full max-w-xs"
+                        style={{ background: "var(--blanco)", boxShadow: "0 24px 56px rgba(0,0,0,0.22)" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Icono */}
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                          style={{ background: confirmAnuncio.tipo === "eliminar" ? "var(--error-light)" : "#FEF9C3" }}>
+                          {confirmAnuncio.tipo === "eliminar"
+                            ? <Trash2 size={26} style={{ color: "var(--error)" }} />
+                            : <TriangleAlert size={26} style={{ color: "#D97706" }} />}
+                        </div>
+                        {/* Texto */}
+                        <div>
+                          <p className="font-bold text-lg" style={{ color: "var(--texto-primario)", letterSpacing: "-0.02em" }}>
+                            {confirmAnuncio.tipo === "eliminar" ? "¿Eliminar borrador?" : "¿Desactivar anuncio?"}
+                          </p>
+                          <p className="text-sm mt-1.5" style={{ color: "var(--texto-muted)" }}>
+                            {confirmAnuncio.tipo === "eliminar"
+                              ? "Se borrará permanentemente. Esta acción no se puede deshacer."
+                              : "El anuncio dejará de ser visible para los empleados. Esta acción no se puede deshacer."}
+                          </p>
+                        </div>
+                        {/* Botones */}
+                        <div className="flex flex-col gap-2 w-full">
+                          <Button variant="primary" size="md" className="w-full justify-center" onClick={() => setConfirmAnuncio(null)}>
+                            Cancelar
+                          </Button>
+                          <Button variant="danger" size="md" className="w-full justify-center" onClick={ejecutarConfirmAnuncio}>
+                            {confirmAnuncio.tipo === "eliminar" ? "Eliminar borrador" : "Desactivar anuncio"}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
 
-                {/* Grid de módulos */}
-                {formaciones.length === 0 ? (
-                  <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center mb-6"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                      style={{ background: "#EDE9FE" }}>
-                      <LibraryBig size={30} strokeWidth={1.5} style={{ color: "#7B4A85" }} />
-                    </div>
-                    <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
-                    <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer módulo formativo para tus empleados</p>
-                    <Button variant="primary" size="md" onClick={() => router.push("/dashboard/admin/modulos/crear")}>
-                      <Plus size={14} /> Crear módulo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    {formaciones.map((f) => {
-                      const accentColor = tipoAccentColor[f.tipoModulo] ?? "var(--azul-egm)";
-                      return (
-                        <div
-                          key={f.moduloId}
-                          className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
-                          style={{
-                            background: f.activo ? "var(--blanco)" : "var(--gris-pagina)",
-                            border: `1px solid ${f.activo ? "var(--gris-borde)" : "var(--gris-borde)"}`,
-                            opacity: f.activo ? 1 : 0.65,
+                {/* ── TAB EVENTOS ── */}
+                {activeTab === "eventos" && (
+                  <EventosAdminTab esSuperAdmin={usuario?.codigoRol === "ROLE_ADMIN"} />
+                )}
+
+                {/* ── TAB MÓDULOS FORMATIVOS ── */}
+                {activeTab === "formaciones" && (
+                  <>
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-8">
+                      <div>
+                        <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                          Gestión de Módulos
+                        </h1>
+                        <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
+                          {cargandoModulos ? "Cargando módulos…" : `${formaciones.filter(f => f.activo).length} módulo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""} activo${formaciones.filter(f => f.activo).length !== 1 ? "s" : ""}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            for (let i = localStorage.length - 1; i >= 0; i--) {
+                              const key = localStorage.key(i);
+                              if (key?.startsWith("egm_modulo_admin_")) localStorage.removeItem(key);
+                            }
+                            queryClient.invalidateQueries({ queryKey: QK.modulos(usuario?.empresaId) });
+                            mostrarToast("Progreso de admin reiniciado");
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+                          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                          style={{ background: "var(--blanco)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
+                          title="Reiniciar progreso de admin"
                         >
-                          {/* Imagen de portada o franja de color */}
-                          {f.imagenPortadaUrl ? (
-                            <div className="w-full h-36 relative overflow-hidden shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover"
-                                style={{ filter: f.activo ? "none" : "grayscale(100%)" }} />
-                              <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
-                            </div>
-                          ) : (
-                            <div className="w-full h-2 shrink-0"
-                              style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
-                          )}
-                          <div className="p-5 flex flex-col flex-1">
-                            {/* Badges */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {MODULO_TIPO_LABEL[f.tipoModulo] && (
-                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                                  style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                                  {MODULO_TIPO_LABEL[f.tipoModulo]}
-                                </span>
-                              )}
-                              {f.empresaId === null ? (
-                                <span className="text-xs px-2.5 py-1 rounded-full italic"
-                                  style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                                  EGM Global
-                                </span>
-                              ) : (
-                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                                  style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
-                                  Tu empresa
-                                </span>
-                              )}
-                              {!f.activo && (
-                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                                  style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
-                                  Desactivado
-                                </span>
-                              )}
-                            </div>
+                          < RefreshCw />
+                          Reiniciar
+                        </button>
+                        <button
+                          onClick={() => router.push("/dashboard/admin/modulos/crear")}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                          style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--azul-egm-hover)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--azul-egm)")}
+                        >
+                          < Plus />
+                          Nuevo módulo
+                        </button>
+                      </div>
+                    </div>
 
-                            {/* Title + description */}
-                            <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
-                              {f.nombre}
-                            </p>
-                            <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
-                              {f.descripcion}
-                            </p>
+                    {/* Grid de módulos */}
+                    {formaciones.length === 0 ? (
+                      <div className="rounded-2xl flex flex-col items-center justify-center py-14 sm:py-20 px-6 text-center mb-6"
+                        style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                          style={{ background: "#EDE9FE" }}>
+                          <LibraryBig size={30} strokeWidth={1.5} style={{ color: "#7B4A85" }} />
+                        </div>
+                        <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay módulos creados todavía</p>
+                        <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Crea el primer módulo formativo para tus empleados</p>
+                        <Button variant="primary" size="md" onClick={() => router.push("/dashboard/admin/modulos/crear")}>
+                          <Plus size={14} /> Crear módulo
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        {formaciones.map((f) => {
+                          const accentColor = tipoAccentColor[f.tipoModulo] ?? "var(--azul-egm)";
+                          return (
+                            <div
+                              key={f.moduloId}
+                              className="rounded-2xl overflow-hidden flex flex-col transition-shadow"
+                              style={{
+                                background: f.activo ? "var(--blanco)" : "var(--gris-pagina)",
+                                border: `1px solid ${f.activo ? "var(--gris-borde)" : "var(--gris-borde)"}`,
+                                opacity: f.activo ? 1 : 0.65,
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+                            >
+                              {/* Imagen de portada o franja de color */}
+                              {f.imagenPortadaUrl ? (
+                                <div className="w-full h-36 relative overflow-hidden shrink-0">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={f.imagenPortadaUrl} alt={f.nombre} className="w-full h-full object-cover"
+                                    style={{ filter: f.activo ? "none" : "grayscale(100%)" }} />
+                                  <div className="absolute inset-0" style={{ background: "rgba(10,20,40,0.18)" }} />
+                                </div>
+                              ) : (
+                                <div className="w-full h-2 shrink-0"
+                                  style={{ background: f.activo ? accentColor : "var(--gris-borde)" }} />
+                              )}
+                              <div className="p-5 flex flex-col flex-1">
+                                {/* Badges */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {MODULO_TIPO_LABEL[f.tipoModulo] && (
+                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                      style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                                      {MODULO_TIPO_LABEL[f.tipoModulo]}
+                                    </span>
+                                  )}
+                                  {f.empresaId === null ? (
+                                    <span className="text-xs px-2.5 py-1 rounded-full italic"
+                                      style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                                      EGM Global
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                      style={{ background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }}>
+                                      Tu empresa
+                                    </span>
+                                  )}
+                                  {!f.activo && (
+                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                      style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" }}>
+                                      Desactivado
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Title + description */}
+                                <p className="text-base font-semibold mt-3 mb-1" style={{ color: "var(--texto-primario)" }}>
+                                  {f.nombre}
+                                </p>
+                                <p className="text-sm line-clamp-2 flex-1" style={{ color: "var(--texto-muted)" }}>
+                                  {f.descripcion}
+                                </p>
 
                             {/* Actions */}
                             <div className="flex items-center justify-end gap-2 mt-4 pt-3"
@@ -2163,19 +2248,17 @@ function AdminContent() {
                                 </span>
                               )}
                             </div>
-                          </div>{/* /p-5 */}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
 
-            {/* ── TAB INCIDENCIAS ── */}
-            {activeTab === "incidencias" && (
-              <GestionIncidencias empresaId={usuario?.empresaId} />
-            )}
+                {/* ── TAB INCIDENCIAS ── */}
+                {activeTab === "incidencias" && (
+                  <GestionIncidencias empresaId={usuario?.empresaId} />
+                )}
 
             {/* ── TAB ESTADÍSTICAS ── */}
             {activeTab === "estadisticas" && (
@@ -2212,7 +2295,7 @@ function AdminContent() {
               />
             )}
 
-          </motion.div>
+              </motion.div>
         </AnimatePresence>
 
         {/* DocumentosAdminTab FUERA del motion.div con key={activeTab} para que nunca

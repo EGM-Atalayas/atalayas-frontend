@@ -83,6 +83,14 @@ function EventoCard({
         opacity:     pasado ? 0.72 : 1,
       }}
     >
+      {/* Imagen de portada */}
+      {evento.imagenUrl && (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16 / 9", background: "#f1f5f9" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={evento.imagenUrl} alt={evento.titulo} className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Franja de fecha */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         {/* Bloque día */}
@@ -305,6 +313,8 @@ export default function EventosPage() {
         titulo="Eventos"
         subtitulo="Actividades, jornadas y encuentros del área empresarial EGM Atalayas."
         variante="seccion"
+        imagenFondo="/eventos-banner.png"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
       {puedeEditar && (
         <div className="px-4 sm:px-6 lg:px-8 -mt-2 flex justify-end">
