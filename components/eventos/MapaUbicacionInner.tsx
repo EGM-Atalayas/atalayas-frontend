@@ -29,13 +29,13 @@ export default function MapaUbicacionInner({
   latitud, longitud, etiqueta, alturaPx = 240, zoom = 15,
 }: Props) {
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-200"
-      style={{ height: alturaPx }}>
+    <div className="rounded-xl overflow-hidden border border-slate-200 relative"
+      style={{ height: alturaPx, zIndex: 0, isolation: "isolate" }}>
       <MapContainer
         center={[latitud, longitud]}
         zoom={zoom}
         scrollWheelZoom={false}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", zIndex: 0 }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

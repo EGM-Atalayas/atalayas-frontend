@@ -385,6 +385,8 @@ export default function ServiciosPage() {
         titulo="Servicios"
         subtitulo="Recursos y servicios del área empresarial EGM Atalayas disponibles para todos los trabajadores."
         variante="seccion"
+        imagenFondo="/servicios-banner.webp"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
       {esSuperAdmin && (
         <div className="px-4 sm:px-6 lg:px-8 -mt-2">

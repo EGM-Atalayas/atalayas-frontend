@@ -561,9 +561,10 @@ export default function VentajasPage() {
       <DashboardHero
         prefijo="Tus"
         titulo="Ventajas"
-        imagenFondo="/bg-ventajas.webp"
+        imagenFondo="/ventajas-banner.webp"
         objectPosition="center 40%"
         variante="seccion"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
 
       <div className="px-5 sm:px-9 lg:px-14 py-8 sm:py-12">

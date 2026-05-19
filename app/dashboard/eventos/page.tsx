@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import DashboardHero from "@/components/ui/DashboardHero";
 import { Button }    from "@/components/ui/Button";
 import { useAuth }   from "@/context/AuthContext";
@@ -52,6 +53,7 @@ function EventoCard({
   onDesactivar: (e: ComunidadEvento) => void;
   onVerUbicacion: (e: ComunidadEvento) => void;
 }) {
+  const router = useRouter();
   const [hovered,   setHovered]   = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -59,6 +61,8 @@ function EventoCard({
   const cfg     = ESTADO_CONFIG[estado];
   const pasado  = estado === "FINALIZADO";
   const fechaIni = new Date(evento.fechaInicio);
+
+  const irAlDetalle = () => router.push(`/dashboard/eventos/${evento.eventoId}`);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -71,9 +75,10 @@ function EventoCard({
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl overflow-hidden"
+      className="relative flex flex-col rounded-2xl overflow-hidden cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={irAlDetalle}
       style={{
         background:  "#ffffff",
         border:      "1px solid rgba(0,0,0,0.07)",
@@ -91,9 +96,9 @@ function EventoCard({
         </span>
       </div>
       {puedeEditar && (
-        <div ref={menuRef} className="absolute top-3 right-3 z-10" style={{ position: "absolute" }}>
+        <div ref={menuRef} className="absolute top-3 right-3 z-10" style={{ position: "absolute" }} onClick={(e) => e.stopPropagation()}>
           <button
-            onClick={() => setMenuOpen(p => !p)}
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(p => !p); }}
             className="flex items-center justify-center rounded-lg"
             style={{ width: 30, height: 30, background: menuOpen ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.80)", border: "1px solid rgba(0,0,0,0.06)", cursor: "pointer", color: "#6b7280", backdropFilter: "blur(4px)" }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.95)"; }}
@@ -190,7 +195,7 @@ function EventoCard({
         {evento.latitud != null && evento.longitud != null && (
           <button
             type="button"
-            onClick={() => onVerUbicacion(evento)}
+            onClick={(e) => { e.stopPropagation(); onVerUbicacion(evento); }}
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
             style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
@@ -307,7 +312,7 @@ export default function EventosPage() {
         titulo="Eventos"
         subtitulo="Actividades, jornadas y encuentros del área empresarial EGM Atalayas."
         variante="seccion"
-        imagenFondo="/eventos-banner.png"
+        imagenFondo="/Banner.webp"
         tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
       {puedeEditar && (
