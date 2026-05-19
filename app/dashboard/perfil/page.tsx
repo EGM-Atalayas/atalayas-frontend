@@ -14,13 +14,14 @@ import {
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
 import { subirImagenBanner } from "@/lib/supabase";
 import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
-import { removeBackground } from "@imgly/background-removal";
-import toast, { Toaster } from "react-hot-toast";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
 import type { ModuloProgresoResponse } from "@/lib/api/moduloProgreso";
+import { removeBackground } from "@/lib/utils/removeBackground";
+import toast, { Toaster } from "react-hot-toast";
+
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
 
@@ -536,11 +537,24 @@ export default function PerfilPage() {
         toast.error("Se subirá con fondo");
       }
 
-      const result = await subirLogoEmpresa(usuario.empresaId, fileToUpload);
-      setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
-      guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
-      localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, result.logoEmpresaUrl);
+      // Subir el archivo (con o sin fondo)
+      const formData = new FormData();
+      formData.append("file", fileToUpload);
+
+      const response = await fetch(`${API_URL}/upload/imagen`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Error al subir");
+
+      const { url } = await response.json();
+
+      setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: url } : prev);
+      guardarUsuario({ ...usuario!, logoEmpresaUrl: url });
+      localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, url);
       toast.success("Logo subido correctamente");
+
     } catch (err) {
       console.error("[Perfil] Error subiendo logo:", err);
       toast.error("Error al subir el logo");
