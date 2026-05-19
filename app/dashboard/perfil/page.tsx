@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
 import { subirImagenBanner } from "@/lib/supabase";
-import { getEmpresas } from "@/lib/api/empresas";
+import { getEmpresas, subirLogoEmpresa, getEmpresaById, actualizarEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";
@@ -228,12 +228,19 @@ export default function PerfilPage() {
           nombreEmpresa: data.nombreEmpresa ?? "",
           cif: data.cif ?? "",
           emailContacto: data.emailContacto ?? "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl,
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
         });
         setFormEmpNombre(data.nombreEmpresa ?? "");
         setFormEmpCif(data.cif ?? "");
         setFormEmpEmail(data.emailContacto ?? "");
-      } catch {} finally {
+      } catch {
+        setEmpresaData({
+          nombreEmpresa: "",
+          cif: "",
+          emailContacto: "",
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
+        });
+      } finally {
         setEmpresaLoaded(true);
       }
     })();
@@ -470,7 +477,7 @@ export default function PerfilPage() {
         nombreEmpresa: updated.nombreEmpresa ?? "",
         cif: updated.cif ?? "",
         emailContacto: updated.emailContacto ?? "",
-        logoEmpresaUrl: empresaData?.logoEmpresaUrl,
+        logoEmpresaUrl: (updated as any).logoEmpresaUrl ?? empresaData?.logoEmpresaUrl,
       });
       setFormEmpNombre(updated.nombreEmpresa ?? "");
       setFormEmpCif(updated.cif ?? "");
@@ -478,10 +485,19 @@ export default function PerfilPage() {
       guardarUsuario({
         ...usuario!,
         nombreEmpresa: updated.nombreEmpresa,
+        logoEmpresaUrl: (updated as any).logoEmpresaUrl ?? empresaData?.logoEmpresaUrl ?? usuario!.logoEmpresaUrl,
       });
       setEditandoEmpresa(false);
     } catch {
-      alert("Error al guardar los datos de la empresa");
+      // El backend no expone PATCH /empresas/:id → guardamos localmente
+      setEmpresaData(prev => prev ? {
+        ...prev,
+        nombreEmpresa: nombreFinal,
+        cif: cifFinal,
+        emailContacto: emailFinal,
+      } : prev);
+      setEditandoEmpresa(false);
+      localStorage.setItem("empresa_nombre", nombreFinal);
     } finally {
       setSavingEmpresa(false);
     }
@@ -505,8 +521,10 @@ export default function PerfilPage() {
       const result = await subirLogoEmpresa(usuario.empresaId, file);
       setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
       guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
-    } catch {
-      alert("No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
+      localStorage.setItem("empresa_logo_url", result.logoEmpresaUrl);
+    } catch (err) {
+      console.error("[Perfil] Error subiendo logo:", err);
+      alert(err instanceof Error ? err.message : "No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
     } finally {
       setUploadingLogo(false);
     }

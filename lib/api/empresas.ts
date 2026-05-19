@@ -93,19 +93,22 @@ export async function actualizarEmpresa(
   return response.json();
 }
 
-// Subir logo de empresa
+// Subir logo de empresa (sube a upload/imagen y devuelve la URL pública)
+// Nota: el backend no expone endpoint para persistir logoEmpresaUrl, se actualiza localmente en el AuthContext
 export async function subirLogoEmpresa(id: string, file: File): Promise<{ logoEmpresaUrl: string }> {
-  const formData = new FormData();
-  formData.append("file", file);
+  const fd = new FormData();
+  fd.append("file", file);
 
-  const response = await apiFetch(`${API_URL}/empresas/${id}/logo`, {
+  const uploadRes = await apiFetch(`${API_URL}/upload/imagen`, {
     method: "POST",
-    body: formData,
+    body: fd,
   });
 
-  if (!response.ok) {
-    throw new Error("Error al subir el logo de la empresa");
+  if (!uploadRes.ok) {
+    const errBody = await uploadRes.text().catch(() => "");
+    throw new Error(`Error al subir la imagen del logo (HTTP ${uploadRes.status}): ${errBody}`);
   }
 
-  return response.json();
+  const uploadData = await uploadRes.json();
+  return { logoEmpresaUrl: uploadData.url as string };
 }
