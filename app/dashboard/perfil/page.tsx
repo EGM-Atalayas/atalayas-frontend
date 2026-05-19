@@ -228,7 +228,7 @@ export default function PerfilPage() {
           nombreEmpresa: data.nombreEmpresa ?? "",
           cif: data.cif ?? "",
           emailContacto: data.emailContacto ?? "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) || undefined,
         });
         setFormEmpNombre(data.nombreEmpresa ?? "");
         setFormEmpCif(data.cif ?? "");
@@ -238,7 +238,7 @@ export default function PerfilPage() {
           nombreEmpresa: "",
           cif: "",
           emailContacto: "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
+          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) || undefined,
         });
       } finally {
         setEmpresaLoaded(true);
@@ -497,7 +497,7 @@ export default function PerfilPage() {
         emailContacto: emailFinal,
       } : prev);
       setEditandoEmpresa(false);
-      localStorage.setItem("empresa_nombre", nombreFinal);
+      localStorage.setItem(`empresa_nombre_${usuario.empresaId}`, nombreFinal);
     } finally {
       setSavingEmpresa(false);
     }
@@ -521,7 +521,7 @@ export default function PerfilPage() {
       const result = await subirLogoEmpresa(usuario.empresaId, file);
       setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
       guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
-      localStorage.setItem("empresa_logo_url", result.logoEmpresaUrl);
+      localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, result.logoEmpresaUrl);
     } catch (err) {
       console.error("[Perfil] Error subiendo logo:", err);
       alert(err instanceof Error ? err.message : "No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
@@ -1020,15 +1020,15 @@ export default function PerfilPage() {
                   className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
                   style={{
                     width: 80, height: 80,
-                    background: "var(--gris-superficie)",
-                    border: "1px solid var(--gris-borde)",
+                    background: empresaData?.logoEmpresaUrl ? "transparent" : "var(--gris-superficie)",
+                    border: empresaData?.logoEmpresaUrl ? "none" : "1px solid var(--gris-borde)",
                   }}
                 >
                   {uploadingLogo ? (
                     <div className="w-6 h-6 rounded-full border-2 animate-spin"
                       style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
                   ) : empresaData?.logoEmpresaUrl ? (
-                    <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
                   )}

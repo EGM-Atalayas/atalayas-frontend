@@ -94,7 +94,6 @@ const LoginPage: React.FC = () => {
           apellidos: data.apellidos,
           codigoRol: data.codigoRol,
           nombreEmpresa: data.nombreEmpresa,
-          logoEmpresaUrl: data.avatarUrl,
           empresaId: data.empresaId,
           usuarioId: data.usuarioId,
           email: data.email,

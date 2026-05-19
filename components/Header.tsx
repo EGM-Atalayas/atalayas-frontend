@@ -31,7 +31,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
-  const logoSrc = usuario?.logoEmpresaUrl || (typeof window !== "undefined" ? localStorage.getItem("empresa_logo_url") : null);
+  const logoSrc = usuario?.logoEmpresaUrl || (typeof window !== "undefined" && usuario?.empresaId ? localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`) : null);
 
   // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
   useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
