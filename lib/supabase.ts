@@ -55,6 +55,26 @@ export async function subirAdjunto(file: File): Promise<{ url: string; nombre: s
 }
 
 /**
+ * Sube una imagen de portada de perfil al bucket "modulos" de Supabase Storage
+ * y devuelve la URL pública.
+ */
+export async function subirImagenBanner(file: File): Promise<string> {
+  const client = getClient();
+  const ext    = file.name.split(".").pop() ?? "jpg";
+  const nombre = `${crypto.randomUUID()}.${ext}`;
+  const ruta   = `portadas/${nombre}`;
+
+  const { error } = await client.storage
+    .from("modulos")
+    .upload(ruta, file, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`Error al subir banner: ${error.message}`);
+
+  const { data } = client.storage.from("modulos").getPublicUrl(ruta);
+  return data.publicUrl;
+}
+
+/**
  * Sube un archivo de audio (MP3) al bucket "modulos" de Supabase Storage
  * y devuelve la URL pública.
  */

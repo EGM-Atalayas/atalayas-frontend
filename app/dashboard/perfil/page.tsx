@@ -9,11 +9,16 @@ import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
-  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight,
+  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight, Upload,
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
-import { getEmpresas } from "@/lib/api/empresas";
+import { subirImagenBanner } from "@/lib/supabase";
+import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
+import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";
+import type { ModuloConProgreso } from "@/lib/types/modulos";
+import type { ModuloProgresoResponse } from "@/lib/api/moduloProgreso";
 
 type Disponibilidad = "DISPONIBLE" | "OCUPADO" | "TELETRABAJO" | "AUSENTE" | "VACACIONES";
 
@@ -31,18 +36,6 @@ interface PerfilCompleto {
   nombreRol?: string;
   fechaRegistro?: string;
   ultimoLogin?: string;
-}
-
-interface ProgresoItem {
-  contenidoId: string;
-  completado: boolean;
-  tiempoSegundos: number;
-}
-
-interface ModuloItem {
-  moduloId: string;
-  titulo: string;
-  tipoModulo: string;
 }
 
 const DISPONIBILIDAD_CONFIG: Record<Disponibilidad, { label: string; color: string; bg: string; dot: string }> = {
@@ -147,8 +140,8 @@ export default function PerfilPage() {
   const pathname = usePathname();
 
   const [perfil, setPerfil] = useState<PerfilCompleto | null>(null);
-  const [progreso, setProgreso] = useState<ProgresoItem[]>([]);
-  const [modulos, setModulos] = useState<ModuloItem[]>([]);
+  const [modulos, setModulos] = useState<ModuloConProgreso[]>([]);
+  const [progresosModulo, setProgresosModulo] = useState<ModuloProgresoResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const esAdmin = usuario?.codigoRol === "ROLE_ADMIN_EMPRESA" || usuario?.codigoRol === "ROLE_ADMIN";
@@ -173,6 +166,19 @@ export default function PerfilPage() {
 
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [savingBanner, setSavingBanner] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
+
+  // ── Datos de empresa ──
+  const [editandoEmpresa, setEditandoEmpresa] = useState(false);
+  const [empresaData, setEmpresaData] = useState<{ nombreEmpresa: string; cif: string; emailContacto: string; logoEmpresaUrl?: string } | null>(null);
+  const [formEmpNombre, setFormEmpNombre] = useState("");
+  const [formEmpCif, setFormEmpCif] = useState("");
+  const [formEmpEmail, setFormEmpEmail] = useState("");
+  const [savingEmpresa, setSavingEmpresa] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [empresaLoaded, setEmpresaLoaded] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Superadmin KPIs ──
   const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
@@ -212,6 +218,26 @@ export default function PerfilPage() {
       window.scrollTo(0, scrollY);
     };
   }, [showBannerPicker]);
+
+  useEffect(() => {
+    if (!esAdmin || !usuario?.empresaId || empresaLoaded) return;
+    (async () => {
+      try {
+        const data = await getEmpresaById(usuario.empresaId!);
+        setEmpresaData({
+          nombreEmpresa: data.nombreEmpresa ?? "",
+          cif: data.cif ?? "",
+          emailContacto: data.emailContacto ?? "",
+          logoEmpresaUrl: usuario.logoEmpresaUrl,
+        });
+        setFormEmpNombre(data.nombreEmpresa ?? "");
+        setFormEmpCif(data.cif ?? "");
+        setFormEmpEmail(data.emailContacto ?? "");
+      } catch {} finally {
+        setEmpresaLoaded(true);
+      }
+    })();
+  }, [esAdmin, usuario?.empresaId, empresaLoaded]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -278,12 +304,12 @@ export default function PerfilPage() {
 
   const loadProgreso = async () => {
     try {
-      const [progresoRes, modulosRes] = await Promise.all([
-        apiFetch(`${API_URL}/progreso/me`),
-        apiFetch(`${API_URL}/modulos`),
+      const [modulosCP, progresosModuloData] = await Promise.all([
+        getModulosConProgreso(usuario?.empresaId),
+        getMisProgresosModulo(),
       ]);
-      if (progresoRes.ok) setProgreso(await progresoRes.json());
-      if (modulosRes.ok) setModulos(await modulosRes.json());
+      setModulos(modulosCP);
+      setProgresosModulo(progresosModuloData);
     } catch {}
   };
 
@@ -382,6 +408,26 @@ export default function PerfilPage() {
     setShowBannerPicker(false);
   };
 
+  const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (file.size > 50 * 1024 * 1024) {
+      alert("La imagen no debe exceder 50 MB.");
+      return;
+    }
+    setUploadingBanner(true);
+    try {
+      const url = await subirImagenBanner(file);
+      await patchPerfil({ bannerUrl: url });
+      setShowBannerPicker(false);
+    } catch {
+      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleEnviarSugerencia = async () => {
     if (!sugerencia.trim()) return;
     setEnviandoSug(true);
@@ -406,10 +452,74 @@ export default function PerfilPage() {
     }
   };
 
+  const handleGuardarEmpresa = async () => {
+    if (!usuario?.empresaId) return;
+    const nombreFinal = formEmpNombre.trim();
+    const cifFinal = formEmpCif.trim();
+    const emailFinal = formEmpEmail.trim();
+    if (!nombreFinal) return;
+
+    setSavingEmpresa(true);
+    try {
+      const updated = await actualizarEmpresa(usuario.empresaId, {
+        nombreEmpresa: nombreFinal,
+        cif: cifFinal,
+        emailContacto: emailFinal,
+      });
+      setEmpresaData({
+        nombreEmpresa: updated.nombreEmpresa ?? "",
+        cif: updated.cif ?? "",
+        emailContacto: updated.emailContacto ?? "",
+        logoEmpresaUrl: empresaData?.logoEmpresaUrl,
+      });
+      setFormEmpNombre(updated.nombreEmpresa ?? "");
+      setFormEmpCif(updated.cif ?? "");
+      setFormEmpEmail(updated.emailContacto ?? "");
+      guardarUsuario({
+        ...usuario!,
+        nombreEmpresa: updated.nombreEmpresa,
+      });
+      setEditandoEmpresa(false);
+    } catch {
+      alert("Error al guardar los datos de la empresa");
+    } finally {
+      setSavingEmpresa(false);
+    }
+  };
+
+  const handleCancelarEmpresa = () => {
+    if (empresaData) {
+      setFormEmpNombre(empresaData.nombreEmpresa);
+      setFormEmpCif(empresaData.cif);
+      setFormEmpEmail(empresaData.emailContacto);
+    }
+    setEditandoEmpresa(false);
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !usuario?.empresaId) return;
+    e.target.value = "";
+    setUploadingLogo(true);
+    try {
+      const result = await subirLogoEmpresa(usuario.empresaId, file);
+      setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: result.logoEmpresaUrl } : prev);
+      guardarUsuario({ ...usuario!, logoEmpresaUrl: result.logoEmpresaUrl });
+    } catch {
+      alert("No se pudo subir el logo. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    if (file.size > 50 * 1024 * 1024) {
+      alert("La imagen no debe exceder 50 MB.");
+      return;
+    }
     setUploadingAvatar(true);
     try {
       const formData = new FormData();
@@ -423,45 +533,28 @@ export default function PerfilPage() {
       setPerfil((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : prev);
       guardarUsuario({ ...usuario!, avatarUrl: data.avatarUrl });
     } catch {
-      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 5 MB.");
+      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  const completados   = progreso.filter((p) => p.completado).length;
-  const pendientes    = Math.max(0, modulos.length - completados);
-  const pctOnboarding = modulos.length > 0 ? Math.round((Math.min(completados, modulos.length) / modulos.length) * 100) : 0;
+  const completados   = modulos.filter((m) => m.status === "completado").length;
+  const pendientes    = modulos.filter((m) => m.status === "pendiente").length;
+  const pctOnboarding = modulos.length > 0 ? Math.round((completados / modulos.length) * 100) : 0;
 
-  // Módulo actual: primero el que tiene tiempo invertido pero no completado, luego el primer pendiente
+  // Módulo actual: primero "en progreso", luego el primer pendiente
   const moduloActual = (() => {
-    const enProgreso = modulos.find(m => {
-      const p = progreso.find(px => px.contenidoId === m.moduloId);
-      return p && !p.completado && (p.tiempoSegundos ?? 0) > 0;
-    });
+    const enProgreso = modulos.find(m => m.status === "en progreso");
     if (enProgreso) return enProgreso;
-    return modulos.find(m => !progreso.find(px => px.contenidoId === m.moduloId && px.completado));
+    return modulos.find(m => m.status === "pendiente");
   })();
 
   const progresoModuloActual = moduloActual
-    ? progreso.find(px => px.contenidoId === moduloActual.moduloId) ?? null
+    ? progresosModulo.find(p => p.moduloId === moduloActual.moduloId) ?? null
     : null;
 
-  // % del módulo actual estimado por tiempo vs media de completados (máx 95% hasta que se marque como completo)
-  const tiempoMedioCompletado = (() => {
-    const completadosConTiempo = progreso.filter(p => p.completado && (p.tiempoSegundos ?? 0) > 0);
-    if (completadosConTiempo.length === 0) return 0;
-    return completadosConTiempo.reduce((a, p) => a + (p.tiempoSegundos ?? 0), 0) / completadosConTiempo.length;
-  })();
-
-  const pctModuloActual = (() => {
-    if (!progresoModuloActual) return 0;
-    if (progresoModuloActual.completado) return 100;
-    const t = progresoModuloActual.tiempoSegundos ?? 0;
-    if (tiempoMedioCompletado > 0 && t > 0)
-      return Math.min(95, Math.round((t / tiempoMedioCompletado) * 100));
-    return 0;
-  })();
+  const pctModuloActual = progresoModuloActual?.porcentaje ?? 0;
 
   // La segunda tarjeta tiene contenido si hay módulos y (hay pendientes o todo completado)
   const haySegundaTarjeta = modulos.length > 0 && (moduloActual != null || pctOnboarding === 100);
@@ -864,6 +957,140 @@ export default function PerfilPage() {
 
         </div>
 
+        {/* ── Datos de empresa (solo admin) ── */}
+        {esAdmin && (
+        <div className="flex flex-col gap-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 style={{
+              fontFamily:  "var(--font-raleway), sans-serif",
+              fontWeight:  800,
+              fontSize:    "clamp(1.6rem, 3vw, 2.2rem)",
+              lineHeight:  1.1,
+              color:       "var(--texto-primario)",
+              letterSpacing: "-0.02em",
+            }}>Datos de empresa</h2>
+            {!editandoEmpresa ? (
+              <button
+                onClick={() => setEditandoEmpresa(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
+                style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}
+              >
+                <Pencil size={13} /> Editar
+              </button>
+            ) : (
+              <div className="flex gap-2 shrink-0">
+                <button onClick={handleCancelarEmpresa}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border"
+                  style={{ borderColor: "var(--gris-borde)", color: "var(--texto-muted)" }}>
+                  <X size={13} /> Cancelar
+                </button>
+                <button onClick={handleGuardarEmpresa} disabled={savingEmpresa}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity"
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)", color: "#fff", opacity: savingEmpresa ? 0.7 : 1 }}>
+                  <Check size={13} /> {savingEmpresa ? "Guardando…" : "Guardar"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 min-w-0">
+            {/* Logo empresa */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Logo</p>
+              <div className="flex items-center gap-4">
+                <div
+                  className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                  style={{
+                    width: 80, height: 80,
+                    background: "var(--gris-superficie)",
+                    border: "1px solid var(--gris-borde)",
+                  }}
+                >
+                  {uploadingLogo ? (
+                    <div className="w-6 h-6 rounded-full border-2 animate-spin"
+                      style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
+                  ) : empresaData?.logoEmpresaUrl ? (
+                    <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : (
+                    <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
+                  )}
+                </div>
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
+                >
+                  <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                </button>
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+              </div>
+            </div>
+
+            {/* Nombre empresa */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Nombre de la empresa</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpNombre}
+                    onChange={(e) => setFormEmpNombre(e.target.value)}
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="Nombre de la empresa"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
+              )}
+            </div>
+
+            {/* CIF */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>CIF</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpCif}
+                    onChange={(e) => setFormEmpCif(e.target.value.toUpperCase())}
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="B12345678"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.cif || "—"}</p>
+              )}
+            </div>
+
+            {/* Email contacto */}
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Email de contacto</p>
+              {editandoEmpresa ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    value={formEmpEmail}
+                    onChange={(e) => setFormEmpEmail(e.target.value)}
+                    type="email"
+                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; }}
+                    placeholder="empresa@ejemplo.com"
+                    className="w-full px-3 py-2.5 text-base rounded-xl border outline-none transition-colors"
+                    style={{ borderColor: "var(--gris-borde)", color: "var(--texto-primario)" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        )}
+
         {/* ── Sección formación ── */}
         {!isSuperAdmin && (
         <div className="flex flex-col gap-7">
@@ -972,7 +1199,7 @@ export default function PerfilPage() {
                   <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--azul-egm)" }}>
                     {pctModuloActual > 0 ? "Continúa donde lo dejaste" : "Siguiente curso"}
                   </p>
-                  <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloActual.titulo}</p>
+                  <p className="font-bold leading-tight truncate" style={{ color: "var(--texto-primario)", fontSize: "1.1rem" }}>{moduloActual.nombre}</p>
                 </div>
                 <button
                   onClick={() => router.push("/dashboard/formacion")}
@@ -1123,6 +1350,40 @@ export default function PerfilPage() {
 
             {/* Grupos de imágenes */}
             <div className="px-8 py-7 flex flex-col gap-8 overflow-y-auto" style={{ maxHeight: "65vh" }}>
+
+              {/* Subir imagen personalizada */}
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "var(--texto-muted)" }}>
+                  Subir imagen
+                </p>
+                <input ref={bannerFileRef} type="file" accept="image/*" className="hidden" onChange={handleUploadBanner} />
+                <button
+                  onClick={() => bannerFileRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="w-full flex items-center justify-center gap-3 px-5 py-6 rounded-xl border-2 border-dashed transition-all"
+                  style={{
+                    borderColor: "var(--gris-borde)",
+                    color: "var(--texto-muted)",
+                    background: uploadingBanner ? "var(--gris-pagina)" : "transparent",
+                    cursor: uploadingBanner ? "not-allowed" : "pointer",
+                  }}
+                  onMouseEnter={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; e.currentTarget.style.color = "var(--azul-egm)"; }}}
+                  onMouseLeave={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}}
+                >
+                  {uploadingBanner ? (
+                    <>
+                      <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
+                      <span className="text-sm font-semibold">Subiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={20} />
+                      <span className="text-sm font-semibold">Elige un archivo de tu ordenador</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               {BANNER_GRUPOS.map((grupo) => (
                 <div key={grupo.grupo}>
                   <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "var(--texto-muted)" }}>
