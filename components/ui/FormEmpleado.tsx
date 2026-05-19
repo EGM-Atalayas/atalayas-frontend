@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { NuevoEmpleadoForm } from "@/app/dashboard/admin/page";
+import type { NuevoEmpleadoForm } from "@/lib/types/usuario";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
