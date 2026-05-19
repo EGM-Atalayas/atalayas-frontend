@@ -1,5 +1,7 @@
 import { API_URL, apiFetch } from "@/lib/api";
+import { getMisProgresosModulo } from "@/lib/api/moduloProgreso";
 import type { Modulo, ModuloConProgreso, ProgresoItem } from "@/lib/types/modulos";
+import type { ModuloProgresoResponse } from "@/lib/api/moduloProgreso";
 
 
 // ── GET /api/v1/modulos ───────────────────────────────────────────────────────
@@ -47,37 +49,23 @@ export async function getMiProgreso(): Promise<ProgresoItem[]> {
  */
 
 export async function getModulosConProgreso(empresaId?: string | null): Promise<ModuloConProgreso[]> {
-  // Llamadas en paralelo para minimizar tiempo de carga
-  const [modulos, progreso] = await Promise.all([
+  const [modulos, progresosModulo] = await Promise.all([
     getModulos(empresaId),
-    getMiProgreso().catch(() => [] as ProgresoItem[]), // si falla el progreso no bloqueamos
+    getMisProgresosModulo(),
   ]);
 
-
-  // Índice rápido: moduloId - mejor estado derivado de sus contenidos
-  // Por ahora agrupamos por empresaId como aproximación hasta tener endpoint de módulo
-  // El estado se resuelve así: COMPLETADO > EN_PROGRESO > PENDIENTE
-  const progresoMap = new Map<string, ProgresoItem[]>();
-  for (const p of progreso) {
-    const key = p.empresaId;
-    if (!progresoMap.has(key)) progresoMap.set(key, []);
-    progresoMap.get(key)!.push(p);
+  const progresoMap = new Map<string, ModuloProgresoResponse>();
+  for (const p of progresosModulo) {
+    progresoMap.set(p.moduloId, p);
   }
 
   return modulos.map((modulo): ModuloConProgreso => {
-    // Buscamos registros de progreso que correspondan a este módulo
-    // Hasta tener moduloId en ProgresoItem, usamos empresaId como proxy
-    const registros = modulo.empresaId
-      ? (progresoMap.get(modulo.empresaId) ?? [])
-      : [];
+    const prog = progresoMap.get(modulo.moduloId);
 
     let status: ModuloConProgreso["status"] = "pendiente";
-
-    if (registros.length > 0) {
-      const hayCompletado = registros.some((r) => r.completado);
-      const hayEnProgreso = registros.some((r) => r.tiempoSegundos > 0 && !r.completado);
-      if (hayCompletado) status = "completado";
-      else if (hayEnProgreso) status = "en progreso";
+    if (prog) {
+      if (prog.completado) status = "completado";
+      else if (prog.porcentaje > 0) status = "en progreso";
     }
 
     return { ...modulo, status };
