@@ -7,7 +7,7 @@ export async function removeBackground(file: File): Promise<Blob> {
         console.log("Quitando fondo con @imgly...");
 
         const result = await removeBackground(file, {
-            model: 'isnet',           // mejor calidad para logos
+            model: 'isnet',
             output: {
                 format: 'image/png',
                 quality: 0.95,
