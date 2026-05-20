@@ -537,20 +537,23 @@ export default function PerfilPage() {
     if (!file) return;
 
     setUploadingLogo(true);
+    toast.loading("Procesando y subiendo logo...", { id: "logo" });
 
     try {
       let fileToUpload = file;
 
       // Quitar fondo automáticamente
       if (file.type.startsWith('image/')) {
-        toast.loading("Quitando fondo y procesando logo...", { id: "logo" });
         try {
+          toast.loading("Quitando fondo...", { id: "logo" });
           const cleanBlob = await removeBackground(file);
           fileToUpload = new File([cleanBlob], "logo-sinfondo.png", { type: "image/png" });
         } catch (err) {
           console.warn("No se pudo quitar fondo automáticamente");
         }
       }
+
+      toast.loading("Subiendo logo...", { id: "logo" });
 
       const formData = new FormData();
       formData.append("file", fileToUpload);
@@ -1080,7 +1083,7 @@ export default function PerfilPage() {
                   <div className="flex items-center gap-4">
                     {/* Previsualización del logo */}
                     <div
-                      className="rounded-2xl overflow-hidden flex items-center justify-center mx-auto"
+                      className="rounded-2xl overflow-hidden flex items-center justify-center mx-auto relative"
                       style={{
                         width: 120,
                         height: 120,
@@ -1090,7 +1093,7 @@ export default function PerfilPage() {
                     >
                       {empresaData?.logoEmpresaUrl ? (
                         <img
-                          key={`preview-${logoKey}`}                    // ← Usamos el estado
+                          key={`preview-${logoKey}`}
                           src={`${empresaData.logoEmpresaUrl}?v=${Date.now()}`}
                           alt="Logo actual"
                           style={{
@@ -1098,10 +1101,19 @@ export default function PerfilPage() {
                             height: "100%",
                             objectFit: "contain",
                             padding: "10px",
+                            opacity: uploadingLogo ? 0.3 : 1,
+                            transition: "opacity 0.3s",
                           }}
                         />
                       ) : (
-                        <Building2 size={48} style={{ color: "#9CA3AF" }} />
+                        <div className={`transition-opacity duration-300 ${uploadingLogo ? "opacity-30" : ""}`}>
+                          <Building2 size={48} style={{ color: "#9CA3AF" }} />
+                        </div>
+                      )}
+                      {uploadingLogo && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        </div>
                       )}
                     </div>
                     <button
@@ -1110,7 +1122,7 @@ export default function PerfilPage() {
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
                       style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
                     >
-                      <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                      <Camera size={13} /> {uploadingLogo ? "Subiendo..." : empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
                     </button>
                     <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                   </div>
@@ -1134,6 +1146,26 @@ export default function PerfilPage() {
                   ) : (
                     <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
                   )}
+                  {/* Toggle mostrar nombre junto al logo */}
+                  <div className="flex items-center justify-between gap-4 pt-2">
+                    <div className="flex flex-col mt-2">
+                      <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Mostrar nombre</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const nuevo = !mostrarNombreJuntoLogo;
+                        setMostrarNombreJuntoLogo(nuevo);
+                        if (usuario?.empresaId) {
+                          localStorage.setItem(`mostrar_nombre_empresa_${usuario.empresaId}`, String(nuevo));
+                        }
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${mostrarNombreJuntoLogo ? "bg-blue-600" : "bg-gray-300"}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${mostrarNombreJuntoLogo ? "translate-x-6" : "translate-x-1"}`}
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 {/* CIF */}
@@ -1176,28 +1208,6 @@ export default function PerfilPage() {
                     <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
                   )}
                 </div>
-              </div>
-
-              {/* Toggle mostrar nombre junto al logo */}
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Mostrar nombre junto al logo</span>
-                  <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Enciende esta opción si en el logo no se ve bien el nombre de la empresa</span>
-                </div>
-                <button
-                  onClick={() => {
-                    const nuevo = !mostrarNombreJuntoLogo;
-                    setMostrarNombreJuntoLogo(nuevo);
-                    if (usuario?.empresaId) {
-                      localStorage.setItem(`mostrar_nombre_empresa_${usuario.empresaId}`, String(nuevo));
-                    }
-                  }}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${mostrarNombreJuntoLogo ? "bg-blue-600" : "bg-gray-300"}`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${mostrarNombreJuntoLogo ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
               </div>
             </div>
           )}
