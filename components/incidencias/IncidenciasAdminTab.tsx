@@ -16,6 +16,7 @@ import type { Incidencia, IncidenciaInput } from "@/lib/types/incidencias";
 import { AnimatePresence, motion } from "motion/react";
 import {
   AlertTriangle,
+  CircleAlert,
   Clock,
   CheckCircle2,
   ChevronDown,
@@ -30,9 +31,9 @@ const TAB_COLOR = "#B45309";
 
 // ── Paleta de estados ────────────────────────────────────────────────────────
 const ESTADOS = [
-  { value: "ABIERTA",  label: "Abierta",  color: "#dc2626", bg: "#fee2e2", border: "#fca5a5", Icon: AlertTriangle },
-  { value: "EN_CURSO", label: "En curso", color: "#d97706", bg: "#fef3c7", border: "#fcd34d", Icon: Clock        },
-  { value: "CERRADA",  label: "Cerrada",  color: "#16a34a", bg: "#dcfce7", border: "#86efac", Icon: CheckCircle2 },
+  { value: "ABIERTA",  label: "Abierta",  color: "#dc2626", dark: "#991b1b", bg: "#fee2e2", border: "#fca5a5", Icon: CircleAlert },
+  { value: "EN_CURSO", label: "En curso", color: "#d97706", dark: "#92400e", bg: "#fef3c7", border: "#fcd34d", Icon: Clock        },
+  { value: "CERRADA",  label: "Cerrada",  color: "#16a34a", dark: "#14532d", bg: "#dcfce7", border: "#86efac", Icon: CheckCircle2 },
 ] as const;
 
 const PRIORIDADES = [
@@ -66,96 +67,116 @@ const estadoConf = (v: string) => ESTADOS.find(e => e.value === v) ?? ESTADOS[0]
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl p-5 animate-pulse"
+    <div className="rounded-2xl overflow-hidden animate-pulse flex"
       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-      <div className="flex items-start gap-4">
-        <div className="rounded-2xl shrink-0" style={{ width: 48, height: 48, background: "var(--gris-borde)" }} />
-        <div className="flex-1 flex flex-col gap-2.5 pt-0.5">
-          <div className="flex gap-2 items-center">
-            <div className="h-4 rounded-full w-48" style={{ background: "var(--gris-borde)" }} />
-            <div className="h-5 rounded-full w-16" style={{ background: "var(--gris-borde)" }} />
+      {/* Acento lateral */}
+      <div style={{ width: 4, flexShrink: 0, background: "var(--gris-borde)" }} />
+      {/* Contenido */}
+      <div className="flex flex-1 items-center gap-3 px-3 sm:px-4 py-3">
+        <div className="rounded-lg shrink-0" style={{ width: 32, height: 32, background: "var(--gris-borde)" }} />
+        <div className="flex-1 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <div className="h-3.5 rounded-full w-40" style={{ background: "var(--gris-borde)" }} />
+            <div className="h-3.5 rounded-full w-12" style={{ background: "var(--gris-borde)" }} />
           </div>
-          <div className="h-3 rounded-full w-full" style={{ background: "var(--gris-borde)" }} />
-          <div className="h-3 rounded-full w-2/3" style={{ background: "var(--gris-borde)" }} />
-          <div className="flex gap-3 mt-1">
-            <div className="h-3 rounded-full w-28" style={{ background: "var(--gris-borde)" }} />
-            <div className="h-3 rounded-full w-16" style={{ background: "var(--gris-borde)" }} />
-          </div>
+          <div className="h-3 rounded-full w-3/4" style={{ background: "var(--gris-superficie)" }} />
         </div>
-        <div className="rounded-xl shrink-0 h-8 w-28" style={{ background: "var(--gris-borde)" }} />
+        <div className="hidden sm:block rounded-xl shrink-0 h-7 w-28" style={{ background: "var(--gris-borde)" }} />
       </div>
     </div>
   );
 }
 
 // ── Estado selector ───────────────────────────────────────────────────────────
-function EstadoSelector({ incidenciaId, estadoActual, onChange }: {
+function EstadoSelector({ incidenciaId, estadoActual, onChange, matchButtonHeight = false }: {
   incidenciaId: string; estadoActual: string;
   onChange: (id: string, estado: string) => void;
+  matchButtonHeight?: boolean;
 }) {
   const conf = estadoConf(estadoActual);
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const calcPos = () => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 5, left: r.left, width: r.width });
+  };
 
   return (
-    <div className="relative shrink-0" ref={ref}>
+    <div className="shrink-0">
       <button
-        onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl"
+        ref={triggerRef}
+        onClick={() => { calcPos(); setOpen(v => !v); }}
+        className={`flex items-center gap-1 font-semibold cursor-pointer ${matchButtonHeight ? "text-sm px-4" : "text-[11px] px-2 rounded-lg"}`}
         style={{
-          background: conf.bg, color: conf.color,
-          border: `1px solid ${conf.border}`,
-          cursor: "pointer", minWidth: 112,
-          justifyContent: "space-between",
-          transition: "opacity 0.15s",
+          height: matchButtonHeight ? 40 : 26,
+          borderRadius: matchButtonHeight ? "var(--radius-btn)" : "7px",
+          background: conf.bg,
+          border: `1px solid ${open ? conf.color : conf.border}`,
+          color: conf.color,
+          transition: "border-color 0.15s",
         }}
       >
-        <span className="flex items-center gap-1.5">
-          <conf.Icon size={11} strokeWidth={2.5} />
-          {conf.label}
-        </span>
-        <ChevronDown size={11} strokeWidth={2.5}
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.18s" }} />
+        <conf.Icon size={matchButtonHeight ? 14 : 10} strokeWidth={2.5} />
+        {conf.label}
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.18 }}
+          style={{ display: "flex", opacity: 0.55 }}
+        >
+          <ChevronDown size={matchButtonHeight ? 14 : 10} strokeWidth={2.5} />
+        </motion.span>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.97 }}
-              transition={{ duration: 0.14 }}
-              className="absolute right-0 top-full mt-1 z-20 rounded-xl overflow-hidden"
-              style={{
-                background: "var(--blanco)",
-                border: "1px solid var(--gris-borde)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-                minWidth: 130,
-              }}
-            >
-              {ESTADOS.map(e => (
-                <button
-                  key={e.value}
-                  onClick={() => { onChange(incidenciaId, e.value); setOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-left"
-                  style={{
-                    color: e.value === estadoActual ? e.color : "var(--texto-primario)",
-                    background: e.value === estadoActual ? e.bg : "transparent",
-                    cursor: "pointer", transition: "background 0.12s",
-                  }}
-                  onMouseEnter={ev => { if (e.value !== estadoActual) (ev.currentTarget as HTMLButtonElement).style.background = "var(--gris-superficie)"; }}
-                  onMouseLeave={ev => { if (e.value !== estadoActual) (ev.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                >
-                  <e.Icon size={12} strokeWidth={2.5} />
-                  {e.label}
-                </button>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {open && (
+            <>
+              <div className="fixed inset-0 z-[200]" onClick={() => setOpen(false)} />
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                style={{
+                  position: "fixed",
+                  top: pos.top,
+                  left: pos.left,
+                  minWidth: Math.max(pos.width, 160),
+                  zIndex: 201,
+                  background: "#ffffff",
+                  border: "1px solid rgba(0,0,0,0.10)",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                  overflow: "hidden",
+                }}
+              >
+                {ESTADOS.map(e => (
+                  <button
+                    key={e.value}
+                    onClick={() => { onChange(incidenciaId, e.value); setOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer"
+                    style={{
+                      background: e.value === estadoActual ? `${e.color}12` : "transparent",
+                      color: e.value === estadoActual ? e.color : "var(--texto-primario)",
+                      fontWeight: e.value === estadoActual ? 600 : 400,
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={ev => { if (e.value !== estadoActual) (ev.currentTarget as HTMLButtonElement).style.background = "var(--gris-superficie)"; }}
+                    onMouseLeave={ev => { if (e.value !== estadoActual) (ev.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                  >
+                    <e.Icon size={14} strokeWidth={2.2} />
+                    {e.label}
+                  </button>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
@@ -199,6 +220,10 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
   const [search, setSearch]       = useState("");
   const [errorMut, setErrorMut]   = useState<string | null>(null);
   const [confirmEliminar, setConfirmEliminar] = useState<Incidencia | null>(null);
+  const [detailInc, setDetailInc] = useState<Incidencia | null>(null);
+  const [filtroDropOpen, setFiltroDropOpen] = useState(false);
+  const [filtroDropPos, setFiltroDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const filtroDropRef = useRef<HTMLButtonElement>(null);
 
   // ── Formulario nueva incidencia ───────────────────────────────────────────
   const [showForm, setShowForm]       = useState(false);
@@ -286,14 +311,132 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
 
   const hayFiltrosActivos = search.trim() !== "" || filtro !== "todas";
 
-  // Scroll lock when modal is open
+  // Scroll lock when any modal is open
   useEffect(() => {
-    if (showForm) {
+    if (showForm || !!detailInc) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => { document.body.style.overflow = prev; };
     }
-  }, [showForm]);
+  }, [showForm, detailInc]);
+
+  // live ref para el modal de detalle (refleja cambios de estado en tiempo real)
+  const liveDetailInc = detailInc
+    ? incidencias.find(i => i.incidenciaId === detailInc.incidenciaId) ?? detailInc
+    : null;
+
+  // ── Modal detalle incidencia (portal) ─────────────────────────────────────
+  const detailModalNode = typeof document !== "undefined" ? createPortal(
+    <AnimatePresence>
+      {liveDetailInc && (() => {
+        const est = estadoConf(liveDetailInc.estado);
+        return (
+          <motion.div
+            key="inc-detail-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            style={{ background: "var(--overlay, rgba(0,0,0,0.45))" }}
+            onMouseDown={e => { if (e.target === e.currentTarget) setDetailInc(null); }}
+          >
+            <motion.div
+              key="inc-detail-panel"
+              initial={{ opacity: 0, y: 28, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: 0.26, ease: [0.34, 1.15, 0.64, 1] }}
+              className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden"
+              style={{ maxHeight: "85dvh", background: "var(--gris-panel)", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              {/* Header plano con color del estado */}
+              <div className="shrink-0 flex items-start justify-between px-5 sm:px-6"
+                style={{ paddingTop: "20px", paddingBottom: "20px", background: est.color }}>
+                <div className="flex-1 min-w-0 pr-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)" }}>
+                      <est.Icon size={11} strokeWidth={2.5} />
+                      {est.label}
+                    </span>
+                    {liveDetailInc.prioridad === "CRITICA" && (
+                      <span className="inline-flex items-center justify-center rounded-full"
+                        style={{ width: 28, height: 28, background: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)" }}
+                        title="Prioridad crítica">
+                        <AlertTriangle size={15} strokeWidth={2.5} />
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold leading-snug" style={{ color: "#ffffff" }}>
+                    {liveDetailInc.titulo}
+                  </h2>
+                </div>
+                <div className="shrink-0">
+                  <IconButton onClick={() => setDetailInc(null)} variant="glass" label="Cerrar" />
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-5 flex flex-col gap-3">
+
+                {/* Meta: creador · fecha en una sola línea */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {liveDetailInc.nombreCreador && (
+                    <>
+                      <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Reportado por</span>
+                      <span className="text-xs font-semibold" style={{ color: "var(--texto-secundario)" }}>
+                        {liveDetailInc.nombreCreador}
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--gris-borde)" }}>·</span>
+                    </>
+                  )}
+                  <span className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                    {tiempoRelativo(liveDetailInc.creadoEn) !== formatFecha(liveDetailInc.creadoEn)
+                      ? tiempoRelativo(liveDetailInc.creadoEn)
+                      : formatFecha(liveDetailInc.creadoEn)}
+                  </span>
+                </div>
+
+                {/* Descripción */}
+                <div>
+                  {liveDetailInc.descripcion?.trim() ? (
+                    <p className="text-sm" style={{ color: "var(--texto-primario)", lineHeight: 1.8 }}>
+                      {liveDetailInc.descripcion}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic" style={{ color: "var(--texto-placeholder)" }}>Sin descripción</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer: izq cerrar+eliminar · der estado */}
+              <div className="flex items-center justify-between gap-2 px-5 sm:px-6 py-4 shrink-0"
+                style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="md" onClick={() => setDetailInc(null)}>Cerrar</Button>
+                  {!esDemo && (
+                    <Button variant="danger" size="md" onClick={() => { setConfirmEliminar(liveDetailInc); setDetailInc(null); }}>
+                      <Trash2 size={14} strokeWidth={2} />
+                      <span className="hidden sm:inline">Eliminar</span>
+                    </Button>
+                  )}
+                </div>
+                <EstadoSelector
+                  incidenciaId={liveDetailInc.incidenciaId}
+                  estadoActual={liveDetailInc.estado}
+                  onChange={handleEstado}
+                  matchButtonHeight
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        );
+      })()}
+    </AnimatePresence>,
+    document.body
+  ) : null;
 
   // ── Modal nueva incidencia (portal) ──────────────────────────────────────
   const modalNode = typeof document !== "undefined" ? createPortal(
@@ -316,68 +459,80 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.26, ease: [0.34, 1.15, 0.64, 1] }}
             className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden"
-            style={{ maxHeight: "92dvh", background: "var(--blanco)" }}
+            style={{ maxHeight: "92dvh", background: "var(--gris-panel)", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
             onMouseDown={e => e.stopPropagation()}
           >
-            {/* Header with color */}
-            <div className="relative overflow-hidden shrink-0 flex items-center justify-between px-6 py-5"
-              style={{ background: TAB_COLOR }}>
-              <div className="absolute inset-0 pointer-events-none">
-                <Grainient color1={TAB_COLOR} color2="#92400e" color3="#451a03" />
+            {/* Header */}
+            <div className="relative overflow-hidden shrink-0 flex items-center justify-between px-5 sm:px-6"
+              style={{ paddingTop: "20px", paddingBottom: "20px", background: "#C8782A" }}>
+              <div className="absolute inset-0">
+                <Grainient
+                  color1="#C8782A" color2="#B45309" color3="#7C3A0E"
+                  timeSpeed={0.18} warpStrength={1.1} warpFrequency={4.0}
+                  warpSpeed={1.4} warpAmplitude={55} grainAmount={0.07}
+                />
               </div>
+              <h2 className="relative z-10" style={{
+                fontFamily: "var(--font-raleway), sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(1.4rem, 4vw, 1.8rem)",
+                lineHeight: 1.1,
+                letterSpacing: "-0.03em",
+                color: "#ffffff",
+                margin: 0,
+              }}>
+                Nueva incidencia
+              </h2>
               <div className="relative z-10">
-                <h2 className="text-base font-bold text-white" style={{ letterSpacing: "-0.01em" }}>
-                  Nueva incidencia
-                </h2>
-                <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.72)" }}>
-                  Rellena los datos y pulsa crear
-                </p>
-              </div>
-              <div className="relative z-10">
-                <IconButton onClick={closeForm} variant="glass" label="Cerrar">
-                  <X size={16} strokeWidth={2.5} />
-                </IconButton>
+                <IconButton onClick={closeForm} variant="glass" label="Cerrar" />
               </div>
             </div>
 
             {/* Form body — scrollable */}
-            <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-4">
+            <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-5 flex flex-col gap-4">
               {/* Título */}
               <div>
-                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--texto-label)" }}>
-                  Título <span style={{ color: "#ef4444" }}>*</span>
+                <label className="text-sm font-semibold mb-1.5 block" style={{ color: "var(--texto-label)" }}>
+                  Título
+                  <span className="relative group ml-0.5 inline-block" style={{ color: "#ef4444" }}>
+                    *
+                    <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                      style={{ background: "#1f2937", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.18)", zIndex: 99 }}>
+                      Obligatorio
+                    </span>
+                  </span>
                 </label>
                 <input
                   value={formTitulo}
                   onChange={e => setFormTitulo(e.target.value)}
                   placeholder="Describe brevemente el problema…"
                   autoFocus
-                  className="w-full rounded-xl text-sm px-3.5 outline-none border transition-all"
-                  style={{ height: 42, borderColor: "var(--gris-borde)", background: "#fff", color: "var(--texto-primario)" }}
-                  onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--gris-borde)"}
+                  className="w-full rounded-lg text-sm px-3.5 outline-none border transition-all"
+                  style={{ height: 44, borderColor: "rgba(0,0,0,0.12)", background: "#fff", color: "var(--texto-primario)" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = TAB_COLOR; e.currentTarget.style.boxShadow = `0 0 0 3px ${TAB_COLOR}22`; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                   onKeyDown={e => e.key === "Enter" && handleCrear()}
                 />
               </div>
 
               {/* Descripción */}
               <div>
-                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--texto-label)" }}>Descripción</label>
+                <label className="text-sm font-semibold mb-1.5 block" style={{ color: "var(--texto-label)" }}>Descripción</label>
                 <textarea
                   value={formDesc}
                   onChange={e => setFormDesc(e.target.value)}
                   placeholder="Explica con más detalle qué ocurre, cuándo y a quién afecta…"
                   rows={4}
-                  className="w-full rounded-xl text-sm px-3.5 py-2.5 outline-none border transition-all resize-none"
-                  style={{ borderColor: "var(--gris-borde)", background: "#fff", color: "var(--texto-primario)", lineHeight: 1.6 }}
-                  onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--gris-borde)"}
+                  className="w-full rounded-lg text-sm px-3.5 py-2.5 outline-none border transition-all resize-none"
+                  style={{ borderColor: "rgba(0,0,0,0.12)", background: "#fff", color: "var(--texto-primario)", lineHeight: 1.6 }}
+                  onFocus={e => { e.currentTarget.style.borderColor = TAB_COLOR; e.currentTarget.style.boxShadow = `0 0 0 3px ${TAB_COLOR}22`; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
 
               {/* Prioridad */}
               <div>
-                <label className="text-xs font-semibold mb-2 block" style={{ color: "var(--texto-label)" }}>Prioridad</label>
+                <label className="text-sm font-semibold mb-2 block" style={{ color: "var(--texto-label)" }}>Prioridad</label>
                 <div className="flex gap-2">
                   {PRIORIDADES.map(p => (
                     <button
@@ -406,30 +561,32 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
 
               {/* Error */}
               {formError && (
-                <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>{formError}</p>
+                <p className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.07)", color: "var(--error)" }}>
+                  {formError}
+                </p>
               )}
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 px-6 py-4 flex justify-end gap-3"
-              style={{ borderTop: "1px solid var(--gris-borde)" }}>
-              <button
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-2.5 px-5 sm:px-6 py-4 shrink-0"
+              style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+              <Button
                 type="button"
+                variant="secondary"
+                className="w-full sm:w-auto order-2 sm:order-1"
                 onClick={closeForm}
-                className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-                style={{ background: "var(--gris-superficie)", color: "var(--texto-primario)", border: "1px solid var(--gris-borde)", cursor: "pointer" }}
+                disabled={guardando}
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                className="w-full sm:w-auto order-1 sm:order-2"
                 onClick={handleCrear}
-                disabled={guardando}
-                className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-opacity"
-                style={{ background: TAB_COLOR, color: "#fff", cursor: guardando ? "not-allowed" : "pointer", opacity: guardando ? 0.7 : 1 }}
+                disabled={guardando || !formTitulo.trim()}
               >
                 {guardando ? "Creando…" : "Crear incidencia"}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </motion.div>
@@ -441,9 +598,10 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
   return (
     <div>
       {modalNode}
+      {detailModalNode}
 
       {/* ── Título ── */}
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-8 text-center sm:text-left">
         <h1 style={{
           fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800,
           fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "var(--texto-primario)",
@@ -546,7 +704,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
           </Button>
         </div>
 
-        {/* Móvil: buscador + botón en fila, pills debajo */}
+        {/* Móvil: buscador + botón, dropdown de filtro debajo */}
         <div className="flex flex-col gap-2 sm:hidden">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -561,30 +719,76 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
               <Plus size={14} />
             </Button>
           </div>
-          <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
-              {["todas", ...ESTADOS.map(e => e.value)].map(v => {
-                const est = v === "todas" ? null : ESTADOS.find(e => e.value === v)!;
-                const isActive = filtro === v;
-                return (
-                  <motion.button key={v}
-                    onClick={() => setFiltro(v === filtro && v !== "todas" ? "todas" : v)}
-                    className="relative text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
-                    style={{ color: isActive ? (est ? est.color : "#fff") : "var(--texto-muted)", zIndex: 1, border: "none", background: "transparent" }}
-                    whileTap={{ scale: 0.94 }}>
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.span key="bg" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
-                          className="absolute inset-0 rounded-lg"
-                          style={{ background: est ? est.bg : TAB_COLOR, border: est ? `1px solid ${est.border}` : "none", zIndex: -1 }} />
-                      )}
-                    </AnimatePresence>
-                    {v === "todas" ? "Todas" : est!.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Dropdown filtro estado — portal, igual que "Todos los tipos" en Documentos */}
+          {(() => {
+            const activo = filtro !== "todas" ? ESTADOS.find(e => e.value === filtro) : null;
+            return (
+              <>
+                <button
+                  ref={filtroDropRef}
+                  onClick={() => {
+                    if (!filtroDropOpen && filtroDropRef.current) {
+                      const r = filtroDropRef.current.getBoundingClientRect();
+                      setFiltroDropPos({ top: r.bottom + 5, left: r.left, width: r.width });
+                    }
+                    setFiltroDropOpen(v => !v);
+                  }}
+                  className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer"
+                  style={{
+                    background: "var(--blanco)",
+                    border: `1.5px solid ${activo ? activo.border : "var(--gris-borde)"}`,
+                    color: activo ? activo.color : "var(--texto-primario)",
+                    transition: "border-color 0.15s",
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    {activo && <activo.Icon size={13} strokeWidth={2.3} />}
+                    {activo ? activo.label : "Todos los estados"}
+                  </span>
+                  <ChevronDown size={14} strokeWidth={2.3} style={{ color: "var(--texto-muted)", transform: filtroDropOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }} />
+                </button>
+                {filtroDropOpen && createPortal(
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setFiltroDropOpen(false)} />
+                    <div
+                      className="fixed z-[9999] rounded-xl overflow-hidden"
+                      style={{
+                        top: filtroDropPos.top,
+                        left: filtroDropPos.left,
+                        minWidth: Math.max(filtroDropPos.width, 180),
+                        background: "var(--blanco)",
+                        border: "1px solid var(--gris-borde)",
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
+                      }}
+                    >
+                      {[{ value: "todas", label: "Todos los estados", Icon: null as any, color: "var(--texto-primario)", bg: "transparent" },
+                        ...ESTADOS].map(opt => {
+                        const isSelected = filtro === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => { setFiltro(opt.value); setFiltroDropOpen(false); }}
+                            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm font-semibold cursor-pointer text-left"
+                            style={{
+                              color: isSelected ? opt.color : "var(--texto-primario)",
+                              background: isSelected ? (("bg" in opt && opt.bg !== "transparent") ? opt.bg : "var(--gris-superficie)") : "transparent",
+                              transition: "background 0.1s",
+                            }}
+                            onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "var(--gris-superficie)"; }}
+                            onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                          >
+                            {opt.Icon && <opt.Icon size={13} strokeWidth={2.3} style={{ color: opt.color }} />}
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>,
+                  document.body
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -604,8 +808,8 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
 
       {/* ── Contenido ── */}
       {cargando ? (
-        <div className="flex flex-col gap-3">
-          {[0, 1, 2].map(i => <SkeletonCard key={i} />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+          {[0, 1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
         </div>
 
       ) : isError ? (
@@ -626,22 +830,28 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
         </div>
 
       ) : filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-5 rounded-2xl text-center"
-          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-          <div className="rounded-2xl p-5" style={{ background: "var(--gris-superficie)" }}>
-            <AlertTriangle size={32} strokeWidth={1.4} style={{ color: "var(--texto-muted)" }} />
+        <div className="card flex flex-col items-center justify-center py-16 text-center gap-4">
+          <div className="flex items-center justify-center rounded-full"
+            style={{ width: 72, height: 72, background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+            {search || filtro !== "todas"
+              ? <Search size={28} strokeWidth={1.4} />
+              : <AlertTriangle size={28} strokeWidth={1.4} />}
           </div>
           <div>
-            <p className="font-bold text-base" style={{ color: "var(--texto-primario)" }}>
+            <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>
               {search ? "Sin resultados" : filtro === "todas" ? "Todavía no hay incidencias" : `Sin incidencias ${ESTADOS.find(e => e.value === filtro)?.label.toLowerCase()}`}
             </p>
-            <p className="text-sm mt-1" style={{ color: "var(--texto-muted)", maxWidth: 280, margin: "4px auto 0" }}>
-              {search ? `No hay incidencias que coincidan con "${search}"` : filtro === "todas" ? "Los empleados aún no han reportado ninguna" : "Prueba a cambiar el filtro"}
+            <p className="text-sm" style={{ color: "var(--texto-muted)", maxWidth: 320, margin: "0 auto" }}>
+              {search
+                ? <>No hay incidencias que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{search}"</span></>
+                : filtro === "todas"
+                  ? "Los empleados aún no han reportado ninguna incidencia."
+                  : "Prueba a cambiar el filtro de estado."}
             </p>
           </div>
           {(search || filtro !== "todas") && (
             <button onClick={() => { setSearch(""); setFiltro("todas"); }}
-              className="text-sm font-semibold px-5 py-2.5 rounded-xl"
+              className="text-sm font-semibold px-5 py-2.5 rounded-xl mt-1"
               style={{ background: "var(--azul-egm)", color: "white", cursor: "pointer" }}>
               Ver todas
             </button>
@@ -649,8 +859,9 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
         </div>
 
       ) : (
-        <div className="flex flex-col gap-3">
-          {filtradas.map(inc => {
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+          <AnimatePresence initial={false}>
+          {filtradas.map((inc, idx) => {
             const est       = estadoConf(inc.estado);
             const esCritica = inc.prioridad === "CRITICA";
 
@@ -658,113 +869,82 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
               <motion.div
                 key={inc.incidenciaId}
                 layout
-                initial={{ opacity: 0, y: 6 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.18 }}
-                className="group rounded-2xl overflow-hidden"
+                transition={{ duration: 0.2, ease: "easeOut", delay: idx * 0.03 }}
+                className="flex rounded-2xl"
                 style={{
                   background: "var(--blanco)",
                   border: "1px solid var(--gris-borde)",
-                  transition: "box-shadow 0.18s",
+                  borderLeft: `3px solid ${est.color}`,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                  transition: "box-shadow 0.2s ease",
+                  overflow: "visible",
+                  position: "relative",
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 18px rgba(0,0,0,0.07)"}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = "none"}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.09)"; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
               >
-                <div className="flex items-start gap-4 px-5 pt-4 pb-3">
-                  {/* Icono estado */}
-                  <div className="rounded-2xl shrink-0 flex items-center justify-center"
-                    style={{ width: 48, height: 48, background: est.bg, color: est.color, border: `1px solid ${est.border}`, marginTop: 1 }}>
-                    <est.Icon size={20} strokeWidth={2} />
+                {/* Contenido principal */}
+                <div className="flex flex-1 items-center gap-3 px-3 sm:px-4 py-3 min-w-0 cursor-pointer" onClick={() => setDetailInc(inc)}>
+
+                  {/* Icono estado + indicador crítica */}
+                  <div className="relative shrink-0" style={{ width: 36, height: 36 }}>
+                    <div className="flex items-center justify-center rounded-xl w-full h-full"
+                      style={{ background: est.bg }}>
+                      <est.Icon size={17} strokeWidth={2.2} style={{ color: est.color }} />
+                    </div>
+                    {esCritica && (
+                      <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full"
+                        style={{ width: 17, height: 17, background: "#dc2626", boxShadow: "0 0 0 2px var(--blanco)" }}
+                        title="Prioridad crítica">
+                        <AlertTriangle size={9} strokeWidth={2.8} style={{ color: "#fff" }} />
+                      </span>
+                    )}
                   </div>
 
-                  {/* Contenido */}
+                  {/* Texto */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <span className="font-bold text-sm leading-snug" style={{ color: "var(--texto-primario)" }}>
+                    {/* Fila superior: título + fecha */}
+                    <div className="flex items-start justify-between gap-2 min-w-0">
+                      <span className="font-semibold text-sm line-clamp-1 leading-snug"
+                        style={{ color: "var(--texto-primario)" }}>
                         {inc.titulo}
                       </span>
-                      {esCritica && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                          style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5" }}>
-                          <AlertTriangle size={9} strokeWidth={2.5} />
-                          Crítica
+                      <span className="text-[11px] shrink-0 font-medium whitespace-nowrap"
+                        style={{ color: "var(--texto-muted)" }}
+                        title={formatFecha(inc.creadoEn)}>
+                        {tiempoRelativo(inc.creadoEn)}
+                      </span>
+                    </div>
+                    {/* Fila inferior: descripción + empresa */}
+                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                      {inc.descripcion?.trim() ? (
+                        <span className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>
+                          {inc.descripcion.trim()}
                         </span>
+                      ) : (
+                        <span className="text-[11px] italic" style={{ color: "var(--texto-placeholder)" }}>Sin descripción</span>
+                      )}
+                      {esSuperadmin && inc.nombreEmpresa && (
+                        <>
+                          <span className="text-[11px] shrink-0" style={{ color: "var(--gris-borde)" }}>·</span>
+                          <span className="text-[11px] font-semibold shrink-0" style={{ color: "var(--texto-muted)" }}>
+                            {inc.nombreEmpresa}
+                          </span>
+                        </>
                       )}
                     </div>
-                    {inc.descripcion && (
-                      <p className="text-xs line-clamp-2" style={{ color: "#6b7280", lineHeight: 1.65 }}>
-                        {inc.descripcion}
-                      </p>
-                    )}
                   </div>
 
-                  {/* Acciones — desktop */}
-                  <div className="hidden sm:flex items-center gap-2 shrink-0">
-                    <EstadoSelector
-                      incidenciaId={inc.incidenciaId}
-                      estadoActual={inc.estado}
-                      onChange={handleEstado}
-                    />
-                    {!esDemo && (
-                      <motion.button
-                        onClick={() => setConfirmEliminar(inc)}
-                        whileTap={{ scale: 0.88 }}
-                        className="opacity-0 group-hover:opacity-100 flex items-center justify-center shrink-0 cursor-pointer"
-                        style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring), opacity 0.15s" }}
-                        title="Eliminar incidencia"
-                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error)"; el.style.color = "#fff"; el.style.borderColor = "var(--error)"; el.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
-                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error-light)"; el.style.color = "var(--error)"; el.style.borderColor = "rgba(220,38,38,0.15)"; el.style.boxShadow = "none"; }}
-                      >
-                        <Trash2 size={13} strokeWidth={2} />
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Meta row */}
-                <div className="flex items-center justify-between gap-3 px-5 pb-4">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]" style={{ color: "#9ca3af" }}>
-                    {inc.nombreCreador && (
-                      <span>
-                        <strong style={{ color: "var(--texto-primario)", fontWeight: 600 }}>{inc.nombreCreador}</strong>
-                      </span>
-                    )}
-                    {esSuperadmin && inc.nombreEmpresa && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)", border: "1px solid var(--gris-borde)" }}>
-                        {inc.nombreEmpresa}
-                      </span>
-                    )}
-                    <span title={formatFecha(inc.creadoEn)} style={{ color: "#9ca3af" }}>
-                      {tiempoRelativo(inc.creadoEn)}
-                    </span>
-                  </div>
-
-                  {/* Acciones — móvil */}
-                  <div className="sm:hidden flex items-center gap-2 shrink-0">
-                    <EstadoSelector
-                      incidenciaId={inc.incidenciaId}
-                      estadoActual={inc.estado}
-                      onChange={handleEstado}
-                    />
-                    {!esDemo && (
-                      <motion.button
-                        onClick={() => setConfirmEliminar(inc)}
-                        whileTap={{ scale: 0.88 }}
-                        className="flex items-center justify-center shrink-0 cursor-pointer"
-                        style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring)" }}
-                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error)"; el.style.color = "#fff"; el.style.borderColor = "var(--error)"; el.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
-                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error-light)"; el.style.color = "var(--error)"; el.style.borderColor = "rgba(220,38,38,0.15)"; el.style.boxShadow = "none"; }}
-                      >
-                        <Trash2 size={13} strokeWidth={2} />
-                      </motion.button>
-                    )}
-                  </div>
+                  {/* Indicador visual de que hay detalle */}
+                  <ChevronDown size={13} strokeWidth={2} style={{ color: "var(--texto-muted)", transform: "rotate(-90deg)", opacity: 0.4, flexShrink: 0 }} />
                 </div>
               </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
       )}
 

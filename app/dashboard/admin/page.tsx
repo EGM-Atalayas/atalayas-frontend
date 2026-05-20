@@ -206,10 +206,10 @@ function AdminContent() {
     { key: "empleados" as const, label: "Empleados", icon: <Users size={20} />, accent: "#1B3F7E", badge: 0 },
     { key: "incidencias" as const, label: "Incidencias", icon: <TriangleAlert size={20} />, accent: "#B45309", badge: 0 },
     { key: "anuncios" as const, label: "Anuncios", icon: <Megaphone size={20} />, accent: "#0EA5E9", badge: 0 },
-    { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85", badge: 0 },
     { key: "eventos" as const, label: "Eventos", icon: <Calendar size={20} />, accent: "#0F766E", badge: 0 },
-    { key: "estadisticas" as const, label: "Estadísticas", icon: <BarChart3 size={20} />, accent: "#2D8653", badge: 0 },
+    { key: "formaciones" as const, label: "Módulos formativos", icon: <GraduationCap size={20} />, accent: "#7B4A85", badge: 0 },
     { key: "documentos" as const, label: "Documentos", icon: <FileText size={20} />, accent: "#4E6D7E", badge: 0 },
+    { key: "estadisticas" as const, label: "Estadísticas", icon: <BarChart3 size={20} />, accent: "#2D8653", badge: 0 },
   ];
 
   return (

@@ -19,7 +19,7 @@ import {
 } from "@/lib/types/documentos";
 import {
   FileText, Upload, Trash2, Check, X, AlertTriangle, ChevronDown,
-  Users, Building2, Globe, Plus, Search, CheckCircle2, Clock,
+  Users, Building2, Globe, Plus, Search, CheckCircle2, Clock, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -527,6 +527,16 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
                       Asignados
                     </Button>
                     <motion.button
+                      title="Descargar documento"
+                      onClick={() => window.open(d.archivoUrl, "_blank")}
+                      whileTap={{ scale: 0.88 }}
+                      className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
+                      style={{ borderRadius: "50%", background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", transition: "background 0.15s ease, box-shadow 0.18s" }}
+                      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--azul-egm)"; el.style.color = "#fff"; el.style.borderColor = "var(--azul-egm)"; el.style.boxShadow = "0 4px 14px rgba(22,50,105,0.25)"; }}
+                      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--gris-superficie)"; el.style.color = "var(--texto-secundario)"; el.style.borderColor = "var(--gris-borde)"; el.style.boxShadow = "none"; }}>
+                      <Download size={13} strokeWidth={2} />
+                    </motion.button>
+                    <motion.button
                       title="Eliminar documento"
                       onClick={() => setConfirmEliminar(d)}
                       whileTap={{ scale: 0.88 }}
@@ -739,7 +749,7 @@ function ModalSubirDocumento({
         initial={{ opacity: 0, y: 32, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.97 }}
         transition={{ duration: 0.28, ease: [0.34, 1.1, 0.64, 1] }}
         className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
-        style={{ background: "#ffffff", maxHeight: "92dvh", boxShadow: "0 28px 64px rgba(0,0,0,0.22)" }}
+        style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 28px 64px rgba(0,0,0,0.22)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
@@ -771,7 +781,7 @@ function ModalSubirDocumento({
         </div>
 
         {/* ── Cuerpo scrollable con transición entre pasos ── */}
-        <div className="overflow-y-auto flex-1 bg-white" style={{ minHeight: 0 }}>
+        <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
           <AnimatePresence mode="wait" initial={false}>
             {paso === 1 ? (
               <motion.div
@@ -1311,7 +1321,7 @@ function ModalEditarDocumento({
         initial={{ opacity: 0, y: 32, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.97 }}
         transition={{ duration: 0.28, ease: [0.34, 1.1, 0.64, 1] }}
         className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
-        style={{ background: "#ffffff", maxHeight: "92dvh", boxShadow: "0 28px 64px rgba(0,0,0,0.22)" }}
+        style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 28px 64px rgba(0,0,0,0.22)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
@@ -1340,7 +1350,7 @@ function ModalEditarDocumento({
         </div>
 
         {/* ── Cuerpo ── */}
-        <div className="overflow-y-auto flex-1 bg-white" style={{ minHeight: 0 }}>
+        <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
           <AnimatePresence mode="wait" initial={false}>
             {paso === 1 ? (
               <motion.div key="paso1"

@@ -336,6 +336,16 @@ function MessageBubble({ message, isStreaming, animate = true }: { message: Mess
 export default function ChatbotIA() {
   const { usuario } = useAuth()
   const [open, setOpen] = useState(false)
+  const [modalAbierto, setModalAbierto] = useState(false)
+
+  // Ocultarse cuando cualquier modal está abierto (body overflow: hidden)
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setModalAbierto(document.body.style.overflow === "hidden")
+    })
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style"] })
+    return () => observer.disconnect()
+  }, [])
   const initialMessageIds = useRef<Set<string>>(new Set())
 
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -742,6 +752,8 @@ export default function ChatbotIA() {
         width: `${PANEL_W}px`,
         height: `min(${PANEL_H}px, calc(100dvh - 120px))`,
       }
+
+  if (modalAbierto) return null
 
   return (
     <>

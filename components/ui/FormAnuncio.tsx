@@ -540,7 +540,7 @@ export default function FormAnuncio({
         transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
         className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden"
         style={{
-          background: "var(--blanco)",
+          background: "var(--gris-panel)",
           boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.08)",
           maxHeight: "92dvh",
           isolation: "isolate",
@@ -638,7 +638,7 @@ export default function FormAnuncio({
         </div>
 
         {/* Cuerpo con scroll */}
-        <div className="overflow-y-auto" style={{ background: "var(--blanco)" }}>
+        <div className="overflow-y-auto" style={{ background: "var(--gris-panel)" }}>
 
           {/* TAB: Contenido */}
           <div style={{ display: tab === "contenido" ? "block" : "none" }}>
@@ -1007,13 +1007,13 @@ export default function FormAnuncio({
         {/* Footer fijo */}
         <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0"
           style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-          <div className="flex-1 min-w-0">
-            {errorMsg && <p className="text-sm truncate" style={{ color: "var(--error)" }}>{errorMsg}</p>}
-          </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="secondary" size="md" onClick={handleRequestClose}>
               Cancelar
             </Button>
+            {errorMsg && <p className="text-sm truncate max-w-[160px]" style={{ color: "var(--error)" }}>{errorMsg}</p>}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             {editando && editando.estado === "borrador" && (
               <Button
                 variant="ghost" size="md"
@@ -1048,6 +1048,7 @@ export default function FormAnuncio({
           </div>
         </div>
       </motion.div>
+
     </motion.div>
     </AnimatePresence>
 
