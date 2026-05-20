@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { FaBuilding, FaClock, FaChartBar, FaExclamationTriangle } from "react-icons/fa";
 import GestionEmpresas from "@/components/pages/GestionEmpresas";
 import SolicitudesPendientes from "@/components/pages/SolicitudesPendientes";
-import GestionIncidencias from "@/components/pages/GestionIncidencias";
+import IncidenciasAdminTab from "@/components/incidencias/IncidenciasAdminTab";
 import EstadisticasPage from "@/app/superadmin/estadisticas/page";
 
 type TabType = "empresas" | "solicitudes" | "estadisticas" | "incidencias";
@@ -62,7 +62,7 @@ export default function AdministracionPage() {
 
           {activeTab === "incidencias" && (
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <GestionIncidencias esSuperadmin={true} />
+              <IncidenciasAdminTab esSuperadmin={true} />
             </div>
           )}
         </div>

@@ -20,15 +20,15 @@ import {
   Sparkles,
 } from "lucide-react";
 
-// ÔöÇÔöÇ Configuraci+¦n de pasos ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Configuraci+ï¿½n de pasos ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 interface GuiaStep {
   route: string;
   icon: React.ReactNode;
   title: string;
   desc: string;
-  /** Label del nav al que apunta la flecha (secci+¦n actual) */
+  /** Label del nav al que apunta la flecha (secci+ï¿½n actual) */
   navLabel?: string;
-  /** Label del nav al que ir despu+®s */
+  /** Label del nav al que ir despu+ï¿½s */
   nextNavLabel?: string;
   nextRoute?: string;
   isLast?: boolean;
@@ -42,26 +42,26 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Panel principal",
-    desc: "Aqu+¡ empieza tu d+¡a en Atalayas. Ver+ís un saludo personalizado con tu nombre, los servicios del parque empresarial (coche compartido, autob+¦s lanzadera, aparcamiento, guarder+¡a, descuentos), un carrusel con las +¦ltimas comunicaciones y noticias, tus cursos de formaci+¦n en curso con su progreso, y los pr+¦ximos eventos de la comunidad. Todo tu entorno laboral en una sola pantalla.",
+    desc: "Aqu+ï¿½ empieza tu d+ï¿½a en Atalayas. Ver+ï¿½s un saludo personalizado con tu nombre, los servicios del parque empresarial (coche compartido, autob+ï¿½s lanzadera, aparcamiento, guarder+ï¿½a, descuentos), un carrusel con las +ï¿½ltimas comunicaciones y noticias, tus cursos de formaci+ï¿½n en curso con su progreso, y los pr+ï¿½ximos eventos de la comunidad. Todo tu entorno laboral en una sola pantalla.",
     navLabel: "Inicio",
-    nextNavLabel: "Formaci+¦n",
+    nextNavLabel: "Formaci+ï¿½n",
     nextRoute: "/dashboard/formacion",
   },
   {
     route: "/dashboard/formacion",
     icon: <GraduationCap size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Formaci+¦n",
-    desc: "El centro de aprendizaje. Aqu+¡ tienes tu programa de onboarding con los m+¦dulos de incorporaci+¦n a la empresa, cada uno con su barra de progreso. M+ís abajo est+í la formaci+¦n continua con todos los cursos disponibles. Puedes buscar por nombre, filtrar por tipo de m+¦dulo o por estado (pendiente, en progreso, completado). Cada curso incluye imagen, duraci+¦n, descripci+¦n y un bot+¦n para empezar, continuar o descargar el certificado.",
-    navLabel: "Formaci+¦n",
-    nextNavLabel: "Comunicaci+¦n",
+    title: "Formaci+ï¿½n",
+    desc: "El centro de aprendizaje. Aqu+ï¿½ tienes tu programa de onboarding con los m+ï¿½dulos de incorporaci+ï¿½n a la empresa, cada uno con su barra de progreso. M+ï¿½s abajo est+ï¿½ la formaci+ï¿½n continua con todos los cursos disponibles. Puedes buscar por nombre, filtrar por tipo de m+ï¿½dulo o por estado (pendiente, en progreso, completado). Cada curso incluye imagen, duraci+ï¿½n, descripci+ï¿½n y un bot+ï¿½n para empezar, continuar o descargar el certificado.",
+    navLabel: "Formaci+ï¿½n",
+    nextNavLabel: "Comunicaci+ï¿½n",
     nextRoute: "/dashboard/comunicacion",
   },
   {
     route: "/dashboard/comunicacion",
     icon: <MessageSquare size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Comunicaci+¦n",
-    desc: "Tu centro de comunicaciones. Aqu+¡ puedes filtrar entre comunicados de EGM Atalayas, anuncios de tu empresa o ver todos juntos. Las publicaciones m+ís recientes aparecen como tarjetas destacadas con imagen de fondo, y el resto en una lista ordenada por fecha. Puedes buscar por texto, ordenar por m+ís reciente o m+ís antiguo, y al hacer clic en cualquier comunicaci+¦n se abre un modal con el contenido completo, im+ígenes y enlaces.",
-    navLabel: "Comunicaci+¦n",
+    title: "Comunicaci+ï¿½n",
+    desc: "Tu centro de comunicaciones. Aqu+ï¿½ puedes filtrar entre comunicados de EGM Atalayas, anuncios de tu empresa o ver todos juntos. Las publicaciones m+ï¿½s recientes aparecen como tarjetas destacadas con imagen de fondo, y el resto en una lista ordenada por fecha. Puedes buscar por texto, ordenar por m+ï¿½s reciente o m+ï¿½s antiguo, y al hacer clic en cualquier comunicaci+ï¿½n se abre un modal con el contenido completo, im+ï¿½genes y enlaces.",
+    navLabel: "Comunicaci+ï¿½n",
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
   },
@@ -69,7 +69,7 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad",
-    desc: "El punto de encuentro de la comunidad Atalayas. Desde aqu+¡ puedes acceder a tres secciones principales: Eventos (jornadas, networking y actividades del +írea empresarial), Servicios (bus lanzadera, coche compartido, aparcamiento y m+ís), y Ventajas (descuentos en comercios, servicios y ocio). Cada tarjeta tiene una imagen de fondo representativa y al pasar el rat+¦n se muestra m+ís informaci+¦n.",
+    desc: "El punto de encuentro de la comunidad Atalayas. Desde aqu+ï¿½ puedes acceder a tres secciones principales: Eventos (jornadas, networking y actividades del +ï¿½rea empresarial), Servicios (bus lanzadera, coche compartido, aparcamiento y m+ï¿½s), y Ventajas (descuentos en comercios, servicios y ocio). Cada tarjeta tiene una imagen de fondo representativa y al pasar el rat+ï¿½n se muestra m+ï¿½s informaci+ï¿½n.",
     navLabel: "Comunidad",
     nextNavLabel: "Colaboradores",
     nextRoute: "/dashboard/colaboradores",
@@ -78,7 +78,7 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/colaboradores",
     icon: <UserPlus size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Colaboradores",
-    desc: "El ecosistema de entidades colaboradoras de Atalayas. Aqu+¡ encontrar+ís tres categor+¡as desplegables: Universidades (como la Universidad de Alicante y la UMH), Parques Cient+¡ficos e Institutos Tecnol+¦gicos (AIJU, INESCOP, AITEX). Cada entidad muestra su logo, descripci+¦n y un enlace a su p+ígina web. Es tu red de conocimiento e innovaci+¦n.",
+    desc: "El ecosistema de entidades colaboradoras de Atalayas. Aqu+ï¿½ encontrar+ï¿½s tres categor+ï¿½as desplegables: Universidades (como la Universidad de Alicante y la UMH), Parques Cient+ï¿½ficos e Institutos Tecnol+ï¿½gicos (AIJU, INESCOP, AITEX). Cada entidad muestra su logo, descripci+ï¿½n y un enlace a su p+ï¿½gina web. Es tu red de conocimiento e innovaci+ï¿½n.",
     navLabel: "Colaboradores",
     nextNavLabel: "Tu perfil",
     nextRoute: "/dashboard/perfil",
@@ -87,7 +87,7 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/perfil",
     icon: <UserCircle size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Tu perfil",
-    desc: "Tu espacio personal. Aqu+¡ puedes cambiar tu foto de avatar y la imagen de portada con tu propia imagen o eligiendo entre varias galer+¡as tem+íticas. Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, tel+®fono y email. Los administradores tambi+®n pueden cambiar la disponibilidad (Disponible, Teletrabajo, Ocupado, Vacaciones, Ausente). Adem+ís tienes un buz+¦n de sugerencias para enviar tus ideas a EGM Atalayas y acceso a tus documentos.",
+    desc: "Tu espacio personal. Aqu+ï¿½ puedes cambiar tu foto de avatar y la imagen de portada con tu propia imagen o eligiendo entre varias galer+ï¿½as tem+ï¿½ticas. Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, tel+ï¿½fono y email. Los administradores tambi+ï¿½n pueden cambiar la disponibilidad (Disponible, Teletrabajo, Ocupado, Vacaciones, Ausente). Adem+ï¿½s tienes un buz+ï¿½n de sugerencias para enviar tus ideas a EGM Atalayas y acceso a tus documentos.",
     navLabel: "Tu perfil",
     isLast: true,
   },
@@ -97,36 +97,36 @@ const STEPS_ADMIN: GuiaStep[] = [
   {
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Panel de administraci+¦n",
-    desc: "Tu centro de control. Aqu+¡ ves un resumen completo de tu empresa: n+¦mero de empleados activos, progreso medio de formaci+¦n, m+¦dulos publicados y la actividad reciente de tu equipo. Tambi+®n tienes acceso r+ípido a las acciones m+ís comunes: a+¦adir empleado, gestionar m+¦dulos, crear un nuevo m+¦dulo o publicar un anuncio. Y en la parte inferior, los +¦ltimos comunicados publicados.",
+    title: "Panel de administraci+ï¿½n",
+    desc: "Tu centro de control. Aqu+ï¿½ ves un resumen completo de tu empresa: n+ï¿½mero de empleados activos, progreso medio de formaci+ï¿½n, m+ï¿½dulos publicados y la actividad reciente de tu equipo. Tambi+ï¿½n tienes acceso r+ï¿½pido a las acciones m+ï¿½s comunes: a+ï¿½adir empleado, gestionar m+ï¿½dulos, crear un nuevo m+ï¿½dulo o publicar un anuncio. Y en la parte inferior, los +ï¿½ltimos comunicados publicados.",
     navLabel: "Inicio",
-    nextNavLabel: "Administraci+¦n",
+    nextNavLabel: "Administraci+ï¿½n",
     nextRoute: "/dashboard/admin",
   },
   {
     route: "/dashboard/admin",
     icon: <Building2 size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Administraci+¦n",
-    desc: "El panel de gesti+¦n completa de tu empresa. Tiene 7 pesta+¦as con herramientas especializadas: Empleados (gestiona tu plantilla), Incidencias (reporta y hace seguimiento), Anuncios (crea y publica comunicados), Eventos (organiza actividades), M+¦dulos formativos (crea cursos), Documentos (sube y asigna archivos) y Estad+¡sticas (exporta informes con filtros por departamento y periodo).",
-    navLabel: "Administraci+¦n",
-    nextNavLabel: "Formaci+¦n",
+    title: "Administraci+ï¿½n",
+    desc: "El panel de gesti+ï¿½n completa de tu empresa. Tiene 7 pesta+ï¿½as con herramientas especializadas: Empleados (gestiona tu plantilla), Incidencias (reporta y hace seguimiento), Anuncios (crea y publica comunicados), Eventos (organiza actividades), M+ï¿½dulos formativos (crea cursos), Documentos (sube y asigna archivos) y Estad+ï¿½sticas (exporta informes con filtros por departamento y periodo).",
+    navLabel: "Administraci+ï¿½n",
+    nextNavLabel: "Formaci+ï¿½n",
     nextRoute: "/dashboard/formacion",
   },
   {
     route: "/dashboard/formacion",
     icon: <GraduationCap size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Formaci+¦n",
-    desc: "Gestiona la formaci+¦n de tu empresa. Desde aqu+¡ puedes crear nuevos m+¦dulos formativos, editarlos y supervisar el progreso de tus empleados. La secci+¦n de onboarding muestra el programa de incorporaci+¦n, y la formaci+¦n continua incluye todos los cursos disponibles con filtros por tipo, estado y b+¦squeda por nombre.",
-    navLabel: "Formaci+¦n",
-    nextNavLabel: "Comunicaci+¦n",
+    title: "Formaci+ï¿½n",
+    desc: "Gestiona la formaci+ï¿½n de tu empresa. Desde aqu+ï¿½ puedes crear nuevos m+ï¿½dulos formativos, editarlos y supervisar el progreso de tus empleados. La secci+ï¿½n de onboarding muestra el programa de incorporaci+ï¿½n, y la formaci+ï¿½n continua incluye todos los cursos disponibles con filtros por tipo, estado y b+ï¿½squeda por nombre.",
+    navLabel: "Formaci+ï¿½n",
+    nextNavLabel: "Comunicaci+ï¿½n",
     nextRoute: "/dashboard/comunicacion",
   },
   {
     route: "/dashboard/comunicacion",
     icon: <MessageSquare size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Comunicaci+¦n",
-    desc: "El centro de comunicaciones de tu empresa. Aqu+¡ puedes crear y publicar anuncios para toda tu plantilla. Tambi+®n ves los comunicados de EGM Atalayas. Puedes filtrar por fuente (EGM o tu empresa), buscar por texto y ordenar por fecha. Los borradores pendientes de publicar aparecen en un panel amarillo destacado.",
-    navLabel: "Comunicaci+¦n",
+    title: "Comunicaci+ï¿½n",
+    desc: "El centro de comunicaciones de tu empresa. Aqu+ï¿½ puedes crear y publicar anuncios para toda tu plantilla. Tambi+ï¿½n ves los comunicados de EGM Atalayas. Puedes filtrar por fuente (EGM o tu empresa), buscar por texto y ordenar por fecha. Los borradores pendientes de publicar aparecen en un panel amarillo destacado.",
+    navLabel: "Comunicaci+ï¿½n",
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
   },
@@ -134,7 +134,7 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad",
-    desc: "El punto de encuentro de la comunidad Atalayas. Desde aqu+¡ t+¦ y tus empleados pod+®is acceder a Eventos (jornadas y networking), Servicios del parque empresarial (bus lanzadera, coche compartido, aparcamiento) y Ventajas (descuentos en comercios y ocio).",
+    desc: "El punto de encuentro de la comunidad Atalayas. Desde aqu+ï¿½ t+ï¿½ y tus empleados pod+ï¿½is acceder a Eventos (jornadas y networking), Servicios del parque empresarial (bus lanzadera, coche compartido, aparcamiento) y Ventajas (descuentos en comercios y ocio).",
     navLabel: "Comunidad",
     nextNavLabel: "Colaboradores",
     nextRoute: "/dashboard/colaboradores",
@@ -143,7 +143,7 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/colaboradores",
     icon: <UserPlus size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Colaboradores",
-    desc: "Gestiona el ecosistema de entidades colaboradoras. Aqu+¡ puedes ver y administrar las relaciones con Universidades (UA, UMH), Parques Cient+¡ficos e Institutos Tecnol+¦gicos como AIJU, INESCOP y AITEX.",
+    desc: "Gestiona el ecosistema de entidades colaboradoras. Aqu+ï¿½ puedes ver y administrar las relaciones con Universidades (UA, UMH), Parques Cient+ï¿½ficos e Institutos Tecnol+ï¿½gicos como AIJU, INESCOP y AITEX.",
     navLabel: "Colaboradores",
     nextNavLabel: "Tu perfil",
     nextRoute: "/dashboard/perfil",
@@ -152,7 +152,7 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/perfil",
     icon: <UserCircle size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Tu perfil",
-    desc: "Tu espacio personal con funciones a+¦adidas de administrador. Adem+ís de gestionar tu avatar, portada y datos personales, puedes editar los datos de tu empresa: nombre, CIF, email de contacto y subir el logo corporativo con eliminaci+¦n autom+ítica de fondo. Tambi+®n tienes acceso al buz+¦n de sugerencias.",
+    desc: "Tu espacio personal con funciones a+ï¿½adidas de administrador. Adem+ï¿½s de gestionar tu avatar, portada y datos personales, puedes editar los datos de tu empresa: nombre, CIF, email de contacto y subir el logo corporativo con eliminaci+ï¿½n autom+ï¿½tica de fondo. Tambi+ï¿½n tienes acceso al buz+ï¿½n de sugerencias.",
     navLabel: "Tu perfil",
     isLast: true,
   },
@@ -163,17 +163,17 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Panel de control global",
-    desc: "Tu centro de control de toda la plataforma. Aqu+¡ ves 6 tarjetas con las m+®tricas clave: empresas adheridas, nuevas empresas del mes, empleados registrados, nuevos empleados, m+¦dulos publicados e incidencias cr+¡ticas. Tambi+®n tienes una gu+¡a de configuraci+¦n con 5 pasos para poner en marcha la plataforma, acceso r+ípido a la gesti+¦n de empresas y solicitudes pendientes, y un feed con la actividad reciente de toda la plataforma.",
+    desc: "Tu centro de control de toda la plataforma. Aqu+ï¿½ ves 6 tarjetas con las m+ï¿½tricas clave: empresas adheridas, nuevas empresas del mes, empleados registrados, nuevos empleados, m+ï¿½dulos publicados e incidencias cr+ï¿½ticas. Tambi+ï¿½n tienes una gu+ï¿½a de configuraci+ï¿½n con 5 pasos para poner en marcha la plataforma, acceso r+ï¿½pido a la gesti+ï¿½n de empresas y solicitudes pendientes, y un feed con la actividad reciente de toda la plataforma.",
     navLabel: "Inicio",
-    nextNavLabel: "Administraci+¦n",
+    nextNavLabel: "Administraci+ï¿½n",
     nextRoute: "/superadmin/administracion",
   },
   {
     route: "/superadmin/administracion",
     icon: <Building2 size={24} className={ICON_CLS} style={ICON_STYLE} />,
-    title: "Administraci+¦n global",
-    desc: "La gesti+¦n central de la plataforma. Tiene 4 pesta+¦as: Empresas (visualiza y gestiona todas las empresas, act+¡valas o desact+¡valas), Solicitudes (aprueba o rechaza las solicitudes de registro de nuevas empresas), Estad+¡sticas (informes detallados) e Incidencias (haz seguimiento de todas las incidencias reportadas).",
-    navLabel: "Administraci+¦n",
+    title: "Administraci+ï¿½n global",
+    desc: "La gesti+ï¿½n central de la plataforma. Tiene 4 pesta+ï¿½as: Empresas (visualiza y gestiona todas las empresas, act+ï¿½valas o desact+ï¿½valas), Solicitudes (aprueba o rechaza las solicitudes de registro de nuevas empresas), Estad+ï¿½sticas (informes detallados) e Incidencias (haz seguimiento de todas las incidencias reportadas).",
+    navLabel: "Administraci+ï¿½n",
     nextNavLabel: "Comunicados",
     nextRoute: "/superadmin/comunicados",
   },
@@ -181,7 +181,7 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "/superadmin/comunicados",
     icon: <Megaphone size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunicados globales",
-    desc: "Crea y publica comunicados que llegar+ín a todas las empresas y empleados de la plataforma. Es la herramienta para comunicar decisiones importantes, novedades o informaci+¦n de inter+®s general a toda la comunidad Atalayas.",
+    desc: "Crea y publica comunicados que llegar+ï¿½n a todas las empresas y empleados de la plataforma. Es la herramienta para comunicar decisiones importantes, novedades o informaci+ï¿½n de inter+ï¿½s general a toda la comunidad Atalayas.",
     navLabel: "Comunicados",
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
@@ -190,7 +190,7 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad global",
-    desc: "Supervisa la comunidad global de la plataforma. Aqu+¡ t+¦ y todas las empresas pod+®is acceder a Eventos, Servicios del parque empresarial y Ventajas y descuentos. Es el escaparate de la actividad comunitaria de Atalayas.",
+    desc: "Supervisa la comunidad global de la plataforma. Aqu+ï¿½ t+ï¿½ y todas las empresas pod+ï¿½is acceder a Eventos, Servicios del parque empresarial y Ventajas y descuentos. Es el escaparate de la actividad comunitaria de Atalayas.",
     navLabel: "Comunidad",
     isLast: true,
   },
@@ -209,7 +209,7 @@ function getSteps(role?: string): GuiaStep[] {
 const CARD_WIDTH = 520;
 const ARROW_SIZE = 14;
 
-// ÔöÇÔöÇ Componente ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Componente ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 export default function AppTutorial() {
   const { usuario } = useAuth();
   const pathname = usePathname();
@@ -226,7 +226,7 @@ export default function AppTutorial() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lsKey = userId ? `${LS_KEY_PREFIX}${userId}` : null;
 
-  // ÔöÇÔöÇ Inicializar ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Inicializar ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   useEffect(() => {
     if (!lsKey || !userId) return;
     const saved = localStorage.getItem(lsKey);
@@ -238,7 +238,7 @@ export default function AppTutorial() {
     return () => clearTimeout(t);
   }, [lsKey, userId]);
 
-  // ÔöÇÔöÇ Sincronizar paso con la ruta ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Sincronizar paso con la ruta ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   useEffect(() => {
     if (!active) return;
     const cur = steps[stepIdx];
@@ -252,7 +252,7 @@ export default function AppTutorial() {
     setVisible(pathname === cur.route);
   }, [pathname, stepIdx, steps, active]);
 
-  // ÔöÇÔöÇ Avance autom+ítico ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Avance autom+ï¿½tico ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   useEffect(() => {
     if (!active || !lsKey) return;
     const next = steps.findIndex((s, i) => i > stepIdx && s.route === pathname);
@@ -262,7 +262,7 @@ export default function AppTutorial() {
     }
   }, [pathname, active, stepIdx, steps, lsKey]);
 
-  // ÔöÇÔöÇ Buscar bot+¦n en el nav del header ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Buscar bot+ï¿½n en el nav del header ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   const findNavButton = useCallback((label: string): Element | null => {
     const nav = document.querySelector("header nav");
     if (!nav) return null;
@@ -273,7 +273,7 @@ export default function AppTutorial() {
     return null;
   }, []);
 
-  // ÔöÇÔöÇ Calcular posici+¦n ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Calcular posici+ï¿½n ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   const measure = useCallback(() => {
     if (!visible || !active) { setTargetRect(null); return; }
     const cur = steps[stepIdx];
@@ -302,7 +302,7 @@ export default function AppTutorial() {
     };
   }, [measure]);
 
-  // ÔöÇÔöÇ Acciones ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Acciones ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   const goNext = useCallback(() => {
     const cur = steps[stepIdx];
     if (cur?.nextRoute) router.push(cur.nextRoute);
@@ -319,13 +319,13 @@ export default function AppTutorial() {
     else goNext();
   }, [stepIdx, steps, finish, goNext]);
 
-  // ÔöÇÔöÇ Render ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Render ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   if (!active || !visible || !steps[stepIdx]) return null;
 
   const cur = steps[stepIdx];
   const half = CARD_WIDTH / 2;
 
-  // Posici+¦n horizontal: centrar la card sobre el target
+  // Posici+ï¿½n horizontal: centrar la card sobre el target
   let cardLeft: number | string = 16;
   let cardTop: number | string = 80;
 
@@ -433,7 +433,7 @@ export default function AppTutorial() {
               {cur.desc}
             </p>
 
-            {/* Sugerencia de navegaci+¦n ÔÇö m+ís compacta */}
+            {/* Sugerencia de navegaci+ï¿½n ï¿½ï¿½ï¿½ m+ï¿½s compacta */}
             {!cur.isLast && cur.nextNavLabel && (
               <div
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl mt-3"
@@ -444,12 +444,12 @@ export default function AppTutorial() {
               >
                 <ArrowUp size={14} style={{ color: "#2563eb", flexShrink: 0 }} />
                 <p className="text-xs" style={{ color: "#1e40af" }}>
-                  Siguiente paso: haz clic en <strong>"{cur.nextNavLabel}"</strong> en el men+¦ superior
+                  Siguiente paso: haz clic en <strong>"{cur.nextNavLabel}"</strong> en el men+ï¿½ superior
                 </p>
               </div>
             )}
 
-            {/* Paso final ÔÇö compacto */}
+            {/* Paso final ï¿½ï¿½ï¿½ compacto */}
             {cur.isLast && (
               <div
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mt-3"
@@ -460,12 +460,12 @@ export default function AppTutorial() {
               >
                 <CheckCircle size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
                 <p className="text-xs font-semibold" style={{ color: "#166534" }}>
-                  -íTutorial completado! Has visitado todas las secciones.
+                  -ï¿½Tutorial completado! Has visitado todas las secciones.
                 </p>
               </div>
             )}
 
-            {/* Botones m+ís compactos */}
+            {/* Botones m+ï¿½s compactos */}
             <div className="flex items-center justify-between gap-2 mt-3 pt-1">
               <button
                 onClick={finish}
