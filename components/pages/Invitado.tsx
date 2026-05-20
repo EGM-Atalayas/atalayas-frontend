@@ -474,7 +474,7 @@ export default function Invitado() {
             { src: "/logo-aliaxis.webp", alt: "Aliaxis", href: "https://www.aliaxis.com" },
             { src: "/logo-blinker.webp", alt: "Blinker", href: "https://www.blinker.com" },
             { src: "/logo-seur.webp", alt: "Seur", href: "https://www.seur.com" },
-            { src: "/logo-gofre.webp", alt: "Gofre", href: "https://www.puntodeproductosvending.com" },
+            { src: "/logo-gofre.webp", alt: "Gofre", href: "https://puntogofre.com" },
             { src: "/logo-itae.webp", alt: "ITAE", href: "https://www.itae.es" },
             { src: "/logo-pompadour.webp", alt: "Pompadour", href: "https://www.pompadour.es" },
             { src: "/logo-sprinter.webp", alt: "Sprinter", href: "https://www.sprinter.es" },

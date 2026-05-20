@@ -182,6 +182,7 @@ export default function PerfilPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [empresaLoaded, setEmpresaLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoKey, setLogoKey] = useState(0);
 
   // ── Superadmin KPIs ──
   const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
@@ -227,21 +228,23 @@ export default function PerfilPage() {
     (async () => {
       try {
         const data = await getEmpresaById(usuario.empresaId!);
+        const empresaId = usuario.empresaId;
         setEmpresaData({
-          nombreEmpresa: data.nombreEmpresa ?? "",
-          cif: data.cif ?? "",
-          emailContacto: data.emailContacto ?? "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
+          nombreEmpresa: (localStorage.getItem(`empresa_nombre_${empresaId}`) || data.nombreEmpresa) ?? "",
+          cif: (localStorage.getItem(`empresa_cif_${empresaId}`) || data.cif) ?? "",
+          emailContacto: (localStorage.getItem(`empresa_email_${empresaId}`) || data.emailContacto) ?? "",
+          logoEmpresaUrl: usuario.logoEmpresaUrl || (empresaId ? localStorage.getItem(`empresa_logo_url_${empresaId}`) : null) || undefined,
         });
-        setFormEmpNombre(data.nombreEmpresa ?? "");
-        setFormEmpCif(data.cif ?? "");
-        setFormEmpEmail(data.emailContacto ?? "");
+        setFormEmpNombre((localStorage.getItem(`empresa_nombre_${empresaId}`) || data.nombreEmpresa) ?? "");
+        setFormEmpCif((localStorage.getItem(`empresa_cif_${empresaId}`) || data.cif) ?? "");
+        setFormEmpEmail((localStorage.getItem(`empresa_email_${empresaId}`) || data.emailContacto) ?? "");
       } catch {
+        const empresaId = usuario.empresaId;
         setEmpresaData({
-          nombreEmpresa: "",
-          cif: "",
-          emailContacto: "",
-          logoEmpresaUrl: usuario.logoEmpresaUrl || localStorage.getItem("empresa_logo_url") || undefined,
+          nombreEmpresa: localStorage.getItem(`empresa_nombre_${empresaId}`) || "",
+          cif: localStorage.getItem(`empresa_cif_${empresaId}`) || "",
+          emailContacto: localStorage.getItem(`empresa_email_${empresaId}`) || "",
+          logoEmpresaUrl: usuario.logoEmpresaUrl || (empresaId ? localStorage.getItem(`empresa_logo_url_${empresaId}`) : null) || undefined,
         });
       } finally {
         setEmpresaLoaded(true);
@@ -500,7 +503,16 @@ export default function PerfilPage() {
         emailContacto: emailFinal,
       } : prev);
       setEditandoEmpresa(false);
-      localStorage.setItem("empresa_nombre", nombreFinal);
+      const empresaId = usuario?.empresaId;
+      if (empresaId) {
+        localStorage.setItem(`empresa_nombre_${empresaId}`, nombreFinal);
+        localStorage.setItem(`empresa_cif_${empresaId}`, cifFinal);
+        localStorage.setItem(`empresa_email_${empresaId}`, emailFinal);
+      }
+      guardarUsuario({
+        ...usuario!,
+        nombreEmpresa: nombreFinal,
+      });
     } finally {
       setSavingEmpresa(false);
     }
@@ -548,20 +560,21 @@ export default function PerfilPage() {
 
       if (!newUrl) throw new Error("No se recibió URL");
 
-      const finalUrl = `${newUrl}?t=${Date.now()}`;
+      // Actualizaciones
+      setEmpresaData(prev => prev ? {
+        ...prev,
+        logoEmpresaUrl: newUrl
+      } : prev);
 
-      // === ACTUALIZACIONES IMPORTANTES ===
-
-      // 1. Actualizar empresaData (si lo usas en esta página)
-      setEmpresaData(prev => prev ? { ...prev, logoEmpresaUrl: newUrl } : prev);
-
-      // 2. Actualizar localStorage (porque logoSrc lo lee de ahí)
       if (usuario?.empresaId) {
         localStorage.setItem(`empresa_logo_url_${usuario.empresaId}`, newUrl);
       }
 
-      // 3. Si tienes un estado global de usuario, actualízalo también
-      // setUsuario(prev => prev ? { ...prev, logoEmpresaUrl: newUrl } : prev);
+      // Actualizar contexto global
+      guardarUsuario({ ...usuario!, logoEmpresaUrl: newUrl });
+
+      // Forzar actualización de previsualización
+      setLogoKey(prev => prev + 1);
 
       toast.success("✅ Logo actualizado correctamente", { id: "logo" });
 
@@ -570,7 +583,7 @@ export default function PerfilPage() {
       toast.error("Error al actualizar el logo");
     } finally {
       setUploadingLogo(false);
-      e.target.value = "";
+      e.target.value = "";   // Limpiar input
     }
   };
 
@@ -1016,9 +1029,7 @@ export default function PerfilPage() {
                   </span>
                 )}
               </div>
-
             </div>
-
           </div>
 
           {/* ── Datos de empresa (solo admin) ── */}
@@ -1062,21 +1073,30 @@ export default function PerfilPage() {
                 <div className="flex flex-col gap-2 min-w-0">
                   <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Logo</p>
                   <div className="flex items-center gap-4">
+                    {/* Previsualización del logo */}
                     <div
-                      className="rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                      className="rounded-2xl overflow-hidden flex items-center justify-center mx-auto"
                       style={{
-                        width: 80, height: 80,
-                        background: empresaData?.logoEmpresaUrl ? "transparent" : "var(--gris-superficie)",
-                        border: empresaData?.logoEmpresaUrl ? "none" : "1px solid var(--gris-borde)",
+                        width: 120,
+                        height: 120,
+                        background: "rgba(255,255,255,0.95)",
+                        border: "1px solid rgba(0,0,0,0.08)",
                       }}
                     >
-                      {uploadingLogo ? (
-                        <div className="w-6 h-6 rounded-full border-2 animate-spin"
-                          style={{ borderColor: "var(--azul-egm)", borderTopColor: "transparent" }} />
-                      ) : empresaData?.logoEmpresaUrl ? (
-                        <img src={empresaData.logoEmpresaUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "multiply" }} />
+                      {empresaData?.logoEmpresaUrl ? (
+                        <img
+                          key={`preview-${logoKey}`}                    // ← Usamos el estado
+                          src={`${empresaData.logoEmpresaUrl}?v=${Date.now()}`}
+                          alt="Logo actual"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            padding: "10px",
+                          }}
+                        />
                       ) : (
-                        <Building2 size={28} style={{ color: "var(--texto-muted)" }} />
+                        <Building2 size={48} style={{ color: "#9CA3AF" }} />
                       )}
                     </div>
                     <button
