@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
 import ChatbotIA from "@/components/ui/ChatbotIA";
+import AppTutorial from "@/components/tutorial/AppTutorial";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { usuario, guardarUsuario } = useAuth();
@@ -84,6 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
       <ChatbotIA />
+      <AppTutorial />
     </div>
   );
 }
