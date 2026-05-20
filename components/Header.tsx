@@ -35,6 +35,9 @@ export default function Header() {
     || (typeof window !== "undefined" && usuario?.empresaId
       ? localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`)
       : null);
+  const mostrarNombre = typeof window !== "undefined" && usuario?.empresaId
+    ? localStorage.getItem(`mostrar_nombre_empresa_${usuario.empresaId}`) === "true"
+    : false;
   // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
   useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
 
@@ -159,7 +162,7 @@ export default function Header() {
 
         {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
         <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 shrink-0 z-10">
-          <Link href={linkLogo}>
+          <Link href={linkLogo} className="flex items-center gap-3">
             {logoSrc ? (
               /* Logo personalizado → con fondo suave */
               <div
@@ -196,6 +199,11 @@ export default function Header() {
                 }}
                 className="brightness-0 invert cursor-pointer hover:opacity-75"
               />
+            )}
+            {mostrarNombre && usuario?.nombreEmpresa && (
+              <span className="text-lg font-semibold truncate max-w-[180px]" style={{ color: "var(--texto-primario)" }}>
+                {usuario.nombreEmpresa}
+              </span>
             )}
           </Link>
         </div>
@@ -283,7 +291,7 @@ export default function Header() {
             style={{ height: "80px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
           >
             {/* Logo — izquierda */}
-            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center flex-1">
+            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center gap-2 flex-1">
               {logoSrc ? (
                 <img
                   src={logoSrc}
@@ -296,6 +304,11 @@ export default function Header() {
                   style={{ height: "40px", width: "auto" }}
                   className="brightness-0 invert"
                 />
+              )}
+              {mostrarNombre && usuario?.nombreEmpresa && (
+                <span className="text-sm font-semibold truncate max-w-[140px]" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  {usuario.nombreEmpresa}
+                </span>
               )}
             </Link>
 

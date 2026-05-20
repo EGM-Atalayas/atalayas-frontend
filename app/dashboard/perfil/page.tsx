@@ -183,6 +183,7 @@ export default function PerfilPage() {
   const [empresaLoaded, setEmpresaLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [logoKey, setLogoKey] = useState(0);
+  const [mostrarNombreJuntoLogo, setMostrarNombreJuntoLogo] = useState(false);
 
   // ── Superadmin KPIs ──
   const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
@@ -248,6 +249,10 @@ export default function PerfilPage() {
         });
       } finally {
         setEmpresaLoaded(true);
+        const empresaId = usuario.empresaId;
+        if (empresaId) {
+          setMostrarNombreJuntoLogo(localStorage.getItem(`mostrar_nombre_empresa_${empresaId}`) === "true");
+        }
       }
     })();
   }, [esAdmin, usuario?.empresaId, empresaLoaded]);
@@ -1171,6 +1176,28 @@ export default function PerfilPage() {
                     <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.emailContacto || "—"}</p>
                   )}
                 </div>
+              </div>
+
+              {/* Toggle mostrar nombre junto al logo */}
+              <div className="flex items-center justify-between gap-4 pt-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Mostrar nombre junto al logo</span>
+                  <span className="text-xs" style={{ color: "var(--texto-muted)" }}>Enciende esta opción si en el logo no se ve bien el nombre de la empresa</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const nuevo = !mostrarNombreJuntoLogo;
+                    setMostrarNombreJuntoLogo(nuevo);
+                    if (usuario?.empresaId) {
+                      localStorage.setItem(`mostrar_nombre_empresa_${usuario.empresaId}`, String(nuevo));
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${mostrarNombreJuntoLogo ? "bg-blue-600" : "bg-gray-300"}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${mostrarNombreJuntoLogo ? "translate-x-6" : "translate-x-1"}`}
+                  />
+                </button>
               </div>
             </div>
           )}
