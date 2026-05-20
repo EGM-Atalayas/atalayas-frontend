@@ -162,7 +162,7 @@ export default function Header() {
 
         {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
         <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 z-10 min-w-0 max-w-[45%]">
-          <Link href={linkLogo} className="flex items-center gap-2 min-w-0">
+          <Link href={linkLogo} className="flex items-center gap-4 min-w-0">
             {logoSrc ? (
               /* Logo personalizado → con fondo suave */
               <div
@@ -291,7 +291,7 @@ export default function Header() {
             style={{ height: "80px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
           >
             {/* Logo — izquierda */}
-            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center gap-2 flex-1">
+            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center gap-3 flex-1">
               {logoSrc ? (
                 <img
                   src={logoSrc}
