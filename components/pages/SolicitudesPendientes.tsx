@@ -1,28 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaCheck, FaTimes, FaBuilding, FaEnvelope, FaIdCard, FaUserTie, FaRegCalendarAlt } from "react-icons/fa";
-import { getEmpresas, actualizarEstadoEmpresa, rechazarSolicitudEmpresa } from "@/lib/api/empresas";
+import { FaCheck, FaTimes, FaBuilding, FaEnvelope, FaIdCard, FaUserTie, FaRegCalendarAlt, FaPaperPlane } from "react-icons/fa";
+import { getSolicitudesPendientes, aprobarSolicitudEmpresa, rechazarSolicitudEmpresa, reenviarEmailAprobacion, type SolicitudDetalle } from "@/lib/api/empresas";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export interface SolicitudDB {
-  empresaId: string;
-  nombreEmpresa: string;
-  cif: string;
-  emailContacto: string; 
-  nombre?: string;       
-  apellidos?: string;    
-  emailAdmin?: string;   
-  fechaSolicitud?: string;
-  estadoSolicitud?: string;
-  [key: string]: any; 
-}
+export type SolicitudDB = SolicitudDetalle;
 
 const SolicitudesPendientes: React.FC = () => {
   const [solicitudes, setSolicitudes] = useState<SolicitudDB[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [reenviando, setReenviando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ tipo: "exito" | "error"; mensaje: string } | null>(null);
 
   useEffect(() => {
@@ -33,14 +23,8 @@ const SolicitudesPendientes: React.FC = () => {
     setIsLoading(true);
     setError("");
     try {
-      const data = await getEmpresas();
-      
-      const pendientes = data.filter((emp: any) => {
-        const estado = String(emp.estadoSolicitud || "").toUpperCase().trim();
-        return estado === "PENDIENTE";
-      });
-      
-      setSolicitudes(pendientes);
+      const data = await getSolicitudesPendientes();
+      setSolicitudes(data);
     } catch (err: any) {
       console.error("Error cargando solicitudes:", err);
       setError("No se pudieron cargar las solicitudes pendientes.");
@@ -58,10 +42,9 @@ const SolicitudesPendientes: React.FC = () => {
       if (accion === "RECHAZADA") {
         await rechazarSolicitudEmpresa(id);
       } else {
-        await actualizarEstadoEmpresa(id, accion);
+        await aprobarSolicitudEmpresa(id);
       }
 
-      // Escondemos la tarjeta después de exitoso
       setSolicitudes((prev) => prev.filter((sol) => sol.empresaId !== id));
 
       const mensaje =
@@ -71,8 +54,6 @@ const SolicitudesPendientes: React.FC = () => {
 
       setAviso({ tipo: "exito", mensaje });
       setProcesando(null);
-
-      // Quitar aviso después de 4 segundos
       setTimeout(() => setAviso(null), 4000);
     } catch (error) {
       console.error(`Error al ${accion}:`, error);
@@ -82,6 +63,20 @@ const SolicitudesPendientes: React.FC = () => {
         mensaje: `Error al ${accion === "APROBADA" ? "aprobar" : "rechazar"}. Intenta de nuevo.`,
       });
       setTimeout(() => setAviso(null), 4000);
+    }
+  };
+
+  const handleReenviarEmail = async (id: string) => {
+    setReenviando(id);
+    try {
+      await reenviarEmailAprobacion(id);
+      setAviso({ tipo: "exito", mensaje: "Email de aprobación reenviado correctamente" });
+      setTimeout(() => setAviso(null), 4000);
+    } catch (err: any) {
+      setAviso({ tipo: "error", mensaje: err.message || "Error al reenviar el email" });
+      setTimeout(() => setAviso(null), 4000);
+    } finally {
+      setReenviando(null);
     }
   };
 
@@ -241,6 +236,22 @@ const SolicitudesPendientes: React.FC = () => {
                   )}
                 </button>
               </div>
+              {solicitud.emailEnviado === false && (
+                <div className="px-5 pb-4" style={{ background: "var(--gris-pagina)" }}>
+                  <button
+                    onClick={() => handleReenviarEmail(solicitud.empresaId)}
+                    disabled={reenviando === solicitud.empresaId}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-amber-200"
+                  >
+                    {reenviando === solicitud.empresaId ? (
+                      <div className="w-3 h-3 border-2 border-amber-300 border-t-amber-700 rounded-full animate-spin" />
+                    ) : (
+                      <FaPaperPlane size={11} />
+                    )}
+                    Reenviar email de aprobación
+                  </button>
+                </div>
+              )}
 
             </div>
           ))}
