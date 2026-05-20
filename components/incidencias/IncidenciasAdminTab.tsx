@@ -181,36 +181,6 @@ function EstadoSelector({ incidenciaId, estadoActual, onChange, matchButtonHeigh
   );
 }
 
-// ── Demo data ─────────────────────────────────────────────────────────────────
-const DEMO: Incidencia[] = [
-  {
-    incidenciaId: "demo-1",
-    titulo: "Fallo en el sistema de climatización planta 2",
-    descripcion: "Desde el lunes el aire acondicionado de la planta 2 no funciona correctamente, la temperatura supera los 30°C y está afectando al rendimiento del equipo.",
-    prioridad: "CRITICA", estado: "ABIERTA",
-    creadoPor: "usr-demo", nombreCreador: "Laura Martínez", emailCreador: "laura@empresa.com",
-    empresaId: "demo", creadoEn: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    actualizadoEn: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-  },
-  {
-    incidenciaId: "demo-2",
-    titulo: "Problemas con el acceso al portal de RRHH",
-    descripcion: "Varios empleados del departamento de administración no pueden iniciar sesión en el portal interno de RRHH. El error aparece al introducir las credenciales.",
-    prioridad: "NORMAL", estado: "EN_CURSO",
-    creadoPor: "usr-demo2", nombreCreador: "Carlos Pérez", emailCreador: "carlos@empresa.com",
-    empresaId: "demo", creadoEn: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
-    actualizadoEn: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-  },
-  {
-    incidenciaId: "demo-3",
-    titulo: "Impresora de recepción sin papel y con error de red",
-    descripcion: "La impresora principal de recepción muestra un error de conexión de red y además se ha quedado sin papel. Se ha reportado dos veces sin resolución.",
-    prioridad: "NORMAL", estado: "CERRADA",
-    creadoPor: "usr-demo3", nombreCreador: "Ana Gómez", emailCreador: "ana@empresa.com",
-    empresaId: "demo", creadoEn: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    actualizadoEn: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-  },
-];
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) {
@@ -239,8 +209,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
     enabled: !!empresaId,
   });
 
-  const esDemo = !cargando && !isError && rawIncidencias.length === 0;
-  const incidencias = esDemo ? DEMO : rawIncidencias;
+  const incidencias = rawIncidencias;
 
   const contadores = ESTADOS.reduce((acc, e) => {
     acc[e.value] = incidencias.filter(i => i.estado === e.value).length;
@@ -261,7 +230,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleEstado = async (id: string, nuevoEstado: string) => {
-    if (esDemo) return;
+
     setErrorMut(null);
     queryClient.setQueryData<Incidencia[]>(["incidencias", empresaId], prev =>
       prev?.map(i => i.incidenciaId === id ? { ...i, estado: nuevoEstado as Incidencia["estado"] } : i) ?? []
@@ -275,7 +244,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
   };
 
   const handleEliminar = async () => {
-    if (!confirmEliminar || esDemo) return;
+    if (!confirmEliminar) return;
     try {
       await deleteIncidencia(confirmEliminar.incidenciaId);
       queryClient.setQueryData<Incidencia[]>(["incidencias", empresaId], prev =>
@@ -416,12 +385,10 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                 style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
                 <div className="flex items-center gap-2">
                   <Button variant="secondary" size="md" onClick={() => setDetailInc(null)}>Cerrar</Button>
-                  {!esDemo && (
-                    <Button variant="danger" size="md" onClick={() => { setConfirmEliminar(liveDetailInc); setDetailInc(null); }}>
-                      <Trash2 size={14} strokeWidth={2} />
-                      <span className="hidden sm:inline">Eliminar</span>
-                    </Button>
-                  )}
+                  <Button variant="danger" size="md" onClick={() => { setConfirmEliminar(liveDetailInc); setDetailInc(null); }}>
+                    <Trash2 size={14} strokeWidth={2} />
+                    <span className="hidden sm:inline">Eliminar</span>
+                  </Button>
                 </div>
                 <EstadoSelector
                   incidenciaId={liveDetailInc.incidenciaId}
@@ -610,9 +577,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
           Incidencias
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--texto-muted)" }}>
-          {cargando ? "Cargando incidencias…" : isError ? "Error al cargar" : esDemo
-            ? <span>Vista previa · <span style={{ color: TAB_COLOR, fontWeight: 600 }}>datos de ejemplo</span></span>
-            : incidencias.length === 0 ? "No hay incidencias registradas"
+          {cargando ? "Cargando incidencias…" : isError ? "Error al cargar" : incidencias.length === 0 ? "No hay incidencias registradas"
             : <>
                 {incidencias.length} incidencia{incidencias.length !== 1 ? "s" : ""}
                 {contadores["ABIERTA"] > 0 && (
