@@ -80,7 +80,15 @@ export default function FormEmpleado({
             />
           </div>
           <div className="relative z-10 flex flex-col gap-0.5">
-            <h2 className="text-2xl font-bold" style={{ color: "#ffffff" }}>Añadir empleado</h2>
+            <h2 style={{
+              fontFamily: "var(--font-raleway), sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(1.4rem, 4vw, 1.8rem)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.03em",
+              color: "#ffffff",
+              margin: 0,
+            }}>Añadir empleado</h2>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>Crea una cuenta para un nuevo miembro</p>
           </div>
           <div className="relative z-10">

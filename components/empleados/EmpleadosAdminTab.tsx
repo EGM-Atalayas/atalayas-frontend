@@ -444,8 +444,6 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                 <EmpCampo label="Contraseña inicial" required type="password" placeholder="Mínimo 8 caracteres"
                   hint="El empleado podrá cambiarla en su primer acceso"
                   value={formEmpleado.password} onChange={(v) => setFormEmpleado({ ...formEmpleado, password: v })} />
-                {/* Divisor secciones */}
-                <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", margin: "2px 0" }} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Puesto */}
                   <EmpCampo label="Puesto de trabajo" placeholder="Ej: Técnico de producción"
@@ -466,7 +464,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
               </form>
 
               {/* Footer */}
-              <div className="flex flex-col sm:flex-row sm:justify-end gap-2.5 px-5 sm:px-6 py-4 shrink-0"
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-2.5 px-5 sm:px-6 py-4 shrink-0"
                 style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
                 <Button type="button" variant="secondary" className="w-full sm:w-auto order-2 sm:order-1"
                   onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} disabled={guardandoEmpleado}>
