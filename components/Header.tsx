@@ -201,7 +201,7 @@ export default function Header() {
               />
             )}
             {mostrarNombre && usuario?.nombreEmpresa && (
-              <span className="text-lg font-semibold truncate max-w-[180px]" style={{ color: "var(--texto-primario)" }}>
+              <span className="text-lg font-semibold truncate max-w-[180px]" style={{ color: "#fff" }}>
                 {usuario.nombreEmpresa}
               </span>
             )}
@@ -306,7 +306,7 @@ export default function Header() {
                 />
               )}
               {mostrarNombre && usuario?.nombreEmpresa && (
-                <span className="text-sm font-semibold truncate max-w-[140px]" style={{ color: "rgba(255,255,255,0.9)" }}>
+                <span className="text-sm font-semibold truncate max-w-[140px]" style={{ color: "#fff" }}>
                   {usuario.nombreEmpresa}
                 </span>
               )}
