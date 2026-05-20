@@ -979,7 +979,7 @@ export default function PerfilPage() {
                         style={{ color: "var(--texto-muted)", transform: dispOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
-                    </button>bh
+                    </button>
 
                     {/* Dropdown panel */}
                     {dispOpen && (
