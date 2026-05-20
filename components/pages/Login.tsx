@@ -87,8 +87,6 @@ const LoginPage: React.FC = () => {
           localStorage.setItem("accessToken", data.accessToken);
         }
 
-        console.log("[Login] Usuario logueado:", { nombre: data.nombre, codigoRol: data.codigoRol });
-
         guardarUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,

@@ -163,7 +163,6 @@ export default function NotifMenu({ noLeidas, onMarcarLeidas }: NotifMenuProps) 
       cacheNotifs.current = notifs;
       setNotificaciones(notifs);
     } catch (error) {
-      console.error("[NotifMenu] Error cargando notificaciones:", error);
     } finally {
       setCargando(false);
     }

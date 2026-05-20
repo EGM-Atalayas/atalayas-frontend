@@ -408,7 +408,6 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
       setToastVisible(true);
       setTimeout(() => { setToastVisible(false); onCerrar(); }, 1800);
     } catch (err) {
-      console.error("[BeneficioModal] Error al guardar:", err);
       setError("No se pudo guardar la ventaja. Inténtalo de nuevo.");
       setGuardando(false);
     }
@@ -599,7 +598,7 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
 
         {/* ── Footer ── */}
         <div
-          className="flex items-center justify-end gap-3 px-5 sm:px-6 py-4 shrink-0"
+          className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 shrink-0"
           style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff" }}
         >
           <Button type="button" variant="secondary" onClick={cerrarSeguro} disabled={guardando}>

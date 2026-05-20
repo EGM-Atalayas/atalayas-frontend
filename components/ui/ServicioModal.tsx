@@ -302,7 +302,6 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
       setToastVisible(true);
       setTimeout(() => { setToastVisible(false); onCerrar(); }, 1800);
     } catch (err) {
-      console.error("[ServicioModal]", err);
       setError("No se pudo guardar el servicio. Inténtalo de nuevo.");
       setGuardando(false);
     }
@@ -409,11 +408,11 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
               <p className="text-sm text-center" style={{ color: "#ef4444" }}>{error}</p>
             )}
 
-            <div className="flex gap-3 pt-1 pb-1">
-              <Button type="button" variant="secondary" className="flex-1" onClick={cerrarSeguro} disabled={guardando}>
+            <div className="flex justify-between gap-3 pt-1 pb-1">
+              <Button type="button" variant="secondary" onClick={cerrarSeguro} disabled={guardando}>
                 Cancelar
               </Button>
-              <Button type="submit" variant="primary" className="flex-1" disabled={guardando || !form.titulo?.trim() || !form.categoria}>
+              <Button type="submit" variant="primary" disabled={guardando || !form.titulo?.trim() || !form.categoria}>
                 {guardando ? "Guardando…" : editando ? "Guardar cambios" : "Crear servicio"}
               </Button>
             </div>

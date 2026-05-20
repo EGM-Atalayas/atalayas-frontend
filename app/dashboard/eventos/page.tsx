@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/comunidad";
 import { ModalEvento } from "@/components/eventos/ModalEvento";
 import { ModalUbicacion } from "@/components/eventos/ModalUbicacion";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type EstadoEvento = "PROXIMO" | "EN_CURSO" | "FINALIZADO";
@@ -296,6 +297,7 @@ export default function EventosPage() {
   const [modalOpen,  setModalOpen]  = useState(false);
   const [editando,   setEditando]   = useState<ComunidadEvento | null>(null);
   const [verUbicacion, setVerUbicacion] = useState<ComunidadEvento | null>(null);
+  const [confirmDesactivar, setConfirmDesactivar] = useState<ComunidadEvento | null>(null);
 
   const mostrarToast = useCallback((msg: string, tipo: "ok" | "err" = "ok") => {
     setToast({ msg, tipo });
@@ -312,8 +314,10 @@ export default function EventosPage() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  async function handleDesactivar(evento: ComunidadEvento) {
-    if (!confirm(`¿Cancelar el evento "${evento.titulo}"?`)) return;
+  async function ejecutarDesactivar() {
+    if (!confirmDesactivar) return;
+    const evento = confirmDesactivar;
+    setConfirmDesactivar(null);
     try {
       await desactivarEventoComunidad(evento.eventoId);
       setEventos(prev => prev.filter(e => e.eventoId !== evento.eventoId));
@@ -394,7 +398,7 @@ export default function EventosPage() {
               {activos.map((e) => (
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
-                  onDesactivar={handleDesactivar}
+                  onDesactivar={setConfirmDesactivar}
                   onVerUbicacion={setVerUbicacion}
                 />
               ))}
@@ -412,7 +416,7 @@ export default function EventosPage() {
               {pasados.map((e) => (
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
-                  onDesactivar={handleDesactivar}
+                  onDesactivar={setConfirmDesactivar}
                   onVerUbicacion={setVerUbicacion}
                 />
               ))}
@@ -430,6 +434,17 @@ export default function EventosPage() {
           onGuardado={handleGuardado}
         />
       )}
+
+      {/* Modal confirmar cancelar evento */}
+      <ModalConfirm
+        abierto={!!confirmDesactivar}
+        titulo="¿Cancelar este evento?"
+        descripcion={confirmDesactivar ? `"${confirmDesactivar.titulo}" quedará cancelado y desaparecerá del listado.` : ""}
+        textoConfirmar="Cancelar evento"
+        variante="danger"
+        onConfirmar={ejecutarDesactivar}
+        onCancelar={() => setConfirmDesactivar(null)}
+      />
 
       {/* Modal Ver ubicación */}
       {verUbicacion && verUbicacion.latitud != null && verUbicacion.longitud != null && (
