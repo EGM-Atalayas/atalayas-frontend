@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
         const file = formData.get('file') as File | null;
+        const empresaId = formData.get('empresaId') as string | null;
 
         if (!file) {
             return NextResponse.json({ error: "No se recibió archivo" }, { status: 400 });
@@ -14,9 +15,12 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Crear nombre único
-        const timestamp = Date.now();
-        const filename = `logo-${timestamp}-${file.name.replace(/\s+/g, '-')}`;
+        // Extraer extensión del archivo original
+        const ext = path.extname(file.name) || '.png';
+        // Nombre fijo por empresa → sobrescribe automáticamente
+        const filename = empresaId
+          ? `logo-empresa-${empresaId}${ext}`
+          : `logo-${Date.now()}${ext}`;
 
         // Guardar en carpeta public/uploads (para que sea accesible en /uploads/...)
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');

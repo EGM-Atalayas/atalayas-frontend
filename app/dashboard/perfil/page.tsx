@@ -557,6 +557,7 @@ export default function PerfilPage() {
 
       const formData = new FormData();
       formData.append("file", fileToUpload);
+      if (usuario?.empresaId) formData.append("empresaId", usuario.empresaId);
 
       const res = await fetch("/api/upload/imagen", {
         method: "POST",
