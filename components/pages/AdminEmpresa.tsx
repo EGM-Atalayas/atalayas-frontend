@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
 import { getActividadReciente, getProgresoEmpresa } from "@/lib/api/progreso";
@@ -150,6 +150,7 @@ function ActividadIcon({ tipo }: { tipo: string }) {
 export default function AdminEmpresa() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [resumen, setResumen] = useState<ResumenAdmin | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
@@ -159,17 +160,20 @@ export default function AdminEmpresa() {
   const [modulosStats, setModulosStats] = useState<ModuloStats[]>([]);
   const [progresoMedio, setProgresoMedio] = useState(0);
 
-  useEffect(() => {
-    async function cargarDatos() {
+  const cargarDatos = useCallback(async () => {
       try {
         const empresaId = usuario?.empresaId;
         const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : Promise.resolve(new Response(JSON.stringify([]))),
-          getActividadReciente(5).catch(() => [] as ActividadItem[]),
-          getModulos(empresaId).catch(() => [] as Modulo[]),
-          empresaId ? getProgresoEmpresa(empresaId).catch(() => [] as ProgresoEmpleado[]) : Promise.resolve([] as ProgresoEmpleado[]),
-        ]);
+          getActividadReciente(5).catch((err) => { console.error("Error actividad reciente:", err); return [] as ActividadItem[]; }),
+          getModulos(empresaId).catch((err) => { console.error("Error al cargar módulos:", err); return [] as Modulo[]; }),
+          (empresaId
+            ? getProgresoEmpresa(empresaId).catch((err) => {
+                console.error("Error al obtener progreso de empleados:", err);
+                return [] as ProgresoEmpleado[];
+              })
+            : Promise.resolve([] as ProgresoEmpleado[])),
         let resumenData = null;
         if (resRes.ok) {
           resumenData = await resRes.json();
@@ -225,11 +229,12 @@ export default function AdminEmpresa() {
             total: totalEmpleados || 1,
           })));
         }
-      } catch { }
+      } catch (err) { console.error("Error cargando dashboard admin:", err); }
       finally { setCargando(false); }
     }
-    cargarDatos();
   }, []);
+
+  useEffect(() => { cargarDatos(); }, [cargarDatos, pathname]);
 
   if (cargando) {
     return (
