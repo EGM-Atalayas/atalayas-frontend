@@ -429,7 +429,7 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (debounceRef.current) clearTimeout(debounceRef.current); buscar(); } }}
                           placeholder="Ej: Edificio Central EGM Atalayas, Alicante"
                           style={{ ...inputBase, flex: 1 }} onFocus={focusOn} onBlur={focusOff} />
-                        <button type="button" onClick={buscar}
+                        <button type="button" onClick={() => buscar()}
                           disabled={!lugar.trim() || buscandoMapa}
                           className="inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shrink-0 cursor-pointer disabled:opacity-50"
                           style={{
