@@ -35,6 +35,9 @@ export default function Header() {
     || (typeof window !== "undefined" && usuario?.empresaId
       ? localStorage.getItem(`empresa_logo_url_${usuario.empresaId}`)
       : null);
+  const mostrarNombre = typeof window !== "undefined" && usuario?.empresaId
+    ? localStorage.getItem(`mostrar_nombre_empresa_${usuario.empresaId}`) === "true"
+    : false;
   // Resetear error de avatar móvil cuando cambia la URL (el usuario sube nueva foto)
   useEffect(() => { setMobileAvatarError(false); }, [usuario?.avatarUrl]);
 
@@ -158,12 +161,12 @@ export default function Header() {
       <div className="w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14 flex items-stretch h-20 relative">
 
         {/* Logo — izquierda, z-10 para no quedar bajo el nav centrado */}
-        <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 shrink-0 z-10">
-          <Link href={linkLogo}>
+        <div className="flex items-center pr-4 sm:pr-6 lg:pr-10 z-10 min-w-0 max-w-[45%]">
+          <Link href={linkLogo} className="flex items-center gap-2 min-w-0">
             {logoSrc ? (
               /* Logo personalizado → con fondo suave */
               <div
-                className="rounded-xl p-2 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                className="rounded-xl p-2 flex items-center justify-center transition-all duration-200 hover:scale-105 shrink-0"
                 style={{
                   background: "rgba(255, 255, 255, 0.92)",
                   backdropFilter: "blur(10px)",
@@ -194,8 +197,13 @@ export default function Header() {
                   height: "clamp(38px, 5.5vw, 48px)",
                   width: "auto",
                 }}
-                className="brightness-0 invert cursor-pointer hover:opacity-75"
+                className="brightness-0 invert cursor-pointer hover:opacity-75 shrink-0"
               />
+            )}
+            {mostrarNombre && usuario?.nombreEmpresa && (
+              <span className="text-lg font-semibold truncate min-w-0 max-w-[140px] ml-3" style={{ color: "#fff" }}>
+                {usuario.nombreEmpresa}
+              </span>
             )}
           </Link>
         </div>
@@ -318,7 +326,7 @@ export default function Header() {
             style={{ height: "80px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
           >
             {/* Logo — izquierda */}
-            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center flex-1">
+            <Link href={linkLogo} onClick={cerrarMenu} className="flex items-center gap-2 flex-1">
               {logoSrc ? (
                 <img
                   src={logoSrc}
@@ -331,6 +339,11 @@ export default function Header() {
                   style={{ height: "40px", width: "auto" }}
                   className="brightness-0 invert"
                 />
+              )}
+              {mostrarNombre && usuario?.nombreEmpresa && (
+                <span className="text-sm font-semibold truncate max-w-[140px] ml-3" style={{ color: "#fff" }}>
+                  {usuario.nombreEmpresa}
+                </span>
               )}
             </Link>
 

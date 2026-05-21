@@ -26,7 +26,9 @@ interface Contenido {
   duracion?: string;
   completado: boolean;
   bloqueado: boolean;
-  seccionIdx?: number; // índice en el array de secciones del markdown
+  seccionIdx?: number;
+  adjuntoUrl?: string;
+  adjuntoNombre?: string;
 }
 
 interface SeccionMarkdown {
@@ -157,10 +159,19 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
   // Documentación: páginas desde JSON o markdown por secciones ##
   if (tipos.includes("documentacion")) {
     if (paginasJson) {
-      // Separar primera página, tests, y resto de páginas de texto
+      // Separar primera página, tests, archivos y resto de páginas de texto
       const primeraPag = paginasJson.length > 0 ? paginasJson[0] : null;
       const paginasTest = paginasJson.filter((p) => p.tipo === "test");
-      const paginasTextoResto = paginasJson.slice(1).filter((p) => p.tipo !== "test");
+      const paginasArchivo = paginasJson.filter((p) => p.tipo === "archivo");
+      const paginasTextoResto = paginasJson.filter((p) => p.tipo === "texto" && p !== paginasJson[0]);
+
+      // 1. Primera página (introducción)
+      if (primeraPag) {
+        items.push({
+          id: `c${idx++}`, titulo: primeraPag.titulo || "Introducción", tipo: "texto",
+          duracion: estimarDuracion(primeraPag.contenido || ""), completado: false, bloqueado: false, seccionIdx: 0,
+        });
+      }
 
       // 1. Primera página (introducción)
       if (primeraPag) {
@@ -188,7 +199,18 @@ function buildContenidos(moduloApi: ModuloAPI): Contenido[] {
         });
       });
 
-      // 4. Test al final
+      // 4. Archivos
+      paginasArchivo.forEach((pag) => {
+        items.push({
+          id: `c${idx++}`, titulo: pag.titulo || "Documento", tipo: "pdf",
+          duracion: "5–10 min", completado: false, bloqueado: items.length > 0,
+          seccionIdx: paginasJson.indexOf(pag),
+          adjuntoUrl: pag.archivoUrl || undefined,
+          adjuntoNombre: pag.archivoNombre || undefined,
+        });
+      });
+
+      // 5. Test al final
       paginasTest.forEach((pag) => {
         items.push({
           id: `c${idx++}`, titulo: pag.titulo || "Evaluación", tipo: "quiz",
@@ -705,7 +727,7 @@ export default function Page() {
               {activo.tipo === "video" && activo.subtipo === "podcast" && moduloApi?.scriptPodcast && <ContenidoPodcast script={moduloApi.scriptPodcast} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && activo.subtipo === "slides" && moduloApi?.scriptVideo && <ContenidoSlides scriptVideoJson={moduloApi.scriptVideo} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "video" && !activo.subtipo && <ContenidoVideo onVerificado={() => setVerificado(true)} />}
-              {activo.tipo === "pdf" && <ContenidoPDF url={moduloApi?.adjuntoUrl ?? undefined} nombre={moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
+              {activo.tipo === "pdf" && <ContenidoPDF url={activo.adjuntoUrl ?? moduloApi?.adjuntoUrl ?? undefined} nombre={activo.adjuntoNombre ?? moduloApi?.adjuntoNombre ?? undefined} onVerificado={() => setVerificado(true)} />}
               {activo.tipo === "quiz" && (() => {
                 const desdeJson = paginasJson && activo.seccionIdx !== undefined && activo.seccionIdx >= 0
                   ? paginasJson[activo.seccionIdx] ?? null
