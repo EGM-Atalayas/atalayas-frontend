@@ -227,6 +227,41 @@ export default function Header() {
             />
           </div>
 
+          {/* Botón de ayuda / repetir tutorial */}
+          <div className="flex items-center h-full">
+            <button
+              onClick={() => {
+                const key = usuario?.usuarioId ? `tutorial_step_${usuario.usuarioId}` : null;
+                if (key) localStorage.removeItem(key);
+                window.dispatchEvent(new CustomEvent("restart-tutorial"));
+              }}
+              className="flex items-center justify-center border-none cursor-pointer"
+              style={{
+                width: "42px", height: "42px", borderRadius: "11px",
+                background: "transparent",
+                border: "1px solid transparent",
+                color: "rgba(255,255,255,0.72)",
+                transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+                fontSize: "18px",
+                fontWeight: 700,
+                fontFamily: "var(--font-raleway), sans-serif",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.10)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
+                e.currentTarget.style.color = "rgba(255,255,255,1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = "transparent";
+                e.currentTarget.style.color = "rgba(255,255,255,0.72)";
+              }}
+              aria-label="Repetir tutorial"
+            >
+              ?
+            </button>
+          </div>
+
           {/* Avatar + menú desktop — solo lg+ */}
           <div className="hidden lg:flex items-center h-full">
             <UserMenu
@@ -301,6 +336,29 @@ export default function Header() {
 
             {/* Campana con dropdown completo (NotifMenu) */}
             <NotifMenu noLeidas={noLeidas} onMarcarLeidas={marcarTodasLeidas} />
+
+            {/* Botón ? — repetir tutorial */}
+            <button
+              onClick={() => {
+                const key = usuario?.usuarioId ? `tutorial_step_${usuario.usuarioId}` : null;
+                if (key) localStorage.removeItem(key);
+                window.dispatchEvent(new CustomEvent("restart-tutorial"));
+              }}
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: "42px", height: "42px", borderRadius: "11px",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: "rgba(255,255,255,0.72)",
+                fontSize: "18px",
+                fontWeight: 700,
+                fontFamily: "var(--font-raleway), sans-serif",
+                cursor: "pointer",
+              }}
+              aria-label="Repetir tutorial"
+            >
+              ?
+            </button>
 
             {/* Botón X — mismo estilo que la hamburguesa */}
             <button

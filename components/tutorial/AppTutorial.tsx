@@ -437,6 +437,27 @@ export default function AppTutorial() {
     return () => clearTimeout(t);
   }, [lsKey, userId]);
 
+  const restart = useCallback(() => {
+    if (lsKey) localStorage.removeItem(lsKey);
+    setStepIdx(0);
+    setSubStepIdx(0);
+    setActive(true);
+    const firstStep = steps[0];
+    if (firstStep) {
+      setVisible(
+        firstStep.route === "INIT"
+          ? pathname === "/dashboard" || pathname === "/superadmin"
+          : pathname === firstStep.route
+      );
+    }
+  }, [lsKey, steps, pathname]);
+
+  useEffect(() => {
+    const handler = () => restart();
+    window.addEventListener("restart-tutorial", handler);
+    return () => window.removeEventListener("restart-tutorial", handler);
+  }, [restart]);
+
   useEffect(() => {
     if (!active) return;
     const cur = steps[stepIdx];
