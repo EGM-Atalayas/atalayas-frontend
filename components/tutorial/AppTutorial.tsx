@@ -47,7 +47,7 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
     title: "Panel principal",
     subSteps: [
       {
-        desc: 'Aquí empieza tu día en Atalayas. Arriba tienes el menú principal con todas las secciones: Formación, Comunicación, Comunidad, Colaboradores y Tu perfil. Usa este menú para navegar por la plataforma.',
+        desc: '¡Hola Buenos dias! Aquí empieza tu día a dia en Atalayas. Arriba tienes el menú principal con todas las secciones: Formación, Comunicación, Comunidad, Colaboradores y Tu perfil. Usa este menú para navegar por la plataforma.',
         navLabel: "Inicio",
       },
       {
@@ -103,7 +103,7 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
       },
       {
         desc: 'Usa los filtros para buscar por texto, ordenar por más reciente o más antiguo. Al hacer clic en cualquier comunicación se abre un modal con el contenido completo.',
-        selector: "[class*='filter'], [class*='filtro'], [class*='search'], input",
+        selector: "div[class*='md:ml-auto']",
       },
     ],
     nextNavLabel: "Comunidad",
@@ -141,7 +141,7 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
       },
       {
         desc: 'También hay Parques Científicos e Institutos Tecnológicos como AIJU, INESCOP y AITEX. Cada entidad muestra su logo, descripción y un enlace a su web.',
-        selector: "button[class*='p-6']",
+        selector: "div[class*='rounded-3xl'][class*='overflow-hidden']",
       },
     ],
     nextNavLabel: "Tu perfil",
@@ -157,11 +157,11 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
         navLabel: "Tu perfil",
       },
       {
-        desc: 'Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, teléfono y email. También tienes un buzón de sugerencias para enviar tus ideas a EGM Atalayas.',
+        desc: 'Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, teléfono y email.',
         selector: "div[class*='flex-col'][class*='gap-7']",
       },
       {
-        desc: 'Aquí puedes ver tus documentos asignados y usar el buzón de sugerencias para enviar tus ideas a EGM Atalayas.',
+        desc: 'Aquí puedes ver tus documentos asignados, como contratos, nóminas o certificados de formación. Haz clic en cada documento para descargarlo.',
         selector: "#mis-documentos",
       },
       {
@@ -373,23 +373,38 @@ function getSteps(role?: string): GuiaStep[] {
 const CARD_WIDTH = 520;
 const ARROW_SIZE = 14;
 
-function findTargetElement(subStep: GuiaSubStep): Element | null {
+function findTargetElements(subStep: GuiaSubStep): Element[] {
+  const elements: Element[] = [];
   if (subStep.selector) {
     try {
-      const el = document.querySelector(subStep.selector);
-      if (el) return el;
+      const all = document.querySelectorAll(subStep.selector);
+      all.forEach((el) => elements.push(el));
     } catch { }
   }
-  if (subStep.navLabel) {
+  if (elements.length === 0 && subStep.navLabel) {
     const nav = document.querySelector("header nav");
     if (nav) {
       const all = nav.querySelectorAll("button");
       for (const btn of all) {
-        if ((btn.textContent?.trim().replace(/\s+/g, " ") ?? "") === subStep.navLabel) return btn;
+        if ((btn.textContent?.trim().replace(/\s+/g, " ") ?? "") === subStep.navLabel) {
+          elements.push(btn);
+        }
       }
     }
   }
-  return null;
+  return elements;
+}
+
+function combineRects(elements: Element[]): DOMRect {
+  let top = Infinity, bottom = -Infinity, left = Infinity, right = -Infinity;
+  for (const el of elements) {
+    const r = el.getBoundingClientRect();
+    top = Math.min(top, r.top);
+    bottom = Math.max(bottom, r.bottom);
+    left = Math.min(left, r.left);
+    right = Math.max(right, r.right);
+  }
+  return new DOMRect(left, top, right - left, bottom - top);
 }
 
 export default function AppTutorial() {
@@ -453,10 +468,10 @@ export default function AppTutorial() {
     const subStep = cur.subSteps[subStepIdx];
     if (!subStep) { setTargetRect(null); setHighlightStyle(null); return; }
 
-    const el = findTargetElement(subStep);
-    if (!el) { setTargetRect(null); setHighlightStyle(null); return; }
+    const elements = findTargetElements(subStep);
+    if (elements.length === 0) { setTargetRect(null); setHighlightStyle(null); return; }
 
-    const r = el.getBoundingClientRect();
+    const r = elements.length === 1 ? elements[0].getBoundingClientRect() : combineRects(elements);
     setTargetRect(r);
     setTooltipSide(window.innerHeight - r.bottom < 240 ? "top" : "bottom");
 
@@ -473,7 +488,7 @@ export default function AppTutorial() {
       transition: "all 0.35s ease",
     });
 
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    elements[0].scrollIntoView({ behavior: "smooth", block: "center" });
   }, [visible, active, stepIdx, subStepIdx, steps]);
 
   useEffect(() => {
@@ -531,7 +546,7 @@ export default function AppTutorial() {
       targetRect.left + targetRect.width * 0.55 - half,
       window.innerWidth - CARD_WIDTH - 12
     ));
-    const gap = 14;
+    const gap = 8;
     const cardHeight = cardRef.current?.offsetHeight ?? 240;
     cardTop = tooltipSide === "bottom"
       ? targetRect.top + targetRect.height + gap
