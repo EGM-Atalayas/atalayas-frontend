@@ -17,6 +17,7 @@ const colaboradoresData = [
         descripcion: "Investigación y transferencia de conocimiento",
         icono: University,
         imagen: "/bg-universidad.webp",
+        acento: { from: "#4338CA", to: "#A855F7" }, // Indigo → Púrpura
         entidades: [
             {
                 nombre: "Universidad de Alicante",
@@ -39,6 +40,7 @@ const colaboradoresData = [
         descripcion: "Innovación y conexión empresarial",
         icono: FlaskConical,
         imagen: "/bg-parque.webp",
+        acento: { from: "#0891B2", to: "#10B981" }, // Cian → Verde
         entidades: [
             {
                 nombre: "Parque Científico de Alicante",
@@ -61,6 +63,7 @@ const colaboradoresData = [
         descripcion: "Desarrollo tecnológico especializado",
         icono: Cpu,
         imagen: "/bg-instituto.webp",
+        acento: { from: "#EA580C", to: "#DC2626" }, // Naranja → Rojo
         entidades: [
             {
                 nombre: "AIJU — Instituto Tecnológico de producto infantil y recreativo",
@@ -250,16 +253,21 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                         }, 250);
                                     }
                                 }}
-                                className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]"
+                                className="rounded-3xl overflow-hidden transition-all duration-500 ease-in-out relative hover:scale-[1.01]"
                                 style={{
                                     backgroundImage: `url(${grupo.imagen})`,
                                     backgroundSize: "cover",
                                     backgroundPosition: "center",
-                                    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.6)",
+                                    boxShadow: `0 12px 36px -10px ${grupo.acento.from}66, 0 4px 16px rgba(0,0,0,0.18)`,
                                 }}
                             >
                                 {/* Overlay */}
                                 <div className="absolute inset-0 z-0" style={{ background: overlayGrupo, borderRadius: "inherit" }} />
+                                {/* Halo difuminado superior */}
+                                <div className="absolute top-0 left-0 right-0 z-[1] pointer-events-none" style={{
+                                    height: 140,
+                                    background: `linear-gradient(180deg, ${grupo.acento.from}22 0%, ${grupo.acento.to}10 40%, transparent 100%)`,
+                                }} />
                                 {/* Cabecera - Soporte Hover + Click (mejor para móvil) */}
                                 <button
                                     onClick={() => {
@@ -276,8 +284,9 @@ export default function Colaboradores({ variant = "invitado" }: ColaboradoresPro
                                         <div
                                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:rotate-6 group-active:scale-95"
                                             style={{
-                                                background: d ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
-                                                color: d ? "var(--azul-egm)" : "#ffffff",
+                                                background: `linear-gradient(135deg, ${grupo.acento.from} 0%, ${grupo.acento.to} 100%)`,
+                                                color: "#ffffff",
+                                                boxShadow: `0 6px 16px -4px ${grupo.acento.from}66`,
                                             }}
                                         >
                                             <grupo.icono className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-300" />
