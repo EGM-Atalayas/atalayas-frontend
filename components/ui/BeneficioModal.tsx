@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { Beneficio, BeneficioInput } from "@/lib/types/beneficios";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { ICONOS_BENEFICIO } from "@/lib/iconosBeneficio";
+import { ICONOS_BENEFICIO, BootstrapIcon } from "@/lib/iconosBeneficio";
 import Grainient from "@/components/ui/Grainient";
 
 interface Props {
@@ -89,12 +89,10 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
         {selected ? (
           <>
             <span style={{
-              display: "flex", width: 22, height: 22, flexShrink: 0,
-              overflow: "hidden", color: "var(--azul-egm)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 22, height: 22, flexShrink: 0, color: "var(--azul-egm)",
             }}>
-              <span style={{ transform: "scale(0.61)", transformOrigin: "top left", display: "flex", flexShrink: 0 }}>
-                {selected.svg}
-              </span>
+              <BootstrapIcon name={selected.bi} size={20} />
             </span>
             <span className="flex-1 font-medium text-sm" style={{ color: "var(--texto-primario)" }}>{selected.label}</span>
           </>
@@ -148,7 +146,7 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
                   onMouseEnter={(e) => { if (!sel) { e.currentTarget.style.background = "rgba(27,63,126,0.07)"; e.currentTarget.style.color = "var(--azul-egm)"; }}}
                   onMouseLeave={(e) => { if (!sel) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}}
                 >
-                  {icono.svg}
+                  <BootstrapIcon name={icono.bi} size={28} />
                 </button>
               );
             })}
@@ -410,7 +408,6 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
       setToastVisible(true);
       setTimeout(() => { setToastVisible(false); onCerrar(); }, 1800);
     } catch (err) {
-      console.error("[BeneficioModal] Error al guardar:", err);
       setError("No se pudo guardar la ventaja. Inténtalo de nuevo.");
       setGuardando(false);
     }
@@ -601,7 +598,7 @@ export default function BeneficioModal({ inicial, onGuardar, onCerrar }: Props) 
 
         {/* ── Footer ── */}
         <div
-          className="flex items-center justify-end gap-3 px-5 sm:px-6 py-4 shrink-0"
+          className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 shrink-0"
           style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff" }}
         >
           <Button type="button" variant="secondary" onClick={cerrarSeguro} disabled={guardando}>

@@ -526,11 +526,27 @@ export default function Empleado() {
           )}
         </section>
 
-        {/* ── COMUNIDAD — eventos reales del backend ── */}
+        {/* ── COMUNIDAD — últimos 4 eventos del backend con diseño colorido ── */}
         {(() => {
-          const destacado = eventosCom[0];
-          const otros     = eventosCom.slice(1, 4);
-          const noHay     = eventosCom.length === 0;
+          const ultimos = eventosCom.slice(0, 4);
+          const noHay   = ultimos.length === 0;
+
+          // Estado del evento
+          type EstadoEv = "PROXIMO" | "EN_CURSO" | "FINALIZADO";
+          const calcEstado = (ev: typeof eventosCom[number]): EstadoEv => {
+            const ahora = Date.now();
+            const ini = new Date(ev.fechaInicio).getTime();
+            const fin = ev.fechaFin ? new Date(ev.fechaFin).getTime() : ini + 2 * 60 * 60 * 1000;
+            if (ahora < ini) return "PROXIMO";
+            if (ahora <= fin) return "EN_CURSO";
+            return "FINALIZADO";
+          };
+
+          const ACENTO: Record<EstadoEv, { from: string; to: string; label: string }> = {
+            PROXIMO:    { from: "#6B21A8", to: "#EC4899", label: "Próximo" },
+            EN_CURSO:   { from: "#15803D", to: "#14B8A6", label: "En curso" },
+            FINALIZADO: { from: "#6b7280", to: "#9ca3af", label: "Finalizado" },
+          };
 
           // Helpers de formato
           const fmtDia = (iso: string) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric" });
@@ -541,14 +557,12 @@ export default function Empleado() {
             const fin = new Date(isoFin).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
             return `${ini} – ${fin} h`;
           };
-          const fmtFechaCorta = (iso: string) =>
-            new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 
           return (
             <section>
               <div className="mb-5">
                 <TituloSeccion noMargin>Comunidad</TituloSeccion>
-                <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
+                <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Últimos eventos del parque empresarial</p>
               </div>
 
               {noHay ? (
@@ -567,118 +581,79 @@ export default function Empleado() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 items-stretch">
-
-                  {/* Evento destacado */}
-                  <div
-                    className="rounded-2xl overflow-hidden relative cursor-pointer"
-                    style={{ background: "var(--marino)", minHeight: "200px" }}
-                    onClick={() => router.push("/dashboard/eventos")}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.95"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-                  >
-                    <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
-                    <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
-
-                    <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
-                      <div className="flex items-start justify-between mb-auto">
-                        <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "var(--verde-oliva-hover)" }}>
-                          {new Date(destacado.fechaInicio).getTime() >= Date.now() ? "Próximo evento" : "Último evento"}
-                        </span>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-white leading-none">{fmtDia(destacado.fechaInicio)}</p>
-                          <p className="text-xs capitalize" style={{ color: "rgba(255,255,255,0.5)" }}>{fmtMes(destacado.fechaInicio)}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-6">
-                        <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
-                          {destacado.titulo}
-                        </h3>
-                        {destacado.descripcion && (
-                          <p className="text-sm mb-4 line-clamp-3" style={{ color: "rgba(255,255,255,0.55)" }}>
-                            {destacado.descripcion}
-                          </p>
-                        )}
-                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {fmtHora(destacado.fechaInicio, destacado.fechaFin)}
-                          </span>
-                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {destacado.esGlobal ? "EGM Atalayas" : "Tu empresa"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <Link
-                        href="/dashboard/eventos"
-                        className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
-                        style={{ background: "var(--verde-oliva-hover)", color: "#fff", textDecoration: "none" }}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
+                  {ultimos.map((ev) => {
+                    const estado = calcEstado(ev);
+                    const acento = ACENTO[estado];
+                    const pasado = estado === "FINALIZADO";
+                    return (
+                      <div
+                        key={ev.eventoId}
+                        onClick={() => router.push(`/dashboard/eventos/${ev.eventoId}`)}
+                        className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg flex flex-col"
+                        style={{
+                          background: "var(--blanco)",
+                          border: "1px solid var(--gris-borde)",
+                          minHeight: 240,
+                        }}
                       >
-                        Ver evento
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    </div>
-                  </div>
+                        {/* Línea superior + halo difuminado por estado */}
+                        <div className="absolute top-0 left-0 right-0 pointer-events-none"
+                          style={{ height: 3, background: `linear-gradient(90deg, ${acento.from} 0%, ${acento.to} 100%)` }} />
+                        <div className="absolute top-0 left-0 right-0 pointer-events-none"
+                          style={{ height: 110, background: `linear-gradient(180deg, ${acento.from}29 0%, ${acento.to}14 35%, transparent 100%)` }} />
 
-                  {/* Otros eventos como iniciativas */}
-                  <div className="flex flex-col gap-4 h-full">
-                    {otros.length === 0 ? (
-                      <div className="flex-1 flex items-center justify-center rounded-xl px-6 py-8 text-center"
-                        style={{ background: "var(--blanco)", border: "1px dashed var(--gris-borde)" }}>
-                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
-                          No hay más eventos programados de momento
-                        </p>
-                      </div>
-                    ) : (
-                      otros.map((ev) => {
-                        const color = ev.esGlobal ? "var(--azul-egm)" : "var(--verde-oliva)";
-                        const bg    = ev.esGlobal ? "var(--azul-egm-light)" : "var(--verde-oliva-light)";
-                        return (
-                          <div
-                            key={ev.eventoId}
-                            className="flex-1 flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
-                            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-                            onClick={() => router.push("/dashboard/eventos")}
-                            onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)";
-                              (e.currentTarget as HTMLDivElement).style.borderColor = color;
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)";
-                              (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gris-borde)";
-                            }}
-                          >
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: bg, color }}>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
+                        <div className="relative z-10 p-4 flex flex-col h-full gap-3">
+                          {/* Cabecera: fecha + estado */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div
+                              className="rounded-xl px-2.5 py-1.5 text-center shrink-0"
+                              style={{
+                                background: pasado ? "#f3f4f6" : `linear-gradient(135deg, ${acento.from} 0%, ${acento.to} 100%)`,
+                                color: pasado ? "#9ca3af" : "#ffffff",
+                                minWidth: 48,
+                              }}
+                            >
+                              <p className="text-lg font-bold leading-none">{fmtDia(ev.fechaInicio)}</p>
+                              <p className="text-[10px] uppercase tracking-wider mt-0.5 capitalize">{fmtMes(ev.fechaInicio)}</p>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>{ev.titulo}</p>
-                              {ev.descripcion && (
-                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ev.descripcion}</p>
-                              )}
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-xs font-semibold capitalize" style={{ color }}>{fmtFechaCorta(ev.fechaInicio)}</p>
-                              <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>
-                                {ev.esGlobal ? "EGM" : "Empresa"}
-                              </p>
-                            </div>
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full whitespace-nowrap"
+                              style={{ background: `${acento.from}14`, color: acento.from }}
+                            >
+                              {acento.label}
+                            </span>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
+
+                          {/* Título + descripción */}
+                          <div className="flex-1 min-h-0">
+                            <h3 className="text-sm font-semibold leading-tight mb-1 line-clamp-2"
+                              style={{ color: "var(--texto-primario)" }}>
+                              {ev.titulo}
+                            </h3>
+                            {ev.descripcion && (
+                              <p className="text-xs line-clamp-2" style={{ color: "var(--texto-muted)" }}>
+                                {ev.descripcion}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Footer: hora + ámbito */}
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t" style={{ borderColor: "var(--gris-borde)" }}>
+                            <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--texto-muted)" }}>
+                              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {fmtHora(ev.fechaInicio, ev.fechaFin)}
+                            </span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: acento.from }}>
+                              {ev.esGlobal ? "EGM" : "Empresa"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>

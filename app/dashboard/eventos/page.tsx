@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/comunidad";
 import { ModalEvento } from "@/components/eventos/ModalEvento";
 import { ModalUbicacion } from "@/components/eventos/ModalUbicacion";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type EstadoEvento = "PROXIMO" | "EN_CURSO" | "FINALIZADO";
@@ -44,6 +45,14 @@ function formatHoras(ev: ComunidadEvento) {
   return `${ini} – ${fin}`;
 }
 
+// ── Acento de color por estado ───────────────────────────────────────────────
+type AcentoEvento = { from: string; to: string };
+const ACENTO_POR_ESTADO: Record<EstadoEvento, AcentoEvento> = {
+  PROXIMO:    { from: "#6B21A8", to: "#EC4899" },  // Púrpura → Rosa (próximo)
+  EN_CURSO:   { from: "#15803D", to: "#14B8A6" },  // Verde → Teal (hoy / en curso)
+  FINALIZADO: { from: "#6b7280", to: "#9ca3af" },  // Gris (pasado — apagado)
+};
+
 // ── Card de evento ────────────────────────────────────────────────────────────
 function EventoCard({
   evento, puedeEditar, onEditar, onDesactivar, onVerUbicacion,
@@ -60,6 +69,7 @@ function EventoCard({
   const estado  = calcEstado(evento);
   const cfg     = ESTADO_CONFIG[estado];
   const pasado  = estado === "FINALIZADO";
+  const acento  = ACENTO_POR_ESTADO[estado];
   const fechaIni = new Date(evento.fechaInicio);
 
   const irAlDetalle = () => router.push(`/dashboard/eventos/${evento.eventoId}`);
@@ -82,12 +92,36 @@ function EventoCard({
       style={{
         background:  "#ffffff",
         border:      "1px solid rgba(0,0,0,0.07)",
-        boxShadow:   hovered ? "0 8px 28px rgba(0,0,0,0.11)" : "0 2px 12px rgba(0,0,0,0.06)",
-        transform:   hovered ? "translateY(-2px)" : "translateY(0)",
+        boxShadow:   hovered ? `0 12px 32px ${acento.from}28` : "0 2px 12px rgba(0,0,0,0.06)",
+        transform:   hovered ? "translateY(-3px)" : "translateY(0)",
         transition:  "box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.20,0.64,1)",
         opacity:     pasado ? 0.72 : 1,
       }}
     >
+      {/* Glow superior difuminado hacia el centro */}
+      {!pasado && (
+        <>
+          {/* Línea fina sólida arriba */}
+          <div
+            className="absolute top-0 left-0 right-0 pointer-events-none"
+            style={{
+              height: 3,
+              background: `linear-gradient(90deg, ${acento.from} 0%, ${acento.to} 100%)`,
+            }}
+          />
+          {/* Halo difuminado bajando hacia el centro del card */}
+          <div
+            className="absolute top-0 left-0 right-0 pointer-events-none"
+            style={{
+              height: 120,
+              background: `linear-gradient(180deg,
+                ${acento.from}33 0%,
+                ${acento.to}1A 35%,
+                transparent 100%)`,
+            }}
+          />
+        </>
+      )}
       {/* Badge estado (esquina sup. izq.) + Menú admin (esquina sup. der.) */}
       <div className="absolute top-3 left-3 z-10">
         <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
@@ -129,8 +163,9 @@ function EventoCard({
           <div className="shrink-0 rounded-xl flex flex-col items-center justify-center px-3 py-2"
             style={{
               minWidth: 60,
-              background: pasado ? "#f3f4f6" : "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
-              color: pasado ? "#9ca3af" : "var(--azul-egm)",
+              background: pasado ? "#f3f4f6" : `linear-gradient(135deg, ${acento.from} 0%, ${acento.to} 100%)`,
+              color: pasado ? "#9ca3af" : "#ffffff",
+              boxShadow: pasado ? "none" : `0 4px 12px ${acento.from}40`,
             }}>
             <span className="text-2xl font-bold leading-none">{fechaIni.getDate()}</span>
             <span className="text-[10px] font-semibold uppercase tracking-wider leading-none mt-1">
@@ -262,6 +297,7 @@ export default function EventosPage() {
   const [modalOpen,  setModalOpen]  = useState(false);
   const [editando,   setEditando]   = useState<ComunidadEvento | null>(null);
   const [verUbicacion, setVerUbicacion] = useState<ComunidadEvento | null>(null);
+  const [confirmDesactivar, setConfirmDesactivar] = useState<ComunidadEvento | null>(null);
 
   const mostrarToast = useCallback((msg: string, tipo: "ok" | "err" = "ok") => {
     setToast({ msg, tipo });
@@ -278,8 +314,10 @@ export default function EventosPage() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  async function handleDesactivar(evento: ComunidadEvento) {
-    if (!confirm(`¿Cancelar el evento "${evento.titulo}"?`)) return;
+  async function ejecutarDesactivar() {
+    if (!confirmDesactivar) return;
+    const evento = confirmDesactivar;
+    setConfirmDesactivar(null);
     try {
       await desactivarEventoComunidad(evento.eventoId);
       setEventos(prev => prev.filter(e => e.eventoId !== evento.eventoId));
@@ -300,7 +338,17 @@ export default function EventosPage() {
 
   // Separar próximos/en curso de pasados
   const activos  = eventos.filter(e => calcEstado(e) !== "FINALIZADO");
-  const pasados  = eventos.filter(e => calcEstado(e) === "FINALIZADO");
+  let pasados   = eventos.filter(e => calcEstado(e) === "FINALIZADO");
+
+  // El empleado solo ve eventos finalizados hace ≤ 10 días.
+  // Los admins (empresa/superadmin) ven todo el historial para poder gestionarlo.
+  if (!puedeEditar) {
+    const limite = Date.now() - 10 * 24 * 60 * 60 * 1000;
+    pasados = pasados.filter(e => {
+      const fin = e.fechaFin ? new Date(e.fechaFin).getTime() : new Date(e.fechaInicio).getTime();
+      return fin >= limite;
+    });
+  }
 
   // Ordenar: futuros ascendente, pasados descendente
   activos.sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime());
@@ -347,10 +395,10 @@ export default function EventosPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activos.map(e => (
+              {activos.map((e) => (
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
-                  onDesactivar={handleDesactivar}
+                  onDesactivar={setConfirmDesactivar}
                   onVerUbicacion={setVerUbicacion}
                 />
               ))}
@@ -365,10 +413,10 @@ export default function EventosPage() {
               Anteriores
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pasados.map(e => (
+              {pasados.map((e) => (
                 <EventoCard key={e.eventoId} evento={e} puedeEditar={puedeEditar}
                   onEditar={handleEditar}
-                  onDesactivar={handleDesactivar}
+                  onDesactivar={setConfirmDesactivar}
                   onVerUbicacion={setVerUbicacion}
                 />
               ))}
@@ -386,6 +434,17 @@ export default function EventosPage() {
           onGuardado={handleGuardado}
         />
       )}
+
+      {/* Modal confirmar cancelar evento */}
+      <ModalConfirm
+        abierto={!!confirmDesactivar}
+        titulo="¿Cancelar este evento?"
+        descripcion={confirmDesactivar ? `"${confirmDesactivar.titulo}" quedará cancelado y desaparecerá del listado.` : ""}
+        textoConfirmar="Cancelar evento"
+        variante="danger"
+        onConfirmar={ejecutarDesactivar}
+        onCancelar={() => setConfirmDesactivar(null)}
+      />
 
       {/* Modal Ver ubicación */}
       {verUbicacion && verUbicacion.latitud != null && verUbicacion.longitud != null && (

@@ -26,7 +26,6 @@ const SolicitudesPendientes: React.FC = () => {
       const data = await getSolicitudesPendientes();
       setSolicitudes(data);
     } catch (err: any) {
-      console.error("Error cargando solicitudes:", err);
       setError("No se pudieron cargar las solicitudes pendientes.");
     } finally {
       setIsLoading(false);
@@ -56,7 +55,6 @@ const SolicitudesPendientes: React.FC = () => {
       setProcesando(null);
       setTimeout(() => setAviso(null), 4000);
     } catch (error) {
-      console.error(`Error al ${accion}:`, error);
       setProcesando(null);
       setAviso({
         tipo: "error",

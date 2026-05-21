@@ -16,21 +16,21 @@ const MOCK_SERVICIOS: Servicio[] = [
   {
     servicioId: "m1", titulo: "Autobús lanzadera", categoria: "MOVILIDAD",
     descripcion: "Líneas 7 y 7P con frecuencias adaptadas al horario laboral. Bonos desde 7,50 €/mes.",
-    iconoUrl: "transporte", urlInfo: "https://atalayas.com/autobus-lanzadera/",
+    iconoUrl: "bus-front", urlInfo: "https://atalayas.com/autobus-lanzadera/",
     telefono: null, comoAcceder: "Adquiere tu bono en el portal de movilidad o en la parada de la línea 7.",
     creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
   },
   {
     servicioId: "m2", titulo: "Coche compartido", categoria: "MOVILIDAD",
     descripcion: "Plataforma Journify para compartir trayectos con compañeros del área. Ahorro de hasta 2.500 €/año.",
-    iconoUrl: "parking", urlInfo: "https://atalayas.com/journify-coche-compartido/",
+    iconoUrl: "car-front-fill", urlInfo: "https://atalayas.com/journify-coche-compartido/",
     telefono: null, comoAcceder: "Regístrate en Journify con tu correo corporativo y publica o busca tu ruta habitual.",
     creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
   },
   {
     servicioId: "m3", titulo: "Aparcamiento VAO", categoria: "MOVILIDAD",
     descripcion: "Plazas exclusivas para vehículos de alta ocupación (3-5 personas). Solicitud renovable cada 6 meses.",
-    iconoUrl: "parking", urlInfo: "https://atalayas.com/aparcamientovao/",
+    iconoUrl: "p-circle", urlInfo: "https://atalayas.com/aparcamientovao/",
     telefono: null, comoAcceder: "Forma un grupo de 3 a 5 trabajadores, registraos en Journify y solicitad la tarjeta VAO en recepción.",
     creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
   },
@@ -52,7 +52,7 @@ const MOCK_SERVICIOS: Servicio[] = [
   {
     servicioId: "i3", titulo: "Oficinas y salas de reuniones", categoria: "INSTALACIONES",
     descripcion: "Oficinas amuebladas desde 20 m² y salas de reuniones para alquiler puntual.",
-    iconoUrl: "formacion", urlInfo: null,
+    iconoUrl: "people-fill", urlInfo: null,
     telefono: null, comoAcceder: "Contacta con recepción para consultar disponibilidad y tarifas.",
     creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
   },
@@ -82,7 +82,7 @@ const MOCK_SERVICIOS: Servicio[] = [
   {
     servicioId: "c2", titulo: "Correos y paquetería", categoria: "COMUNES",
     descripcion: "Buzones centralizados para todas las empresas del parque. Atención al público de 11:30 a 13:30.",
-    iconoUrl: "compras", urlInfo: null,
+    iconoUrl: "box-seam-fill", urlInfo: null,
     telefono: null, comoAcceder: "Accede directamente a la zona de buzones en el edificio central en el horario indicado.",
     creadoPor: null, activo: true, creadoEn: "", actualizadoEn: "",
   },
@@ -111,15 +111,28 @@ const CATEGORIAS: { value: CategoriaServicio; label: string; icono: React.ReactN
   },
 ];
 
-// ── Fila de servicio ──────────────────────────────────────────────────────────
-function FilaServicio({
-  servicio, esSuperAdmin, onEditar, onDesactivar,
+// ── Card de servicio (todas grandes, color rotativo) ─────────────────────────
+type AcentoColor = { from: string; to: string };
+
+/** Paleta de colores que se rotan por índice — variedad cromática */
+const PALETA_COLORES: AcentoColor[] = [
+  { from: "#1B3F7E", to: "#2A5298" },  // Azul EGM
+  { from: "#0F766E", to: "#14B8A6" },  // Verde teal
+  { from: "#B45309", to: "#F59E0B" },  // Naranja-ámbar
+  { from: "#6B21A8", to: "#9333EA" },  // Púrpura
+  { from: "#BE185D", to: "#EC4899" },  // Rosa
+  { from: "#B91C1C", to: "#EF4444" },  // Rojo-coral
+];
+
+function CardServicio({
+  servicio, esSuperAdmin, onEditar, onDesactivar, acento,
 }: {
   servicio: Servicio; esSuperAdmin: boolean;
   onEditar: (s: Servicio) => void; onDesactivar: (s: Servicio) => void;
+  acento: AcentoColor;
 }) {
-  const [expandido, setExpandido] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered, setHovered]   = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const iconoNode = getIconoBeneficio(servicio.iconoUrl);
 
@@ -134,147 +147,140 @@ function FilaServicio({
 
   return (
     <div
-      className="flex flex-col"
+      className="relative flex flex-col h-full rounded-2xl p-6 sm:p-8"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
-        transition: "background 0.15s ease",
+        background:  `linear-gradient(135deg, ${acento.from} 0%, ${acento.to} 100%)`,
+        color:       "#ffffff",
+        boxShadow:   hovered ? `0 16px 40px ${acento.from}55` : `0 4px 24px ${acento.from}30`,
+        transform:   hovered ? "translateY(-3px)" : "translateY(0)",
+        transition:  "box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.20,0.64,1)",
+        overflow:    "hidden",
       }}
     >
-      {/* Fila principal */}
-      <button
-        type="button"
-        onClick={() => setExpandido(p => !p)}
-        className="flex items-center gap-4 px-5 py-4 text-left w-full"
-        style={{ background: "transparent", border: "none", cursor: "pointer" }}
-        onMouseEnter={e => { e.currentTarget.style.background = "rgba(27,63,126,0.03)"; }}
-        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-      >
-        {/* Icono */}
-        <div
-          className="shrink-0 rounded-xl flex items-center justify-center"
-          style={{
-            width: "44px", height: "44px",
-            background: "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
-            color: "var(--azul-egm)",
-            boxShadow: "inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 4px rgba(27,63,126,0.10)",
-            position: "relative", overflow: "hidden", flexShrink: 0,
-          }}
-        >
-          {iconoNode ? (
-            <span style={{
-              position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%,-50%) scale(0.61)", display: "flex",
-            }}>
-              {iconoNode}
-            </span>
-          ) : (
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* Decoración: círculo difuminado abajo derecha */}
+      <div className="pointer-events-none" style={{
+        position: "absolute", right: "-60px", bottom: "-60px", width: 220, height: 220,
+        borderRadius: "50%", background: "rgba(255,255,255,0.10)",
+      }} />
+
+      {/* Menú admin esquina sup. derecha */}
+      {esSuperAdmin && (
+        <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 12, right: 12, zIndex: 5 }}>
+          <button
+            onClick={() => setMenuOpen(p => !p)}
+            className="flex items-center justify-center rounded-lg"
+            style={{
+              width: 30, height: 30,
+              background: menuOpen ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.12)",
+              border: "none", cursor: "pointer", color: "#fff",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.20)"; }}
+            onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
+          >
+            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
             </svg>
-          )}
-        </div>
-
-        {/* Texto */}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm leading-snug" style={{ color: "#111827" }}>
-            {servicio.titulo}
-          </p>
-          {servicio.descripcion && !expandido && (
-            <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "#6b7280" }}>
-              {servicio.descripcion}
-            </p>
-          )}
-        </div>
-
-        {/* Acciones SuperAdmin */}
-        {esSuperAdmin && (
-          <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: "relative", flexShrink: 0 }}>
-            <button
-              onClick={() => setMenuOpen(p => !p)}
-              className="flex items-center justify-center rounded-lg"
-              style={{
-                width: "30px", height: "30px",
-                background: menuOpen ? "rgba(0,0,0,0.06)" : "transparent",
-                border: "none", cursor: "pointer", color: "#9ca3af",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
-              onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = "transparent"; }}
-            >
-              <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-              </svg>
-            </button>
-            {menuOpen && (
-              <div style={{
-                position: "absolute", right: 0, top: "calc(100% + 6px)", width: "180px", zIndex: 20,
-                background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "14px",
-                boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px",
-              }}>
-                <MenuBtn label="Editar" onClick={() => { setMenuOpen(false); onEditar(servicio); }}
-                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
-                />
-                <MenuBtn label="Desactivar" danger onClick={() => { setMenuOpen(false); onDesactivar(servicio); }}
-                  icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Chevron expandir */}
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-          style={{
-            color: "#9ca3af", flexShrink: 0,
-            transform: expandido ? "rotate(90deg)" : "rotate(0deg)",
-            transition: "transform 0.2s cubic-bezier(0.34,1.20,0.64,1)",
-          }}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Detalle expandido */}
-      <div style={{
-        overflow: "hidden",
-        maxHeight: expandido ? "400px" : "0px",
-        opacity: expandido ? 1 : 0,
-        transition: "max-height 0.28s cubic-bezier(0.34,1.20,0.64,1), opacity 0.2s ease",
-      }}>
-        <div className="px-5 pb-5 flex flex-col gap-3" style={{ paddingLeft: "77px" }}>
-          {servicio.descripcion && (
-            <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>{servicio.descripcion}</p>
-          )}
-          {servicio.comoAcceder && (
-            <div className="flex items-start gap-2.5 rounded-xl px-3 py-2.5" style={{ background: "rgba(27,63,126,0.05)" }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                style={{ color: "var(--azul-egm)", flexShrink: 0, marginTop: "2px" }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--azul-egm)" }}>{servicio.comoAcceder}</p>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)", width: 180, zIndex: 20,
+              background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14,
+              boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: 6, color: "#111827",
+            }}>
+              <MenuBtn label="Editar" onClick={() => { setMenuOpen(false); onEditar(servicio); }}
+                icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
+              />
+              <MenuBtn label="Desactivar" danger onClick={() => { setMenuOpen(false); onDesactivar(servicio); }}
+                icon={<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
+              />
             </div>
           )}
-          <div className="flex items-center gap-4 flex-wrap">
-            {servicio.urlInfo && (
-              <a href={servicio.urlInfo} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                style={{ color: "var(--azul-egm)" }}>
-                Más información
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            )}
-            {servicio.telefono && (
-              <a href={`tel:${servicio.telefono}`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                style={{ color: "#6b7280" }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                {servicio.telefono}
-              </a>
-            )}
-          </div>
         </div>
+      )}
+
+      {/* Icono */}
+      <div
+        className="shrink-0 rounded-2xl flex items-center justify-center mb-3"
+        style={{
+          width: 84, height: 84,
+          background: "rgba(255,255,255,0.18)",
+          color: "#ffffff",
+          backdropFilter: "blur(8px)",
+          position: "relative", overflow: "hidden",
+          border: "1px solid rgba(255,255,255,0.18)",
+        }}
+      >
+        {iconoNode ? (
+          <span style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%,-50%) scale(1.2)", display: "flex",
+          }}>
+            {iconoNode}
+          </span>
+        ) : (
+          <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+      </div>
+
+      {/* Título */}
+      <h3 className="font-bold leading-snug mb-2 text-2xl"
+        style={{ color: "#ffffff", paddingRight: esSuperAdmin ? "32px" : "0", position: "relative", zIndex: 2 }}>
+        {servicio.titulo}
+      </h3>
+
+      {/* Descripción */}
+      {servicio.descripcion && (
+        <p className="leading-relaxed mb-3 line-clamp-4 text-base"
+          style={{ color: "rgba(255,255,255,0.82)", position: "relative", zIndex: 2 }}>
+          {servicio.descripcion}
+        </p>
+      )}
+
+      {/* Cómo acceder */}
+      {servicio.comoAcceder && (
+        <div className="flex items-start gap-2 rounded-xl px-3 py-2 mb-3"
+          style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", position: "relative", zIndex: 2 }}>
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            style={{ color: "#fff", flexShrink: 0, marginTop: 2 }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-xs leading-snug" style={{ color: "#fff" }}>{servicio.comoAcceder}</p>
+        </div>
+      )}
+
+      {/* Footer: enlaces */}
+      <div className="mt-auto pt-3 flex items-center gap-4 flex-wrap"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.18)",
+          position: "relative", zIndex: 2,
+        }}>
+        {servicio.urlInfo && (
+          <a href={servicio.urlInfo} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline"
+            style={{ color: "#fff" }}>
+            Más información
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        )}
+        {servicio.telefono && (
+          <a href={`tel:${servicio.telefono}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline"
+            style={{ color: "rgba(255,255,255,0.85)" }}>
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            {servicio.telefono}
+          </a>
+        )}
+        {!servicio.urlInfo && !servicio.telefono && (
+          <span className="text-xs italic" style={{ color: "rgba(255,255,255,0.65)" }}>Sin enlace externo</span>
+        )}
       </div>
     </div>
   );
@@ -311,13 +317,16 @@ function MenuBtn({ label, icon, danger = false, onClick }: {
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
-function SkeletonFila() {
+function SkeletonCard() {
   return (
-    <div className="flex items-center gap-4 px-5 py-4" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-      <div className="rounded-xl shrink-0" style={{ width: 44, height: 44, background: "#e5e7eb" }} />
-      <div className="flex-1 flex flex-col gap-2">
-        <div style={{ height: 14, width: "40%", background: "#e5e7eb", borderRadius: 6 }} />
-        <div style={{ height: 11, width: "65%", background: "#f3f4f6", borderRadius: 6 }} />
+    <div className="flex flex-col gap-3 rounded-2xl p-5"
+      style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+      <div className="rounded-2xl" style={{ width: 56, height: 56, background: "#e5e7eb" }} />
+      <div style={{ height: 16, width: "70%", background: "#e5e7eb", borderRadius: 6 }} />
+      <div style={{ height: 12, width: "100%", background: "#f3f4f6", borderRadius: 6 }} />
+      <div style={{ height: 12, width: "85%", background: "#f3f4f6", borderRadius: 6 }} />
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ height: 12, width: "40%", background: "#f3f4f6", borderRadius: 6 }} />
       </div>
     </div>
   );
@@ -399,46 +408,45 @@ export default function ServiciosPage() {
         </div>
       )}
 
-      <div className="px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+      <div className="px-4 sm:px-6 lg:px-8 flex flex-col gap-10">
         {cargando ? (
-          // Skeleton agrupado
+          // Skeleton agrupado (grid)
           CATEGORIAS.map(cat => (
-            <div key={cat.value} className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-              <div className="flex items-center gap-3 px-5 py-3.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", background: "#f9fafb" }}>
-                <div style={{ width: 18, height: 18, background: "#e5e7eb", borderRadius: 4 }} />
-                <div style={{ width: 100, height: 14, background: "#e5e7eb", borderRadius: 6 }} />
+            <section key={cat.value}>
+              <div className="mb-6">
+                <h2 className="font-bold" style={{ color: "#111827", fontSize: "clamp(1.75rem, 3vw, 2.5rem)", letterSpacing: "-0.02em" }}>
+                  {cat.label}
+                </h2>
               </div>
-              {[1, 2].map(i => <SkeletonFila key={i} />)}
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
+              </div>
+            </section>
           ))
         ) : (
           porCategoria.map(grupo => (
-            <div key={grupo.value}
-              className="rounded-2xl overflow-hidden"
-              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}
-            >
+            <section key={grupo.value}>
               {/* Cabecera de categoría */}
-              <div className="flex items-center gap-3 px-5 py-3.5"
-                style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", background: "#f9fafb" }}>
-                <span style={{ color: "var(--azul-egm)" }}>{grupo.icono}</span>
-                <span className="font-semibold text-sm" style={{ color: "#374151" }}>{grupo.label}</span>
-                <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)" }}>
-                  {grupo.items.length}
-                </span>
+              <div className="mb-6">
+                <h2 className="font-bold" style={{ color: "#111827", fontSize: "clamp(1.75rem, 3vw, 2.5rem)", letterSpacing: "-0.02em" }}>
+                  {grupo.label}
+                </h2>
               </div>
 
-              {/* Filas */}
-              {grupo.items.map(s => (
-                <FilaServicio
-                  key={s.servicioId}
-                  servicio={s}
-                  esSuperAdmin={esSuperAdmin}
-                  onEditar={s => { setEditando(s); setModalOpen(true); }}
-                  onDesactivar={s => setConfirmDes(s)}
-                />
-              ))}
-            </div>
+              {/* Grid uniforme — todas grandes con colores rotativos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {grupo.items.map((s, i) => (
+                  <CardServicio
+                    key={s.servicioId}
+                    servicio={s}
+                    esSuperAdmin={esSuperAdmin}
+                    onEditar={s => { setEditando(s); setModalOpen(true); }}
+                    onDesactivar={s => setConfirmDes(s)}
+                    acento={PALETA_COLORES[i % PALETA_COLORES.length]}
+                  />
+                ))}
+              </div>
+            </section>
           ))
         )}
       </div>
