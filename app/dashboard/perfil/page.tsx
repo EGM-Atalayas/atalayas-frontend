@@ -9,10 +9,10 @@ import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
-  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight, Upload,
+  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight,
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
-import { subirImagenBanner } from "@/lib/supabase";
+
 import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
@@ -169,8 +169,6 @@ export default function PerfilPage() {
 
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [savingBanner, setSavingBanner] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
-  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   // ── Datos de empresa ──
   const [editandoEmpresa, setEditandoEmpresa] = useState(false);
@@ -424,26 +422,6 @@ export default function PerfilPage() {
     await patchPerfil({ bannerUrl: src });
     setSavingBanner(false);
     setShowBannerPicker(false);
-  };
-
-  const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    if (file.size > 50 * 1024 * 1024) {
-      alert("La imagen no debe exceder 50 MB.");
-      return;
-    }
-    setUploadingBanner(true);
-    try {
-      const url = await subirImagenBanner(file);
-      await patchPerfil({ bannerUrl: url });
-      setShowBannerPicker(false);
-    } catch {
-      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
-    } finally {
-      setUploadingBanner(false);
-    }
   };
 
   const handleEnviarSugerencia = async () => {
@@ -1472,39 +1450,6 @@ export default function PerfilPage() {
 
               {/* Grupos de imágenes */}
               <div className="px-8 py-7 flex flex-col gap-8 overflow-y-auto" style={{ maxHeight: "65vh" }}>
-
-                {/* Subir imagen personalizada */}
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "var(--texto-muted)" }}>
-                    Subir imagen
-                  </p>
-                  <input ref={bannerFileRef} type="file" accept="image/*" className="hidden" onChange={handleUploadBanner} />
-                  <button
-                    onClick={() => bannerFileRef.current?.click()}
-                    disabled={uploadingBanner}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-6 rounded-xl border-2 border-dashed transition-all"
-                    style={{
-                      borderColor: "var(--gris-borde)",
-                      color: "var(--texto-muted)",
-                      background: uploadingBanner ? "var(--gris-pagina)" : "transparent",
-                      cursor: uploadingBanner ? "not-allowed" : "pointer",
-                    }}
-                    onMouseEnter={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; e.currentTarget.style.color = "var(--azul-egm)"; } }}
-                    onMouseLeave={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; } }}
-                  >
-                    {uploadingBanner ? (
-                      <>
-                        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-                        <span className="text-sm font-semibold">Subiendo...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={20} />
-                        <span className="text-sm font-semibold">Elige un archivo de tu ordenador</span>
-                      </>
-                    )}
-                  </button>
-                </div>
 
                 {BANNER_GRUPOS.map((grupo) => (
                   <div key={grupo.grupo}>
