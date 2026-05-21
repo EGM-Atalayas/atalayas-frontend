@@ -17,18 +17,21 @@ import {
   UserCircle,
   Building2,
   Megaphone,
-  Sparkles,
 } from "lucide-react";
 
-//  Configuración de pasos 
+interface GuiaSubStep {
+  desc: string;
+  /** CSS selector para encontrar el elemento a resaltar */
+  selector?: string;
+  /** Label del nav del header (legacy) */
+  navLabel?: string;
+}
+
 interface GuiaStep {
   route: string;
   icon: React.ReactNode;
   title: string;
-  desc: string;
-  /** Label del nav al que apunta la flecha (sección actual) */
-  navLabel?: string;
-  /** Label del nav al que ir despus */
+  subSteps: GuiaSubStep[];
   nextNavLabel?: string;
   nextRoute?: string;
   isLast?: boolean;
@@ -37,13 +40,29 @@ interface GuiaStep {
 const ICON_CLS = "shrink-0";
 const ICON_STYLE = { color: "var(--azul-egm, #1b3f7e)" };
 
-const STEPS_EMPLEADO: GuiaStep[] = [
+const SUB_STEPS_EMPLEADO: GuiaStep[] = [
   {
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Panel principal",
-    desc: "Aquí empieza tu día en Atalayas. Verás un saludo personalizado con tu nombre, los servicios del parque empresarial (coche compartido, autobús lanzadera, aparcamiento, guardería, descuentos), un carrusel con las últimas comunicaciones y noticias, tus cursos de formación en curso con su progreso, y los próximos eventos de la comunidad. Todo tu entorno laboral en una sola pantalla.",
-    navLabel: "Inicio",
+    subSteps: [
+      {
+        desc: 'Aquí empieza tu día en Atalayas. Arriba tienes el menú principal con todas las secciones: Formación, Comunicación, Comunidad, Colaboradores y Tu perfil. Usa este menú para navegar por la plataforma.',
+        navLabel: "Inicio",
+      },
+      {
+        desc: 'Este es tu saludo personalizado. Aquí aparecerá tu nombre y un resumen rápido de tu actividad. Más abajo verás los servicios del parque empresarial: coche compartido, autobús lanzadera, aparcamiento, guardería y descuentos.',
+        selector: "[style*='8px 40px'], h1",
+      },
+      {
+        desc: 'El carrusel de comunicaciones te muestra las últimas noticias y anuncios importantes. Puedes deslizar para ver más comunicados.',
+        selector: "section:has(a[href='/dashboard/comunicacion'])",
+      },
+      {
+        desc: 'Tus cursos de formación en curso aparecen aquí con su barra de progreso. También verás los próximos eventos de la comunidad.',
+        selector: "section:has(a[href='/dashboard/formacion'])",
+      },
+    ],
     nextNavLabel: "Formación",
     nextRoute: "/dashboard/formacion",
   },
@@ -51,8 +70,21 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/formacion",
     icon: <GraduationCap size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Formación",
-    desc: "El centro de aprendizaje. Aquí tienes tu programa de onboarding con los módulos de incorporación a la empresa, cada uno con su barra de progreso. Más abajo está la formación continua con todos los cursos disponibles. Puedes buscar por nombre, filtrar por tipo de módulo o por estado (pendiente, en progreso, completado). Cada curso incluye imagen, duración, descripción y un botón para empezar, continuar o descargar el certificado.",
-    navLabel: "Formación",
+    subSteps: [
+      {
+        desc: 'Aquí tienes tu programa de onboarding. Cada módulo de incorporación muestra su barra de progreso para que sepas cómo vas.',
+        navLabel: "Formación",
+        selector: "[class*='onboarding'], [class*='incorporacion']",
+      },
+      {
+        desc: 'Más abajo está la formación continua con todos los cursos disponibles. Cada curso incluye imagen, duración, descripción y un botón para empezar, continuar o descargar el certificado.',
+        selector: "[class*='continua'], [class*='cursos'], section",
+      },
+      {
+        desc: 'Puedes buscar cursos por nombre, filtrar por tipo de módulo o por estado (pendiente, en progreso, completado) para encontrar lo que necesites rápidamente.',
+        selector: "#onboarding div[class*='gap-3']",
+      },
+    ],
     nextNavLabel: "Comunicación",
     nextRoute: "/dashboard/comunicacion",
   },
@@ -60,8 +92,20 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/comunicacion",
     icon: <MessageSquare size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunicación",
-    desc: "Tu centro de comunicaciones. Aquí puedes filtrar entre comunicados de EGM Atalayas, anuncios de tu empresa o ver todos juntos. Las publicaciones más recientes aparecen como tarjetas destacadas con imagen de fondo, y el resto en una lista ordenada por fecha. Puedes buscar por texto, ordenar por más reciente o más antiguo, y al hacer clic en cualquier comunicación se abre un modal con el contenido completo, imágenes y enlaces.",
-    navLabel: "Comunicación",
+    subSteps: [
+      {
+        desc: 'Las publicaciones más recientes aparecen como tarjetas destacadas con imagen de fondo. Son las comunicaciones más importantes.',
+        navLabel: "Comunicación",
+      },
+      {
+        desc: 'El resto de comunicados están ordenados por fecha. Puedes filtrar entre comunicados de EGM Atalayas, anuncios de tu empresa o ver todos juntos pulsando estos botones.',
+        selector: "div[style*='scrollbarWidth']",
+      },
+      {
+        desc: 'Usa los filtros para buscar por texto, ordenar por más reciente o más antiguo. Al hacer clic en cualquier comunicación se abre un modal con el contenido completo.',
+        selector: "[class*='filter'], [class*='filtro'], [class*='search'], input",
+      },
+    ],
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
   },
@@ -69,8 +113,20 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad",
-    desc: "El punto de encuentro de la comunidad Atalayas. Desde aquí puedes acceder a tres secciones principales: Eventos (jornadas, networking y actividades del área empresarial), Servicios (bus lanzadera, coche compartido, aparcamiento y más), y Ventajas (descuentos en comercios, servicios y ocio). Cada tarjeta tiene una imagen de fondo representativa y al pasar el ratón se muestra más información.",
-    navLabel: "Comunidad",
+    subSteps: [
+      {
+        desc: 'Este es el punto de encuentro de la comunidad Atalayas. Aquí encontrarás Eventos como jornadas, networking y actividades del área empresarial.',
+        navLabel: "Comunidad",
+      },
+      {
+        desc: 'También tienes Servicios del parque empresarial: bus lanzadera, coche compartido, aparcamiento y más. Cada tarjeta tiene una imagen de fondo representativa.',
+        selector: "[class*='servicio'], [class*='service'], section",
+      },
+      {
+        desc: 'Y en Ventajas encontrarás descuentos en comercios, servicios y ocio. Al pasar el ratón sobre cada tarjeta se muestra más información.',
+        selector: "[class*='md:grid-cols-3'] button:nth-child(3)",
+      },
+    ],
     nextNavLabel: "Colaboradores",
     nextRoute: "/dashboard/colaboradores",
   },
@@ -78,8 +134,16 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/colaboradores",
     icon: <UserPlus size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Colaboradores",
-    desc: "El ecosistema de entidades colaboradoras de Atalayas. Aquí encontrarás tres categorías desplegables: Universidades (como la Universidad de Alicante y la UMH), Parques Científicos e Institutos Tecnológicos (AIJU, INESCOP, AITEX). Cada entidad muestra su logo, descripción y un enlace a su página web. Es tu red de conocimiento e innovación.",
-    navLabel: "Colaboradores",
+    subSteps: [
+      {
+        desc: 'El ecosistema de entidades colaboradoras de Atalayas. Aquí encontrarás Universidades como la Universidad de Alicante y la UMH.',
+        navLabel: "Colaboradores",
+      },
+      {
+        desc: 'También hay Parques Científicos e Institutos Tecnológicos como AIJU, INESCOP y AITEX. Cada entidad muestra su logo, descripción y un enlace a su web.',
+        selector: "button[class*='p-6']",
+      },
+    ],
     nextNavLabel: "Tu perfil",
     nextRoute: "/dashboard/perfil",
   },
@@ -87,19 +151,47 @@ const STEPS_EMPLEADO: GuiaStep[] = [
     route: "/dashboard/perfil",
     icon: <UserCircle size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Tu perfil",
-    desc: "Tu espacio personal. Aquí puedes cambiar tu foto de avatar y la imagen de portada con tu propia imagen o eligiendo entre varias galerías temáticas. Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, teléfono y email. Los administradores también pueden cambiar la disponibilidad (Disponible, Teletrabajo, Ocupado, Vacaciones, Ausente). Además tienes un buzón de sugerencias para enviar tus ideas a EGM Atalayas y acceso a tus documentos.",
-    navLabel: "Tu perfil",
+    subSteps: [
+      {
+        desc: 'Tu espacio personal. Aquí puedes cambiar tu foto de avatar y la imagen de portada, con tu propia imagen o eligiendo entre varias galerías temáticas.',
+        navLabel: "Tu perfil",
+      },
+      {
+        desc: 'Gestiona tus datos personales: nombre, apellidos, puesto de trabajo, teléfono y email. También tienes un buzón de sugerencias para enviar tus ideas a EGM Atalayas.',
+        selector: "div[class*='flex-col'][class*='gap-7']",
+      },
+      {
+        desc: 'Aquí puedes ver tus documentos asignados y usar el buzón de sugerencias para enviar tus ideas a EGM Atalayas.',
+        selector: "#mis-documentos",
+      },
+      {
+        desc: 'El buzón de sugerencias te permite enviar tus ideas, quejas o propuestas directamente a EGM Atalayas. Escribe tu mensaje y pulsa "Enviar".',
+        selector: "div[class*='flex-col'][class*='gap-4']",
+      },
+    ],
     isLast: true,
   },
 ];
 
-const STEPS_ADMIN: GuiaStep[] = [
+const SUB_STEPS_ADMIN: GuiaStep[] = [
   {
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Panel de administración",
-    desc: "Tu centro de control. Aquí ves un resumen completo de tu empresa: número de empleados activos, progreso medio de formación, módulos publicados y la actividad reciente de tu equipo. También tienes acceso rápido a las acciones más comunes: añadir empleado, gestionar módulos, crear un nuevo módulo o publicar un anuncio. Y en la parte inferior, los últimos comunicados publicados.",
-    navLabel: "Inicio",
+    subSteps: [
+      {
+        desc: 'Tu centro de control. Aquí ves un resumen completo de tu empresa: número de empleados activos, progreso medio de formación, módulos publicados y la actividad reciente de tu equipo.',
+        navLabel: "Inicio",
+      },
+      {
+        desc: 'Tienes acceso rápido a las acciones más comunes: añadir empleado, gestionar módulos, crear un nuevo módulo o publicar un anuncio.',
+        selector: "[class*='acceso'], [class*='quick'], [class*='action']",
+      },
+      {
+        desc: 'En la parte inferior, los últimos comunicados publicados para que no te pierdas nada.',
+        selector: "[class*='comunicado'], [class*='anuncio'], section",
+      },
+    ],
     nextNavLabel: "Administración",
     nextRoute: "/dashboard/admin",
   },
@@ -107,8 +199,20 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/admin",
     icon: <Building2 size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Administración",
-    desc: "El panel de gestión completa de tu empresa. Tiene 7 pestañas con herramientas especializadas: Empleados (gestiona tu plantilla), Incidencias (reporta y hace seguimiento), Anuncios (crea y publica comunicados), Eventos (organiza actividades), Módulos formativos (crea cursos), Documentos (sube y asigna archivos) y Estadísticas (exporta informes con filtros por departamento y periodo).",
-    navLabel: "Administración",
+    subSteps: [
+      {
+        desc: 'El panel de gestión completa de tu empresa. Tiene 7 pestañas con herramientas especializadas: Empleados, Incidencias, Anuncios, Eventos, Módulos, Documentos y Estadísticas.',
+        navLabel: "Administración",
+      },
+      {
+        desc: 'En Empleados puedes gestionar tu plantilla. En Incidencias puedes reportar y hacer seguimiento. Y en Anuncios puedes crear y publicar comunicados.',
+        selector: "[class*='tab'], [role='tab'], [class*='pestana']",
+      },
+      {
+        desc: 'En Módulos formativos puedes crear cursos. En Documentos puedes subir y asignar archivos. Y en Estadísticas puedes exportar informes con filtros por departamento y periodo.',
+        selector: "[class*='modulo'], [class*='documento'], [class*='estadistica']",
+      },
+    ],
     nextNavLabel: "Formación",
     nextRoute: "/dashboard/formacion",
   },
@@ -116,8 +220,16 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/formacion",
     icon: <GraduationCap size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Formación",
-    desc: "Gestiona la formación de tu empresa. Desde aquí puedes crear nuevos módulos formativos, editarlos y supervisar el progreso de tus empleados. La sección de onboarding muestra el programa de incorporación, y la formación continua incluye todos los cursos disponibles con filtros por tipo, estado y búsqueda por nombre.",
-    navLabel: "Formación",
+    subSteps: [
+      {
+        desc: 'Gestiona la formación de tu empresa. Desde aquí puedes crear nuevos módulos formativos, editarlos y supervisar el progreso de tus empleados.',
+        navLabel: "Formación",
+      },
+      {
+        desc: 'La sección de onboarding muestra el programa de incorporación, y la formación continua incluye todos los cursos disponibles con filtros por tipo y estado.',
+        selector: "[class*='onboarding'], [class*='cursos'], section",
+      },
+    ],
     nextNavLabel: "Comunicación",
     nextRoute: "/dashboard/comunicacion",
   },
@@ -125,8 +237,16 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/comunicacion",
     icon: <MessageSquare size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunicación",
-    desc: "El centro de comunicaciones de tu empresa. Aquí puedes crear y publicar anuncios para toda tu plantilla. También ves los comunicados de EGM Atalayas. Puedes filtrar por fuente (EGM o tu empresa), buscar por texto y ordenar por fecha. Los borradores pendientes de publicar aparecen en un panel amarillo destacado.",
-    navLabel: "Comunicación",
+    subSteps: [
+      {
+        desc: 'Crea y publica anuncios para toda tu plantilla. También ves los comunicados de EGM Atalayas.',
+        navLabel: "Comunicación",
+      },
+      {
+        desc: 'Puedes filtrar por fuente (EGM o tu empresa), buscar por texto y ordenar por fecha. Los borradores pendientes aparecen en un panel amarillo destacado.',
+        selector: "[class*='filter'], [class*='filtro'], input",
+      },
+    ],
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
   },
@@ -134,8 +254,16 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad",
-    desc: "El punto de encuentro de la comunidad Atalayas. Desde aquí tú y tus empleados podéis acceder a Eventos (jornadas y networking), Servicios del parque empresarial (bus lanzadera, coche compartido, aparcamiento) y Ventajas (descuentos en comercios y ocio).",
-    navLabel: "Comunidad",
+    subSteps: [
+      {
+        desc: 'El punto de encuentro de la comunidad Atalayas. Desde aquí tus empleados pueden acceder a Eventos, Servicios y Ventajas.',
+        navLabel: "Comunidad",
+      },
+      {
+        desc: 'Eventos incluye jornadas y networking. Servicios incluye bus lanzadera, coche compartido y aparcamiento. Ventajas incluye descuentos en comercios y ocio.',
+        selector: "[class*='evento'], [class*='servicio'], [class*='ventaja'], section",
+      },
+    ],
     nextNavLabel: "Colaboradores",
     nextRoute: "/dashboard/colaboradores",
   },
@@ -143,8 +271,12 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/colaboradores",
     icon: <UserPlus size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Colaboradores",
-    desc: "Gestiona el ecosistema de entidades colaboradoras. Aquí puedes ver y administrar las relaciones con Universidades (UA, UMH), Parques Científicos e Institutos Tecnológicos como AIJU, INESCOP y AITEX.",
-    navLabel: "Colaboradores",
+    subSteps: [
+      {
+        desc: 'Gestiona las entidades colaboradoras. Aquí puedes ver y administrar las relaciones con Universidades (UA, UMH), Parques Científicos e Institutos Tecnológicos.',
+        navLabel: "Colaboradores",
+      },
+    ],
     nextNavLabel: "Tu perfil",
     nextRoute: "/dashboard/perfil",
   },
@@ -152,19 +284,35 @@ const STEPS_ADMIN: GuiaStep[] = [
     route: "/dashboard/perfil",
     icon: <UserCircle size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Tu perfil",
-    desc: "Tu espacio personal con funciones añadidas de administrador. Además de gestionar tu avatar, portada y datos personales, puedes editar los datos de tu empresa: nombre, CIF, email de contacto y subir el logo corporativo con eliminación automática de fondo. También tienes acceso al buzón de sugerencias.",
-    navLabel: "Tu perfil",
+    subSteps: [
+      {
+        desc: 'Además de gestionar tu avatar, portada y datos personales, puedes editar los datos de tu empresa: nombre, CIF, email de contacto y subir el logo corporativo.',
+        navLabel: "Tu perfil",
+      },
+      {
+        desc: 'También tienes acceso al buzón de sugerencias para enviar tus ideas.',
+        selector: "[class*='sugerencia'], [class*='suggestion'], form",
+      },
+    ],
     isLast: true,
   },
 ];
 
-const STEPS_SUPERADMIN: GuiaStep[] = [
+const SUB_STEPS_SUPERADMIN: GuiaStep[] = [
   {
     route: "INIT",
     icon: <LayoutDashboard size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Panel de control global",
-    desc: "Tu centro de control de toda la plataforma. Aquí ves 6 tarjetas con las métricas clave: empresas adheridas, nuevas empresas del mes, empleados registrados, nuevos empleados, módulos publicados e incidencias críticas. También tienes una guía de configuración con 5 pasos para poner en marcha la plataforma, acceso rápido a la gestión de empresas y solicitudes pendientes, y un feed con la actividad reciente de toda la plataforma.",
-    navLabel: "Inicio",
+    subSteps: [
+      {
+        desc: 'Tu centro de control de toda la plataforma. Aquí ves 6 tarjetas con métricas clave: empresas adheridas, nuevas empresas del mes, empleados registrados y más.',
+        navLabel: "Inicio",
+      },
+      {
+        desc: 'También tienes una guía de configuración con 5 pasos para poner en marcha la plataforma, acceso rápido a la gestión de empresas y un feed con la actividad reciente.',
+        selector: "[class*='config'], [class*='guia'], [class*='guide'], section",
+      },
+    ],
     nextNavLabel: "Administración",
     nextRoute: "/superadmin/administracion",
   },
@@ -172,8 +320,16 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "/superadmin/administracion",
     icon: <Building2 size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Administración global",
-    desc: "La gestión central de la plataforma. Tiene 4 pestañas: Empresas (visualiza y gestiona todas las empresas, actívalas o desactívalas), Solicitudes (aprueba o rechaza las solicitudes de registro de nuevas empresas), Estadísticas (informes detallados) e Incidencias (haz seguimiento de todas las incidencias reportadas).",
-    navLabel: "Administración",
+    subSteps: [
+      {
+        desc: 'La gestión central de la plataforma. Tiene 4 pestañas: Empresas, Solicitudes, Estadísticas e Incidencias.',
+        navLabel: "Administración",
+      },
+      {
+        desc: 'En Empresas puedes activarlas o desactivarlas. En Solicitudes apruebas o rechazas nuevos registros. En Incidencias haces seguimiento de todas las reportadas.',
+        selector: "[class*='tab'], [role='tab'], [class*='pestana']",
+      },
+    ],
     nextNavLabel: "Comunicados",
     nextRoute: "/superadmin/comunicados",
   },
@@ -181,8 +337,12 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "/superadmin/comunicados",
     icon: <Megaphone size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunicados globales",
-    desc: "Crea y publica comunicados que llegarán a todas las empresas y empleados de la plataforma. Es la herramienta para comunicar decisiones importantes, novedades o información de interés general a toda la comunidad Atalayas.",
-    navLabel: "Comunicados",
+    subSteps: [
+      {
+        desc: 'Crea y publica comunicados que llegarán a todas las empresas y empleados de la plataforma. Ideal para decisiones importantes o info de interés general.',
+        navLabel: "Comunicados",
+      },
+    ],
     nextNavLabel: "Comunidad",
     nextRoute: "/dashboard/comunidad",
   },
@@ -190,8 +350,12 @@ const STEPS_SUPERADMIN: GuiaStep[] = [
     route: "/dashboard/comunidad",
     icon: <Users size={24} className={ICON_CLS} style={ICON_STYLE} />,
     title: "Comunidad global",
-    desc: "Supervisa la comunidad global de la plataforma. Aquí tú y todas las empresas podéis acceder a Eventos, Servicios del parque empresarial y Ventajas y descuentos. Es el escaparate de la actividad comunitaria de Atalayas.",
-    navLabel: "Comunidad",
+    subSteps: [
+      {
+        desc: 'Supervisa la comunidad global. Aquí todas las empresas pueden acceder a Eventos, Servicios del parque empresarial y Ventajas y descuentos.',
+        navLabel: "Comunidad",
+      },
+    ],
     isLast: true,
   },
 ];
@@ -200,16 +364,34 @@ const LS_KEY_PREFIX = "tutorial_step_";
 
 function getSteps(role?: string): GuiaStep[] {
   switch (role) {
-    case "ROLE_ADMIN": return STEPS_SUPERADMIN;
-    case "ROLE_ADMIN_EMPRESA": return STEPS_ADMIN;
-    default: return STEPS_EMPLEADO;
+    case "ROLE_ADMIN": return SUB_STEPS_SUPERADMIN;
+    case "ROLE_ADMIN_EMPRESA": return SUB_STEPS_ADMIN;
+    default: return SUB_STEPS_EMPLEADO;
   }
 }
 
 const CARD_WIDTH = 520;
 const ARROW_SIZE = 14;
 
-//  Componente 
+function findTargetElement(subStep: GuiaSubStep): Element | null {
+  if (subStep.selector) {
+    try {
+      const el = document.querySelector(subStep.selector);
+      if (el) return el;
+    } catch { }
+  }
+  if (subStep.navLabel) {
+    const nav = document.querySelector("header nav");
+    if (nav) {
+      const all = nav.querySelectorAll("button");
+      for (const btn of all) {
+        if ((btn.textContent?.trim().replace(/\s+/g, " ") ?? "") === subStep.navLabel) return btn;
+      }
+    }
+  }
+  return null;
+}
+
 export default function AppTutorial() {
   const { usuario } = useAuth();
   const pathname = usePathname();
@@ -220,13 +402,15 @@ export default function AppTutorial() {
 
   const [active, setActive] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
+  const [subStepIdx, setSubStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [tooltipSide, setTooltipSide] = useState<"bottom" | "top">("bottom");
   const [visible, setVisible] = useState(false);
+  const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lsKey = userId ? `${LS_KEY_PREFIX}${userId}` : null;
 
-  //  Inicializar 
   useEffect(() => {
     if (!lsKey || !userId) return;
     const saved = localStorage.getItem(lsKey);
@@ -238,7 +422,6 @@ export default function AppTutorial() {
     return () => clearTimeout(t);
   }, [lsKey, userId]);
 
-  //  Sincronizar paso con la ruta 
   useEffect(() => {
     if (!active) return;
     const cur = steps[stepIdx];
@@ -252,40 +435,46 @@ export default function AppTutorial() {
     setVisible(pathname === cur.route);
   }, [pathname, stepIdx, steps, active]);
 
-  //  Avance automático 
   useEffect(() => {
     if (!active || !lsKey) return;
     const next = steps.findIndex((s, i) => i > stepIdx && s.route === pathname);
     if (next !== -1) {
       setStepIdx(next);
+      setSubStepIdx(0);
       localStorage.setItem(lsKey, String(next));
     }
   }, [pathname, active, stepIdx, steps, lsKey]);
 
-  //  Buscar botón en el nav del header 
-  const findNavButton = useCallback((label: string): Element | null => {
-    const nav = document.querySelector("header nav");
-    if (!nav) return null;
-    const all = nav.querySelectorAll("button");
-    for (const btn of all) {
-      if ((btn.textContent?.trim().replace(/\s+/g, " ") ?? "") === label) return btn;
-    }
-    return null;
-  }, []);
-
-  //  Calcular posición 
   const measure = useCallback(() => {
-    if (!visible || !active) { setTargetRect(null); return; }
+    if (!visible || !active) { setTargetRect(null); setHighlightStyle(null); return; }
     const cur = steps[stepIdx];
-    if (!cur?.navLabel) { setTargetRect(null); return; }
+    if (!cur) { setTargetRect(null); setHighlightStyle(null); return; }
 
-    const el = findNavButton(cur.navLabel);
-    if (!el) { setTargetRect(null); return; }
+    const subStep = cur.subSteps[subStepIdx];
+    if (!subStep) { setTargetRect(null); setHighlightStyle(null); return; }
+
+    const el = findTargetElement(subStep);
+    if (!el) { setTargetRect(null); setHighlightStyle(null); return; }
 
     const r = el.getBoundingClientRect();
     setTargetRect(r);
     setTooltipSide(window.innerHeight - r.bottom < 240 ? "top" : "bottom");
-  }, [visible, active, stepIdx, steps, findNavButton]);
+
+    setHighlightStyle({
+      position: "fixed",
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+      borderRadius: 8,
+      boxShadow: "0 0 0 9999px rgba(0,0,0,0.55), 0 0 0 2px rgba(37,99,235,0.5), 0 0 24px rgba(37,99,235,0.3)",
+      pointerEvents: "none",
+      zIndex: 9997,
+      transition: "all 0.35s ease",
+    });
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [visible, active, stepIdx, subStepIdx, steps]);
 
   useEffect(() => {
     measure();
@@ -302,11 +491,21 @@ export default function AppTutorial() {
     };
   }, [measure]);
 
-  //  Acciones 
-  const goNext = useCallback(() => {
+  const advanceSubStep = useCallback(() => {
     const cur = steps[stepIdx];
-    if (cur?.nextRoute) router.push(cur.nextRoute);
-  }, [stepIdx, steps, router]);
+    if (!cur) return;
+    if (subStepIdx < cur.subSteps.length - 1) {
+      setSubStepIdx((prev) => prev + 1);
+    } else {
+      if (cur.isLast) {
+        if (lsKey) localStorage.setItem(lsKey, "COMPLETED");
+        setActive(false);
+        setVisible(false);
+      } else if (cur.nextRoute) {
+        router.push(cur.nextRoute);
+      }
+    }
+  }, [stepIdx, subStepIdx, steps, router, lsKey]);
 
   const finish = useCallback(() => {
     if (lsKey) localStorage.setItem(lsKey, "COMPLETED");
@@ -314,43 +513,53 @@ export default function AppTutorial() {
     setVisible(false);
   }, [lsKey]);
 
-  const handleNext = useCallback(() => {
-    if (steps[stepIdx]?.isLast) finish();
-    else goNext();
-  }, [stepIdx, steps, finish, goNext]);
-
-  //  Render 
   if (!active || !visible || !steps[stepIdx]) return null;
 
   const cur = steps[stepIdx];
-  const half = CARD_WIDTH / 2;
+  const subStep = cur.subSteps[subStepIdx];
+  if (!subStep) return null;
 
-  // Posicin horizontal: centrar la card sobre el target
+  const half = CARD_WIDTH / 2;
+  const totalSubSteps = cur.subSteps.length;
+  const isLastSubStep = subStepIdx === totalSubSteps - 1;
+
   let cardLeft: number | string = 16;
   let cardTop: number | string = 80;
 
   if (targetRect) {
     cardLeft = Math.max(12, Math.min(
-      targetRect.left + targetRect.width / 2 - half,
+      targetRect.left + targetRect.width * 0.55 - half,
       window.innerWidth - CARD_WIDTH - 12
     ));
     const gap = 14;
+    const cardHeight = cardRef.current?.offsetHeight ?? 240;
     cardTop = tooltipSide === "bottom"
       ? targetRect.top + targetRect.height + gap
-      : targetRect.top - gap;
+      : targetRect.top - gap - cardHeight;
+    cardTop = Math.max(10, Math.min(cardTop, window.innerHeight - 260));
   }
 
   return (
     <AnimatePresence>
+      {highlightStyle && (
+        <motion.div
+          style={highlightStyle}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
       <motion.div
+        ref={cardRef}
         className="fixed z-[9999]"
         style={{ left: cardLeft, top: cardTop, width: CARD_WIDTH }}
         initial={{ opacity: 0, y: 10, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.96 }}
         transition={{ type: "spring", damping: 22, stiffness: 280, mass: 0.8 }}
+        key={`${stepIdx}-${subStepIdx}`}
       >
-        {/* Flecha */}
         {targetRect && (
           <div
             style={{
@@ -371,7 +580,6 @@ export default function AppTutorial() {
           />
         )}
 
-        {/* Card principal */}
         <div
           className="relative rounded-2xl overflow-hidden"
           style={{
@@ -380,7 +588,6 @@ export default function AppTutorial() {
             zIndex: 1,
           }}
         >
-          {/* Cabecera compacta */}
           <div
             className="relative px-5 py-3"
             style={{
@@ -404,10 +611,10 @@ export default function AppTutorial() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span
-                    className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                    className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
                     style={{ background: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.85)" }}
                   >
-                    {stepIdx + 1} / {steps.length}
+                    {stepIdx + 1}.{subStepIdx + 1} / {steps.length}.{totalSubSteps}
                   </span>
                   <h3
                     className="text-sm font-extrabold truncate"
@@ -424,17 +631,15 @@ export default function AppTutorial() {
             </div>
           </div>
 
-          {/* Cuerpo compacto */}
           <div className="px-5 py-3">
             <p
               className="text-sm leading-snug"
-              style={{ color: "var(--texto-secundario, #4b5563)" }}
+              style={{ color: "var(--texto-secundario, #4b5563)", fontFamily: "var(--font-poppins), sans-serif" }}
             >
-              {cur.desc}
+              {subStep.desc}
             </p>
 
-            {/* Sugerencia de navegación  más compacta */}
-            {!cur.isLast && cur.nextNavLabel && (
+            {!cur.isLast && isLastSubStep && cur.nextNavLabel && (
               <div
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl mt-3"
                 style={{
@@ -443,14 +648,13 @@ export default function AppTutorial() {
                 }}
               >
                 <ArrowUp size={14} style={{ color: "#2563eb", flexShrink: 0 }} />
-                <p className="text-xs" style={{ color: "#1e40af" }}>
-                  Siguiente paso: haz clic en <strong>"{cur.nextNavLabel}"</strong> en el men superior
+                <p className="text-xs" style={{ color: "#1e40af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  Siguiente paso: haz clic en <strong>"{cur.nextNavLabel}"</strong> en el menú superior
                 </p>
               </div>
             )}
 
-            {/* Paso final  compacto */}
-            {cur.isLast && (
+            {cur.isLast && isLastSubStep && (
               <div
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mt-3"
                 style={{
@@ -459,13 +663,12 @@ export default function AppTutorial() {
                 }}
               >
                 <CheckCircle size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
-                <p className="text-xs font-semibold" style={{ color: "#166534" }}>
-                  -Tutorial completado! Has visitado todas las secciones.
+                <p className="text-xs" style={{ color: "#166534", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  Tutorial completado! Has visitado todas las secciones.
                 </p>
               </div>
             )}
 
-            {/* Botones más compactos */}
             <div className="flex items-center justify-between gap-2 mt-3 pt-1">
               <button
                 onClick={finish}
@@ -482,7 +685,7 @@ export default function AppTutorial() {
                   {steps.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => setStepIdx(i)}
+                      onClick={() => { setStepIdx(i); setSubStepIdx(0); }}
                       className="rounded-full transition-all border-none"
                       style={{
                         width: i === stepIdx ? 18 : 5,
@@ -497,31 +700,22 @@ export default function AppTutorial() {
                   ))}
                 </div>
 
-                {cur.isLast ? (
-                  <button
-                    onClick={finish}
+                <button
+                    onClick={advanceSubStep}
                     className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
                     style={{
-                      background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      background: isLastSubStep && !cur.isLast
+                        ? "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)"
+                        : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                       color: "#fff",
-                      boxShadow: "0 4px 12px rgba(22,163,74,0.3)",
+                      boxShadow: isLastSubStep && !cur.isLast
+                        ? "0 4px 14px rgba(27,63,126,0.3)"
+                        : "0 4px 12px rgba(22,163,74,0.3)",
                     }}
                   >
-                    <CheckCircle size={14} /> Finalizar
+                    {isLastSubStep && !cur.isLast ? "Ir ahora" : isLastSubStep && cur.isLast ? "Finalizar" : "Siguiente"}
+                    {isLastSubStep && cur.isLast ? <CheckCircle size={14} /> : <ArrowRight size={13} />}
                   </button>
-                ) : (
-                  <button
-                    onClick={handleNext}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)",
-                      color: "#fff",
-                      boxShadow: "0 4px 14px rgba(27,63,126,0.3)",
-                    }}
-                  >
-                    Ir ahora <ArrowRight size={13} />
-                  </button>
-                )}
               </div>
             </div>
           </div>
