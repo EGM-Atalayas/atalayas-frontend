@@ -434,9 +434,8 @@ export default function PerfilPage() {
       const url = await subirImagenBanner(file);
       await patchPerfil({ bannerUrl: url });
       setShowBannerPicker(false);
-    } catch (err) {
-      console.error("Error al subir banner:", err);
-      alert("No se pudo subir la imagen. Revisa la conexión o inténtalo de nuevo.");
+    } catch {
+      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
     } finally {
       setUploadingBanner(false);
     }
@@ -609,7 +608,7 @@ export default function PerfilPage() {
       setPerfil((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : prev);
       guardarUsuario({ ...usuario!, avatarUrl: data.avatarUrl });
     } catch {
-      alert("No se pudo subir la imagen de perfil. Revisa la conexión o inténtalo de nuevo.");
+      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
     } finally {
       setUploadingAvatar(false);
     }
