@@ -9,7 +9,8 @@ import { getModulosConProgreso } from "@/lib/api/modulos";
 import { getEventosComunidad, type ComunidadEvento } from "@/lib/api/comunidad";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import type { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import ComunicadosDeck from "@/components/ui/ComunicadosDeck";
 import DashboardHero from "@/components/ui/DashboardHero";
 
 // ── TIPOS Y MOCK FORMACIONES ──────────────────────────────────────────────────
@@ -299,54 +300,80 @@ export default function Empleado() {
       {onboardingIncompleto && (
         <div className="px-5 sm:px-8 lg:px-16 pt-5 sm:pt-7">
           <div
-            className="relative flex items-center gap-3 sm:gap-6 px-4 sm:px-7 py-4 sm:py-5 rounded-2xl cursor-pointer overflow-hidden"
-            style={{ background: "#0a1628", boxShadow: "0 4px 24px rgba(0,0,0,0.18)" }}
+            className="group relative flex items-center gap-3 sm:gap-6 px-4 sm:px-7 py-4 sm:py-5 rounded-2xl cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(120deg, #10B981 0%, #0EA5E9 45%, #7C3AED 100%)",
+              boxShadow: "0 12px 32px -10px rgba(14,165,233,0.55)",
+            }}
             onClick={() => router.push("/dashboard/onboarding")}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.28)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.18)"; }}
           >
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: "radial-gradient(ellipse at 95% 50%, rgba(163,181,53,0.12) 0%, transparent 60%)",
+            {/* Halos decorativos */}
+            <div style={{ position: "absolute", top: "-80px", right: "-40px", width: "260px", height: "260px", borderRadius: "50%", background: "rgba(255,255,255,0.12)", filter: "blur(2px)" }} />
+            <div style={{ position: "absolute", bottom: "-60px", left: "20%", width: "180px", height: "180px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+            {/* Shimmer sutil */}
+            <div className="absolute inset-0 pointer-events-none opacity-60" style={{
+              background: "radial-gradient(circle at 20% 0%, rgba(255,255,255,0.18) 0%, transparent 40%)",
             }} />
 
+            {/* Icono con gradiente inverso */}
             <div
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
-              style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)" }}
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 relative z-10"
+              style={{
+                background: "rgba(255,255,255,0.22)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
+              }}
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              {/* Cohete — encaja con "incorporación / despegar" */}
+              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
               </svg>
             </div>
 
             <div className="flex-1 min-w-0 relative z-10">
-              <p className="text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5" style={{ color: "var(--verde-oliva-hover)" }}>
-                Proceso de incorporación
-              </p>
-              <p className="text-sm sm:text-base font-semibold text-white mb-2">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.22)", color: "#ffffff", backdropFilter: "blur(6px)" }}>
+                  Onboarding
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  · En progreso
+                </span>
+              </div>
+              <p className="text-base sm:text-lg font-bold text-white mb-2.5 leading-tight">
                 Completa tu onboarding en Atalayas
               </p>
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
-                  <div className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${onboardingProgreso}%`, background: "linear-gradient(90deg, var(--azul-egm) 0%, var(--verde-oliva-hover) 100%)" }} />
+                <div className="flex-1 h-2 rounded-full overflow-hidden relative" style={{ background: "rgba(255,255,255,0.18)" }}>
+                  <div className="h-full rounded-full transition-all duration-700 relative"
+                    style={{
+                      width: `${onboardingProgreso}%`,
+                      background: "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FFFFFF 100%)",
+                      boxShadow: "0 0 12px rgba(251,191,36,0.55)",
+                    }}
+                  />
                 </div>
-                <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "rgba(255,255,255,0.5)" }}>
+                <span className="text-sm font-bold tabular-nums shrink-0 text-white">
                   {onboardingProgreso}%
                 </span>
               </div>
             </div>
 
             <div
-              className="shrink-0 hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl relative z-10"
-              style={{ background: "var(--verde-oliva-hover)", color: "#fff" }}
+              className="shrink-0 hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl relative z-10 transition-transform group-hover:translate-x-0.5"
+              style={{
+                background: "rgba(255,255,255,0.95)",
+                color: "#0EA5E9",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
+              }}
             >
-              <span className="text-sm font-semibold">Continuar</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <span className="text-sm font-bold">Continuar</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </div>
-            <div className="shrink-0 sm:hidden relative z-10" style={{ color: "rgba(255,255,255,0.45)" }}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="shrink-0 sm:hidden relative z-10 text-white">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </div>
@@ -362,34 +389,45 @@ export default function Empleado() {
         {/* ── SERVICIOS DEL PARQUE — chips compactos justo debajo del onboarding ── */}
         <section>
           <div className="mb-4 text-center">
-            <TituloSeccion noMargin>Servicios del parque</TituloSeccion>
+            <TituloSeccion noMargin sinBarra>Servicios del parque</TituloSeccion>
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center">
-            {SERVICIOS_MOCK.filter((s) => s.activo).slice(0, 8).map((s) => {
+            {(() => {
+              const PALETA_CHIPS = [
+                { from: "#8B7AB8", to: "#C8A2C8" },  // Púrpura suave → Lila
+                { from: "#7BA7B5", to: "#9AC4A8" },  // Azul polvo → Verde salvia
+                { from: "#D4956B", to: "#C77F7F" },  // Terracota → Coral apagado
+                { from: "#7C82B5", to: "#B5A1C8" },  // Azul lavanda → Malva
+                { from: "#8FA88A", to: "#C9C58A" },  // Verde oliva → Mostaza suave
+                { from: "#6F8FA3", to: "#9AB8C7" },  // Azul pizarra → Azul polvo
+                { from: "#B58A9F", to: "#D4A88A" },  // Rosa apagado → Melocotón
+                { from: "#5D7A99", to: "#8AA8C2" },  // Azul humo → Cielo neblina
+              ];
+              return SERVICIOS_MOCK.filter((s) => s.activo).slice(0, 8).map((s, idx) => {
+              const ac = PALETA_CHIPS[idx % PALETA_CHIPS.length];
               const chip = (
                 <span
                   className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full text-base font-semibold transition-all"
                   style={{
-                    background: "var(--blanco)",
-                    border:     "1px solid var(--gris-borde)",
+                    background: `linear-gradient(var(--blanco), var(--blanco)) padding-box, linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%) border-box`,
+                    border:     "2px solid transparent",
                     color:      "var(--texto-primario)",
                     boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--azul-egm)";
-                    (e.currentTarget as HTMLElement).style.background  = "var(--azul-egm-light)";
-                    (e.currentTarget as HTMLElement).style.transform   = "translateY(-2px)";
-                    (e.currentTarget as HTMLElement).style.boxShadow   = "0 4px 12px rgba(27,63,126,0.18)";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 16px -4px ${ac.from}55`;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
-                    (e.currentTarget as HTMLElement).style.background  = "var(--blanco)";
-                    (e.currentTarget as HTMLElement).style.transform   = "translateY(0)";
-                    (e.currentTarget as HTMLElement).style.boxShadow   = "0 1px 4px rgba(0,0,0,0.04)";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
                   }}
                 >
-                  <span className="flex items-center justify-center w-6 h-6 [&_svg]:w-5 [&_svg]:h-5" style={{ color: "var(--azul-egm)" }}>
+                  <span
+                    className="flex items-center justify-center w-6 h-6 [&_svg]:w-5 [&_svg]:h-5"
+                    style={{ color: ac.from }}
+                  >
                     {ICONO_MAP[s.icono ?? ""] ?? (
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -410,7 +448,8 @@ export default function Empleado() {
                   {chip}
                 </button>
               );
-            })}
+              });
+            })()}
           </div>
         </section>
 
@@ -424,14 +463,7 @@ export default function Empleado() {
               Ver todas →
             </Link>
           </div>
-          <ComunicadosCarousel
-            items={carouselItems}
-            autoplay
-            autoplayDelay={4500}
-            pauseOnHover
-            loop
-            minHeight={460}
-          />
+          <ComunicadosDeck items={carouselItems} minHeight={460} />
         </section>
 
 
@@ -717,22 +749,37 @@ export default function Empleado() {
 }
 
 // ── TÍTULO DE SECCIÓN ─────────────────────────────────────────────────────────
-function TituloSeccion({ children, noMargin }: {
+function TituloSeccion({ children, noMargin, sinBarra }: {
   children: React.ReactNode;
   noMargin?: boolean;
+  sinBarra?: boolean;
 }) {
   return (
     <h2
-      className={noMargin ? "" : "mb-5"}
+      className={`inline-flex items-center gap-3 ${noMargin ? "" : "mb-5"}`}
       style={{
-        fontSize:      "clamp(1.15rem, 1.6vw, 1.4rem)",
+        fontSize:      "clamp(1.6rem, 2.4vw, 2.1rem)",
         fontFamily:    "var(--font-poppins), sans-serif",
-        fontWeight:    700,
+        fontWeight:    800,
         color:         "var(--texto-primario)",
-        letterSpacing: "-0.01em",
-        lineHeight:    1.25,
+        letterSpacing: "-0.025em",
+        lineHeight:    1.15,
       }}
     >
+      {/* Barra decorativa con gradiente */}
+      {!sinBarra && (
+        <span
+          aria-hidden="true"
+          style={{
+            display:      "inline-block",
+            width:        6,
+            height:       "1.3em",
+            borderRadius: 999,
+            background:   "linear-gradient(180deg, #1E3A8A 0%, #0EA5E9 100%)",
+            boxShadow:    "0 2px 8px rgba(14,165,233,0.35)",
+          }}
+        />
+      )}
       {children}
     </h2>
   );
