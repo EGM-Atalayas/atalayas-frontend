@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Servicio, ServicioInput, CategoriaServicio } from "@/lib/types/servicios";
 import { Button } from "@/components/ui/Button";
-import { ICONOS_BENEFICIO } from "@/lib/iconosBeneficio";
+import { IconButton } from "@/components/ui/IconButton";
+import { ICONOS_BENEFICIO, BootstrapIcon } from "@/lib/iconosBeneficio";
 import Grainient from "@/components/ui/Grainient";
 
 interface Props {
@@ -21,7 +22,7 @@ const estiloInput = (foco: boolean) => ({
   borderColor: foco ? "var(--azul-egm)" : "rgba(0,0,0,0.12)",
   boxShadow:   foco ? "0 0 0 3px rgba(22,50,105,0.08)" : "none",
   background:  "#ffffff",
-  color:       "#111827",
+  color:       "var(--texto-primario)",
 });
 
 const CATEGORIAS: { value: CategoriaServicio; label: string; emoji: string }[] = [
@@ -31,36 +32,6 @@ const CATEGORIAS: { value: CategoriaServicio; label: string; emoji: string }[] =
   { value: "COMUNES",       label: "Servicios comunes", emoji: "🔧" },
 ];
 
-// ── Botón cerrar ──────────────────────────────────────────────────────────────
-function CloseButton({ onClick }: { onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setPressed(false); }}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      aria-label="Cerrar"
-      style={{
-        width: "38px", height: "38px", borderRadius: "11px",
-        border: "1px solid rgba(255,255,255,0.28)", cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: pressed ? "rgba(0,0,0,0.28)" : hovered ? "rgba(0,0,0,0.20)" : "rgba(255,255,255,0.14)",
-        color: "rgba(255,255,255,0.90)",
-        boxShadow: hovered && !pressed ? "0 4px 14px rgba(0,0,0,0.30), 0 0 0 3px rgba(0,0,0,0.12)" : "0 2px 6px rgba(0,0,0,0.18)",
-        transform: pressed ? "scale(0.88)" : hovered ? "scale(1.10)" : "scale(1)",
-        transition: "background 0.15s ease, box-shadow 0.18s cubic-bezier(0.34,1.20,0.64,1), transform 0.18s cubic-bezier(0.34,1.20,0.64,1)",
-        flexShrink: 0,
-      }}
-    >
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  );
-}
 
 // ── Selector de icono ─────────────────────────────────────────────────────────
 function IconoPicker({ value, onChange }: { value: string; onChange: (key: string) => void }) {
@@ -89,10 +60,10 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
   return (
     <div className="flex flex-col gap-1.5" ref={ref}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold" style={{ color: "#374151" }}>Icono</span>
+        <span className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>Icono</span>
         {value && (
           <button type="button" onClick={() => onChange("")}
-            style={{ color: "#9ca3af", background: "none", border: "none", cursor: "pointer", fontSize: "11px", padding: 0 }}>
+            style={{ color: "var(--texto-placeholder)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", padding: 0 }}>
             Quitar
           </button>
         )}
@@ -110,16 +81,16 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
       >
         {selected ? (
           <>
-            <span style={{ display: "flex", width: 22, height: 22, flexShrink: 0, overflow: "hidden", color: "var(--azul-egm)" }}>
-              <span style={{ transform: "scale(0.61)", transformOrigin: "top left", display: "flex", flexShrink: 0 }}>{selected.svg}</span>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, flexShrink: 0, color: "var(--azul-egm)" }}>
+              <BootstrapIcon name={selected.bi} size={20} />
             </span>
-            <span className="flex-1 font-medium text-sm" style={{ color: "#111827" }}>{selected.label}</span>
+            <span className="flex-1 font-medium text-sm" style={{ color: "var(--texto-primario)" }}>{selected.label}</span>
           </>
         ) : (
-          <span style={{ color: "#9ca3af" }}>Seleccionar icono</span>
+          <span style={{ color: "var(--texto-placeholder)" }}>Seleccionar icono</span>
         )}
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}
-          style={{ color: "#9ca3af", transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s", flexShrink: 0 }}>
+          style={{ color: "var(--texto-placeholder)", transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s", flexShrink: 0 }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
@@ -140,13 +111,13 @@ function IconoPicker({ value, onChange }: { value: string; onChange: (key: strin
                     padding: "7px", borderRadius: "10px",
                     border: sel ? "2px solid var(--azul-egm)" : "2px solid transparent",
                     background: sel ? "var(--azul-egm-light)" : "transparent",
-                    color: sel ? "var(--azul-egm)" : "#6b7280", cursor: "pointer",
+                    color: sel ? "var(--azul-egm)" : "var(--texto-muted)", cursor: "pointer",
                     transition: "background 0.12s, color 0.12s",
                   }}
                   onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = "rgba(27,63,126,0.07)"; e.currentTarget.style.color = "var(--azul-egm)"; }}}
-                  onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6b7280"; }}}
+                  onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}}
                 >
-                  {icono.svg}
+                  <BootstrapIcon name={icono.bi} size={28} />
                 </button>
               );
             })}
@@ -163,7 +134,7 @@ function CategoriaSelector({ value, onChange }: { value: CategoriaServicio | "";
   const [foco, setFoco] = useState(false);
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: "#374151" }}>
+      <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
         Categoría<span title="Obligatorio" style={{ color: "#ef4444", marginLeft: 2 }}>*</span>
       </label>
       <select
@@ -172,7 +143,7 @@ function CategoriaSelector({ value, onChange }: { value: CategoriaServicio | "";
         onFocus={() => setFoco(true)}
         onBlur={() => setFoco(false)}
         className="w-full rounded-xl px-3.5 text-sm outline-none border appearance-none cursor-pointer"
-        style={{ height: ALTURA_CAMPO, ...estiloInput(foco), color: value ? "#111827" : "#9ca3af" }}
+        style={{ height: ALTURA_CAMPO, ...estiloInput(foco), color: value ? "var(--texto-primario)" : "var(--texto-placeholder)" }}
       >
         <option value="" disabled>Seleccionar categoría</option>
         {CATEGORIAS.map(c => (
@@ -217,7 +188,7 @@ function Campo({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <label htmlFor={name} className="text-sm font-semibold" style={{ color: "#374151" }}>
+        <label htmlFor={name} className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
           {label}
           {required && <span title="Obligatorio" style={{ color: "#ef4444", marginLeft: 2 }}>*</span>}
         </label>
@@ -242,7 +213,7 @@ function Campo({
       ) : (
         <input {...shared} type={type} style={{ ...shared.style, height: ALTURA_CAMPO }} />
       )}
-      {hint && <p className="text-xs" style={{ color: "#9ca3af" }}>{hint}</p>}
+      {hint && <p className="text-xs" style={{ color: "var(--texto-placeholder)" }}>{hint}</p>}
     </div>
   );
 }
@@ -331,7 +302,6 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
       setToastVisible(true);
       setTimeout(() => { setToastVisible(false); onCerrar(); }, 1800);
     } catch (err) {
-      console.error("[ServicioModal]", err);
       setError("No se pudo guardar el servicio. Inténtalo de nuevo.");
       setGuardando(false);
     }
@@ -343,7 +313,7 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
       {toastVisible && createPortal(
         <div style={{
           position: "fixed", bottom: "28px", left: "50%", transform: "translateX(-50%)",
-          zIndex: 99999, background: "#111827", color: "#fff", borderRadius: "14px",
+          zIndex: 99999, background: "var(--texto-primario)", color: "#fff", borderRadius: "14px",
           padding: "12px 20px", fontSize: "0.875rem", fontWeight: 600,
           display: "flex", alignItems: "center", gap: "10px",
           boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
@@ -360,11 +330,11 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
 
       <div ref={overlayRef} onClick={e => { if (e.target === overlayRef.current) cerrarSeguro(); }}
         className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-        style={{ background: "rgba(0,0,0,0.45)" }}
+        style={{ background: "var(--overlay)" }}
       >
         <div ref={panelRef}
           className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
-          style={{ background: "#f9fafb", maxHeight: "92dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
+          style={{ background: "var(--gris-panel)", maxHeight: "92dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
         >
           {/* Cabecera */}
           <div className="flex items-center justify-between px-5 sm:px-6 shrink-0"
@@ -383,7 +353,7 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
               {editando ? "Editar servicio" : "Nuevo servicio"}
             </h2>
             <div style={{ position: "relative", zIndex: 1 }}>
-              <CloseButton onClick={confirmSalir ? onCerrar : cerrarSeguro} />
+              <IconButton onClick={confirmSalir ? onCerrar : cerrarSeguro} variant="glass" />
             </div>
           </div>
 
@@ -438,11 +408,11 @@ export default function ServicioModal({ inicial, onGuardar, onCerrar }: Props) {
               <p className="text-sm text-center" style={{ color: "#ef4444" }}>{error}</p>
             )}
 
-            <div className="flex gap-3 pt-1 pb-1">
-              <Button type="button" variant="secondary" className="flex-1" onClick={cerrarSeguro} disabled={guardando}>
+            <div className="flex justify-between gap-3 pt-1 pb-1">
+              <Button type="button" variant="secondary" onClick={cerrarSeguro} disabled={guardando}>
                 Cancelar
               </Button>
-              <Button type="submit" variant="primary" className="flex-1" disabled={guardando || !form.titulo?.trim() || !form.categoria}>
+              <Button type="submit" variant="primary" disabled={guardando || !form.titulo?.trim() || !form.categoria}>
                 {guardando ? "Guardando…" : editando ? "Guardar cambios" : "Crear servicio"}
               </Button>
             </div>

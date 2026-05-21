@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getBeneficios, crearBeneficio, editarBeneficio, desactivarBeneficio } from "@/lib/api/beneficios";
 import type { Beneficio, BeneficioInput } from "@/lib/types/beneficios";
 import BeneficioModal  from "@/components/ui/BeneficioModal";
-import ConfirmDialog   from "@/components/ui/ConfirmDialog";
+import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
 // ── Breadcrumb de vuelta ──────────────────────────────────────────────────────
 function BreadcrumbBack({ href, label }: { href: string; label: string }) {
@@ -150,17 +150,33 @@ function CardMenuItem({
   );
 }
 
-// ── Card de beneficio ─────────────────────────────────────────────────────────
+// ── Paleta Wallet — degradados vivos premium tipo tarjeta de crédito ──────────
+type AcentoWallet = { from: string; to: string };
+
+const PALETA_WALLET: AcentoWallet[] = [
+  { from: "#6B21A8", to: "#EC4899" },  // Púrpura → Rosa
+  { from: "#1B3F7E", to: "#0891B2" },  // Azul EGM → Cian
+  { from: "#15803D", to: "#EAB308" },  // Verde → Amarillo
+  { from: "#EA580C", to: "#DC2626" },  // Naranja → Rojo
+  { from: "#0891B2", to: "#10B981" },  // Cian → Verde
+  { from: "#4338CA", to: "#A855F7" },  // Indigo → Púrpura
+  { from: "#BE185D", to: "#F97316" },  // Magenta → Naranja
+  { from: "#0F766E", to: "#3B82F6" },  // Teal → Azul
+];
+
+// ── Card de beneficio (estilo Wallet) ─────────────────────────────────────────
 function BeneficioCard({
   beneficio,
   esSuperAdmin,
   onEditar,
   onDesactivar,
+  acento,
 }: {
   beneficio:    Beneficio;
   esSuperAdmin: boolean;
   onEditar:     (b: Beneficio) => void;
   onDesactivar: (b: Beneficio) => void;
+  acento:       AcentoWallet;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hovered,  setHovered]  = useState(false);
@@ -177,160 +193,199 @@ function BeneficioCard({
   }, [menuOpen]);
 
   const iconoNode = getIconoBeneficio(beneficio.iconoUrl);
-  const tieneCuerpo = !!(beneficio.descripcion || beneficio.comoAcceder);
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl"
+      className="relative flex flex-col overflow-hidden"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background:  "#ffffff",
-        border:      "1px solid rgba(0,0,0,0.07)",
-        boxShadow:   hovered ? "0 8px 28px rgba(0,0,0,0.11)" : "0 2px 12px rgba(0,0,0,0.06)",
-        transform:   hovered ? "translateY(-3px)" : "translateY(0)",
-        transition:  "box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.20,0.64,1)",
-        animation:   "heroFadeUp 0.45s ease both",
+        borderRadius: "24px",
+        aspectRatio:  "16 / 10",            // proporción de tarjeta de crédito
+        background:   `linear-gradient(135deg, ${acento.from} 0%, ${acento.to} 100%)`,
+        color:        "#ffffff",
+        boxShadow:    hovered
+          ? `0 24px 60px ${acento.from}55, 0 8px 24px ${acento.to}40`
+          : `0 8px 24px ${acento.from}30, 0 2px 8px rgba(0,0,0,0.08)`,
+        transform:    hovered ? "translateY(-6px) scale(1.01)" : "translateY(0) scale(1)",
+        transition:   "transform 0.35s cubic-bezier(0.34,1.20,0.64,1), box-shadow 0.35s ease",
+        animation:    "heroFadeUp 0.45s ease both",
       }}
     >
-      {/* Cabecera — icono + título */}
-      <div className="flex items-start gap-3 px-5 pt-5 pb-3">
+      {/* Reflejo brillante en la parte superior */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0"
+        style={{
+          height: "55%",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)",
+        }}
+      />
 
-        {/* Icono */}
-        <div
-          className="shrink-0 rounded-xl flex items-center justify-center"
-          style={{
-            width: "46px", height: "46px",
-            background: "linear-gradient(135deg, #e8eef8 0%, #d4e0f5 100%)",
-            color:      "var(--azul-egm)",
-            overflow:   "hidden",
-            position:   "relative",
-            boxShadow:  "inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 4px rgba(27,63,126,0.10)",
-          }}
-        >
-          {iconoNode ? (
-            <span style={{
-              position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%, -50%) scale(0.61)",
-              display: "flex",
-            }}>
-              {iconoNode}
-            </span>
-          ) : (
-            <IconoDefault />
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold leading-snug" style={{ fontSize: "0.95rem", color: "#111827" }}>
-            {beneficio.titulo}
-          </h3>
-          {beneficio.fechaFin && (
-            <div className="mt-1"><BadgeCaducidad fechaFin={beneficio.fechaFin} /></div>
-          )}
-        </div>
-
-        {/* Menú acciones — solo SuperAdmin */}
-        {esSuperAdmin && (
-          <div ref={menuRef} className="shrink-0" style={{ position: "relative" }}>
-            <button
-              onClick={() => setMenuOpen(p => !p)}
-              className="flex items-center justify-center rounded-lg"
-              style={{
-                width: "32px", height: "32px",
-                background: menuOpen ? "rgba(0,0,0,0.06)" : "transparent",
-                color:      "#9ca3af",
-                border:     "none",
-                cursor:     "pointer",
-                transition: "background 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
-              onMouseLeave={(e) => { if (!menuOpen) e.currentTarget.style.background = "transparent"; }}
-            >
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
-              </svg>
-            </button>
-
-            {menuOpen && (
-              <div
-                style={{
-                  position: "absolute", right: 0, top: "calc(100% + 6px)",
-                  width: "200px", zIndex: 20,
-                  background: "#ffffff",
-                  border:     "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: "16px",
-                  boxShadow:  "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
-                  overflow:   "hidden",
-                  padding:    "6px",
-                }}
-              >
-                <CardMenuItem
-                  label="Editar"
-                  danger={false}
-                  icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
-                  onClick={() => { setMenuOpen(false); onEditar(beneficio); }}
-                />
-                <CardMenuItem
-                  label="Desactivar"
-                  danger
-                  icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>}
-                  onClick={() => { setMenuOpen(false); onDesactivar(beneficio); }}
-                />
-              </div>
-            )}
-          </div>
+      {/* Icono GIGANTE translúcido al fondo (decorativo) */}
+      <div
+        className="pointer-events-none absolute"
+        style={{
+          right: "-20px", bottom: "-40px",
+          width: 220, height: 220,
+          opacity: 0.18,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#ffffff",
+        }}
+      >
+        {iconoNode ? (
+          <div style={{ transform: "scale(4.5)" }}>{iconoNode}</div>
+        ) : (
+          <div style={{ transform: "scale(7)" }}><IconoDefault /></div>
         )}
       </div>
 
-      {/* Separador + cuerpo — solo si hay contenido */}
-      {tieneCuerpo && (
-        <>
-          <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "0 20px" }} />
-          <div className="px-5 py-4 flex flex-col gap-3 flex-1">
-            {beneficio.descripcion && (
-              <p className="text-sm leading-relaxed" style={{ color: "#6b7280" }}>
-                {beneficio.descripcion}
-              </p>
-            )}
-            {beneficio.comoAcceder && (
-              <div
-                className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
-                style={{ background: "rgba(27,63,126,0.05)" }}
-              >
-                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                  style={{ color: "var(--azul-egm)", flexShrink: 0, marginTop: "1px" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--azul-egm)" }}>
-                  {beneficio.comoAcceder}
-                </p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      {/* Patrón decorativo: círculos al fondo */}
+      <div
+        className="pointer-events-none absolute"
+        style={{
+          top: "-80px", left: "-80px", width: 200, height: 200,
+          borderRadius: "50%", background: "rgba(255,255,255,0.08)",
+        }}
+      />
 
-      {/* Footer — enlace externo */}
-      {beneficio.urlInfo && (
-        <div className="px-5 pb-4 mt-auto">
-          <a
-            href={beneficio.urlInfo}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold"
-            style={{ color: "var(--azul-egm)", transition: "opacity 0.15s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+      {/* Menú admin — esquina sup. derecha */}
+      {esSuperAdmin && (
+        <div ref={menuRef} className="absolute top-3 right-3 z-10" style={{ position: "absolute" }}>
+          <button
+            onClick={() => setMenuOpen(p => !p)}
+            className="flex items-center justify-center rounded-lg"
+            style={{
+              width: "32px", height: "32px",
+              background: menuOpen ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)",
+              color:      "#ffffff",
+              border:     "1px solid rgba(255,255,255,0.20)",
+              cursor:     "pointer",
+              transition: "background 0.15s ease",
+              backdropFilter: "blur(6px)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.25)"; }}
+            onMouseLeave={(e) => { if (!menuOpen) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
           >
-            Más información
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
             </svg>
-          </a>
+          </button>
+
+          {menuOpen && (
+            <div
+              style={{
+                position: "absolute", right: 0, top: "calc(100% + 6px)",
+                width: "200px", zIndex: 20,
+                background: "#ffffff",
+                border:     "1px solid rgba(0,0,0,0.08)",
+                borderRadius: "16px",
+                boxShadow:  "0 8px 32px rgba(0,0,0,0.18)",
+                overflow:   "hidden",
+                padding:    "6px",
+                color:      "#111827",
+              }}
+            >
+              <CardMenuItem
+                label="Editar"
+                danger={false}
+                icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
+                onClick={() => { setMenuOpen(false); onEditar(beneficio); }}
+              />
+              <CardMenuItem
+                label="Desactivar"
+                danger
+                icon={<svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>}
+                onClick={() => { setMenuOpen(false); onDesactivar(beneficio); }}
+              />
+            </div>
+          )}
         </div>
       )}
+
+      {/* Contenido principal — top: marca / chip, bottom: detalles */}
+      <div className="relative z-[2] flex flex-col h-full px-6 py-5">
+
+        {/* Top: pseudo-chip de tarjeta + caducidad */}
+        <div className="flex items-start justify-between gap-3 mb-auto">
+          {/* Chip dorado-translúcido tipo tarjeta */}
+          <div
+            className="rounded-md"
+            style={{
+              width: 38, height: 28,
+              background: "linear-gradient(135deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.16) 100%)",
+              border: "1px solid rgba(255,255,255,0.30)",
+              boxShadow: "inset 0 1px 2px rgba(255,255,255,0.40)",
+            }}
+          />
+          {beneficio.fechaFin && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                color: "#ffffff",
+                border: "1px solid rgba(255,255,255,0.25)",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <BadgeCaducidadWallet fechaFin={beneficio.fechaFin} />
+            </span>
+          )}
+        </div>
+
+        {/* Bottom: título + descripción + footer */}
+        <div className="flex flex-col gap-2">
+          <h3 className="font-bold leading-tight" style={{ fontSize: "1.5rem", color: "#ffffff", letterSpacing: "-0.01em" }}>
+            {beneficio.titulo}
+          </h3>
+          {beneficio.descripcion && (
+            <p className="text-xs leading-snug line-clamp-2" style={{ color: "rgba(255,255,255,0.85)" }}>
+              {beneficio.descripcion}
+            </p>
+          )}
+
+          {/* Footer: enlace + uppercase del beneficio */}
+          <div className="flex items-end justify-between gap-3 mt-2 pt-2"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.18)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.65)" }}>
+              EGM Atalayas · Beneficio
+            </p>
+            {beneficio.urlInfo && (
+              <a
+                href={beneficio.urlInfo}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs font-semibold"
+                style={{ color: "#ffffff" }}
+              >
+                Usar
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/** Badge caducidad — versión Wallet (sin fondo, solo texto blanco) */
+function BadgeCaducidadWallet({ fechaFin }: { fechaFin: string }) {
+  const fecha  = new Date(fechaFin);
+  const hoy    = new Date();
+  const dias   = Math.ceil((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+  return (
+    <>
+      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: dias <= 30 ? "#fca5a5" : "#86efac" }} />
+      {dias <= 0
+        ? "Caducada"
+        : `Hasta ${fecha.toLocaleDateString("es-ES", {
+            day: "numeric", month: "short",
+            year: fecha.getFullYear() !== hoy.getFullYear() ? "numeric" : undefined,
+          })}`}
+    </>
   );
 }
 
@@ -561,18 +616,16 @@ export default function VentajasPage() {
       <DashboardHero
         prefijo="Tus"
         titulo="Ventajas"
-        imagenFondo="/bg-ventajas.webp"
+        imagenFondo="/ventajas-banner.webp"
         objectPosition="center 40%"
         variante="seccion"
+        tituloSize="clamp(3.5rem, 7vw, 6rem)"
       />
 
       <div className="px-5 sm:px-9 lg:px-14 py-8 sm:py-12">
 
         {/* Barra navegación/acción */}
-        <div className="flex items-center justify-between mb-6 sm:mb-8">
-
-          {/* ← Comunidad */}
-          <BreadcrumbBack href="/dashboard/comunidad" label="Comunidad" />
+        <div className="flex items-center justify-end mb-6 sm:mb-8">
 
           {/* Nueva ventaja — solo SuperAdmin */}
           {esSuperAdmin && (
@@ -609,14 +662,15 @@ export default function VentajasPage() {
         ) : beneficios.length === 0 ? (
           <EstadoVacio esSuperAdmin={esSuperAdmin} onNuevo={abrirNuevo} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {beneficios.map(b => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {beneficios.map((b, i) => (
               <BeneficioCard
                 key={b.beneficioId}
                 beneficio={b}
                 esSuperAdmin={esSuperAdmin}
                 onEditar={abrirEditar}
                 onDesactivar={handleDesactivar}
+                acento={PALETA_WALLET[i % PALETA_WALLET.length]}
               />
             ))}
           </div>
@@ -632,17 +686,15 @@ export default function VentajasPage() {
         />
       )}
 
-      {/* Confirmación desactivar */}
-      {confirmando && (
-        <ConfirmDialog
-          titulo="Desactivar ventaja"
-          mensaje={`"${confirmando.titulo}" dejará de ser visible para los empleados. ¿Continuar?`}
-          labelOk="Desactivar"
-          peligro
-          onOk={confirmarDesactivar}
-          onCerrar={() => setConfirmando(null)}
-        />
-      )}
+      <ModalConfirm
+        abierto={!!confirmando}
+        titulo="¿Desactivar ventaja?"
+        descripcion={confirmando ? `"${confirmando.titulo}" dejará de ser visible para los empleados.` : ""}
+        textoConfirmar="Desactivar"
+        variante="danger"
+        onConfirmar={() => { confirmarDesactivar(); setConfirmando(null); }}
+        onCancelar={() => setConfirmando(null)}
+      />
 
       {/* Toast global */}
       {toast && (

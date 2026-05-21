@@ -1,11 +1,13 @@
 // src/components/pages/Login.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FiChevronRight, FiChevronLeft, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import Link from "next/link";
 
 const LoginPage: React.FC = () => {
@@ -20,6 +22,23 @@ const LoginPage: React.FC = () => {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
+  const forgotPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showForgotModal) return;
+    document.body.style.overflow = "hidden";
+    const el = forgotPanelRef.current;
+    if (el) {
+      el.animate(
+        [
+          { opacity: 0, transform: "translateY(16px) scale(0.97)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" },
+        ],
+        { duration: 220, easing: "cubic-bezier(0.25,0.46,0.45,0.94)", fill: "forwards" }
+      );
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showForgotModal]);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -68,14 +87,11 @@ const LoginPage: React.FC = () => {
           localStorage.setItem("accessToken", data.accessToken);
         }
 
-        console.log("[Login] Usuario logueado:", { nombre: data.nombre, codigoRol: data.codigoRol });
-
         guardarUsuario({
           nombre: data.nombre,
           apellidos: data.apellidos,
           codigoRol: data.codigoRol,
           nombreEmpresa: data.nombreEmpresa,
-          logoEmpresaUrl: data.avatarUrl,
           empresaId: data.empresaId,
           usuarioId: data.usuarioId,
           email: data.email,
@@ -132,7 +148,7 @@ const LoginPage: React.FC = () => {
       <div
         className="hidden lg:flex relative flex-col justify-between lg:w-[48%] py-12 lg:py-16"
         style={{
-          background:     "url('/background-login.webp') no-repeat center center",
+          background: "url('/background-login.webp') no-repeat center center",
           backgroundSize: "cover",
         }}
       >
@@ -140,7 +156,7 @@ const LoginPage: React.FC = () => {
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
 
         {/* Logo */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="Atalayas" className="h-32 sm:h-44 w-auto brightness-0 invert" />
         </div>
@@ -149,39 +165,38 @@ const LoginPage: React.FC = () => {
 
       {/* ── PANEL DERECHO: Formulario ── */}
       <div
-        className="flex-1 flex flex-col items-center justify-start lg:justify-center px-0 lg:px-24 pt-0 pb-10 lg:py-0 min-h-screen lg:min-h-0"
+        className="flex-1 flex flex-col items-center justify-start lg:justify-center px-0 lg:px-24 pt-0 pb-10 lg:py-10 min-h-screen lg:min-h-0 overflow-y-auto"
         style={{ background: "#ffffff" }}
       >
         {/* Branding visible solo en móvil */}
-        <div className="lg:hidden w-full px-6 py-12 mb-2 relative flex flex-col items-center"
+        <div className="lg:hidden w-full relative flex flex-col items-center"
           style={{ background: "url('/background-login.webp') center/cover no-repeat" }}>
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="Atalayas" className="relative z-10 h-20 w-auto brightness-0 invert" />
+          <div className="relative z-10 w-full flex flex-col items-center px-6 py-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="Atalayas" className="h-16 w-auto brightness-0 invert" />
+          </div>
         </div>
 
-        <div className="w-full max-w-md px-6 lg:px-0 py-8 lg:py-0">
+        <div className="w-full max-w-md px-5 sm:px-6 lg:px-0 py-6 lg:py-0">
 
-          {/* Volver */}
-          <div className="mb-6">
-            <button
-              onClick={() => router.push("/")}
-              className="flex items-center gap-1.5 text-sm transition-colors cursor-pointer"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
-            >
-              <FiChevronLeft size={15} /> Volver
-            </button>
+          {/* Atrás */}
+          <div className="mb-5">
+            <Button variant="secondary" size="md" onClick={() => router.push("/")}>
+              <FiChevronLeft size={15} /> Atrás
+            </Button>
           </div>
 
           {/* Título del formulario */}
-          <h2
-            className="text-4xl sm:text-5xl font-bold mb-5 text-center"
-            style={{ color: "#1B3F7E", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}
-          >
-            Iniciar sesión
-          </h2>
+          <div className="mb-5 text-center">
+            <h2
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+              style={{ color: "var(--azul-egm)", fontFamily: "var(--font-poppins), sans-serif", letterSpacing: "-0.03em" }}
+            >
+              Iniciar sesión
+            </h2>
+            <p className="text-sm sm:text-base mt-2" style={{ color: "#6B7A8D" }}>Accede a tu área empresarial</p>
+          </div>
 
           {/* Formulario */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -212,7 +227,7 @@ const LoginPage: React.FC = () => {
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.borderColor = "var(--azul-egm)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
@@ -249,7 +264,7 @@ const LoginPage: React.FC = () => {
                     color: "#0f1923",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#1B3F7E";
+                    e.target.style.borderColor = "var(--azul-egm)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(27, 63, 126, 0.08)";
                   }}
                   onBlur={(e) => {
@@ -277,9 +292,9 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex items-center gap-2 text-sm font-medium transition-colors self-start"
-                style={{ color: "#1B3F7E" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+                style={{ color: "var(--azul-egm)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
               >
                 <FiChevronRight
                   size={16}
@@ -289,7 +304,7 @@ const LoginPage: React.FC = () => {
               </button>
 
               {showAdvanced && (
-                <div className="rounded-xl px-5 py-5 flex flex-col gap-4"
+                <div className="rounded-2xl px-5 py-5 flex flex-col gap-4"
                   style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.15)" }}>
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#3D4A5C" }}>
@@ -307,7 +322,7 @@ const LoginPage: React.FC = () => {
                         color: "#0f1923",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "#1B3F7E";
+                        e.target.style.borderColor = "var(--azul-egm)";
                         e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)";
                       }}
                       onBlur={(e) => {
@@ -327,8 +342,8 @@ const LoginPage: React.FC = () => {
                     onChange={(e) => setRememberEmail(e.target.checked)}
                     className="w-4 h-4 rounded cursor-pointer appearance-none outline-none transition-all"
                     style={{
-                      border: rememberEmail ? "1px solid #1B3F7E" : "1px solid #C8CDD8",
-                      background: rememberEmail ? "#1B3F7E" : "#f5f6f8",
+                      border: rememberEmail ? "1px solid var(--azul-egm)" : "1px solid #C8CDD8",
+                      background: rememberEmail ? "var(--azul-egm)" : "#f5f6f8",
                     }}
                   />
                   {rememberEmail && (
@@ -346,40 +361,18 @@ const LoginPage: React.FC = () => {
 
             {/* Error */}
             {errorMensaje && (
-              <div
-                className="text-sm text-center py-3 px-4 rounded-lg"
-                style={{
-                  background: "#FDECEA",
-                  border: "1px solid #C84B31",
-                  color: "#C84B31",
-                }}
-              >
+              <div className="text-sm text-center py-3 px-4 rounded-2xl"
+                style={{ background: "var(--error-light)", border: "1px solid var(--error)", color: "var(--error)" }}>
                 {errorMensaje}
               </div>
             )}
 
             {/* Botón Entrar */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 rounded-lg text-base font-semibold tracking-wide transition-all duration-300 cursor-pointer disabled:cursor-not-allowed"
-              style={{
-                background:           isLoading ? "rgba(27,63,126,0.5)" : "rgba(27,63,126,0.82)",
-                border:               "1px solid rgba(255,255,255,0.18)",
-                color:                "#ffffff",
-                backdropFilter:       "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(27,63,126,0.25)",
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.95)";
-              }}
-              onMouseLeave={(e) => {
-                if (!isLoading) e.currentTarget.style.background = "rgba(27,63,126,0.82)";
-              }}
-            >
-              {isLoading ? <span className="loading-dots">Conectando</span> : "Entrar"}
-            </button>
+            <div className="mt-2">
+              <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
+                {isLoading ? <span className="loading-dots">Conectando</span> : "Entrar"}
+              </Button>
+            </div>
           </form>
 
           {/* Olvidaste contraseña */}
@@ -388,16 +381,16 @@ const LoginPage: React.FC = () => {
               type="button"
               onClick={() => { setShowForgotModal(true); setForgotEmail(email); setForgotSent(false); }}
               className="text-sm transition-colors cursor-pointer"
-              style={{ color: "#1B3F7E" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#2A5298")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#1B3F7E")}
+              style={{ color: "var(--azul-egm)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--azul-egm-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--azul-egm)")}
             >
               ¿Olvidaste tu contraseña?
             </button>
           </div>
 
           {/* ── Zona Nueva empresa ── */}
-          <div className="mt-10 rounded-2xl overflow-hidden relative"
+          <div className="mt-8 rounded-2xl overflow-hidden relative"
             style={{ background: "linear-gradient(135deg, #4a7cc9 0%, #2d5494 100%)" }}>
             <div className="relative px-6 py-6 flex flex-col items-center gap-3 text-center">
               <div>
@@ -412,12 +405,12 @@ const LoginPage: React.FC = () => {
                 href="/register-empresa"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
                 style={{
-                  background:           "rgba(255,255,255,0.15)",
-                  border:               "1px solid rgba(255,255,255,0.3)",
-                  color:                "#ffffff",
-                  backdropFilter:       "blur(12px)",
+                  background: "rgba(255,255,255,0.15)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "#ffffff",
+                  backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
-                  boxShadow:            "inset 0 1px 0 rgba(255,255,255,0.2)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
@@ -426,45 +419,40 @@ const LoginPage: React.FC = () => {
               </Link>
             </div>
           </div>
-
-          {/* Acceso invitado */}
-          <div className="text-center mt-3">
-            <button
-              onClick={handleInvitado}
-              className="text-sm transition-colors cursor-pointer"
-              style={{ color: "#6B7A8D" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#3D4A5C")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7A8D")}
-            >
-              ← Continuar como invitado
-            </button>
-          </div>
         </div>
       </div>
       {/* ── MODAL: Recuperar contraseña ── */}
       {showForgotModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          style={{ background: "var(--overlay)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowForgotModal(false); }}
         >
           <div
-            className="w-full max-w-md rounded-2xl overflow-hidden"
+            ref={forgotPanelRef}
+            className="w-full max-w-md mx-4 sm:mx-0 rounded-2xl overflow-hidden flex flex-col"
             style={{ background: "#ffffff", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
           >
             {!forgotSent ? (
               <>
                 {/* Header */}
-                <div style={{ background: "#1B3F7E", padding: "24px 32px 20px" }}>
-                  <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Recuperar contraseña
-                  </h3>
-                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
-                    Introduce tu correo y te enviaremos un enlace
-                  </p>
+                <div style={{
+                  padding: "20px 24px 16px",
+                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+                }}>
+                  <div>
+                    <h3 className="text-xl font-bold" style={{ color: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Recuperar contraseña
+                    </h3>
+                    <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                      Introduce tu correo y te enviaremos un enlace
+                    </p>
+                  </div>
+                  <IconButton variant="glass" label="Cerrar" onClick={() => setShowForgotModal(false)} style={{ flexShrink: 0 }} />
                 </div>
 
-                <div className="p-8 flex flex-col gap-5">
+                <div className="p-5 sm:p-8 flex flex-col gap-5">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: "#3D4A5C" }}>
                       Correo electrónico
@@ -476,56 +464,37 @@ const LoginPage: React.FC = () => {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         placeholder="tu@empresa.com"
-                        className="w-full pl-11 pr-4 py-3 text-sm rounded-lg outline-none transition-all"
-                        style={{ background: "#f5f6f8", border: "1px solid rgba(27,63,126,0.22)", color: "#0f1923" }}
-                        onFocus={(e) => { e.target.style.borderColor = "#1B3F7E"; e.target.style.boxShadow = "0 0 0 3px rgba(27,63,126,0.08)"; }}
-                        onBlur={(e) => { e.target.style.borderColor = "rgba(27,63,126,0.22)"; e.target.style.boxShadow = "none"; }}
+                        className="w-full pl-11 pr-4 rounded-lg outline-none border transition-all duration-150"
+                        style={{ height: "44px", background: "#ffffff", borderColor: "rgba(0,0,0,0.12)", color: "var(--texto-primario)", fontSize: "0.875rem" }}
+                        onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.08)"; }}
+                        onBlur={(e) => { e.target.style.borderColor = "rgba(0,0,0,0.12)"; e.target.style.boxShadow = "none"; }}
                         onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
                       />
                     </div>
                     {forgotEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail) && (
-                      <p className="text-xs mt-1.5" style={{ color: "#C84B31" }}>
+                      <p className="text-xs mt-1.5" style={{ color: "var(--error)" }}>
                         Introduce un correo electrónico válido
                       </p>
                     )}
                   </div>
 
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowForgotModal(false)}
-                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
-                      style={{ color: "#6B7A8D", borderColor: "#e2e5ea", background: "transparent" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6f8")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
+                    <Button variant="secondary" size="md" className="flex-1" onClick={() => setShowForgotModal(false)}>
                       Cancelar
-                    </button>
-                    <button
-                      onClick={handleForgotPassword}
+                    </Button>
+                    <Button variant="primary" size="md" className="flex-1"
                       disabled={!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail) || forgotLoading}
-                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "#1B3F7E", color: "#ffffff" }}
-                      onMouseEnter={(e) => { if (!forgotLoading) e.currentTarget.style.background = "#2A5298"; }}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
-                    >
-                      {forgotLoading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          Enviando...
-                        </span>
-                      ) : "Enviar enlace"}
-                    </button>
+                      onClick={handleForgotPassword}>
+                      {forgotLoading ? <span className="loading-dots">Enviando</span> : "Enviar enlace"}
+                    </Button>
                   </div>
                 </div>
               </>
             ) : (
               <>
-                <div className="p-8 flex flex-col items-center text-center gap-5">
+                <div className="p-5 sm:p-8 flex flex-col items-center text-center gap-5">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#e8f0fe" }}>
-                    <FiMail size={28} style={{ color: "#1B3F7E" }} />
+                    <FiMail size={28} style={{ color: "var(--azul-egm)" }} />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-2" style={{ color: "#0f1923" }}>¡Correo enviado!</h3>
@@ -534,7 +503,7 @@ const LoginPage: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="w-full rounded-xl p-4 text-sm" style={{ background: "#f5f6f8", border: "1px solid #e2e5ea" }}>
+                  <div className="w-full rounded-2xl p-4 text-sm" style={{ background: "#f5f6f8", border: "1px solid #e2e5ea" }}>
                     <p className="mb-1 font-medium" style={{ color: "#3D4A5C" }}>¿Qué hacer ahora?</p>
                     <ul className="text-xs space-y-1.5" style={{ color: "#6B7A8D" }}>
                       <li>1. Revisa tu bandeja de entrada</li>
@@ -547,24 +516,12 @@ const LoginPage: React.FC = () => {
                   </div>
 
                   <div className="w-full flex gap-3">
-                    <button
-                      onClick={() => { setForgotSent(false); setForgotEmail(""); }}
-                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-colors border"
-                      style={{ color: "#1B3F7E", borderColor: "#1B3F7E", background: "transparent" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(27,63,126,0.05)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
+                    <Button variant="secondary" size="md" className="flex-1" onClick={() => { setForgotSent(false); setForgotEmail(""); }}>
                       Reenviar
-                    </button>
-                    <button
-                      onClick={() => setShowForgotModal(false)}
-                      className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all"
-                      style={{ background: "#1B3F7E", color: "#ffffff" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#2A5298")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#1B3F7E")}
-                    >
+                    </Button>
+                    <Button variant="primary" size="md" className="flex-1" onClick={() => setShowForgotModal(false)}>
                       Cerrar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </>

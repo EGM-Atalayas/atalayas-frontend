@@ -3,7 +3,7 @@ export interface Incidencia {
   titulo: string;
   descripcion: string;
   prioridad: 'NORMAL' | 'CRITICA';
-  estado: 'ABIERTA' | 'EN_CURSO' | 'RESUELTA' | 'CERRADA';
+  estado: 'ABIERTA' | 'EN_CURSO' | 'CERRADA';
   creadoPor: string;
   nombreCreador: string;
   emailCreador: string;

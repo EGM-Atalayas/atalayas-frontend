@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
 import ChatbotIA from "@/components/ui/ChatbotIA";
+import AppTutorial from "@/components/tutorial/AppTutorial";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { usuario, guardarUsuario } = useAuth();
   const [verificando, setVerificando] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   // Verificamos sesión activa contra el endpoint correcto
   useEffect(() => {
@@ -43,6 +45,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [verificando, usuario]);
 
+  // Redirigimos al superadmin al panel principal solo si está en la raíz del dashboard
+  useEffect(() => {
+    if (!verificando && usuario?.codigoRol === "ROLE_ADMIN" && pathname === "/dashboard") {
+      router.replace("/superadmin");
+    }
+  }, [verificando, usuario, pathname]);
+
   // Pantalla de verificación mientras comprobamos la sesión
   if (verificando) {
     return (
@@ -55,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="w-7 h-7 border-2 rounded-full animate-spin"
             style={{
               borderColor:    "var(--gris-borde)",
-              borderTopColor: "var(--verde-oliva)",
+              borderTopColor: "var(--lima)",
             }}
           />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -66,8 +75,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Mientras redirige al invitado no renderizamos nada
-  if (!usuario || usuario.codigoRol === "INVITADO") return null;
+  // Mientras redirige no renderizamos nada
+  if (!usuario || usuario.codigoRol === "INVITADO" || (usuario.codigoRol === "ROLE_ADMIN" && pathname === "/dashboard")) return null;
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--gris-pagina)" }}>
@@ -76,6 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
       <ChatbotIA />
+      <AppTutorial />
     </div>
   );
 }

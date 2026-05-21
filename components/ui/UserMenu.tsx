@@ -12,7 +12,6 @@ interface UserMenuProps {
   onPerfil: () => void;
   onConfiguracion: () => void;
   onCerrarSesion: () => void;
-  onIncidencias?: () => void;
 }
 
 const ACCIONES = [
@@ -21,7 +20,7 @@ const ACCIONES = [
     label:  "Mi perfil",
     danger: false,
     icon: (
-      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
@@ -31,26 +30,16 @@ const ACCIONES = [
     label:  "Configuración",
     danger: false,
     icon: (
-      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-  {
-    key:    "incidencias" as const,
-    label:  "Incidencias",
-    danger: true,
-    icon: (
-      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     ),
   },
 ];
 
 const ICONO_LOGOUT = (
-  <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9}>
+  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
   </svg>
 );
@@ -63,12 +52,21 @@ export default function UserMenu({
   onPerfil,
   onConfiguracion,
   onCerrarSesion,
-  onIncidencias,
 }: UserMenuProps) {
   const [open, setOpen]       = useState(false);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const containerRef          = useRef<HTMLDivElement>(null);
+
+  // Resetear el error cuando cambia la URL (el usuario sube nueva foto)
+  const prevAvatarUrl = useRef(avatarUrl);
+  if (avatarUrl !== prevAvatarUrl.current) {
+    prevAvatarUrl.current = avatarUrl;
+    if (imgError) setImgError(false);
+  }
+
+  const showAvatar = !!avatarUrl && !imgError;
   const dropdownRef           = useRef<HTMLDivElement>(null);
   const cardsRef              = useRef<HTMLDivElement[]>([]);
   const tlRef                 = useRef<gsap.core.Timeline | null>(null);
@@ -103,11 +101,10 @@ export default function UserMenu({
   }
   function toggle() { open ? closeMenu() : openMenu(); }
 
-  function handleAccion(key: "perfil" | "configuracion" | "incidencias") {
+  function handleAccion(key: "perfil" | "configuracion") {
     closeMenu();
     if (key === "perfil") onPerfil();
     else if (key === "configuracion") onConfiguracion();
-    else if (key === "incidencias" && onIncidencias) onIncidencias();
   }
 
   return (
@@ -137,14 +134,14 @@ export default function UserMenu({
           style={{
             width:      "30px",
             height:     "30px",
-            background: avatarUrl ? "transparent" : "rgba(255,255,255,0.15)",
+            background: showAvatar ? "transparent" : "rgba(255,255,255,0.15)",
             color:      "#fff",
             border:     `2px solid ${hovered || open ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.30)"}`,
             transition: "border-color 0.15s ease",
           }}
         >
-          {avatarUrl
-            ? <Image src={avatarUrl} alt="Avatar" width={30} height={30} className="object-cover rounded-full" />
+          {showAvatar
+            ? <Image src={avatarUrl!} alt="Avatar" width={30} height={30} className="object-cover rounded-full" onError={() => setImgError(true)} />
             : initials}
         </div>
 
@@ -182,12 +179,12 @@ export default function UserMenu({
         >
           {/* Caret */}
           <div style={{ position: "absolute", top: "-6px", right: "22px", width: "12px", height: "6px", overflow: "hidden" }}>
-            <div style={{ width: "10px", height: "10px", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", transform: "rotate(45deg) translate(1px, 3px)", boxShadow: "-2px -2px 4px rgba(0,0,0,0.04)" }} />
+            <div style={{ width: "10px", height: "10px", background: "var(--blanco)", border: "1px solid var(--surface-border)", transform: "rotate(45deg) translate(1px, 3px)", boxShadow: "-2px -2px 4px rgba(0,0,0,0.04)" }} />
           </div>
 
           <div
             className="rounded-2xl overflow-hidden"
-            style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}
+            style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}
           >
             {/* ── Info — solo lectura ── */}
             <div className="px-4 py-4 flex items-center gap-3">
@@ -197,23 +194,23 @@ export default function UserMenu({
                   width:      "46px",
                   height:     "46px",
                   fontSize:   "17px",
-                  background: avatarUrl ? "transparent" : "var(--azul-egm)",
+                  background: showAvatar ? "transparent" : "var(--azul-egm)",
                   color:      "#fff",
                   border:     "2px solid rgba(0,0,0,0.06)",
                   flexShrink: 0,
                 }}
               >
-                {avatarUrl
-                  ? <Image src={avatarUrl} alt="Avatar" width={46} height={46} className="object-cover rounded-full" />
+                {showAvatar
+                  ? <Image src={avatarUrl!} alt="Avatar" width={46} height={46} className="object-cover rounded-full" onError={() => setImgError(true)} />
                   : initials}
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-semibold truncate" style={{ color: "#111827", lineHeight: 1.3 }}>
+                <p className="text-[15px] font-semibold truncate" style={{ color: "var(--texto-primario)", lineHeight: 1.3 }}>
                   {nombreMostrado}
                 </p>
                 {email && (
-                  <p className="text-xs truncate mt-0.5" style={{ color: "#9ca3af" }} title={email}>
+                  <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }} title={email}>
                     {email}
                   </p>
                 )}
@@ -221,7 +218,7 @@ export default function UserMenu({
             </div>
 
             {/* Separador */}
-            <div style={{ height: "1px", background: "rgba(0,0,0,0.07)", margin: "0 16px" }} />
+            <div style={{ height: "1px", background: "var(--surface-border)", margin: "0 16px" }} />
 
             {/* ── Mi perfil + Configuración + Incidencias ── */}
             <div className="py-2 px-2 flex flex-col gap-0.5">
@@ -238,7 +235,7 @@ export default function UserMenu({
             </div>
 
             {/* Separador antes de cerrar sesión */}
-            <div style={{ height: "1px", background: "rgba(0,0,0,0.07)", margin: "0 16px" }} />
+            <div style={{ height: "1px", background: "var(--surface-border)", margin: "0 16px" }} />
 
             {/* ── Cerrar sesión ── */}
             <div className="py-2 px-2">
@@ -246,7 +243,7 @@ export default function UserMenu({
                 label="Cerrar sesión"
                 icon={ICONO_LOGOUT}
                 danger
-                refFn={(el) => { if (el) cardsRef.current[2] = el; }}
+                refFn={(el) => { if (el) cardsRef.current[ACCIONES.length] = el; }}
                 onClick={() => { closeMenu(); onCerrarSesion(); }}
               />
             </div>
@@ -279,12 +276,13 @@ function ActionItem({
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer select-none"
+      className="flex items-center gap-3 px-3 py-3 cursor-pointer select-none active:bg-black/[0.05]"
       style={{
+        borderRadius: "var(--radius-sm)",
         background: hov
-          ? (danger ? "rgba(239,68,68,0.07)" : "rgba(0,0,0,0.045)")
+          ? (danger ? "rgba(192,57,43,0.07)" : "rgba(0,0,0,0.045)")
           : "transparent",
-        color:      danger ? "#e11d48" : "#374151",
+        color:      danger ? "var(--error)" : "var(--texto-label)",
         transition: "background 0.15s ease",
       }}
     >
@@ -292,9 +290,9 @@ function ActionItem({
         className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
         style={{
           background: hov
-            ? (danger ? "rgba(239,68,68,0.12)" : "rgba(0,0,0,0.07)")
-            : (danger ? "rgba(239,68,68,0.07)" : "rgba(0,0,0,0.05)"),
-          color:      danger ? "#e11d48" : "#6b7280",
+            ? (danger ? "var(--error-light)" : "rgba(0,0,0,0.07)")
+            : (danger ? "rgba(192,57,43,0.06)" : "rgba(0,0,0,0.05)"),
+          color:      danger ? "var(--error)" : "var(--texto-muted)",
           transition: "background 0.15s ease",
         }}
       >
@@ -307,7 +305,7 @@ function ActionItem({
         width="14" height="14" fill="none" viewBox="0 0 24 24"
         stroke="currentColor" strokeWidth={2.5}
         style={{
-          color:      danger ? "rgba(225,29,72,0.35)" : "rgba(0,0,0,0.18)",
+          color:      danger ? "rgba(192,57,43,0.35)" : "rgba(0,0,0,0.18)",
           opacity:    hov ? 1 : 0.5,
           transition: "opacity 0.15s ease",
         }}

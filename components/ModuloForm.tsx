@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import type { ModuloTipo } from "@/lib/types/modulos";
-import { MODULO_TIPO_LABEL } from "@/lib/types/modulos";
+import { MODULO_TIPO_LABEL, mapTipoToBackend } from "@/lib/types/modulos";
 import { apiFetch, API_URL } from "@/lib/api";
 import { subirImagenModulo } from "@/lib/supabase";
 
@@ -68,7 +70,7 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
       const payload = {
         nombre: nombre.trim(),
         descripcion: descripcion.trim(),
-        tipoModulo,
+        tipoModulo: mapTipoToBackend(tipoModulo),
         audiencia,
         activo,
         imagenPortadaUrl: imagenPortadaUrl || null,
@@ -105,14 +107,7 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
           <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
             {editando ? "Editar módulo" : "Nuevo módulo"}
           </h2>
-          <button onClick={onCancel} className="w-7 h-7 flex items-center justify-center rounded-full transition-colors"
-            style={{ color: "var(--texto-muted)" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "var(--gris-borde)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <IconButton onClick={onCancel} variant="surface" size="sm" label="Cerrar" />
         </div>
 
         {/* Body */}
@@ -231,20 +226,12 @@ export default function ModuloForm({ editando, empresaId, onSave, onCancel }: Mo
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-2" style={{ borderTop: "1px solid var(--gris-borde)" }}>
-            <button type="button" onClick={onCancel}
-              className="text-sm px-4 py-2 rounded-xl transition-colors"
-              style={{ color: "var(--texto-muted)" }}>
+            <Button type="button" variant="secondary" onClick={onCancel}>
               Cancelar
-            </button>
-            <button type="submit" disabled={submitting}
-              className="text-sm font-bold px-5 py-2 rounded-xl transition-all"
-              style={{
-                background: submitting ? "var(--gris-borde)" : "linear-gradient(135deg,var(--azul-egm),#A3B535)",
-                color: submitting ? "var(--texto-muted)" : "#fff",
-                boxShadow: submitting ? "none" : "0 4px 12px rgba(0,82,204,0.25)",
-              }}>
+            </Button>
+            <Button type="submit" disabled={submitting}>
               {submitting ? "Guardando…" : "Guardar cambios"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

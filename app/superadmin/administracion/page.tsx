@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { FaBuilding, FaClock, FaChartBar, FaExclamationTriangle } from "react-icons/fa";
 import GestionEmpresas from "@/components/pages/GestionEmpresas";
 import SolicitudesPendientes from "@/components/pages/SolicitudesPendientes";
-import GestionIncidencias from "@/components/pages/GestionIncidencias";
+import IncidenciasAdminTab from "@/components/incidencias/IncidenciasAdminTab";
 import EstadisticasPage from "@/app/superadmin/estadisticas/page";
 
 type TabType = "empresas" | "solicitudes" | "estadisticas" | "incidencias";
@@ -23,15 +23,15 @@ export default function AdministracionPage() {
     <div className="w-full">
       <div className="w-full px-6 md:px-8 lg:px-10 pt-10 pb-16">
         {/* PESTAÑAS */}
-        <div className="flex gap-2 mb-8 bg-white rounded-xl p-2 shadow-sm border border-slate-100 w-fit">
+        <div className="flex flex-wrap gap-3 mb-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
                 activeTab === tab.id
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               {tab.icon}
@@ -43,26 +43,26 @@ export default function AdministracionPage() {
         {/* CONTENIDO DE LAS PESTAÑAS */}
         <div className="animate-fadeIn">
           {activeTab === "empresas" && (
-            <div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
               <GestionEmpresas />
             </div>
           )}
 
           {activeTab === "solicitudes" && (
-            <div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
               <SolicitudesPendientes />
             </div>
           )}
 
           {activeTab === "estadisticas" && (
-            <div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
               <EstadisticasPage />
             </div>
           )}
 
           {activeTab === "incidencias" && (
-            <div>
-              <GestionIncidencias esSuperadmin={true} />
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <IncidenciasAdminTab esSuperadmin={true} />
             </div>
           )}
         </div>

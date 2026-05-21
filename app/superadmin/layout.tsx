@@ -7,11 +7,19 @@ import Header from "@/components/Header";
 import DashboardHero from "@/components/ui/DashboardHero";
 import ChatbotIA from "@/components/ui/ChatbotIA";
 import { useAuth } from "@/context/AuthContext";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { usuario } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Solo ROLE_ADMIN puede acceder al panel de superadmin
+  React.useEffect(() => {
+    if (usuario !== undefined && usuario !== null && usuario.codigoRol !== "ROLE_ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [usuario]);
 
   const nombreParaMostrar = usuario?.nombre ? usuario.nombre.split(" ")[0] : "Admin";
 
@@ -37,14 +45,14 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Panel de ",
       titulo:       "Administración",
-      imagenFondo:  "/background-empresa.webp",
+      imagenFondo:  "/hero-administracion.webp",
       objectPosition: "center 30%",
     };
   } else if (pathname.includes("/superadmin/empresas")) {
     heroConfig = {
       prefijo:      "Gestiona las ",
       titulo:       "Empresas",
-      imagenFondo:  "/background-empresa.webp",
+      imagenFondo:  "/hero-administracion.webp",
       objectPosition: "center 50%",
     };
   } else if (pathname.includes("/superadmin/solicitudes")) {
@@ -65,13 +73,13 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     heroConfig = {
       prefijo:      "Gestiona los ",
       titulo:       "Comunicados",
-      imagenFondo:  "/background-comunicacion-empleado.webp",
+      imagenFondo:  "/hero-comunicacion.webp",
       objectPosition: "center 40%",
     };
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-10">
+    <div className="min-h-screen pb-10" style={{ background: "var(--gris-pagina)" }}>
       <Header />
       <DashboardHero
         prefijo={heroConfig.prefijo}

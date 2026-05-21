@@ -10,7 +10,7 @@ import type { Noticia, Comunicado } from "@/lib/types/noticias";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://atalayas-backend-c25d.onrender.com/api/v1";
+  "https://atalayas-backend-1.onrender.com/api/v1";
 
 const TAG_COLORS: Record<string, { bg: string; color: string }> = {
   Noticia:    { bg: "#EFF6FF", color: "#1B3F7E" },

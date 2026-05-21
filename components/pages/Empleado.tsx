@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getNoticias } from "@/lib/api/noticias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
+import { getEventosComunidad, type ComunidadEvento } from "@/lib/api/comunidad";
 import type { Noticia } from "@/lib/types/noticias";
 import type { ModuloConProgreso } from "@/lib/types/modulos";
-import ComunicadosCarousel, { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import type { ComunicadoItem } from "@/components/ui/ComunicadosCarousel";
+import ComunicadosDeck from "@/components/ui/ComunicadosDeck";
 import DashboardHero from "@/components/ui/DashboardHero";
-
-function formatFecha(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-}
 
 // ── TIPOS Y MOCK FORMACIONES ──────────────────────────────────────────────────
 type FormacionLocal = ModuloConProgreso & { totalItems: number; completadosLocal: number };
@@ -41,21 +39,21 @@ const MOCK_FORMACIONES_BASE: FormacionLocal[] = [
 ];
 
 const FORMACION_IMAGES_BY_ID: Record<string, string> = {
-  "mock-1": "/background-formacion-empleado.jpg",
-  "mock-2": "/comunicacion-trabajo.jpg",
-  "mock-3": "/diversidad.jpg",
-  "mock-4": "/herramientas-digitales.jpg",
+  "mock-1": "/background-formacion-empleado.webp",
+  "mock-2": "/comunicacion-trabajo.webp",
+  "mock-3": "/diversidad.webp",
+  "mock-4": "/herramientas-digitales.webp",
 };
 
 const FORMACION_IMAGES_BY_NAME: Array<{ keywords: string[]; imagen: string }> = [
-  { keywords: ["incorporac", "bienvenid", "atalayas"],    imagen: "/background-formacion-empleado.jpg" },
-  { keywords: ["comunicac", "efectiva", "trabajo"],       imagen: "/comunicacion-trabajo.jpg" },
-  { keywords: ["prl", "prevenci", "riesgos", "laboral"],  imagen: "/diversidad.jpg" },
-  { keywords: ["digitaliz", "herramienta", "colaborat"],  imagen: "/herramientas-digitales.jpg" },
-  { keywords: ["negociaci", "habilidad"],                 imagen: "/negociacion-habilidades.jpg" },
-  { keywords: ["metodolog", "agil"],                      imagen: "/metodologias-agiles.jpg" },
-  { keywords: ["cibersegur", "datos"],                    imagen: "/ciberseguridad-datos.jpg" },
-  { keywords: ["diversidad", "inclusi"],                  imagen: "/diversidad.jpg" },
+  { keywords: ["incorporac", "bienvenid", "atalayas"],    imagen: "/background-formacion-empleado.webp" },
+  { keywords: ["comunicac", "efectiva", "trabajo"],       imagen: "/comunicacion-trabajo.webp" },
+  { keywords: ["prl", "prevenci", "riesgos", "laboral"],  imagen: "/diversidad.webp" },
+  { keywords: ["digitaliz", "herramienta", "colaborat"],  imagen: "/herramientas-digitales.webp" },
+  { keywords: ["negociaci", "habilidad"],                 imagen: "/negociacion-habilidades.webp" },
+  { keywords: ["metodolog", "agil"],                      imagen: "/metodologias-agiles.webp" },
+  { keywords: ["cibersegur", "datos"],                    imagen: "/ciberseguridad-datos.webp" },
+  { keywords: ["diversidad", "inclusi"],                  imagen: "/diversidad.webp" },
 ];
 
 function getFormacionImage(moduloId: string, nombre: string): string | undefined {
@@ -141,22 +139,49 @@ export default function Empleado() {
   const [noticias, setNoticias]               = useState<Noticia[]>([]);
   const [formaciones, setFormaciones]         = useState<ModuloConProgreso[]>([]);
   const [formacionesLocal, setFormacionesLocal] = useState<FormacionLocal[]>([]);
+  const [eventosCom, setEventosCom]           = useState<ComunidadEvento[]>([]);
   const [cargando, setCargando]               = useState(true);
+
+  // Ref al contenedor de scroll horizontal de "Mi formación" para los botones de navegación
+  const formScrollRef = useRef<HTMLDivElement>(null);
+  const scrollFormacion = (dir: "left" | "right") => {
+    const el = formScrollRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-tarjeta-curso]");
+    const step = card ? card.offsetWidth + 16 /* gap-4 */ : 280;
+    el.scrollBy({ left: dir === "left" ? -step : step, behavior: "smooth" });
+  };
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [noticiasData, modulosData] = await Promise.all([
+        const [noticiasData, modulosData, eventosData] = await Promise.all([
           getNoticias(usuario?.empresaId).catch(() => []),
-          getModulosConProgreso().catch(() => []),
+          getModulosConProgreso(usuario?.empresaId).catch(() => []),
+          getEventosComunidad().catch(() => []),
         ]);
-        setNoticias((noticiasData as Noticia[]).slice(0, 6));
+        const filtradas = usuario?.empresaId
+          ? (noticiasData as Noticia[]).filter((n) => n.empresaId === usuario.empresaId)
+          : (noticiasData as Noticia[]).filter((n) => !n.empresaId);
+        setNoticias(filtradas.slice(0, 6));
         const real = (modulosData as ModuloConProgreso[]).sort((a, b) => a.orden - b.orden);
         setFormaciones(real);
         // Si la API no devuelve módulos, usar mock con progreso de localStorage
         if (real.length === 0) {
           setFormacionesLocal(applyProgress(MOCK_FORMACIONES_BASE, loadProgress()));
         }
+        // Eventos: ordenar por fecha (futuros primero, luego pasados)
+        const ahora = Date.now();
+        const ordenados = [...eventosData].sort((a, b) => {
+          const ta = new Date(a.fechaInicio).getTime();
+          const tb = new Date(b.fechaInicio).getTime();
+          const futuroA = ta >= ahora;
+          const futuroB = tb >= ahora;
+          if (futuroA && !futuroB) return -1;
+          if (!futuroA && futuroB) return 1;
+          return futuroA ? ta - tb : tb - ta;  // futuros asc, pasados desc
+        });
+        setEventosCom(ordenados);
       } finally {
         setCargando(false);
       }
@@ -198,11 +223,7 @@ export default function Empleado() {
   const totalProgress = formDisplay.length > 0
     ? Math.round((completados / formDisplay.length) * 100)
     : 0;
-  const siguientePaso = formDisplay.find((f) => f.status !== "completado");
   const hayModulos    = formDisplay.length > 0;
-  const hayProgreso   = hayModulos && completados > 0;
-  const noticiasEGM     = noticias.filter((n) => n.esGlobal);
-  const noticiasEmpresa = noticias.filter((n) => !n.esGlobal);
 
   // Transforma Noticia[] → ComunicadoItem[] para el carrusel
   const carouselItems: ComunicadoItem[] = noticias.length > 0
@@ -247,6 +268,19 @@ export default function Empleado() {
 
   const nombreCorto = usuario?.nombre?.split(" ")[0] ?? "Empleado";
 
+  // ── Progreso del onboarding calculado desde módulos de tipo ONBOARDING ──
+  const onboardingModules = formDisplay.filter((m) => m.tipoModulo === "ONBOARDING");
+  const onboardingProgreso = onboardingModules.length === 0
+    ? 0
+    : Math.round((onboardingModules.filter((m) => m.status === "completado").length / onboardingModules.length) * 100);
+  const onboardingIncompleto = onboardingModules.length > 0 && onboardingProgreso < 100;
+
+  // ── Ordenamiento inteligente: en curso → pendientes → completados ──
+  const formOrdenado = [...formDisplay].sort((a, b) => {
+    const peso = (s: string) => s === "en progreso" ? 0 : s === "pendiente" ? 1 : 2;
+    return peso(a.status) - peso(b.status);
+  });
+
   return (
     <div>
       {/* ════════════════════════════════════════════
@@ -260,289 +294,182 @@ export default function Empleado() {
         objectPosition="center 40%"
       />
 
-
       {/* ════════════════════════════════════════════
-          ACCESOS RÁPIDOS
+          HERO ACTION — Solo si onboarding incompleto
       ════════════════════════════════════════════ */}
-      <div className="px-5 sm:px-8 lg:px-16 pt-5 sm:pt-7">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-          {[
-            {
-              label: "Comunicación",
-              href:  "/dashboard/comunicacion",
-              color: "var(--azul-egm)",
-              bg:    "var(--azul-egm-light)",
-              icon:  "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
-            },
-            {
-              label: "Formación",
-              href:  "/dashboard/formacion",
-              color: "var(--verde-oliva)",
-              bg:    "var(--verde-oliva-light)",
-              icon:  "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-            },
-            {
-              label: "Comunidad",
-              href:  "/dashboard/comunidad",
-              color: "#7c3aed",
-              bg:    "#ede9fe",
-              icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
-            },
-            {
-              label: "Servicios",
-              href:  "/dashboard/servicios",
-              color: "var(--info)",
-              bg:    "var(--info-light)",
-              icon:  "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
-            },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={() => router.push(item.href)}
-              className="flex flex-col items-center gap-2.5 py-4 px-3 rounded-2xl transition-all duration-150 w-full"
+      {onboardingIncompleto && (
+        <div className="px-5 sm:px-8 lg:px-16 pt-5 sm:pt-7">
+          <div
+            className="group relative flex items-center gap-3 sm:gap-6 px-4 sm:px-7 py-4 sm:py-5 rounded-2xl cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(120deg, #10B981 0%, #0EA5E9 45%, #7C3AED 100%)",
+              boxShadow: "0 12px 32px -10px rgba(14,165,233,0.55)",
+            }}
+            onClick={() => router.push("/dashboard/onboarding")}
+          >
+            {/* Halos decorativos */}
+            <div style={{ position: "absolute", top: "-80px", right: "-40px", width: "260px", height: "260px", borderRadius: "50%", background: "rgba(255,255,255,0.12)", filter: "blur(2px)" }} />
+            <div style={{ position: "absolute", bottom: "-60px", left: "20%", width: "180px", height: "180px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+            {/* Shimmer sutil */}
+            <div className="absolute inset-0 pointer-events-none opacity-60" style={{
+              background: "radial-gradient(circle at 20% 0%, rgba(255,255,255,0.18) 0%, transparent 40%)",
+            }} />
+
+            {/* Icono con gradiente inverso */}
+            <div
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 relative z-10"
               style={{
-                background: "var(--blanco)",
-                border:     "1px solid var(--gris-borde)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = item.color;
-                (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${item.color}22`;
-                (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
-                (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                background: "rgba(255,255,255,0.22)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
               }}
             >
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: item.bg, color: item.color }}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                </svg>
+              {/* Cohete — encaja con "incorporación / despegar" */}
+              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+              </svg>
+            </div>
+
+            <div className="flex-1 min-w-0 relative z-10">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.22)", color: "#ffffff", backdropFilter: "blur(6px)" }}>
+                  Onboarding
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  · En progreso
+                </span>
               </div>
-              <span className="text-xs font-semibold text-center leading-tight" style={{ color: "var(--texto-primario)" }}>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════
-          ONBOARDING
-      ════════════════════════════════════════════ */}
-      <div className="px-5 sm:px-8 lg:px-16 pt-4 sm:pt-8">
-        <div
-          className="relative flex items-center gap-3 sm:gap-6 px-4 sm:px-7 py-4 sm:py-5 rounded-2xl cursor-pointer overflow-hidden"
-          style={{ background: "#0a1628", boxShadow: "0 4px 24px rgba(0,0,0,0.18)" }}
-          onClick={() => router.push("/dashboard/onboarding")}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.28)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.18)"; }}
-        >
-          {/* Fondo decorativo */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse at 95% 50%, rgba(163,181,53,0.12) 0%, transparent 60%)",
-          }} />
-
-          {/* Icono */}
-          <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 relative z-10"
-            style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)" }}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-          </div>
-
-          {/* Texto + barra */}
-          <div className="flex-1 min-w-0 relative z-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5" style={{ color: "#A3B535" }}>
-              Proceso de incorporación
-            </p>
-            <p className="text-sm sm:text-base font-semibold text-white mb-2">
-              Completa tu onboarding en Atalayas
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: "35%", background: "linear-gradient(90deg, var(--azul-egm) 0%, #A3B535 100%)" }} />
+              <p className="text-base sm:text-lg font-bold text-white mb-2.5 leading-tight">
+                Completa tu onboarding en Atalayas
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 rounded-full overflow-hidden relative" style={{ background: "rgba(255,255,255,0.18)" }}>
+                  <div className="h-full rounded-full transition-all duration-700 relative"
+                    style={{
+                      width: `${onboardingProgreso}%`,
+                      background: "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FFFFFF 100%)",
+                      boxShadow: "0 0 12px rgba(251,191,36,0.55)",
+                    }}
+                  />
+                </div>
+                <span className="text-sm font-bold tabular-nums shrink-0 text-white">
+                  {onboardingProgreso}%
+                </span>
               </div>
-              <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "rgba(255,255,255,0.5)" }}>
-                35%
-              </span>
+            </div>
+
+            <div
+              className="shrink-0 hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl relative z-10 transition-transform group-hover:translate-x-0.5"
+              style={{
+                background: "rgba(255,255,255,0.95)",
+                color: "#0EA5E9",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
+              }}
+            >
+              <span className="text-sm font-bold">Continuar</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+            <div className="shrink-0 sm:hidden relative z-10 text-white">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
-
-          {/* CTA desktop */}
-          <div
-            className="shrink-0 hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl relative z-10"
-            style={{ background: "#A3B535", color: "#fff" }}
-          >
-            <span className="text-sm font-semibold">Continuar</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </div>
-          {/* Flecha móvil */}
-          <div className="shrink-0 sm:hidden relative z-10" style={{ color: "rgba(255,255,255,0.45)" }}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* ════════════════════════════════════════════
           CONTENIDO
       ════════════════════════════════════════════ */}
       <div className="px-5 sm:px-8 lg:px-16 pt-8 sm:pt-10 pb-16 flex flex-col gap-10 sm:gap-14">
 
-        {/* ── FILA 1: COMUNICACIONES (2/3) + SERVICIOS (1/3) ── */}
+        {/* ── SERVICIOS DEL PARQUE — chips compactos justo debajo del onboarding ── */}
         <section>
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-
-            {/* COMUNICACIONES — 2/3 */}
-            <div className="xl:col-span-2 flex flex-col">
-              <div className="mb-5"><TituloSeccion noMargin>Comunicaciones</TituloSeccion></div>
-              <ComunicadosCarousel
-                items={carouselItems}
-                autoplay
-                autoplayDelay={4500}
-                pauseOnHover
-                loop
-              />
-            </div>
-
-            {/* SERVICIOS DEL PARQUE — 1/3 */}
-            <div className="flex flex-col">
-              <div className="mb-5"><TituloSeccion noMargin>Servicios del parque</TituloSeccion></div>
-              <div
-                className="rounded-2xl overflow-hidden relative"
-                style={{ background: "linear-gradient(160deg, #1B3F7E 0%, #0D1B2E 100%)" }}
-              >
-                {/* Glow decorativo */}
-                <div className="absolute pointer-events-none" style={{
-                  top: "-60px", left: "-60px", width: "240px", height: "240px",
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)",
-                }} />
-
-                {/* Mini cabecera */}
-                <div className="relative px-4 pt-4 pb-3 flex items-center justify-between"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest"
-                    style={{ color: "rgba(255,255,255,0.38)" }}>
-                    Servicios del parque
-                  </p>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: "rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                    {SERVICIOS_MOCK.filter(s => s.activo).length} / {SERVICIOS_MOCK.length} activos
-                  </span>
-                </div>
-
-                <div className="relative p-4 flex flex-col gap-2">
-                  {SERVICIOS_MOCK.filter((s, i) => s.activo || i < 4).map((s) => {
-                    const content = (
-                      <div
-                        className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
-                        style={{
-                          background:           s.activo ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
-                          border:               s.activo ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.07)",
-                          backdropFilter:       "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          boxShadow:            s.activo ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
-                        }}
-                      >
-                        {/* Icono */}
-                        <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                          style={{
-                            background:           s.activo ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
-                            border:               s.activo ? "1px solid rgba(255,255,255,0.22)" : "1px solid rgba(255,255,255,0.06)",
-                            backdropFilter:       "blur(4px)",
-                            WebkitBackdropFilter: "blur(4px)",
-                            color:                s.activo ? "white" : "rgba(255,255,255,0.2)",
-                          }}
-                        >
-                          {ICONO_MAP[s.icono ?? ""] ?? (
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          )}
-                        </div>
-
-                        {/* Texto */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate"
-                            style={{ color: s.activo ? "white" : "rgba(255,255,255,0.25)" }}>
-                            {s.label}
-                          </p>
-                          <p className="text-xs mt-0.5 truncate"
-                            style={{ color: s.activo ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.15)" }}>
-                            {s.desc}
-                          </p>
-                        </div>
-
-                        {/* Acción */}
-                        {s.activo ? (
-                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" strokeWidth={2}
-                            style={{ color: "rgba(255,255,255,0.4)" }}>
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        ) : (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                            style={{
-                              background: "rgba(255,255,255,0.07)",
-                              color:      "rgba(255,255,255,0.25)",
-                              border:     "1px solid rgba(255,255,255,0.08)",
-                            }}>
-                            Próx.
-                          </span>
-                        )}
-                      </div>
-                    );
-
-                    return s.activo && s.href ? (
-                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                        className="block" style={{ textDecoration: "none" }}
-                        onMouseEnter={(e) => {
-                          const d = e.currentTarget.firstElementChild as HTMLElement;
-                          if (d) {
-                            d.style.background  = "rgba(255,255,255,0.17)";
-                            d.style.borderColor = "rgba(255,255,255,0.28)";
-                            d.style.transform   = "translateY(-1px)";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          const d = e.currentTarget.firstElementChild as HTMLElement;
-                          if (d) {
-                            d.style.background  = "rgba(255,255,255,0.10)";
-                            d.style.borderColor = "rgba(255,255,255,0.18)";
-                            d.style.transform   = "translateY(0)";
-                          }
-                        }}>
-                        {content}
-                      </a>
-                    ) : <div key={s.label}>{content}</div>;
-                  })}
-                </div>
-              </div>
-            </div>
-
+          <div className="mb-4 text-center">
+            <TituloSeccion noMargin sinBarra>Servicios del parque</TituloSeccion>
           </div>
-          <div className="flex justify-start mt-3">
-            <Link href="/dashboard/comunicacion"
-              className="text-sm font-semibold hover:underline"
-              style={{ color: "var(--azul-egm)" }}>
-              Ver todas las comunicaciones →
-            </Link>
+
+          <div className="flex flex-wrap gap-3 justify-center">
+            {(() => {
+              const PALETA_CHIPS = [
+                { from: "#8B7AB8", to: "#C8A2C8" },  // Púrpura suave → Lila
+                { from: "#7BA7B5", to: "#9AC4A8" },  // Azul polvo → Verde salvia
+                { from: "#D4956B", to: "#C77F7F" },  // Terracota → Coral apagado
+                { from: "#7C82B5", to: "#B5A1C8" },  // Azul lavanda → Malva
+                { from: "#8FA88A", to: "#C9C58A" },  // Verde oliva → Mostaza suave
+                { from: "#6F8FA3", to: "#9AB8C7" },  // Azul pizarra → Azul polvo
+                { from: "#B58A9F", to: "#D4A88A" },  // Rosa apagado → Melocotón
+                { from: "#5D7A99", to: "#8AA8C2" },  // Azul humo → Cielo neblina
+              ];
+              return SERVICIOS_MOCK.filter((s) => s.activo).slice(0, 8).map((s, idx) => {
+              const ac = PALETA_CHIPS[idx % PALETA_CHIPS.length];
+              const chip = (
+                <span
+                  className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full text-base font-semibold transition-all"
+                  style={{
+                    background: `linear-gradient(var(--blanco), var(--blanco)) padding-box, linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%) border-box`,
+                    border:     "2px solid transparent",
+                    color:      "var(--texto-primario)",
+                    boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 16px -4px ${ac.from}55`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
+                  }}
+                >
+                  <span
+                    className="flex items-center justify-center w-6 h-6 [&_svg]:w-5 [&_svg]:h-5"
+                    style={{ color: ac.from }}
+                  >
+                    {ICONO_MAP[s.icono ?? ""] ?? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </span>
+                  {s.label}
+                </span>
+              );
+              return s.href ? (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ textDecoration: "none" }}>
+                  {chip}
+                </a>
+              ) : (
+                <button key={s.label} type="button" onClick={() => router.push("/dashboard/servicios")}
+                  style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>
+                  {chip}
+                </button>
+              );
+              });
+            })()}
           </div>
         </section>
 
-
-        {/* ── RUTA DE APRENDIZAJE ── */}
+        {/* ── COMUNICACIONES (ancho completo) ── */}
         <section>
-          <div className="flex items-start justify-between mb-5 gap-4">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <TituloSeccion noMargin>Comunicaciones</TituloSeccion>
+            <Link href="/dashboard/comunicacion"
+              className="text-sm font-semibold shrink-0 hover:underline mb-1"
+              style={{ color: "var(--azul-egm)" }}>
+              Ver todas →
+            </Link>
+          </div>
+          <ComunicadosDeck items={carouselItems} minHeight={460} />
+        </section>
+
+
+        {/* ── MI FORMACIÓN — grid vertical de tarjetas ── */}
+        <section>
+          <div className="flex items-end justify-between mb-5 gap-4">
             <div>
               <TituloSeccion noMargin>Mi formación</TituloSeccion>
               {hayModulos && (
@@ -550,14 +477,14 @@ export default function Empleado() {
                   {completados === 0
                     ? "Aún no has completado ningún módulo. ¡Empieza cuando quieras!"
                     : completados === formDisplay.length
-                    ? "🎉 ¡Has completado toda tu formación!"
+                    ? "¡Has completado toda tu formación!"
                     : `${completados} de ${formDisplay.length} módulos completados · ${totalProgress}% del total`}
                 </p>
               )}
             </div>
             {hayModulos && (
               <Link href="/dashboard/formacion"
-                className="text-sm font-semibold shrink-0 hover:underline mt-1"
+                className="text-sm font-semibold shrink-0 hover:underline mb-1"
                 style={{ color: "var(--azul-egm)" }}>
                 Ver todo →
               </Link>
@@ -580,233 +507,241 @@ export default function Empleado() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {formDisplay.map((m, i) => (
-                <TarjetaModulo
-                  key={m.moduloId}
-                  modulo={m}
-                  index={i}
-                  esMock={formaciones.length === 0}
-                  onAvanzar={() => avanzarModulo(m.moduloId)}
-                  onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
-                  imagenUrl={getFormacionImage(m.moduloId, m.nombre)}
-                />
-              ))}
+            <div className="relative group">
+              {/* Botón izquierda — solo flecha, sin círculo */}
+              <button
+                type="button"
+                onClick={() => scrollFormacion("left")}
+                aria-label="Anterior"
+                className="absolute -left-12 top-1/2 -translate-y-1/2 z-20 transition-transform hover:scale-125 hidden sm:flex items-center justify-center bg-transparent border-0 cursor-pointer"
+                style={{ color: "var(--texto-primario)" }}
+              >
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Botón derecha — solo flecha, sin círculo */}
+              <button
+                type="button"
+                onClick={() => scrollFormacion("right")}
+                aria-label="Siguiente"
+                className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 transition-transform hover:scale-125 hidden sm:flex items-center justify-center bg-transparent border-0 cursor-pointer"
+                style={{ color: "var(--texto-primario)" }}
+              >
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Carrusel con difuminado en los laterales */}
+              <div
+                ref={formScrollRef}
+                className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory items-stretch scroll-smooth"
+                style={{
+                  maskImage:        "linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent 100%)",
+                  WebkitMaskImage:  "linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent 100%)",
+                }}
+              >
+                {formOrdenado.map((m) => (
+                  <div key={m.moduloId} data-tarjeta-curso className="snap-start shrink-0 flex"
+                    style={{ width: "clamp(240px, 22vw, 300px)" }}>
+                    <TarjetaCurso
+                      modulo={m}
+                      onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
+                      imagenUrl={getFormacionImage(m.moduloId, m.nombre)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
 
-        {/* ── FILA 3: COMUNIDAD ── */}
-        <section>
-          <div className="flex items-start justify-between mb-5 gap-4">
-            <div>
-              <TituloSeccion noMargin>Comunidad</TituloSeccion>
-              <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
-            </div>
-            <Link href="/dashboard/comunidad"
-              className="text-sm font-semibold shrink-0 hover:underline mt-1"
-              style={{ color: "var(--azul-egm)" }}>
-              Ver todo →
-            </Link>
-          </div>
+        {/* ── COMUNIDAD — eventos reales del backend ── */}
+        {(() => {
+          const destacado = eventosCom[0];
+          const otros     = eventosCom.slice(1, 4);
+          const noHay     = eventosCom.length === 0;
 
-          {/* Evento destacado + iniciativas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4">
+          // Helpers de formato
+          const fmtDia = (iso: string) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric" });
+          const fmtMes = (iso: string) => new Date(iso).toLocaleDateString("es-ES", { month: "short" }).replace(".", "");
+          const fmtHora = (iso: string, isoFin?: string | null) => {
+            const ini = new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+            if (!isoFin) return `${ini} h`;
+            const fin = new Date(isoFin).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+            return `${ini} – ${fin} h`;
+          };
+          const fmtFechaCorta = (iso: string) =>
+            new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 
-            {/* Evento destacado */}
-            <div
-              className="rounded-2xl overflow-hidden relative cursor-pointer"
-              style={{ background: "var(--marino)", minHeight: "200px" }}
-              onClick={() => router.push("/dashboard/eventos")}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.95"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-            >
-              {/* Fondo decorativo */}
-              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 20%, rgba(163,181,53,0.18) 0%, transparent 60%)" }} />
-              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
-
-              <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
-                <div className="flex items-start justify-between mb-auto">
-                  <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ background: "rgba(163,181,53,0.2)", color: "#A3B535" }}>
-                    Próximo evento
-                  </span>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-white leading-none">24</p>
-                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>May</p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-white mb-1" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
-                    Jornada de Networking EGM
-                  </h3>
-                  <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    Conecta con profesionales del parque empresarial. Ponencias, mesas redondas y espacio de networking libre.
-                  </p>
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-                    {[
-                      { icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z", text: "Sala Polivalente A" },
-                      { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "10:00 – 14:00 h" },
-                      { icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z", text: "42 inscritos" },
-                    ].map((d) => (
-                      <span key={d.text} className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={d.icon} />
-                        </svg>
-                        {d.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <Link
-                  href="/dashboard/eventos"
-                  className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80 inline-flex items-center gap-1.5"
-                  style={{ background: "#A3B535", color: "#fff", textDecoration: "none" }}
-                >
-                  Ver evento
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+          return (
+            <section>
+              <div className="mb-5">
+                <TituloSeccion noMargin>Comunidad</TituloSeccion>
+                <p className="text-sm mt-1.5 font-medium" style={{ color: "var(--texto-muted)" }}>Actividades e iniciativas del parque empresarial</p>
               </div>
-            </div>
 
-            {/* Iniciativas */}
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  label: "Team building",
-                  desc:  "Integración y trabajo en equipo entre empresas del parque",
-                  fecha: "Jun 2025",
-                  inscritos: 18,
-                  color: "#7c3aed",
-                  bg:    "#ede9fe",
-                  icon:  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
-                },
-                {
-                  label: "En Femenino",
-                  desc:  "Liderazgo, igualdad e inspiración en el entorno empresarial",
-                  fecha: "Jul 2025",
-                  inscritos: 31,
-                  color: "#be185d",
-                  bg:    "#fce7f3",
-                  icon:  "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
-                },
-                {
-                  label: "Eventos empresariales",
-                  desc:  "Actividades de networking entre las empresas del parque",
-                  fecha: "Mensual",
-                  inscritos: 60,
-                  color: "var(--azul-egm)",
-                  bg:    "var(--azul-egm-light)",
-                  icon:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-                },
-              ].map((ini) => (
-                <div
-                  key={ini.label}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-150 cursor-pointer"
-                  style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-                  onClick={() => router.push("/dashboard/comunidad")}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)";
-                    (e.currentTarget as HTMLDivElement).style.borderColor = ini.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)";
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gris-borde)";
-                  }}
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ini.bg, color: ini.color }}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={ini.icon} />
+              {noHay ? (
+                /* Placeholder cuando no hay eventos */
+                <div className="rounded-2xl flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
+                  style={{ background: "var(--blanco)", border: "1px dashed var(--gris-borde)" }}>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{ini.label}</p>
-                    <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{ini.desc}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold" style={{ color: ini.color }}>{ini.fecha}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--texto-muted)" }}>{ini.inscritos} inscritos</p>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Aún no hay eventos programados</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Cuando se publiquen aparecerán aquí</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              ) : (() => {
+                // Paleta colorida rotativa para los secundarios
+                const PALETA = [
+                  { from: "#6B21A8", to: "#EC4899" },  // Púrpura → Rosa
+                  { from: "#0891B2", to: "#10B981" },  // Cian → Verde
+                  { from: "#EA580C", to: "#DC2626" },  // Naranja → Rojo
+                  { from: "#4338CA", to: "#A855F7" },  // Indigo → Púrpura
+                ];
+                // Color del destacado según estado
+                const esProx = new Date(destacado.fechaInicio).getTime() >= Date.now();
+                const destAcento = esProx
+                  ? { from: "#6B21A8", to: "#EC4899" }  // Próximo: púrpura → rosa
+                  : { from: "#1B3F7E", to: "#0891B2" }; // Pasado: azul → cian
 
-          {/* Accesos comunidad */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              {
-                titulo: "Noticias del parque",
-                desc:   "Comunicados y avisos del área empresarial EGM.",
-                href:   "/dashboard/comunicacion",
-                color:  "var(--azul-egm)",
-                bg:     "var(--azul-egm-light)",
-                icon:   "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
-              },
-              {
-                titulo: "Eventos del área",
-                desc:   "Jornadas, actividades y encuentros empresariales.",
-                href:   "/dashboard/eventos",
-                color:  "#7c3aed",
-                bg:     "#ede9fe",
-                icon:   "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-              },
-              {
-                titulo: "Actividad de empresa",
-                desc:   "Iniciativas y eventos internos de tu empresa.",
-                href:   "/dashboard/comunidad",
-                color:  "var(--verde-oliva)",
-                bg:     "var(--verde-oliva-light)",
-                icon:   "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
-              },
-            ].map((item) => (
-              <Link
-                key={item.titulo}
-                href={item.href}
-                className="flex items-start gap-3.5 px-4 py-4 rounded-2xl transition-all duration-150 group"
-                style={{
-                  background:  "var(--blanco)",
-                  border:      "1px solid var(--gris-borde)",
-                  textDecoration: "none",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = item.color;
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${item.color}18`;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "var(--gris-borde)";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                }}
-              >
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: item.bg, color: item.color }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-tight mb-1" style={{ color: "var(--texto-primario)" }}>
-                    {item.titulo}
-                  </p>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--texto-muted)" }}>
-                    {item.desc}
-                  </p>
-                </div>
-                <svg className="w-4 h-4 shrink-0 mt-0.5 opacity-30 group-hover:opacity-60 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: item.color }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ))}
-          </div>
-        </section>
+                return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 items-stretch">
 
+                  {/* Evento destacado con gradiente vibrante */}
+                  <div
+                    className="rounded-2xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:-translate-y-1"
+                    style={{
+                      background: `linear-gradient(135deg, ${destAcento.from} 0%, ${destAcento.to} 100%)`,
+                      minHeight: "200px",
+                      boxShadow: `0 10px 30px -10px ${destAcento.from}66`,
+                    }}
+                    onClick={() => router.push(`/dashboard/eventos/${destacado.eventoId}`)}
+                  >
+                    {/* Halos decorativos */}
+                    <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "220px", height: "220px", borderRadius: "50%", background: "rgba(255,255,255,0.10)" }} />
+                    <div style={{ position: "absolute", bottom: "-40px", left: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+
+                    <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
+                      <div className="flex items-start justify-between mb-auto">
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur"
+                          style={{ background: "rgba(255,255,255,0.22)", color: "#ffffff" }}>
+                          {esProx ? "Próximo evento" : "Último evento"}
+                        </span>
+                        <div className="text-right rounded-xl px-3 py-2 backdrop-blur" style={{ background: "rgba(255,255,255,0.18)" }}>
+                          <p className="text-2xl font-bold text-white leading-none">{fmtDia(destacado.fechaInicio)}</p>
+                          <p className="text-[10px] uppercase tracking-wider capitalize mt-0.5" style={{ color: "rgba(255,255,255,0.85)" }}>{fmtMes(destacado.fechaInicio)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <h3 className="text-xl font-semibold text-white mb-1.5" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
+                          {destacado.titulo}
+                        </h3>
+                        {destacado.descripcion && (
+                          <p className="text-sm mb-4 line-clamp-2" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            {destacado.descripcion}
+                          </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
+                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {fmtHora(destacado.fechaInicio, destacado.fechaFin)}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {destacado.esGlobal ? "EGM Atalayas" : "Tu empresa"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl inline-flex items-center gap-1.5"
+                        style={{ background: "rgba(255,255,255,0.22)", color: "#fff", backdropFilter: "blur(8px)" }}
+                      >
+                        Ver evento
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Otros eventos como iniciativas con franja lateral de color */}
+                  <div className="flex flex-col gap-4 h-full">
+                    {otros.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center rounded-xl px-6 py-8 text-center"
+                        style={{ background: "var(--blanco)", border: "1px dashed var(--gris-borde)" }}>
+                        <p className="text-sm" style={{ color: "var(--texto-muted)" }}>
+                          No hay más eventos programados de momento
+                        </p>
+                      </div>
+                    ) : (
+                      otros.map((ev, idx) => {
+                        const ac = PALETA[(idx + 1) % PALETA.length];
+                        return (
+                          <div
+                            key={ev.eventoId}
+                            className="relative flex-1 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 group"
+                            style={{
+                              background: `linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%)`,
+                              boxShadow: `0 6px 18px -8px ${ac.from}66`,
+                            }}
+                            onClick={() => router.push(`/dashboard/eventos/${ev.eventoId}`)}
+                          >
+                            {/* Halo decorativo */}
+                            <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(255,255,255,0.10)" }} />
+
+                            <div className="relative z-10 flex items-center gap-3 px-4 py-3.5 h-full">
+                              {/* Día grande */}
+                              <div className="shrink-0 text-center pr-3 border-r" style={{ borderColor: "rgba(255,255,255,0.25)" }}>
+                                <p className="text-2xl font-bold text-white leading-none">{fmtDia(ev.fechaInicio)}</p>
+                                <p className="text-[10px] uppercase tracking-wider mt-1 capitalize" style={{ color: "rgba(255,255,255,0.85)" }}>{fmtMes(ev.fechaInicio)}</p>
+                              </div>
+
+                              {/* Contenido */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate text-white">{ev.titulo}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="flex items-center gap-1 text-[11px]" style={{ color: "rgba(255,255,255,0.85)" }}>
+                                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {fmtHora(ev.fechaInicio, ev.fechaFin)}
+                                  </span>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.22)", color: "#ffffff" }}>
+                                    {ev.esGlobal ? "EGM" : "Empresa"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Flecha */}
+                              <svg className="w-4 h-4 shrink-0 text-white/80 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+                );
+              })()}
+            </section>
+          );
+        })()}
 
       </div>
     </div>
@@ -814,121 +749,43 @@ export default function Empleado() {
 }
 
 // ── TÍTULO DE SECCIÓN ─────────────────────────────────────────────────────────
-function TituloSeccion({ children, noMargin }: {
+function TituloSeccion({ children, noMargin, sinBarra }: {
   children: React.ReactNode;
   noMargin?: boolean;
+  sinBarra?: boolean;
 }) {
   return (
     <h2
-      className={noMargin ? "" : "mb-5"}
+      className={`inline-flex items-center gap-3 ${noMargin ? "" : "mb-5"}`}
       style={{
-        fontSize:      "clamp(1.15rem, 1.6vw, 1.4rem)",
+        fontSize:      "clamp(1.6rem, 2.4vw, 2.1rem)",
         fontFamily:    "var(--font-poppins), sans-serif",
-        fontWeight:    700,
+        fontWeight:    800,
         color:         "var(--texto-primario)",
-        letterSpacing: "-0.01em",
-        lineHeight:    1.25,
+        letterSpacing: "-0.025em",
+        lineHeight:    1.15,
       }}
     >
+      {/* Barra decorativa con gradiente */}
+      {!sinBarra && (
+        <span
+          aria-hidden="true"
+          style={{
+            display:      "inline-block",
+            width:        6,
+            height:       "1.3em",
+            borderRadius: 999,
+            background:   "linear-gradient(180deg, #1E3A8A 0%, #0EA5E9 100%)",
+            boxShadow:    "0 2px 8px rgba(14,165,233,0.35)",
+          }}
+        />
+      )}
       {children}
     </h2>
   );
 }
 
-// ── SECCIÓN COMUNICACIONES (patrón invitado) ──────────────────────────────────
-function SeccionComunicaciones({ noticiasEGM, noticiasEmpresa }: {
-  noticiasEGM: Noticia[]; noticiasEmpresa: Noticia[];
-}) {
-  const tieneAmbas = noticiasEGM.length > 0 && noticiasEmpresa.length > 0;
-
-  return (
-    <div className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid var(--gris-borde)" }}>
-
-      {/* Cabecera */}
-      <div className="flex items-center justify-between px-6 py-4"
-        style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
-        <h2 className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>
-          Últimas comunicaciones
-        </h2>
-        <Link href="/dashboard/comunicacion"
-          className="text-sm font-semibold hover:underline"
-          style={{ color: "var(--azul-egm)" }}>
-          Ver todas →
-        </Link>
-      </div>
-
-      {/* Grid de columnas — mismo patrón que invitado */}
-      <div
-        className={`grid ${tieneAmbas ? "lg:grid-cols-2" : "grid-cols-1"}`}
-        style={{ background: "var(--gris-pagina)" }}
-      >
-        {noticiasEGM.length > 0 && (
-          <ColumnaNoticia tipo="egm"     noticias={noticiasEGM}     conBorde={tieneAmbas} />
-        )}
-        {noticiasEmpresa.length > 0 && (
-          <ColumnaNoticia tipo="empresa" noticias={noticiasEmpresa} conBorde={false} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ColumnaNoticia({ tipo, noticias, conBorde }: {
-  tipo: "egm" | "empresa"; noticias: Noticia[]; conBorde: boolean;
-}) {
-  const esEGM  = tipo === "egm";
-  const acento = esEGM ? "var(--azul-egm)"  : "var(--verde-oliva)";
-  const label  = esEGM ? "EGM Atalayas"     : "Tu empresa";
-
-  return (
-    <div className="p-5"
-      style={{ borderRight: conBorde && esEGM ? "1px solid var(--gris-borde)" : "none" }}>
-
-      {/* Etiqueta de columna */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: acento }} />
-        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: acento }}>
-          {label}
-        </p>
-      </div>
-
-      {/* Tarjetas */}
-      <div className="flex flex-col gap-2.5">
-        {noticias.map((n) => (
-          <div key={n.anuncioId}
-            className="rounded-xl px-4 py-3 transition-colors"
-            style={{
-              background:  "var(--blanco)",
-              border:      "1px solid var(--gris-borde)",
-              borderLeft:  `3px solid ${acento}`,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-                  {n.titulo}
-                </p>
-                <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed"
-                  style={{ color: "var(--texto-muted)" }}>
-                  {n.contenido}
-                </p>
-              </div>
-              <span className="text-xs shrink-0 mt-0.5 whitespace-nowrap"
-                style={{ color: "var(--texto-muted)" }}>
-                {formatFecha(n.creadoEn)}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── TARJETA MÓDULO ────────────────────────────────────────────────────────────
+// ── TARJETA CURSO (vertical, estilo card) ─────────────────────────────────────
 const TIPO_ACENTO: Record<string, { bg: string; text: string; label: string }> = {
   IDENTIDAD:   { bg: "var(--azul-egm-light)",   text: "var(--azul-egm)",    label: "Identidad Corporativa" },
   BASICA:      { bg: "var(--verde-oliva-light)", text: "var(--verde-oliva)", label: "Formación Básica" },
@@ -939,105 +796,138 @@ const TIPO_ACENTO: Record<string, { bg: string; text: string; label: string }> =
   COMUNIDAD:   { bg: "var(--gris-superficie)",   text: "var(--texto-muted)", label: "Comunidad" },
 };
 
-const STATUS_ESTILO: Record<string, { bg: string; text: string; label: string }> = {
-  completado:    { bg: "var(--exito-light)",     text: "var(--exito)",       label: "Completado" },
-  "en progreso": { bg: "var(--azul-egm-light)",  text: "var(--azul-egm)",    label: "En progreso" },
-  pendiente:     { bg: "var(--gris-superficie)", text: "var(--texto-muted)", label: "Pendiente" },
+const DURACION_POR_TIPO: Record<string, string> = {
+  IDENTIDAD:   "20 min",
+  BASICA:      "35 min",
+  ESPECIFICA:  "50 min",
+  DESARROLLO:  "45 min",
+  SEGURIDAD:   "40 min",
+  RECOMPENSAS: "15 min",
+  COMUNIDAD:   "25 min",
 };
 
-function TarjetaModulo({ modulo, index, onClick, esMock, imagenUrl }: {
-  modulo:     FormacionLocal;
-  index:      number;
-  onClick:    () => void;
-  onAvanzar?: () => void;
-  esMock?:    boolean;
+function TarjetaCurso({ modulo, onClick, imagenUrl }: {
+  modulo:    FormacionLocal;
+  onClick:   () => void;
   imagenUrl?: string;
 }) {
   const tipo       = TIPO_ACENTO[modulo.tipoModulo] ?? TIPO_ACENTO.ESPECIFICA;
   const completado = modulo.status === "completado";
   const enProgreso = modulo.status === "en progreso";
+  const duracion   = DURACION_POR_TIPO[modulo.tipoModulo] ?? "30 min";
 
   const pct = modulo.totalItems > 0
     ? Math.round((modulo.completadosLocal / modulo.totalItems) * 100)
     : completado ? 100 : 0;
 
+  // Etiqueta de estado superpuesta en la imagen (esquina superior derecha)
+  const statusBadge = completado
+    ? { label: "Completado", bg: "var(--exito)",    color: "#fff" }
+    : enProgreso
+      ? { label: "En curso",  bg: "var(--azul-egm)", color: "#fff" }
+      : null;
+
   return (
     <button
       onClick={onClick}
-      className="w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200"
+      className="w-full h-full text-left flex flex-col rounded-2xl overflow-hidden transition-all duration-200"
       style={{
         background: "var(--blanco)",
-        border:     enProgreso ? `2px solid ${tipo.text}` : "1px solid var(--gris-borde)",
-        boxShadow:  enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)",
+        border:     "1px solid var(--gris-borde)",
+        boxShadow:  "0 1px 4px rgba(0,0,0,0.04)",
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.09)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = enProgreso ? `0 4px 16px ${tipo.text}22` : "0 1px 4px rgba(0,0,0,0.04)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)";
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
+        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+      }}
     >
-      {/* Imagen / Número / check */}
-      {imagenUrl ? (
-        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative">
-          <img src={imagenUrl} alt={modulo.nombre} className="w-full h-full object-cover" />
-          {completado && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-xl"
-              style={{ background: "rgba(22,163,74,0.65)" }}>
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      {/* Imagen superior */}
+      <div className="relative w-full aspect-[16/10] overflow-hidden flex items-center justify-center"
+        style={{ background: tipo.text }}>
+        {/* Fallback SVG (siempre debajo) */}
+        <svg className="w-12 h-12 opacity-30 absolute" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        {imagenUrl && (
+          <img
+            src={imagenUrl}
+            alt=""
+            className="relative w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
+        {/* Overlay sutil para legibilidad de badges */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%)" }} />
+
+        {/* Badge de estado (esquina sup. derecha) */}
+        {statusBadge && (
+          <span
+            className="absolute top-2.5 right-2.5 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+            style={{ background: statusBadge.bg, color: statusBadge.color, boxShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
+          >
+            {statusBadge.label}
+          </span>
+        )}
+
+        {/* Check grande si completado */}
+        {completado && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(22,163,74,0.85)", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" }}>
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-          )}
-        </div>
-      ) : (
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
-          style={{
-            background: completado ? "var(--exito)" : enProgreso ? tipo.text : "var(--gris-superficie)",
-            color:      completado || enProgreso ? "white" : "var(--texto-muted)",
-          }}
-        >
-          {completado ? (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : String(index + 1).padStart(2, "0")}
-        </div>
-      )}
-
-      {/* Contenido central */}
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-semibold leading-snug truncate" style={{ color: "var(--texto-primario)" }}>
-            {modulo.nombre}
-          </p>
-          {enProgreso && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-              style={{ background: tipo.bg, color: tipo.text }}>
-              En curso
-            </span>
-          )}
-        </div>
-        {/* Barra de progreso */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: completado ? "var(--exito)" : tipo.text }} />
           </div>
-          <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: completado ? "var(--exito)" : "var(--texto-muted)" }}>
+        )}
+      </div>
+
+      {/* Contenido inferior */}
+      <div className="flex flex-col flex-1 p-4 gap-2.5">
+        {/* Fila superior: tipo + duración */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-md"
+            style={{ background: tipo.bg, color: tipo.text }}>
+            Curso
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--texto-muted)" }}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <circle cx="12" cy="12" r="10" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+            </svg>
+            {duracion}
+          </span>
+        </div>
+
+        {/* Título */}
+        <h3 className="text-base font-bold leading-snug line-clamp-2" style={{ color: "var(--texto-primario)", minHeight: "2.6em" }}>
+          {modulo.nombre}
+        </h3>
+
+        {/* Fila inferior: tipo módulo + progreso */}
+        <div className="flex items-center justify-between gap-2 mt-auto pt-1">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--texto-muted)" }}>
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" style={{ color: tipo.text }}>
+              <path d="M2 22h2v-7H2v7zm5 0h2v-12H7v12zm5 0h2V8h-2v14zm5 0h2v-9h-2v9zm5-17v17h2V5h-2z" />
+            </svg>
+            {tipo.label.split(" ")[0]}
+          </span>
+          <span className="text-xs font-bold tabular-nums" style={{ color: completado ? "var(--exito)" : tipo.text }}>
             {pct}%
           </span>
         </div>
-      </div>
 
-      {/* Flecha / check derecha */}
-      <div className="shrink-0" style={{ color: completado ? "var(--exito)" : "var(--gris-borde)" }}>
-        {completado ? (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        )}
+        {/* Barra de progreso */}
+        <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--gris-borde)" }}>
+          <div className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: completado ? "var(--exito)" : tipo.text }} />
+        </div>
       </div>
     </button>
   );
