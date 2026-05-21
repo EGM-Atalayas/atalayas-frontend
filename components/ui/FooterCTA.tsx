@@ -119,7 +119,7 @@ export default function FooterCTA() {
 
       {/* Fade superior — mezcla con sección anterior */}
       <div
-        className="absolute top-0 left-0 right-0 h-40 pointer-events-none z-[50]"
+        className="absolute top-0 left-0 right-0 h-40 pointer-events-none z-[1]"
         style={{ background: "linear-gradient(to bottom, #0a0a0f, transparent)" }}
       />
 

@@ -487,7 +487,7 @@ export default function Invitado() {
         {/* Imagen decorativa pegada al borde derecho */}
         <div className="hidden lg:block absolute right-0 top-0 bottom-0 pointer-events-none select-none" style={{ width: 500 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/circulos-decoracion.png" alt="" aria-hidden
+          <img src="/circulos-decoracion.webp" alt="" aria-hidden
             className="absolute right-0 top-1/2 -translate-y-1/2"
             style={{ width: 500, opacity: 1, filter: "invert(18%) sepia(60%) saturate(800%) hue-rotate(200deg) brightness(60%)" }} />
         </div>
