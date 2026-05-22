@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
-import { getActividadReciente, getProgresoEmpresa } from "@/lib/api/progreso";
+import { getProgresoEmpresa } from "@/lib/api/progreso";
 
 import { getModulos } from "@/lib/api/modulos";
-import type { ActividadItem, ProgresoEmpleado } from "@/lib/types/progreso";
+import type { ProgresoEmpleado } from "@/lib/types/progreso";
 // Widget simplificado de servicios (pantalla inicio, no la página /servicios)
 type Servicio = { servicioId: string; nombre: string; descripcion: string | null; url: string | null; activo: boolean; icono: string | null; orden: number; };
 import type { Modulo } from "@/lib/types/modulos";
@@ -154,7 +154,6 @@ export default function AdminEmpresa() {
 
   const [resumen, setResumen] = useState<ResumenAdmin | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
-  const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [cargando, setCargando] = useState(true);
   const [servicios, setServicios] = useState<Servicio[]>(SERVICIOS_MOCK);
   const [modulosStats, setModulosStats] = useState<ModuloStats[]>([]);
@@ -164,10 +163,9 @@ export default function AdminEmpresa() {
     async function cargarDatos() {
       try {
         const empresaId = usuario?.empresaId;
-        const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
+        const [resRes, anunciosRes, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : Promise.resolve(new Response(JSON.stringify([]))),
-          getActividadReciente(5).catch((err) => { console.error("Error actividad reciente:", err); return [] as ActividadItem[]; }),
           getModulos(empresaId).catch((err) => { console.error("Error al cargar módulos:", err); return [] as Modulo[]; }),
           empresaId
             ? getProgresoEmpresa(empresaId).catch((err) => {
@@ -186,7 +184,6 @@ export default function AdminEmpresa() {
           const filtrados = data.filter((a: Anuncio) => empresaId ? a.empresaId === empresaId : true);
           setAnuncios(filtrados.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
-        setActividad(actividadData);
         // servicios: usa mock hasta conectar el nuevo endpoint
 
         // Calcular estadísticas reales de módulos
@@ -321,7 +318,7 @@ export default function AdminEmpresa() {
                   <div style={{
                     width: `${progresoMedio}%`,
                     height: "100%",
-                    background: "linear-gradient(90deg, #FBBF24 0%, #FFFFFF 100%)",
+                    background: "linear-gradient(90deg, #06B6D4 0%, #FFFFFF 100%)",
                     borderRadius: "9999px",
                     boxShadow: "0 0 12px rgba(251,191,36,0.6)",
                   }} />
@@ -350,7 +347,7 @@ export default function AdminEmpresa() {
                 sub: inactivos > 0 ? "Gestionar →" : null,
                 href: "/dashboard/admin?tab=empleados",
                 span: "lg:col-span-1 lg:row-span-1",
-                acento: { from: "#EA580C", to: "#DC2626" }, // Naranja → Rojo
+                acento: { from: "#0F766E", to: "#06B6D4" }, // Teal → Cian
                 icono: (
                   // Candado cerrado — usuarios sin acceso
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -364,7 +361,7 @@ export default function AdminEmpresa() {
                 sub: "Ver formaciones →",
                 href: "/dashboard/admin?tab=formaciones",
                 span: "lg:col-span-3 lg:row-span-1",
-                acento: { from: "#6B21A8", to: "#EC4899" }, // Púrpura → Rosa
+                acento: { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
                 icono: (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -462,8 +459,8 @@ export default function AdminEmpresa() {
                       const PALETA_FORM = [
                         { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
                         { from: "#0891B2", to: "#10B981" }, // Cian → Verde
-                        { from: "#6B21A8", to: "#EC4899" }, // Púrpura → Rosa
-                        { from: "#EA580C", to: "#F59E0B" }, // Naranja → Ámbar
+                        { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
+                        { from: "#0F766E", to: "#06B6D4" }, // Teal → Cian
                       ];
                       const ac = PALETA_FORM[idx % PALETA_FORM.length];
                       const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
@@ -529,7 +526,7 @@ export default function AdminEmpresa() {
                                 <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>Hechos</p>
                               </div>
                               <div>
-                                <p className="text-sm font-bold" style={{ color: "#f59e0b" }}>{mod.enProgreso}</p>
+                                <p className="text-sm font-bold" style={{ color: "#0EA5E9" }}>{mod.enProgreso}</p>
                                 <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>En curso</p>
                               </div>
                               <div>
@@ -560,8 +557,8 @@ export default function AdminEmpresa() {
                 const acciones = [
                   { label: "Añadir empleado", href: "/dashboard/admin?tab=empleados", acento: { from: "#4338CA", to: "#0EA5E9" }, icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
                   { label: "Gestión módulos", href: "/dashboard/admin?tab=formaciones", acento: { from: "#0891B2", to: "#10B981" }, icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
-                  { label: "Crear módulo", href: "/dashboard/admin/modulos/crear", acento: { from: "#6B21A8", to: "#EC4899" }, icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-                  { label: "Publicar anuncio", href: "/dashboard/admin?tab=anuncios", acento: { from: "#EA580C", to: "#F59E0B" }, icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
+                  { label: "Crear módulo", href: "/dashboard/admin/modulos/crear", acento: { from: "#6B21A8", to: "#7C3AED" }, icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                  { label: "Publicar anuncio", href: "/dashboard/admin?tab=anuncios", acento: { from: "#0F766E", to: "#06B6D4" }, icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
                 ];
                 return (
                   <div className="grid grid-cols-2 gap-3">
@@ -634,19 +631,19 @@ export default function AdminEmpresa() {
               ) : (() => {
                 // Paleta nueva — distinta a la del resto de la página
                 const PALETA_COM = [
-                  { from: "#BE185D", to: "#F97316" }, // Magenta → Naranja
+                  { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
                   { from: "#0F766E", to: "#3B82F6" }, // Teal → Azul
-                  { from: "#CA8A04", to: "#EAB308" }, // Ámbar oscuro → Amarillo
-                  { from: "#1E293B", to: "#7C3AED" }, // Pizarra → Violeta
-                  { from: "#0284C7", to: "#C026D3" }, // Cielo → Fucsia
-                  { from: "#059669", to: "#84CC16" }, // Esmeralda → Lima
+                  { from: "#0891B2", to: "#10B981" }, // Cian → Verde
+                  { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
+                  { from: "#0284C7", to: "#06B6D4" }, // Cielo → Cian
+                  { from: "#059669", to: "#22D3EE" }, // Esmeralda → Cian claro
                 ];
                 return (
                   // Timeline vertical estilo magazine
                   <div className="relative pl-8">
                     {/* Línea temporal vertical con gradiente arcoiris */}
                     <div className="absolute left-3 top-2 bottom-2 w-0.5 rounded-full" style={{
-                      background: "linear-gradient(180deg, #BE185D 0%, #0F766E 33%, #CA8A04 66%, #7C3AED 100%)",
+                      background: "linear-gradient(180deg, #4338CA 0%, #0891B2 33%, #10B981 66%, #7C3AED 100%)",
                       opacity: 0.4,
                     }} />
 
@@ -721,13 +718,13 @@ export default function AdminEmpresa() {
           {(() => {
             const PALETA_SERV = [
               { from: "#0F766E", to: "#3B82F6" }, // Teal → Azul
-              { from: "#BE185D", to: "#F97316" }, // Magenta → Naranja
-              { from: "#7C3AED", to: "#EC4899" }, // Violeta → Rosa
+              { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
+              { from: "#7C3AED", to: "#06B6D4" }, // Violeta → Cian
               { from: "#0284C7", to: "#06B6D4" }, // Cielo → Cian
-              { from: "#65A30D", to: "#EAB308" }, // Lima → Amarillo
-              { from: "#DC2626", to: "#F59E0B" }, // Rojo → Ámbar
+              { from: "#0891B2", to: "#10B981" }, // Cian → Verde
+              { from: "#15803D", to: "#22D3EE" }, // Verde → Cian claro
               { from: "#4338CA", to: "#A855F7" }, // Indigo → Púrpura
-              { from: "#059669", to: "#84CC16" }, // Esmeralda → Lima
+              { from: "#059669", to: "#3B82F6" }, // Esmeralda → Azul
             ];
 
             const lista = servicios.sort((a, b) => a.orden - b.orden);
