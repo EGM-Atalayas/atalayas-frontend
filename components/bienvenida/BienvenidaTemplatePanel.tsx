@@ -292,7 +292,7 @@ interface DatosPlantilla {
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: BienvenidaTemplatePanelProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [aplicado, setAplicado] = useState(false);
 
   const [datos, setDatos] = useState<DatosPlantilla>({
@@ -346,43 +346,30 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
 
   return (
     <div
-      className="rounded-2xl overflow-hidden mb-6 fade-up"
-      style={{ background: "var(--blanco)", border: "1px solid #bbf7d0", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
+      className="rounded-2xl overflow-hidden card-hover fade-up"
+      style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}
     >
-      {/* ── Header del panel ──────────────────────────────────────────────── */}
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
-        style={{
-          background:   "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-          borderBottom: open ? "1px solid #bbf7d0" : "none",
-        }}
+      {/* ── Header del panel — mismo estilo que las demás vistas ──────────── */}
+      <div
+        className="flex items-center gap-4 px-6 py-4"
+        style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #ecfeff, #d1fae5)" }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "#16a34a", color: "#fff" }}
-          >
-            <ClipboardList className="w-4 h-4" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-bold" style={{ color: "#15803d" }}>Plantilla de Bienvenida</p>
-            <p className="text-xs flex items-center gap-1" style={{ color: "#22c55e" }}>
-              {aplicado && <Check className="w-3 h-3 shrink-0" />}
-              {aplicado
-                ? "Plantilla aplicada — puedes editar el contenido en las páginas"
-                : "Genera el manual de incorporación en segundos con secciones predefinidas"}
-            </p>
-          </div>
-        </div>
         <div
-          className="transition-transform"
-          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(8,145,178,0.2)" }}
         >
-          <ChevronDown style={{ color: "#16a34a" }} />
+          <ClipboardList className="w-5 h-5" />
         </div>
-      </button>
+        <div className="flex-1">
+          <p className="text-sm font-bold" style={{ color: "#0F766E" }}>Plantilla de Bienvenida</p>
+          <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: "#0891B2" }}>
+            {aplicado && <Check className="w-3 h-3 shrink-0" />}
+            {aplicado
+              ? "Plantilla aplicada — puedes editar el contenido en las páginas"
+              : "Genera el manual de incorporación con secciones predefinidas"}
+          </p>
+        </div>
+      </div>
 
       {/* ── Cuerpo del panel ──────────────────────────────────────────────── */}
       {open && (
@@ -427,7 +414,7 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
                   type="button"
                   onClick={() => setSeleccionadas(new Set(SECCIONES.map((s) => s.key)))}
                   className="text-[11px] font-semibold px-2.5 py-1 rounded-lg"
-                  style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}
+                  style={{ background: "#ecfeff", color: "#0F766E", border: "1px solid #a5f3fc" }}
                 >
                   Todas
                 </button>
@@ -451,18 +438,18 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
                     onClick={() => toggleSeccion(s.key)}
                     className="flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-all"
                     style={{
-                      border:     `1.5px solid ${active ? "#86efac" : "var(--gris-borde)"}`,
-                      background: active ? "#f0fdf4" : "var(--gris-pagina)",
+                      border:     `1.5px solid ${active ? "#67e8f9" : "var(--gris-borde)"}`,
+                      background: active ? "#ecfeff" : "var(--gris-pagina)",
                     }}
                   >
                     <span
                       className="shrink-0 mt-0.5 flex items-center justify-center w-7 h-7 rounded-lg"
-                      style={{ background: active ? "#bbf7d0" : "var(--gris-borde)", color: active ? "#15803d" : "var(--texto-muted)" }}
+                      style={{ background: active ? "linear-gradient(135deg, #0891B2 0%, #10B981 100%)" : "var(--gris-borde)", color: active ? "#fff" : "var(--texto-muted)" }}
                     >
                       {s.icon}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold leading-tight" style={{ color: active ? "#15803d" : "var(--texto-primario)" }}>
+                      <p className="text-xs font-bold leading-tight" style={{ color: active ? "#0F766E" : "var(--texto-primario)" }}>
                         {s.label}
                       </p>
                       <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "var(--texto-muted)" }}>
@@ -472,8 +459,8 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
                     <div
                       className="w-4 h-4 rounded shrink-0 mt-0.5 flex items-center justify-center"
                       style={{
-                        background:  active ? "#16a34a" : "var(--blanco)",
-                        border:      `1.5px solid ${active ? "#16a34a" : "var(--gris-borde)"}`,
+                        background:  active ? "#0891B2" : "var(--blanco)",
+                        border:      `1.5px solid ${active ? "#0891B2" : "var(--gris-borde)"}`,
                       }}
                     >
                       {active && (
@@ -493,13 +480,19 @@ export function BienvenidaTemplatePanel({ nombreEmpresa, onAplicar, newId }: Bie
             <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
               Se crearán <strong>{seleccionadas.size}</strong> páginas con contenido listo para personalizar.
             </p>
-            <IAButton
-              size="md"
+            <button
+              type="button"
               onClick={handleAplicar}
               disabled={seleccionadas.size === 0}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed"
+              style={{
+                background: seleccionadas.size === 0 ? "#e5e7eb" : "linear-gradient(135deg, #0891B2 0%, #10B981 100%)",
+                color: seleccionadas.size === 0 ? "#9ca3af" : "#fff",
+                boxShadow: seleccionadas.size === 0 ? "none" : "0 4px 14px -4px rgba(8,145,178,0.45)",
+              }}
             >
               Aplicar plantilla
-            </IAButton>
+            </button>
           </div>
         </div>
       )}
