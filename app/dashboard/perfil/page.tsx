@@ -9,10 +9,10 @@ import { MisDocumentos } from "@/components/documentos/MisDocumentos";
 import {
   Camera, Pencil, Check, X, Briefcase, Phone,
   Calendar, Clock, BookOpen, Award, ChevronRight, Building2, Mail,
-  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight, Upload,
+  BarChart3, Users, AlertTriangle, ExternalLink, ArrowRight,
 } from "lucide-react";
 import { getEstadisticasSuperadmin } from "@/lib/api/estadisticas";
-import { subirImagenBanner } from "@/lib/supabase";
+
 import { getEmpresas, getEmpresaById, actualizarEmpresa, subirLogoEmpresa } from "@/lib/api/empresas";
 import { getIncidencias } from "@/lib/api/incidencias";
 import { getModulosConProgreso } from "@/lib/api/modulos";
@@ -169,8 +169,6 @@ export default function PerfilPage() {
 
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [savingBanner, setSavingBanner] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
-  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   // ── Datos de empresa ──
   const [editandoEmpresa, setEditandoEmpresa] = useState(false);
@@ -183,6 +181,7 @@ export default function PerfilPage() {
   const [empresaLoaded, setEmpresaLoaded] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [logoKey, setLogoKey] = useState(0);
+  const [mostrarNombreJuntoLogo, setMostrarNombreJuntoLogo] = useState(false);
 
   // ── Superadmin KPIs ──
   const [statsSuper, setStatsSuper] = useState<{ empresas: number; empleados: number; pendientes: number; incidenciasAbiertas: number } | null>(null);
@@ -248,6 +247,10 @@ export default function PerfilPage() {
         });
       } finally {
         setEmpresaLoaded(true);
+        const empresaId = usuario.empresaId;
+        if (empresaId) {
+          setMostrarNombreJuntoLogo(localStorage.getItem(`mostrar_nombre_empresa_${empresaId}`) === "true");
+        }
       }
     })();
   }, [esAdmin, usuario?.empresaId, empresaLoaded]);
@@ -421,26 +424,6 @@ export default function PerfilPage() {
     setShowBannerPicker(false);
   };
 
-  const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    if (file.size > 50 * 1024 * 1024) {
-      alert("La imagen no debe exceder 50 MB.");
-      return;
-    }
-    setUploadingBanner(true);
-    try {
-      const url = await subirImagenBanner(file);
-      await patchPerfil({ bannerUrl: url });
-      setShowBannerPicker(false);
-    } catch {
-      alert("No se pudo subir la imagen. Intenta con un archivo JPG, PNG o WebP de menos de 50 MB.");
-    } finally {
-      setUploadingBanner(false);
-    }
-  };
-
   const handleEnviarSugerencia = async () => {
     if (!sugerencia.trim()) return;
     setEnviandoSug(true);
@@ -532,14 +515,15 @@ export default function PerfilPage() {
     if (!file) return;
 
     setUploadingLogo(true);
+    toast.loading("Procesando y subiendo logo...", { id: "logo" });
 
     try {
       let fileToUpload = file;
 
       // Quitar fondo automáticamente
       if (file.type.startsWith('image/')) {
-        toast.loading("Quitando fondo y procesando logo...", { id: "logo" });
         try {
+          toast.loading("Quitando fondo...", { id: "logo" });
           const cleanBlob = await removeBackground(file);
           fileToUpload = new File([cleanBlob], "logo-sinfondo.png", { type: "image/png" });
         } catch (err) {
@@ -547,8 +531,11 @@ export default function PerfilPage() {
         }
       }
 
+      toast.loading("Subiendo logo...", { id: "logo" });
+
       const formData = new FormData();
       formData.append("file", fileToUpload);
+      if (usuario?.empresaId) formData.append("empresaId", usuario.empresaId);
 
       const res = await fetch("/api/upload/imagen", {
         method: "POST",
@@ -1075,7 +1062,7 @@ export default function PerfilPage() {
                   <div className="flex items-center gap-4">
                     {/* Previsualización del logo */}
                     <div
-                      className="rounded-2xl overflow-hidden flex items-center justify-center mx-auto"
+                      className="rounded-2xl overflow-hidden flex items-center justify-center mx-auto relative"
                       style={{
                         width: 120,
                         height: 120,
@@ -1085,7 +1072,7 @@ export default function PerfilPage() {
                     >
                       {empresaData?.logoEmpresaUrl ? (
                         <img
-                          key={`preview-${logoKey}`}                    // ← Usamos el estado
+                          key={`preview-${logoKey}`}
                           src={`${empresaData.logoEmpresaUrl}?v=${Date.now()}`}
                           alt="Logo actual"
                           style={{
@@ -1093,10 +1080,19 @@ export default function PerfilPage() {
                             height: "100%",
                             objectFit: "contain",
                             padding: "10px",
+                            opacity: uploadingLogo ? 0.3 : 1,
+                            transition: "opacity 0.3s",
                           }}
                         />
                       ) : (
-                        <Building2 size={48} style={{ color: "#9CA3AF" }} />
+                        <div className={`transition-opacity duration-300 ${uploadingLogo ? "opacity-30" : ""}`}>
+                          <Building2 size={48} style={{ color: "#9CA3AF" }} />
+                        </div>
+                      )}
+                      {uploadingLogo && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        </div>
                       )}
                     </div>
                     <button
@@ -1105,7 +1101,7 @@ export default function PerfilPage() {
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
                       style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", opacity: uploadingLogo ? 0.6 : 1 }}
                     >
-                      <Camera size={13} /> {empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
+                      <Camera size={13} /> {uploadingLogo ? "Subiendo..." : empresaData?.logoEmpresaUrl ? "Cambiar" : "Subir logo"}
                     </button>
                     <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                   </div>
@@ -1129,6 +1125,26 @@ export default function PerfilPage() {
                   ) : (
                     <p className="text-lg font-medium truncate min-w-0" style={{ color: "var(--texto-primario)" }}>{empresaData?.nombreEmpresa || "—"}</p>
                   )}
+                  {/* Toggle mostrar nombre junto al logo */}
+                  <div className="flex items-center justify-between gap-4 pt-2">
+                    <div className="flex flex-col mt-2">
+                      <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Mostrar nombre</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const nuevo = !mostrarNombreJuntoLogo;
+                        setMostrarNombreJuntoLogo(nuevo);
+                        if (usuario?.empresaId) {
+                          localStorage.setItem(`mostrar_nombre_empresa_${usuario.empresaId}`, String(nuevo));
+                        }
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${mostrarNombreJuntoLogo ? "bg-blue-600" : "bg-gray-300"}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${mostrarNombreJuntoLogo ? "translate-x-6" : "translate-x-1"}`}
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 {/* CIF */}
@@ -1434,39 +1450,6 @@ export default function PerfilPage() {
 
               {/* Grupos de imágenes */}
               <div className="px-8 py-7 flex flex-col gap-8 overflow-y-auto" style={{ maxHeight: "65vh" }}>
-
-                {/* Subir imagen personalizada */}
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "var(--texto-muted)" }}>
-                    Subir imagen
-                  </p>
-                  <input ref={bannerFileRef} type="file" accept="image/*" className="hidden" onChange={handleUploadBanner} />
-                  <button
-                    onClick={() => bannerFileRef.current?.click()}
-                    disabled={uploadingBanner}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-6 rounded-xl border-2 border-dashed transition-all"
-                    style={{
-                      borderColor: "var(--gris-borde)",
-                      color: "var(--texto-muted)",
-                      background: uploadingBanner ? "var(--gris-pagina)" : "transparent",
-                      cursor: uploadingBanner ? "not-allowed" : "pointer",
-                    }}
-                    onMouseEnter={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; e.currentTarget.style.color = "var(--azul-egm)"; } }}
-                    onMouseLeave={(e) => { if (!uploadingBanner) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; } }}
-                  >
-                    {uploadingBanner ? (
-                      <>
-                        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
-                        <span className="text-sm font-semibold">Subiendo...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={20} />
-                        <span className="text-sm font-semibold">Elige un archivo de tu ordenador</span>
-                      </>
-                    )}
-                  </button>
-                </div>
 
                 {BANNER_GRUPOS.map((grupo) => (
                   <div key={grupo.grupo}>

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, API_URL } from "@/lib/api";
-import { getActividadReciente, getProgresoEmpresa } from "@/lib/api/progreso";
+import { getProgresoEmpresa } from "@/lib/api/progreso";
 
 import { getModulos } from "@/lib/api/modulos";
-import type { ActividadItem, ProgresoEmpleado } from "@/lib/types/progreso";
+import type { ProgresoEmpleado } from "@/lib/types/progreso";
 // Widget simplificado de servicios (pantalla inicio, no la página /servicios)
 type Servicio = { servicioId: string; nombre: string; descripcion: string | null; url: string | null; activo: boolean; icono: string | null; orden: number; };
 import type { Modulo } from "@/lib/types/modulos";
@@ -150,10 +150,10 @@ function ActividadIcon({ tipo }: { tipo: string }) {
 export default function AdminEmpresa() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [resumen, setResumen] = useState<ResumenAdmin | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
-  const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [cargando, setCargando] = useState(true);
   const [servicios, setServicios] = useState<Servicio[]>(SERVICIOS_MOCK);
   const [modulosStats, setModulosStats] = useState<ModuloStats[]>([]);
@@ -163,12 +163,16 @@ export default function AdminEmpresa() {
     async function cargarDatos() {
       try {
         const empresaId = usuario?.empresaId;
-        const [resRes, anunciosRes, actividadData, modulosData, progresoData] = await Promise.all([
+        const [resRes, anunciosRes, modulosData, progresoData] = await Promise.all([
           apiFetch(`${API_URL}/dashboard/admin/resumen`),
           empresaId ? apiFetch(`${API_URL}/anuncios?empresaId=${empresaId}`) : Promise.resolve(new Response(JSON.stringify([]))),
-          getActividadReciente(5).catch(() => [] as ActividadItem[]),
-          getModulos(empresaId).catch(() => [] as Modulo[]),
-          empresaId ? getProgresoEmpresa(empresaId).catch(() => [] as ProgresoEmpleado[]) : Promise.resolve([] as ProgresoEmpleado[]),
+          getModulos(empresaId).catch((err) => { console.error("Error al cargar módulos:", err); return [] as Modulo[]; }),
+          empresaId
+            ? getProgresoEmpresa(empresaId).catch((err) => {
+                console.error("Error al obtener progreso de empleados:", err);
+                return [] as ProgresoEmpleado[];
+              })
+            : Promise.resolve([] as ProgresoEmpleado[]),
         ]);
         let resumenData = null;
         if (resRes.ok) {
@@ -180,7 +184,6 @@ export default function AdminEmpresa() {
           const filtrados = data.filter((a: Anuncio) => empresaId ? a.empresaId === empresaId : true);
           setAnuncios(filtrados.filter((a: Anuncio) => a.activo).slice(0, 4));
         }
-        setActividad(actividadData);
         // servicios: usa mock hasta conectar el nuevo endpoint
 
         // Calcular estadísticas reales de módulos
@@ -225,11 +228,11 @@ export default function AdminEmpresa() {
             total: totalEmpleados || 1,
           })));
         }
-      } catch { }
+      } catch (err) { console.error("Error cargando dashboard admin:", err); }
       finally { setCargando(false); }
     }
     cargarDatos();
-  }, []);
+  }, [pathname]);
 
   if (cargando) {
     return (
@@ -271,171 +274,348 @@ export default function AdminEmpresa() {
       ══════════════════════════════════════════ */}
       <div className="px-10 lg:px-16 pt-12 pb-16 flex flex-col gap-12">
 
-        {/* ── MÉTRICAS ── */}
+        {/* ── MÉTRICAS — BENTO ASIMÉTRICO ── */}
         <section>
           <TituloSeccion>Resumen del equipo</TituloSeccion>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 lg:grid-rows-2 gap-4" style={{ gridAutoRows: "minmax(110px, auto)" }}>
 
+            {/* HERO — Progreso medio: ocupa 3 cols x 2 rows con gradiente lleno */}
+            <div
+              className="relative rounded-3xl overflow-hidden lg:col-span-3 lg:row-span-2 p-6 flex flex-col justify-between"
+              style={{
+                background: "linear-gradient(135deg, #15803D 0%, #10B981 50%, #0EA5E9 100%)",
+                boxShadow: "0 18px 40px -12px rgba(16,185,129,0.55)",
+                minHeight: 220,
+              }}
+            >
+              {/* Halos */}
+              <div style={{ position: "absolute", top: "-80px", right: "-60px", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
+              <div style={{ position: "absolute", bottom: "-60px", left: "20%", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+
+              <div className="relative z-10 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full inline-block"
+                    style={{ background: "rgba(255,255,255,0.22)", color: "#fff", backdropFilter: "blur(8px)" }}>
+                    Progreso medio
+                  </span>
+                </div>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.22)", border: "1px solid rgba(255,255,255,0.35)", backdropFilter: "blur(10px)" }}>
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative z-10">
+                <p className="text-7xl sm:text-8xl font-extrabold text-white leading-none tracking-tight" style={{ fontFamily: "var(--font-poppins), sans-serif", textShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
+                  {progresoMedio}<span className="text-5xl sm:text-6xl">%</span>
+                </p>
+                <p className="text-sm mt-2 font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  Promedio de finalización del equipo en módulos formativos
+                </p>
+                <div className="w-full rounded-full overflow-hidden mt-4" style={{ height: "8px", background: "rgba(255,255,255,0.22)" }}>
+                  <div style={{
+                    width: `${progresoMedio}%`,
+                    height: "100%",
+                    background: "linear-gradient(90deg, #06B6D4 0%, #FFFFFF 100%)",
+                    borderRadius: "9999px",
+                    boxShadow: "0 0 12px rgba(251,191,36,0.6)",
+                  }} />
+                </div>
+              </div>
+            </div>
+
+            {/* KPIs secundarios (los recorremos saltando el progreso medio) */}
             {[
-              { valor: activos, label: "Empleados activos", sub: totalEmpleados > 0 ? `${Math.round((activos / totalEmpleados) * 100)}% del total` : null, href: "/dashboard/admin?tab=empleados", color: "var(--azul-egm)" },
-              { valor: inactivos, label: "Sin acceso activo", sub: inactivos > 0 ? "Gestionar →" : null, href: "/dashboard/admin?tab=empleados", color: "var(--texto-muted)" },
-              { valor: `${progresoMedio}%`, label: "Progreso medio", sub: null, href: null, color: "var(--verde-oliva)", barra: true },
-              { valor: modulosTotal, label: "Módulos publicados", sub: "Ver formaciones →", href: "/dashboard/admin?tab=formaciones", color: "var(--texto-primario)" },
+              {
+                valor: activos,
+                label: "Empleados activos",
+                sub: totalEmpleados > 0 ? `${Math.round((activos / totalEmpleados) * 100)}% del total` : null,
+                href: "/dashboard/admin?tab=empleados",
+                span: "lg:col-span-2 lg:row-span-1",
+                acento: { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
+                icono: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ),
+              },
+              {
+                valor: inactivos,
+                label: "Sin acceso activo",
+                sub: inactivos > 0 ? "Gestionar →" : null,
+                href: "/dashboard/admin?tab=empleados",
+                span: "lg:col-span-1 lg:row-span-1",
+                acento: { from: "#0F766E", to: "#06B6D4" }, // Teal → Cian
+                icono: (
+                  // Candado cerrado — usuarios sin acceso
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                ),
+              },
+              {
+                valor: modulosTotal,
+                label: "Módulos publicados",
+                sub: "Ver formaciones →",
+                href: "/dashboard/admin?tab=formaciones",
+                span: "lg:col-span-3 lg:row-span-1",
+                acento: { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
+                icono: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                ),
+              },
             ].map((stat, i) => (
               <div
                 key={i}
                 onClick={() => stat.href && router.push(stat.href)}
-                className="rounded-2xl px-5 py-5 transition-colors"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", cursor: stat.href ? "pointer" : "default" }}
-                onMouseEnter={(e) => { if (stat.href) (e.currentTarget as HTMLDivElement).style.background = "var(--gris-pagina)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--blanco)"; }}
+                className={`relative rounded-2xl px-5 py-5 transition-all overflow-hidden group ${stat.span || ""}`}
+                style={{
+                  background: "var(--blanco)",
+                  border: "1px solid var(--gris-borde)",
+                  cursor: stat.href ? "pointer" : "default",
+                  boxShadow: `0 4px 14px -8px ${stat.acento.from}55`,
+                }}
+                onMouseEnter={(e) => {
+                  if (stat.href) (e.currentTarget as HTMLDivElement).style.boxShadow = `0 10px 24px -10px ${stat.acento.from}88`;
+                  if (stat.href) (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 14px -8px ${stat.acento.from}55`;
+                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                }}
               >
-                <p className="text-2xl font-semibold" style={{ color: stat.color }}>{stat.valor}</p>
-                <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{stat.label}</p>
+                {/* Halo difuminado de color en la esquina */}
+                <div className="absolute top-0 right-0 pointer-events-none" style={{
+                  width: 140, height: 140, borderRadius: "50%",
+                  background: `radial-gradient(circle, ${stat.acento.from}26 0%, transparent 70%)`,
+                  transform: "translate(40%, -40%)",
+                }} />
+
+                {/* Icono con gradiente */}
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 relative z-10 text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${stat.acento.from} 0%, ${stat.acento.to} 100%)`,
+                    boxShadow: `0 4px 12px -3px ${stat.acento.from}66`,
+                  }}>
+                  {stat.icono}
+                </div>
+
+                <p className="text-2xl font-bold relative z-10" style={{
+                  background: `linear-gradient(135deg, ${stat.acento.from} 0%, ${stat.acento.to} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>{stat.valor}</p>
+                <p className="text-xs mt-1 relative z-10" style={{ color: "var(--texto-muted)" }}>{stat.label}</p>
                 {(stat as any).barra && (
-                  <div className="w-full rounded-full overflow-hidden mt-3" style={{ height: "4px", background: "var(--gris-superficie)" }}>
-                    <div style={{ width: `${progresoMedio}%`, height: "100%", background: "var(--verde-oliva)", borderRadius: "9999px" }} />
+                  <div className="w-full rounded-full overflow-hidden mt-3 relative z-10" style={{ height: "5px", background: "var(--gris-superficie)" }}>
+                    <div style={{
+                      width: `${progresoMedio}%`,
+                      height: "100%",
+                      background: `linear-gradient(90deg, ${stat.acento.from} 0%, ${stat.acento.to} 100%)`,
+                      borderRadius: "9999px",
+                      boxShadow: `0 0 8px ${stat.acento.to}88`,
+                    }} />
                   </div>
                 )}
                 {stat.sub && !((stat as any).barra) && (
-                  <p className="text-xs mt-2" style={{ color: stat.href ? "var(--azul-egm)" : "var(--texto-muted)" }}>{stat.sub}</p>
+                  <p className="text-xs mt-2 font-semibold relative z-10" style={{ color: stat.href ? stat.acento.from : "var(--texto-muted)" }}>{stat.sub}</p>
                 )}
               </div>
             ))}
           </div>
         </section>
 
-        {/* ── FORMACIÓN + ACTIVIDAD ── */}
+        {/* ── ESTADO DE FORMACIÓN ── */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-
-            {/* Estado de formación */}
-            <div className="lg:col-span-3">
-              <div className="flex items-center justify-between mb-5">
+          <div>
+            <div>
+              <div className="flex items-center justify-between mb-5 gap-3">
                 <TituloSeccion noMargin>Estado de formación</TituloSeccion>
-                <button onClick={() => router.push("/dashboard/admin?tab=formaciones")} className="text-xs font-medium hover:underline shrink-0" style={{ color: "var(--azul-egm)" }}>
-                  Ver módulos →
-                </button>
+                <div className="flex items-center gap-4 shrink-0">
+                  <button onClick={() => router.push("/dashboard/admin?tab=formaciones")} className="text-xs font-medium hover:underline" style={{ color: "var(--azul-egm)" }}>
+                    Ver módulos
+                  </button>
+                  {modulosStats.length > 4 && (
+                    <button onClick={() => router.push("/dashboard/admin?tab=estadisticas")} className="text-xs font-medium hover:underline" style={{ color: "var(--azul-egm)" }}>
+                      Estadísticas detalladas
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {modulosStats.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
+                  <div className="sm:col-span-2 lg:col-span-4 flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
                     <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin módulos de formación</p>
                     <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Crea el primer módulo para tu equipo</p>
                   </div>
                 ) : (
                   <>
-                    {modulosStats.slice(0, 4).map((mod) => {
+                    {modulosStats.slice(0, 4).map((mod, idx) => {
+                      const PALETA_FORM = [
+                        { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
+                        { from: "#0891B2", to: "#10B981" }, // Cian → Verde
+                        { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
+                        { from: "#0F766E", to: "#06B6D4" }, // Teal → Cian
+                      ];
+                      const ac = PALETA_FORM[idx % PALETA_FORM.length];
                       const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
-                      const pctP = mod.total > 0 ? Math.round((mod.enProgreso / mod.total) * 100) : 0;
+                      const gradId = `grad-mod-${mod.moduloId}`;
+                      const r = 28;
+                      const c = 2 * Math.PI * r;
+                      const dash = (pctC / 100) * c;
+
                       return (
-                        <div key={mod.moduloId} className="rounded-xl px-5 py-4" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
-                            <span className="text-xs font-semibold ml-3 shrink-0" style={{ color: "var(--verde-oliva)" }}>{pctC}%</span>
-                          </div>
-                          <div className="w-full flex rounded-full overflow-hidden" style={{ height: "5px", background: "var(--gris-superficie)" }}>
-                            <div style={{ width: `${pctC}%`, background: "var(--verde-oliva)" }} />
-                            <div style={{ width: `${pctP}%`, background: "#f59e0b" }} />
-                          </div>
-                          <div className="flex gap-4 mt-2">
-                            {[
-                              { n: mod.completados, label: "completados", color: "var(--verde-oliva)" },
-                              { n: mod.enProgreso, label: "en progreso", color: "#f59e0b" },
-                              { n: mod.pendientes, label: "pendientes", color: "var(--gris-borde)" },
-                            ].map((s) => (
-                              <span key={s.label} className="text-xs flex items-center gap-1" style={{ color: "var(--texto-muted)" }}>
-                                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: s.color, display: "inline-block", flexShrink: 0 }} />
-                                {s.n} {s.label}
-                              </span>
-                            ))}
+                        <div key={mod.moduloId} className="relative rounded-2xl overflow-hidden transition-all hover:-translate-y-1 flex flex-col"
+                          style={{
+                            background: `linear-gradient(135deg, ${ac.from}0d 0%, ${ac.to}05 100%), var(--blanco)`,
+                            border: "1px solid var(--gris-borde)",
+                            boxShadow: `0 4px 16px -8px ${ac.from}55`,
+                            minHeight: 240,
+                          }}>
+                          {/* Halo difuminado superior */}
+                          <div className="absolute top-0 left-1/2 pointer-events-none" style={{
+                            width: 220, height: 180, borderRadius: "50%",
+                            background: `radial-gradient(circle, ${ac.from}33 0%, transparent 70%)`,
+                            transform: "translate(-50%, -55%)",
+                          }} />
+
+                          <div className="relative z-10 flex flex-col items-center p-5 flex-1">
+                            {/* Anillo grande centrado */}
+                            <div className="relative shrink-0 mb-4" style={{ width: 110, height: 110 }}>
+                              <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
+                                <defs>
+                                  <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor={ac.from} />
+                                    <stop offset="100%" stopColor={ac.to} />
+                                  </linearGradient>
+                                </defs>
+                                <circle cx="55" cy="55" r="45" fill="none" stroke="var(--gris-superficie)" strokeWidth="8" />
+                                <circle cx="55" cy="55" r="45" fill="none" stroke={`url(#${gradId})`} strokeWidth="8"
+                                  strokeLinecap="round"
+                                  strokeDasharray={`${(pctC / 100) * 2 * Math.PI * 45} ${2 * Math.PI * 45}`}
+                                  style={{ transition: "stroke-dasharray 0.6s ease-out", filter: `drop-shadow(0 0 6px ${ac.to}66)` }}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-extrabold leading-none" style={{
+                                  background: `linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%)`,
+                                  WebkitBackgroundClip: "text",
+                                  WebkitTextFillColor: "transparent",
+                                  backgroundClip: "text",
+                                }}>{pctC}%</span>
+                                <span className="text-[10px] uppercase tracking-wider mt-0.5 font-semibold" style={{ color: "var(--texto-muted)" }}>
+                                  completado
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Nombre del módulo */}
+                            <p className="text-sm font-bold text-center mb-3 line-clamp-2" style={{ color: "var(--texto-primario)" }}>
+                              {mod.nombre}
+                            </p>
+
+                            {/* Stats compactos en fila */}
+                            <div className="w-full mt-auto pt-3 grid grid-cols-3 gap-1 text-center" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: ac.from }}>{mod.completados}</p>
+                                <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>Hechos</p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: "#0EA5E9" }}>{mod.enProgreso}</p>
+                                <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>En curso</p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: "var(--texto-muted)" }}>{mod.pendientes}</p>
+                                <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>Pendientes</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
-                    {modulosStats.length > 4 && (
-                      <button onClick={() => router.push("/dashboard/admin?tab=estadisticas")}
-                        className="w-full text-xs font-semibold py-3 rounded-xl transition-colors"
-                        style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
-                        Ver estadísticas detalladas →
-                      </button>
-                    )}
                   </>
                 )}
               </div>
             </div>
 
-            {/* Actividad reciente */}
-            <div className="lg:col-span-2">
-              <TituloSeccion>Actividad reciente</TituloSeccion>
-              {actividad.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
-                  <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin actividad reciente</p>
-                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Aparecerá aquí cuando los empleados interactúen con los módulos</p>
-                </div>
-              ) : (
-                <div className="rounded-2xl overflow-hidden" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
-                  {actividad.map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 px-4 py-3.5" style={{ borderBottom: i < actividad.length - 1 ? "1px solid var(--gris-borde)" : "none" }}>
-                      <ActividadIcon tipo={item.tipo} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs leading-snug" style={{ color: "var(--texto-primario)" }}>{item.texto}</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>{tiempoRelativo(item.timestamp)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
           </div>
         </section>
 
-        {/* ── ACCIONES + ANUNCIOS ── */}
+        {/* ── ACCIONES + ANUNCIOS — Layout asimétrico ── */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
 
-            {/* Acciones rápidas */}
-            <div className="lg:col-span-1">
+            {/* Acciones rápidas — angosta (2/5) */}
+            <div className="lg:col-span-2">
               <TituloSeccion>Acciones rápidas</TituloSeccion>
-              <div className="flex flex-col gap-2">
-                {[
-                  { label: "Añadir empleado", desc: "Registra un nuevo miembro del equipo", href: "/dashboard/admin?tab=empleados", bg: "var(--azul-egm-light)", color: "var(--azul-egm)", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
-                  { label: "Gestión de módulos", desc: "Administra los módulos formativos", href: "/dashboard/admin?tab=formaciones", bg: "var(--verde-oliva-light)", color: "var(--verde-oliva)", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
-                  { label: "Crear módulo", desc: "Crea contenido formativo para tu equipo", href: "/dashboard/admin/modulos/crear", bg: "var(--azul-egm-light)", color: "var(--azul-egm)", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-                  { label: "Publicar anuncio", desc: "Comunica algo importante a tu equipo", href: "/dashboard/admin?tab=anuncios", bg: "#fef3c7", color: "#b45309", icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
-                ].map((a) => (
-                  <button
-                    key={a.label}
-                    onClick={() => router.push(a.href)}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-left w-full transition-colors"
-                    style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-pagina)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--blanco)"; }}
-                  >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: a.bg, color: a.color }}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d={a.icon} />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{a.label}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>{a.desc}</p>
-                    </div>
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--gris-borde)" }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const acciones = [
+                  { label: "Añadir empleado", href: "/dashboard/admin?tab=empleados", acento: { from: "#4338CA", to: "#0EA5E9" }, icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
+                  { label: "Gestión módulos", href: "/dashboard/admin?tab=formaciones", acento: { from: "#0891B2", to: "#10B981" }, icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
+                  { label: "Crear módulo", href: "/dashboard/admin/modulos/crear", acento: { from: "#6B21A8", to: "#7C3AED" }, icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                  { label: "Publicar anuncio", href: "/dashboard/admin?tab=anuncios", acento: { from: "#0F766E", to: "#06B6D4" }, icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
+                ];
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    {acciones.map((a, i) => (
+                      <button
+                        key={a.label}
+                        onClick={() => router.push(a.href)}
+                        className="group relative rounded-2xl overflow-hidden text-left transition-all hover:-translate-y-1 flex flex-col justify-between"
+                        style={{
+                          background: `linear-gradient(135deg, ${a.acento.from} 0%, ${a.acento.to} 100%)`,
+                          boxShadow: `0 8px 22px -10px ${a.acento.from}99`,
+                          aspectRatio: "1 / 1",
+                          minHeight: 120,
+                          // Mosaico: alternar tamaños — pares más grandes
+                          transform: i === 0 || i === 3 ? "scale(1)" : "scale(1)",
+                        }}
+                      >
+                        {/* Halos blancos */}
+                        <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
+                        <div style={{ position: "absolute", bottom: "-30px", left: "-30px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+
+                        <div className="relative z-10 p-4 flex flex-col h-full justify-between">
+                          {/* Icono glassmorphism arriba izquierda */}
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-6"
+                            style={{
+                              background: "rgba(255,255,255,0.25)",
+                              backdropFilter: "blur(10px)",
+                              border: "1px solid rgba(255,255,255,0.4)",
+                            }}>
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d={a.icon} />
+                            </svg>
+                          </div>
+
+                          {/* Etiqueta abajo */}
+                          <div className="flex items-end justify-between">
+                            <p className="text-sm font-bold text-white leading-tight" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.25)" }}>
+                              {a.label}
+                            </p>
+                            <svg className="w-4 h-4 shrink-0 text-white opacity-80 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* Últimos comunicados */}
-            <div className="lg:col-span-1">
+            {/* Últimos comunicados — ancha (3/5) */}
+            <div className="lg:col-span-3">
               <div className="flex items-center justify-between mb-6">
                 <TituloSeccion noMargin>Últimos comunicados</TituloSeccion>
                 <button onClick={() => router.push("/dashboard/admin?tab=anuncios")} className="text-xs font-medium hover:underline shrink-0" style={{ color: "var(--azul-egm)" }}>
-                  Ver todos →
+                  Ver todos
                 </button>
               </div>
 
@@ -443,135 +623,155 @@ export default function AdminEmpresa() {
                 <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl" style={{ background: "var(--gris-pagina)", border: "1px dashed var(--gris-borde)" }}>
                   <p className="text-sm mb-1" style={{ color: "var(--texto-primario)" }}>Sin comunicados publicados</p>
                   <p className="text-xs mb-4" style={{ color: "var(--texto-muted)" }}>Comunica novedades importantes a tu equipo</p>
-                  <button onClick={() => router.push("/dashboard/admin?tab=anuncios")} className="text-xs font-semibold px-4 py-2 rounded-lg" style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}>
+                  <button onClick={() => router.push("/dashboard/admin?tab=anuncios")} className="text-xs font-bold px-4 py-2 rounded-lg transition-all hover:scale-105"
+                    style={{ background: "linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)", color: "#ffffff", boxShadow: "0 4px 12px -3px rgba(67,56,202,0.55)" }}>
                     Crear comunicado
                   </button>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {anuncios.map((a) => (
-                    <div key={a.anuncioId} className="flex items-start gap-3 rounded-xl px-4 py-3.5" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", borderLeft: "3px solid var(--azul-egm)" }}>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium" style={{ color: "var(--texto-primario)" }}>{a.titulo}</p>
-                          <span className="text-xs shrink-0 mt-0.5" style={{ color: "var(--texto-muted)" }}>{formatFecha(a.creadoEn)}</span>
-                        </div>
-                        <p className="text-xs mt-1 line-clamp-1" style={{ color: "var(--texto-muted)" }}>{a.contenido}</p>
-                      </div>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5" style={{ background: a.esGlobal ? "#dbeafe" : "var(--verde-oliva-light)", color: a.esGlobal ? "#1d4ed8" : "var(--verde-oliva)" }}>
-                        {a.esGlobal ? "Global" : "Empresa"}
-                      </span>
+              ) : (() => {
+                // Paleta nueva — distinta a la del resto de la página
+                const PALETA_COM = [
+                  { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
+                  { from: "#0F766E", to: "#3B82F6" }, // Teal → Azul
+                  { from: "#0891B2", to: "#10B981" }, // Cian → Verde
+                  { from: "#6B21A8", to: "#7C3AED" }, // Púrpura → Violeta
+                  { from: "#0284C7", to: "#06B6D4" }, // Cielo → Cian
+                  { from: "#059669", to: "#22D3EE" }, // Esmeralda → Cian claro
+                ];
+                return (
+                  // Timeline vertical estilo magazine
+                  <div className="relative pl-8">
+                    {/* Línea temporal vertical con gradiente arcoiris */}
+                    <div className="absolute left-3 top-2 bottom-2 w-0.5 rounded-full" style={{
+                      background: "linear-gradient(180deg, #4338CA 0%, #0891B2 33%, #10B981 66%, #7C3AED 100%)",
+                      opacity: 0.4,
+                    }} />
+
+                    <div className="flex flex-col gap-4">
+                      {anuncios.map((a, idx) => {
+                        const ac = PALETA_COM[idx % PALETA_COM.length];
+                        return (
+                          <div
+                            key={a.anuncioId}
+                            onClick={() => router.push("/dashboard/admin?tab=anuncios")}
+                            className="group relative cursor-pointer transition-all hover:-translate-x-0.5"
+                          >
+                            {/* Punto de la timeline — círculo grande con gradiente */}
+                            <div className="absolute -left-8 top-2 z-10">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:scale-125"
+                                style={{
+                                  background: `linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%)`,
+                                  boxShadow: `0 0 0 4px var(--blanco), 0 0 0 5px ${ac.from}44, 0 4px 12px -2px ${ac.from}88`,
+                                }}>
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                              </div>
+                            </div>
+
+                            {/* Card del comunicado — estilo magazine con banner de color arriba */}
+                            <div className="rounded-2xl overflow-hidden transition-all"
+                              style={{
+                                background: "var(--blanco)",
+                                border: "1px solid var(--gris-borde)",
+                                boxShadow: `0 4px 14px -10px ${ac.from}88`,
+                              }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = `0 10px 24px -10px ${ac.from}bb`; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 14px -10px ${ac.from}88`; }}
+                            >
+                              {/* Banner superior con gradiente y categoría */}
+                              <div className="relative px-4 py-2.5 flex items-center justify-between"
+                                style={{ background: `linear-gradient(90deg, ${ac.from} 0%, ${ac.to} 100%)` }}>
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                                  </svg>
+                                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+                                    {a.esGlobal ? "Global · EGM" : "Tu empresa"}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-semibold tracking-wider" style={{ color: "rgba(255,255,255,0.92)", textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>
+                                  {formatFecha(a.creadoEn)}
+                                </span>
+                              </div>
+
+                              {/* Cuerpo blanco */}
+                              <div className="p-4">
+                                <p className="text-sm font-bold leading-tight mb-1.5" style={{ color: "var(--texto-primario)" }}>{a.titulo}</p>
+                                <p className="text-xs line-clamp-2" style={{ color: "var(--texto-muted)" }}>{a.contenido}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Servicios */}
-            <div className="lg:col-span-1">
-              <div className="mb-6"><TituloSeccion noMargin>Servicios</TituloSeccion></div>
-              <div
-                className="rounded-2xl overflow-hidden flex-1 relative"
-                style={{ background: "linear-gradient(160deg, #f9fafb 0%, #f3f4f6 100%)" }}
-              >
-                {/* Glow decorativo */}
-                <div className="absolute pointer-events-none" style={{
-                  top: "-60px", left: "-60px", width: "240px", height: "240px",
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(0,0,0,0.04) 0%, transparent 70%)",
-                }} />
-
-
-
-                <div className="relative p-4 flex flex-col gap-2">
-                  {servicios.sort((a, b) => a.orden - b.orden).map((s) => {
-                    const icono = s.icono ? ICONO_MAP[s.icono] : null;
-                    const content = (
-                      <div
-                        className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200"
-                        style={{
-                          background: s.activo ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.01)",
-                          border: s.activo ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(0,0,0,0.06)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          boxShadow: s.activo ? "inset 0 1px 0 rgba(0,0,0,0.05)" : "none",
-                        }}
-                      >
-                        <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                          style={{
-                            background: s.activo ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)",
-                            border: s.activo ? "1px solid rgba(0,0,0,0.14)" : "1px solid rgba(0,0,0,0.05)",
-                            backdropFilter: "blur(4px)",
-                            WebkitBackdropFilter: "blur(4px)",
-                            color: s.activo ? "#000" : "rgba(0,0,0,0.2)",
-                          }}
-                        >
-                          {icono}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate"
-                            style={{ color: s.activo ? "#000" : "rgba(0,0,0,0.25)" }}>
-                            {s.nombre}
-                          </p>
-                          <p className="text-xs mt-0.5 truncate"
-                            style={{ color: s.activo ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.15)" }}>
-                            {s.descripcion}
-                          </p>
-                        </div>
-
-                        {s.activo ? (
-                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" strokeWidth={2}
-                            style={{ color: "rgba(0,0,0,0.40)" }}>
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        ) : (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                            style={{
-                              background: "rgba(0,0,0,0.05)",
-                              color: "rgba(0,0,0,0.30)",
-                              border: "1px solid rgba(0,0,0,0.08)",
-                            }}>
-                            Próx.
-                          </span>
-                        )}
-                      </div>
-                    );
-
-                    return s.activo && s.url ? (
-                      <a key={s.servicioId} href={s.url} target="_blank" rel="noopener noreferrer"
-                        className="block" style={{ textDecoration: "none" }}
-                        onMouseEnter={(e) => {
-                          const d = e.currentTarget.firstElementChild as HTMLElement;
-                          if (d) {
-                            d.style.background = "rgba(0,0,0,0.10)";
-                            d.style.borderColor = "rgba(0,0,0,0.20)";
-                            d.style.transform = "translateY(-1px)";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          const d = e.currentTarget.firstElementChild as HTMLElement;
-                          if (d) {
-                            d.style.background = s.activo ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.01)";
-                            d.style.borderColor = s.activo ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.06)";
-                            d.style.transform = "none";
-                          }
-                        }}
-                      >
-                        {content}
-                      </a>
-                    ) : (
-                      <div key={s.servicioId}>{content}</div>
-                    );
-                  })}
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
             </div>
 
           </div>
+        </section>
+
+        {/* ── SERVICIOS — galería flotante sin caja, ancho completo ── */}
+        <section className="-mx-10 lg:-mx-16 px-10 lg:px-16">
+          <div className="mb-8"><TituloSeccion noMargin>Servicios</TituloSeccion></div>
+
+          {(() => {
+            const PALETA_SERV = [
+              { from: "#0F766E", to: "#3B82F6" }, // Teal → Azul
+              { from: "#4338CA", to: "#0EA5E9" }, // Indigo → Cielo
+              { from: "#7C3AED", to: "#06B6D4" }, // Violeta → Cian
+              { from: "#0284C7", to: "#06B6D4" }, // Cielo → Cian
+              { from: "#0891B2", to: "#10B981" }, // Cian → Verde
+              { from: "#15803D", to: "#22D3EE" }, // Verde → Cian claro
+              { from: "#4338CA", to: "#A855F7" }, // Indigo → Púrpura
+              { from: "#059669", to: "#3B82F6" }, // Esmeralda → Azul
+            ];
+
+            const lista = servicios.sort((a, b) => a.orden - b.orden);
+
+            return (
+              <div className="flex flex-wrap gap-y-8 justify-between">
+                {lista.map((s, idx) => {
+                  const icono = s.icono ? ICONO_MAP[s.icono] : null;
+                  const ac = PALETA_SERV[idx % PALETA_SERV.length];
+                  const inner = (
+                    <div className="group flex flex-col items-center text-center cursor-pointer transition-transform hover:-translate-y-1" style={{ width: 120 }}>
+                      {/* Círculo grande con gradiente — sin caja, flota */}
+                      <div className="relative mb-3">
+                        <div
+                          className="w-20 h-20 rounded-full flex items-center justify-center text-white transition-all duration-300 group-hover:scale-110"
+                          style={{
+                            background: `linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%)`,
+                            color: "#ffffff",
+                            boxShadow: `0 12px 30px -8px ${ac.from}88, inset 0 1px 0 rgba(255,255,255,0.25)`,
+                          }}
+                        >
+                          <span className="[&_svg]:w-9 [&_svg]:h-9">
+                            {icono}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-sm font-bold leading-tight" style={{ color: "var(--texto-primario)" }}>
+                        {s.nombre}
+                      </p>
+                      <p className="text-[11px] mt-1 leading-snug line-clamp-2" style={{ color: "var(--texto-muted)" }}>
+                        {s.descripcion}
+                      </p>
+                    </div>
+                  );
+
+                  return s.url ? (
+                    <a key={s.servicioId} href={s.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                      {inner}
+                    </a>
+                  ) : (
+                    <div key={s.servicioId}>{inner}</div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </section>
 
       </div>

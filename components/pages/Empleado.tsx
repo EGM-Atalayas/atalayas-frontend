@@ -687,7 +687,78 @@ export default function Empleado() {
                           No hay más eventos programados de momento
                         </p>
                       </div>
-                    ) : (
+                    ) : otros.length === 1 ? (() => {
+                      // Solo hay 1 evento adicional → renderizar como card grande igual al destacado
+                      const ev = otros[0];
+                      const esProxOtro = new Date(ev.fechaInicio).getTime() >= Date.now();
+                      const acOtro = esProxOtro
+                        ? { from: "#0891B2", to: "#10B981" }  // Próximo: cian → verde (distinto al destacado)
+                        : { from: "#1B3F7E", to: "#0891B2" }; // Pasado: azul → cian
+                      return (
+                        <div
+                          key={ev.eventoId}
+                          className="rounded-2xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:-translate-y-1 h-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${acOtro.from} 0%, ${acOtro.to} 100%)`,
+                            minHeight: "200px",
+                            boxShadow: `0 10px 30px -10px ${acOtro.from}66`,
+                          }}
+                          onClick={() => router.push(`/dashboard/eventos/${ev.eventoId}`)}
+                        >
+                          {/* Halos decorativos */}
+                          <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "220px", height: "220px", borderRadius: "50%", background: "rgba(255,255,255,0.10)" }} />
+                          <div style={{ position: "absolute", bottom: "-40px", left: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+
+                          <div className="relative z-10 p-6 flex flex-col h-full" style={{ minHeight: "200px" }}>
+                            <div className="flex items-start justify-between mb-auto">
+                              <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur"
+                                style={{ background: "rgba(255,255,255,0.22)", color: "#ffffff" }}>
+                                {esProxOtro ? "Próximo evento" : "Último evento"}
+                              </span>
+                              <div className="text-right rounded-xl px-3 py-2 backdrop-blur" style={{ background: "rgba(255,255,255,0.18)" }}>
+                                <p className="text-2xl font-bold text-white leading-none">{fmtDia(ev.fechaInicio)}</p>
+                                <p className="text-[10px] uppercase tracking-wider capitalize mt-0.5" style={{ color: "rgba(255,255,255,0.85)" }}>{fmtMes(ev.fechaInicio)}</p>
+                              </div>
+                            </div>
+
+                            <div className="mt-6">
+                              <h3 className="text-xl font-semibold text-white mb-1.5" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
+                                {ev.titulo}
+                              </h3>
+                              {ev.descripcion && (
+                                <p className="text-sm mb-4 line-clamp-2" style={{ color: "rgba(255,255,255,0.85)" }}>
+                                  {ev.descripcion}
+                                </p>
+                              )}
+                              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
+                                <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>
+                                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {fmtHora(ev.fechaInicio, ev.fechaFin)}
+                                </span>
+                                <span className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>
+                                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {ev.esGlobal ? "EGM Atalayas" : "Tu empresa"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span
+                              className="mt-5 self-start text-xs font-semibold px-4 py-2 rounded-xl inline-flex items-center gap-1.5"
+                              style={{ background: "rgba(255,255,255,0.22)", color: "#fff", backdropFilter: "blur(8px)" }}
+                            >
+                              Ver evento
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })() : (
                       otros.map((ev, idx) => {
                         const ac = PALETA[(idx + 1) % PALETA.length];
                         return (

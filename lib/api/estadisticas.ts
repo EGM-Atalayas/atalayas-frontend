@@ -284,7 +284,7 @@ export function getEstadisticasAdminEmpresa(
   const progresoModulos: { nombre: string; porcentaje: number }[] = [];
   const detalleModulos: { moduloId: string; nombre: string; completados: number; enProgreso: number; pendientes: number; total: number }[] = [];
 
-  for (const m of modulos.slice(0, 8)) {
+  for (const m of modulos) {
     const mid = m.moduloId ?? m.id ?? "";
     let completados = 0;
     let enProgreso  = 0;

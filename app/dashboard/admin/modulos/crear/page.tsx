@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, ChevronDown, CircleUser, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Briefcase, Check, CircleUser, File, FileUp, Image, Loader, Plus, Settings, Shield, Sparkles, SquareCheckBig, SquarePen, TextInitial, Trash2, Upload, UsersRound, X } from "lucide-react";
 import { IAButton } from "@/components/ui/IAButton";
 import Link from "next/link";
 import { API_URL, apiFetch } from "@/lib/api";
@@ -54,7 +54,7 @@ let _pid = 1;
 const newId = () => _pid++;
 const ROLES_BLOQUEADOS = ["ROLE_EMPLEADO", "INVITADO"];
 
-type AudienciaTipo = "todos" | "alumno" | "departamento";
+type AudienciaTipo = "todos" | "empleado" | "departamento";
 
 const DEPARTAMENTOS = [
   { id: "PRODUCCION", label: "Producción" },
@@ -70,7 +70,7 @@ const DEPARTAMENTOS = [
 ];
 
 const TIPOS_PAGINA: { key: TipoPagina; label: string; desc: string; icon: React.ReactNode; accent: string; bg: string; badge: string }[] = [
-  { key: "texto", label: "Texto", desc: "Contenido escrito", icon: <TextInitial />, accent: "var(--azul-egm)", bg: "var(--azul-egm-light)", badge: "bg:var(--azul-egm-light)|color:var(--azul-egm)" },
+  { key: "texto", label: "Texto", desc: "Contenido escrito", icon: <TextInitial />, accent: "#1b3f7e", bg: "#eef2ff", badge: "bg:#eef2ff|color:#1b3f7e" },
   { key: "archivo", label: "Archivo", desc: "PDF, DOCX, vídeo, audio", icon: <FileUp />, accent: "#d97706", bg: "#fffbeb", badge: "bg:#fffbeb|color:#d97706" },
   { key: "test", label: "Test", desc: "Preguntas de evaluación", icon: <SquareCheckBig />, accent: "#15803d", bg: "#dcfce7", badge: "bg:#dcfce7|color:#15803d" },
 ];
@@ -79,14 +79,14 @@ function getTipoConfig(tipo: TipoPagina) {
   return TIPOS_PAGINA.find((t) => t.key === tipo)!;
 }
 
-const CS = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--gris-pagina)" };
+const CS = { border: "1.5px solid #e5e7eb", color: "#111827", background: "#f9fafb" };
 const SEL = "w-full text-sm px-3 py-2.5 rounded-lg outline-none cursor-pointer";
 
 // ── TOGGLE ────────────────────────────────────────────────────────────────────
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" onClick={() => onChange(!value)} className="relative inline-flex items-center rounded-full transition-colors shrink-0"
-      style={{ width: "44px", height: "24px", background: value ? "var(--verde-oliva)" : "var(--gris-borde)" }}>
+      style={{ width: "44px", height: "24px", background: value ? "#4a7c59" : "#d1d5db" }}>
       <span className="inline-block rounded-full bg-white transition-transform"
         style={{ width: "18px", height: "18px", transform: value ? "translateX(22px)" : "translateX(3px)", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }} />
     </button>
@@ -94,28 +94,28 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 // ── PORTADA UPLOAD ────────────────────────────────────────────────────────────
-function PortadaUpload({ preview, onFile, onRemove, accent = "var(--azul-egm)", accentLight = "var(--azul-egm-light)" }: {
+function PortadaUpload({ preview, onFile, onRemove, accent = "#1b3f7e", accentLight = "#eef2ff" }: {
   preview: string; onFile: (f: File) => void; onRemove: () => void;
   accent?: string; accentLight?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div>
-      <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Imagen de portada</label>
+      <label className="block text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#9ca3af" }}>Imagen de portada</label>
       {preview ? (
-        <div className="relative rounded-xl overflow-hidden" style={{ height: "140px", border: "1.5px solid var(--gris-borde)" }}>
+        <div className="relative rounded-xl overflow-hidden" style={{ height: "140px", border: "1.5px solid #e5e7eb" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Portada" className="w-full h-full object-cover" />
           <button type="button" onClick={onRemove} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs hover:opacity-80" style={{ background: "rgba(0,0,0,0.55)" }}><i className="bi bi-x-lg" style={{ fontSize: "12px" }} /></button>
         </div>
       ) : (
         <div onClick={() => ref.current?.click()} className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
-          style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)", height: "140px" }}
+          style={{ border: "2px dashed #d1d5db", background: "#f9fafb", height: "140px" }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.background = accentLight; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-          <div style={{ color: "var(--texto-muted)" }}><Image /></div>
-          <p className="text-sm font-medium text-center" style={{ color: "var(--texto-muted)" }}>Subir portada</p>
-          <p className="text-xs" style={{ color: "var(--gris-borde)" }}>JPG · PNG · WEBP</p>
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.background = "#f9fafb"; }}>
+          <div style={{ color: "#9ca3af" }}><Image /></div>
+          <p className="text-sm font-medium text-center" style={{ color: "#9ca3af" }}>Subir portada</p>
+          <p className="text-xs" style={{ color: "#d1d5db" }}>JPG · PNG · WEBP</p>
         </div>
       )}
       <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
@@ -131,28 +131,28 @@ function PdfUpload({ file, onFile, onRemove }: {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div>
-      <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Documento PDF</label>
+      <label className="block text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#9ca3af" }}>Documento PDF</label>
       {file ? (
-        <div className="relative rounded-xl flex items-center gap-3 px-4 py-3" style={{ border: "1.5px solid var(--gris-borde)", background: "var(--gris-pagina)", minHeight: "60px" }}>
+        <div className="relative rounded-xl flex items-center gap-3 px-4 py-3" style={{ border: "1.5px solid #e5e7eb", background: "#f9fafb", minHeight: "60px" }}>
           <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fef2f2", color: "#dc2626" }}>
             <File className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>{file.name}</p>
-            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{formatBytes(file.size)}</p>
+            <p className="text-sm font-semibold truncate" style={{ color: "#111827" }}>{file.name}</p>
+            <p className="text-xs" style={{ color: "#9ca3af" }}>{formatBytes(file.size)}</p>
           </div>
-          <button type="button" onClick={onRemove} className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 shrink-0" style={{ background: "rgba(0,0,0,0.08)", color: "var(--texto-muted)" }}>
+          <button type="button" onClick={onRemove} className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 shrink-0" style={{ background: "rgba(0,0,0,0.08)", color: "#9ca3af" }}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       ) : (
         <div onClick={() => ref.current?.click()} className="rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
-          style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)", height: "100px" }}
+          style={{ border: "2px dashed #d1d5db", background: "#f9fafb", height: "100px" }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#dc2626"; e.currentTarget.style.background = "#fef2f2"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-          <FileUp className="w-5 h-5" style={{ color: "var(--texto-muted)" }} />
-          <p className="text-sm font-medium text-center" style={{ color: "var(--texto-muted)" }}>Subir PDF</p>
-          <p className="text-xs" style={{ color: "var(--gris-borde)" }}>PDF</p>
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.background = "#f9fafb"; }}>
+          <FileUp className="w-5 h-5" style={{ color: "#9ca3af" }} />
+          <p className="text-sm font-medium text-center" style={{ color: "#9ca3af" }}>Subir PDF</p>
+          <p className="text-xs" style={{ color: "#d1d5db" }}>PDF</p>
         </div>
       )}
       <input ref={ref} type="file" accept=".pdf" className="hidden"
@@ -233,7 +233,6 @@ export default function CrearModuloPage() {
   const [paginaActivaId, setPaginaActivaId] = useState<number | null>(null);
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [configOpen, setConfigOpen] = useState(true);
   const [mostrarSelectorTipo, setMostrarSelectorTipo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -241,7 +240,6 @@ export default function CrearModuloPage() {
   const [aiSeleccionadas, setAiSeleccionadas] = useState<Record<AiTipo, boolean>>({ descripcion: false, test: false, podcast: false, video: false, documento: false });
   const [aiLoading, setAiLoading] = useState<AiTipo | null>(null);
   const [aiError, setAiError] = useState("");
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [presentacionPanelOpen, setPresentacionPanelOpen] = useState(false);
   const [presentacionGuardada, setPresentacionGuardada] = useState<{ slides: Slide[]; themeId: string } | null>(null);
   const [mostrarIA, setMostrarIA] = useState(false);
@@ -308,7 +306,7 @@ export default function CrearModuloPage() {
   }, [editId, usuario?.empresaId]);
 
   useEffect(() => {
-    if (audiencia === "alumno" && alumnosDisponibles.length === 0 && usuario?.empresaId) {
+    if (audiencia === "empleado" && alumnosDisponibles.length === 0 && usuario?.empresaId) {
       apiFetch(`${API_URL}/users`)
         .then((r) => r.ok ? r.json() : [])
         .then((data) => {
@@ -529,7 +527,7 @@ export default function CrearModuloPage() {
           duracion,
           audiencia,
           departamentos: audiencia === "departamento" ? JSON.stringify(deptos) : "[]",
-          usuariosIds: audiencia === "alumno" ? alumnosIds : [],
+          usuariosIds: audiencia === "empleado" ? alumnosIds : [],
           contenidoMarkdown: contenidoJson,
           imagenPortadaUrl,
           testPreguntas: null,
@@ -603,7 +601,6 @@ export default function CrearModuloPage() {
 
       setPaginaActivaId(paginasGeneradas.length > 0 ? paginasGeneradas[0].id : null);
       setMostrarIA(false);
-      setConfigOpen(false);
     } catch (e: unknown) {
       setErrorIA(e instanceof Error ? e.message : "Error al generar el módulo");
     } finally {
@@ -620,102 +617,137 @@ export default function CrearModuloPage() {
     setAiSeleccionadas({ descripcion: false, test: false, podcast: false, video: false, documento: false });
   };
 
-  const inputBase = { border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" };
+  const inputBase = { border: "1.5px solid #e5e7eb", color: "#111827", background: "#fff" };
   const onF = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = "var(--azul-egm)";
-    if ("style" in e.target) (e.target as HTMLElement).style.boxShadow = "0 0 0 3px var(--azul-egm-light)";
+    e.target.style.borderColor = "#1b3f7e";
+    if ("style" in e.target) (e.target as HTMLElement).style.boxShadow = "0 0 0 3px #eef2ff";
   };
   const onB = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = "var(--gris-borde)";
+    e.target.style.borderColor = "#e5e7eb";
     if ("style" in e.target) (e.target as HTMLElement).style.boxShadow = "none";
   };
 
   if (cargandoEdicion) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center" style={{ background: "var(--gris-pagina)" }}>
+      <div className="w-full min-h-screen flex items-center justify-center" style={{ background: "#f4f5f7" }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 rounded-full animate-spin" style={{ borderColor: "var(--azul-egm) transparent transparent transparent" }} />
-          <p className="text-sm" style={{ color: "var(--texto-muted)" }}>Cargando módulo...</p>
+          <div className="w-8 h-8 border-3 rounded-full animate-spin" style={{ borderColor: "#1b3f7e transparent transparent transparent" }} />
+          <p className="text-sm" style={{ color: "#9ca3af" }}>Cargando módulo...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="w-full min-h-screen pt-20" style={{ background: "var(--gris-pagina)" }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.05)}to{transform:scale(1)}}.fade-up{animation:fadeUp .28s ease both}.ai-pop{animation:pop .25s ease both}`}</style>
+  const gradAzul = "linear-gradient(135deg, #1b3f7e, #2563eb)";
+  const gradVioleta = "linear-gradient(135deg, #7c3aed, #a855f7)";
+  const gradVerde = "linear-gradient(135deg, #16a34a, #15803d)";
 
-      {/* ══ HEADER BREADCRUMBS ══ */}
-      <div style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
-        <div className="px-8 lg:px-12 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
+  return (
+    <div className="w-full min-h-screen pt-20" style={{ background: "#f4f5f7" }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.05)}to{transform:scale(1)}}
+        @keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:800px}}
+        @keyframes shimmer{0%{background-position:-200% 0}to{background-position:200% 0}}
+        .fade-up{animation:fadeUp .3s ease both}
+        .ai-pop{animation:pop .25s ease both}
+        .slide-down{animation:slideDown .35s ease both;overflow:hidden}
+        .card-hover{transition:all .2s ease}
+        .card-hover:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.08)!important}
+      `}</style>
+
+      {/* ══ TOP ACCENT BAR ══ */}
+      <div style={{ height: "3px", background: "linear-gradient(90deg, #1b3f7e, #2563eb, #3b82f6)" }} />
+
+      {/* ══ HEADER ══ */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+        <div className="px-4 md:px-8 lg:px-12">
+          <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard/admin"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
+                style={{ color: "#4b5563", border: "1px solid #e5e7eb" }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                Volver
+              </Link>
+              <div className="hidden sm:flex items-center gap-2.5">
+                <span className="text-sm" style={{ color: "#9ca3af" }}>Creación de módulos</span>
+                <svg className="w-3.5 h-3.5" style={{ color: "#d1d5db" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                <span className="text-sm font-semibold" style={{ color: "#1b3f7e" }}>
+                  {editId ? "Editar módulo" : "Nuevo módulo"}
+                </span>
+              </div>
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Link href="/dashboard/admin"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold hover:opacity-80 transition-opacity"
-                  style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)" }}>
-                  ← Volver
-                </Link>
-
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "var(--texto-muted)" }}>
-                  <Link href="/dashboard" className="hover:underline">Dashboard</Link>
-                  <span>/</span>
-                  <Link href="/dashboard/admin" className="hover:underline">Administración</Link>
-                  <span>/</span>
-                  <span style={{ color: "var(--texto-primario)", fontWeight: 600 }}>
-                    {editId ? "Editar módulo" : "Crear módulo"}
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: "#f0f4ff", border: "1px solid #dbeafe" }}>
+                  <svg className="w-3.5 h-3.5" style={{ color: "#1b3f7e" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <span className="text-xs font-semibold" style={{ color: "#1b3f7e" }}>
+                    {paginas.length} página{paginas.length !== 1 ? "s" : ""}
                   </span>
                 </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: activo ? "#f0fdf4" : "#f9fafb", border: `1px solid ${activo ? "#bbf7d0" : "#e5e7eb"}` }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: activo ? "#16a34a" : "#9ca3af" }} />
+                  <span className="text-xs font-medium" style={{ color: activo ? "#16a34a" : "#9ca3af" }}>{activo ? "Activo" : "Inactivo"}</span>
+                </div>
               </div>
+              {nombre && (
+                <span className="hidden lg:inline text-xs font-medium truncate max-w-[180px]" style={{ color: "#6b7280" }}>
+                  {nombre}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══ CUERPO ══ */}
-      <div className="px-4 md:px-8 lg:px-12 py-4 md:py-6">
-        <div className="max-w-7xl mx-auto">
+      {/* ══ CUERPO PRINCIPAL ══ */}
+      <div className="px-4 md:px-8 lg:px-12 py-6 md:py-8">
+        <div className="max-w-7xl mx-auto flex flex-col gap-6">
 
-          {/* ══ CONFIGURACIÓN DEL MÓDULO (colapsable) ══ */}
-          <div className="rounded-2xl overflow-hidden mb-6" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <button type="button" onClick={() => setConfigOpen(!configOpen)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
-              style={{ background: "var(--gris-pagina)", borderBottom: configOpen ? "1px solid var(--gris-borde)" : "none" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}><Settings /></div>
-                <div className="text-left">
-                  <p className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>
-                    {nombre || "Configuración del módulo"}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--texto-muted)" }}>
-                    {paginas.length} página{paginas.length !== 1 ? "s" : ""} · {descripcion ? descripcion.slice(0, 60) : "Sin descripción"}
-                  </p>
+          {/* ══ GRID SUPERIOR: CONFIG + IA ══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* ══ COLUMNA IZQUIERDA (2/3): CONFIGURACIÓN ══ */}
+            <div className="lg:col-span-2 rounded-2xl overflow-hidden card-hover fade-up"
+              style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
+              <div className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", color: "#1e40af", boxShadow: "0 2px 8px rgba(30,64,175,0.12)" }}>
+                  <Settings className="w-5 h-5" />
                 </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold" style={{ color: "#111827" }}>Configuración del módulo</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>Información básica y visibilidad</p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                  style={{ background: activo ? "#dcfce7" : "#f3f4f6", color: activo ? "#16a34a" : "#9ca3af" }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: activo ? "#16a34a" : "#9ca3af" }} />
+                  {activo ? "Activo" : "Inactivo"}
+                </span>
               </div>
-              <div className="transition-transform" style={{ transform: configOpen ? "rotate(0)" : "rotate(-90deg)" }}>
-                <ChevronDown />
-              </div>
-            </button>
-
-            {configOpen && (
-              <div className="px-6 py-5 fade-up">
-                <div className="grid grid-cols-1 xl:grid-cols-[1fr_200px] gap-6">
-                  <div className="flex flex-col gap-4">
+              <div className="px-6 py-5">
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr_220px] gap-8">
+                  <div className="flex flex-col gap-5">
+                    {/* Nombre */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#6b7280" }}>
                         Nombre del módulo <span style={{ color: "#dc2626" }}>*</span>
                       </label>
                       <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
                         placeholder="Ej: Seguridad en planta — Nivel básico"
-                        className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all"
-                        style={inputBase} onFocus={onF} onBlur={onB} />
+                        className="w-full text-sm px-4 py-3 rounded-xl outline-none transition-all border"
+                        style={inputBase}
+                        onFocus={onF} onBlur={onB} />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+                    {/* 3 selects en fila */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Categoría</label>
-                        <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={SEL} style={CS} onFocus={onF} onBlur={onB}>
+                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#6b7280" }}>Categoría</label>
+                        <select value={categoria} onChange={(e) => setCategoria(e.target.value)}
+                          className="w-full text-sm px-3 py-2.5 rounded-xl outline-none border cursor-pointer transition-all"
+                          style={inputBase}
+                          onFocus={onF} onBlur={onB}>
                           <option value="GENERAL">General</option>
                           <option value="ESPECIALIZADO">Especializado</option>
                           <option value="ESPECIALIZADO_IA">Especializado IA</option>
@@ -723,45 +755,66 @@ export default function CrearModuloPage() {
                           <option value="ONBOARDING">Onboarding</option>
                         </select>
                         {editId && moduloEditando?.tipoModulo && !["GENERAL", "ESPECIALIZADO", "ESPECIALIZADO_IA", "CUMPLIMIENTO", "ONBOARDING"].includes(moduloEditando.tipoModulo) && (
-                          <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "#dc2626" }}>
+                          <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: "#dc2626" }}>
                             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            Este módulo tiene un tipo antiguo ("{moduloEditando.tipoModulo}"). Elige uno de los valores válidos arriba.
+                            Tipo antiguo: {moduloEditando.tipoModulo}
                           </p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Idioma</label>
-                        <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className={SEL} style={CS} onFocus={onF} onBlur={onB}>
+                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#6b7280" }}>Idioma</label>
+                        <select value={idioma} onChange={(e) => setIdioma(e.target.value)}
+                          className="w-full text-sm px-3 py-2.5 rounded-xl outline-none border cursor-pointer transition-all"
+                          style={inputBase}
+                          onFocus={onF} onBlur={onB}>
                           <option value="es">Español</option>
                           <option value="en">Inglés</option>
                           <option value="ca">Valenciano</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Duración</label>
-                        <select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={SEL} style={CS} onFocus={onF} onBlur={onB}>
+                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#6b7280" }}>Duración</label>
+                        <select value={duracion} onChange={(e) => setDuracion(e.target.value)}
+                          className="w-full text-sm px-3 py-2.5 rounded-xl outline-none border cursor-pointer transition-all"
+                          style={inputBase}
+                          onFocus={onF} onBlur={onB}>
                           <option value="corto">−15 min</option>
                           <option value="medio">15–45 min</option>
                           <option value="largo">+45 min</option>
                         </select>
                       </div>
                     </div>
+
+                    {/* Descripción */}
                     <div>
-                      <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Visibilidad</label>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#6b7280" }}>
+                        Descripción <span className="font-normal lowercase" style={{ color: "#9ca3af" }}>(opcional)</span>
+                      </label>
+                      <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                        placeholder="Describe brevemente de qué trata este módulo..."
+                        rows={3}
+                        className="w-full text-sm px-4 py-3 rounded-xl outline-none transition-all resize-none"
+                        style={{ border: "1.5px solid #e5e7eb", color: "#111827", background: "#fff" }}
+                        onFocus={onF} onBlur={onB} />
+                    </div>
+
+                    {/* Visibilidad */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#6b7280" }}>Visibilidad</label>
                       <div className="flex gap-2">
                         {([
-                          { key: "todos" as AudienciaTipo, label: "Todos", icon: <UsersRound /> },
-                          { key: "alumno" as AudienciaTipo, label: "Alumno", icon: <CircleUser /> },
-                          { key: "departamento" as AudienciaTipo, label: "Departamento", icon: <Briefcase /> },
+                          { key: "todos" as AudienciaTipo, label: "Todos", icon: <UsersRound className="w-4 h-4" /> },
+                          { key: "empleado" as AudienciaTipo, label: "Empleado", icon: <CircleUser className="w-4 h-4" /> },
+                          { key: "departamento" as AudienciaTipo, label: "Departamento", icon: <Briefcase className="w-4 h-4" /> },
                         ]).map((op) => {
                           const sel = audiencia === op.key;
                           return (
                             <button key={op.key} type="button" onClick={() => setAudiencia(op.key)}
-                              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-1"
+                              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex-1"
                               style={{
-                                border: `1.5px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`,
-                                background: sel ? "var(--azul-egm-light)" : "var(--gris-pagina)",
-                                color: sel ? "var(--azul-egm)" : "var(--texto-muted)",
+                                border: `1.5px solid ${sel ? "#1b3f7e" : "#e5e7eb"}`,
+                                background: sel ? "#eef2ff" : "#f9fafb",
+                                color: sel ? "#1b3f7e" : "#9ca3af",
                               }}>
                               {op.icon} {op.label}
                             </button>
@@ -774,22 +827,22 @@ export default function CrearModuloPage() {
                             const sel = deptos.includes(d.id);
                             return (
                               <button key={d.id} type="button" onClick={() => toggleDepto(d.id)}
-                                className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                                 style={{
-                                  border: `1.5px solid ${sel ? "#d97706" : "var(--gris-borde)"}`,
-                                  background: sel ? "#fffbeb" : "var(--blanco)",
-                                  color: sel ? "#d97706" : "var(--texto-muted)",
+                                  border: `1.5px solid ${sel ? "#d97706" : "#e5e7eb"}`,
+                                  background: sel ? "#fffbeb" : "#fff",
+                                  color: sel ? "#d97706" : "#9ca3af",
                                 }}>
-                                {sel && <Check className="w-3 h-3 shrink-0" />}{d.label}
+                                {sel && <Check className="w-3 h-3" />}{d.label}
                               </button>
                             );
                           })}
                         </div>
                       )}
-                      {audiencia === "alumno" && (
+                      {audiencia === "empleado" && (
                         <div className="mt-3">
                           {alumnosDisponibles.length === 0 ? (
-                            <p className="text-xs" style={{ color: "var(--texto-muted)" }}>Cargando alumnos...</p>
+                            <p className="text-xs" style={{ color: "#9ca3af" }}>Cargando empleados...</p>
                           ) : (
                             <div className="flex flex-wrap gap-2">
                               {alumnosDisponibles.map((a) => {
@@ -798,13 +851,13 @@ export default function CrearModuloPage() {
                                   <button key={a.usuarioId} type="button" onClick={() =>
                                     setAlumnosIds((p) => p.includes(a.usuarioId) ? p.filter((id) => id !== a.usuarioId) : [...p, a.usuarioId])
                                   }
-                                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                                     style={{
-                                      border: `1.5px solid ${sel ? "var(--azul-egm)" : "var(--gris-borde)"}`,
-                                      background: sel ? "var(--azul-egm-light)" : "var(--blanco)",
-                                      color: sel ? "var(--azul-egm)" : "var(--texto-muted)",
+                                      border: `1.5px solid ${sel ? "#1b3f7e" : "#e5e7eb"}`,
+                                      background: sel ? "#eef2ff" : "#fff",
+                                      color: sel ? "#1b3f7e" : "#9ca3af",
                                     }}>
-                                    {sel && <Check className="w-3 h-3 shrink-0" />}{a.nombre} {a.apellidos || ""}
+                                    {sel && <Check className="w-3 h-3" />}{a.nombre} {a.apellidos || ""}
                                   </button>
                                 );
                               })}
@@ -813,10 +866,12 @@ export default function CrearModuloPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
+
+                    {/* Toggle activo */}
+                    <div className="flex items-center justify-between px-5 py-3.5 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>Módulo activo</p>
-                        <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>
+                        <p className="text-sm font-semibold" style={{ color: "#111827" }}>Módulo activo</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
                           {activo ? "Visible para los empleados" : "Oculto para los empleados"}
                         </p>
                       </div>
@@ -827,191 +882,205 @@ export default function CrearModuloPage() {
                     preview={portadaPreview}
                     onFile={(f) => { setPortadaFile(f); setPortadaPreview(URL.createObjectURL(f)); }}
                     onRemove={() => { setPortadaFile(null); setPortadaPreview(""); }}
+                    accent="#1b3f7e" accentLight="#eef2ff"
                   />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* ══ PANEL PLANTILLA BIENVENIDA (solo Onboarding) ══ */}
-          {categoria === "ONBOARDING" && (
-            <BienvenidaTemplatePanel
-              nombreEmpresa={usuario?.nombreEmpresa || ""}
-              newId={newId}
-              onAplicar={(nuevasPaginas) => {
-                setPaginas(nuevasPaginas);
-                setPaginaActivaId(nuevasPaginas[0]?.id ?? null);
-              }}
-            />
-          )}
-
-          {/* ══ PANEL IA UNIFICADO ══ */}
-          <div className="rounded-2xl overflow-hidden mb-6 fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <button type="button" onClick={() => setAiPanelOpen(!aiPanelOpen)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: aiPanelOpen ? "1px solid #ddd6fe" : "none" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}><Sparkles className="w-4 h-4" /></div>
-                <div className="text-left">
-                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Asistente IA</p>
-                  <p className="text-xs" style={{ color: "#7c3aed" }}>Todas las herramientas de inteligencia artificial</p>
-                </div>
-              </div>
-              <div className="transition-transform" style={{ transform: aiPanelOpen ? "rotate(0)" : "rotate(-90deg)" }}>
-                <ChevronDown style={{ color: "#7c3aed" }} />
-              </div>
-            </button>
-
-            {aiPanelOpen && (
-              <div className="px-6 py-5 fade-up">
-                {/* Crear módulo completo */}
-                <button type="button" onClick={() => setMostrarIA(true)}
-                  className="w-full flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all mb-6"
-                  style={{ border: "1.5px solid #ddd6fe", background: "linear-gradient(135deg, #f5f3ff, #ede9fe)" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
+            {/* ══ COLUMNA DERECHA (1/3): ASISTENTE IA ══ */}
+            {!editId && (
+              <div className="rounded-2xl overflow-hidden card-hover fade-up"
+                style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
+                <div className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #faf5ff, #f3e8ff)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.2)" }}>
                     <Sparkles className="w-5 h-5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Crear módulo completo con IA</p>
-                    <p className="text-xs" style={{ color: "#7c3aed" }}>Describe el módulo y la IA lo generará automáticamente</p>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Asistente IA</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#8b5cf6" }}>Crea contenido automáticamente</p>
                   </div>
-                </button>
-
-                {/* Generar contenido */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Generar contenido</span>
-                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
                 </div>
+                <div className="px-5 py-5">
+                  {/* Botón crear módulo completo */}
+                  <button type="button" onClick={() => setMostrarIA(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] mb-5"
+                    style={{ border: "1.5px solid #ddd6fe", background: "linear-gradient(135deg, #faf5ff, #f3e8ff)", boxShadow: "0 2px 8px rgba(124,58,237,0.08)" }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }}>
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold" style={{ color: "#6d28d9" }}>Módulo completo</p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "#8b5cf6" }}>Describe y la IA lo genera</p>
+                    </div>
+                  </button>
 
-                <div className="mb-5">
-                  <PdfUpload
-                    file={pdfFile}
-                    onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
-                    onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
-                  />
-                </div>
-
-                {nombre.trim() || pdfFile ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
-                    {[
-                      { key: "descripcion" as AiTipo, label: "Descripción", icon: "📝", desc: "Corta y profesional" },
-                      { key: "test" as AiTipo, label: "Test", icon: "✅", desc: "5 preguntas" },
-                      { key: "podcast" as AiTipo, label: "Podcast", icon: "🎙️", desc: "5-7 minutos" },
-                      { key: "video" as AiTipo, label: "Vídeo", icon: "🎬", desc: "Slides educativos" },
-                      { key: "documento" as AiTipo, label: "Documento", icon: "📑", desc: "Completo" },
-                    ].map((opt) => {
-                      const sel = aiSeleccionadas[opt.key];
-                      return (
-                        <button key={opt.key} type="button"
-                          onClick={() => setAiSeleccionadas((p) => ({ ...p, [opt.key]: !p[opt.key] }))}
-                          className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-center transition-all ${sel ? "ai-pop" : ""}`}
-                          style={{
-                            border: `1.5px solid ${sel ? "#7c3aed" : "var(--gris-borde)"}`,
-                            background: sel ? "#f5f3ff" : "var(--gris-pagina)",
-                            color: sel ? "#5b21b6" : "var(--texto-primario)",
-                          }}>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-lg">{opt.icon}</span>
-                            {sel && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "#7c3aed" }} />}
-                          </div>
-                          <span className="text-xs font-semibold">{opt.label}</span>
-                          <span className="text-[10px]" style={{ color: sel ? "#7c3aed" : "var(--texto-muted)" }}>{opt.desc}</span>
-                        </button>
-                      );
-                    })}
+                  {/* Separador */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9ca3af" }}>Contenido</span>
+                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
                   </div>
-                ) : null}
 
-                {/* Presentación */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>Presentación</span>
-                  <div className="flex-1" style={{ borderTop: "1px solid var(--gris-borde)" }} />
-                </div>
-
-                <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
-                  style={{ border: `1.5px solid ${presentacionPanelOpen ? "#ddd6fe" : "var(--gris-borde)"}`, background: presentacionPanelOpen ? "#f5f3ff" : "var(--gris-pagina)" }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#7c3aed", color: "#fff" }}>
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
-                      {presentacionGuardada ? `Presentación lista — ${presentacionGuardada.slides.length} slides` : "Presentación con IA"}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: "var(--texto-muted)" }}>
-                      {presentacionGuardada ? "Generada desde PDF" : "Genera slides automáticamente desde un PDF"}
-                    </p>
-                  </div>
-                </button>
-
-                {presentacionPanelOpen && (
-                  <div className="mt-3 px-4 py-4 rounded-xl" style={{ background: "var(--gris-pagina)", border: "1px solid var(--gris-borde)" }}>
-                    <PresentationCreator
-                      moduleTitle={nombre}
-                      onSave={(slides, themeId) => {
-                        setPresentacionGuardada({ slides, themeId });
-                        setPresentacionPanelOpen(false);
-                      }}
+                  <div className="mb-4">
+                    <PdfUpload
+                      file={pdfFile}
+                      onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
+                      onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
                     />
                   </div>
-                )}
 
-                {aiError && (
-                  <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-                    <Sparkles size={16} strokeWidth={2} className="shrink-0" />
-                    <span className="flex-1">{aiError}</span>
-                    <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
+                  {nombre.trim() || pdfFile ? (
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {[
+                        { key: "descripcion" as AiTipo, label: "Descripción", icon: "📝", desc: "Corta y profesional" },
+                        { key: "test" as AiTipo, label: "Test", icon: "✅", desc: "5 preguntas" },
+                        { key: "podcast" as AiTipo, label: "Podcast", icon: "🎙️", desc: "5-7 minutos" },
+                        { key: "video" as AiTipo, label: "Vídeo", icon: "🎬", desc: "Slides" },
+                        { key: "documento" as AiTipo, label: "Documento", icon: "📑", desc: "Completo" },
+                      ].map((opt) => {
+                        const sel = aiSeleccionadas[opt.key];
+                        return (
+                          <button key={opt.key} type="button"
+                            onClick={() => setAiSeleccionadas((p) => ({ ...p, [opt.key]: !p[opt.key] }))}
+                            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-center transition-all ${sel ? "ai-pop" : ""}`}
+                            style={{
+                              border: `1.5px solid ${sel ? "#7c3aed" : "#e5e7eb"}`,
+                              background: sel ? "#f5f3ff" : "#f9fafb",
+                              color: sel ? "#5b21b6" : "#374151",
+                            }}>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-lg">{opt.icon}</span>
+                              {sel && <Check className="w-3 h-3 shrink-0" style={{ color: "#7c3aed" }} />}
+                            </div>
+                            <span className="text-xs font-semibold">{opt.label}</span>
+                            <span className="text-[10px]" style={{ color: sel ? "#7c3aed" : "#9ca3af" }}>{opt.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {/* Presentación */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9ca3af" }}>Presentación</span>
+                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
                   </div>
-                )}
+
+                  <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                    style={{ border: `1.5px solid ${presentacionPanelOpen ? "#ddd6fe" : "#e5e7eb"}`, background: presentacionPanelOpen ? "#f5f3ff" : "#f9fafb" }}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: gradVioleta, color: "#fff" }}>
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: "#111827" }}>
+                        {presentacionGuardada ? `Presentación lista — ${presentacionGuardada.slides.length} slides` : "Presentación con IA"}
+                      </p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "#9ca3af" }}>
+                        {presentacionGuardada ? "Generada desde PDF" : "Genera slides desde un PDF"}
+                      </p>
+                    </div>
+                  </button>
+
+                  {presentacionPanelOpen && (
+                    <div className="mt-3 p-4 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                      <PresentationCreator
+                        moduleTitle={nombre}
+                        onSave={(slides, themeId) => {
+                          setPresentacionGuardada({ slides, themeId });
+                          setPresentacionPanelOpen(false);
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {aiError && (
+                    <div className="mt-4 text-xs px-3 py-3 rounded-xl flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                      <Sparkles size={16} strokeWidth={2} className="shrink-0" />
+                      <span className="flex-1">{aiError}</span>
+                      <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          {/* ══ EDITOR DE PÁGINAS ══ */}
-          <div className="rounded-2xl overflow-hidden fade-up" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", minHeight: "500px" }}>
-            <div className="flex flex-col md:flex-row" style={{ height: "calc(100vh - 340px)", minHeight: "500px" }}>
+          {/* ══ PLANTILLA BIENVENIDA (solo Onboarding) ══ */}
+          {categoria === "ONBOARDING" && (
+            <div className="fade-up">
+              <BienvenidaTemplatePanel
+                nombreEmpresa={usuario?.nombreEmpresa || ""}
+                newId={newId}
+                onAplicar={(nuevasPaginas) => {
+                  setPaginas(nuevasPaginas);
+                  setPaginaActivaId(nuevasPaginas[0]?.id ?? null);
+                }}
+              />
+            </div>
+          )}
 
-              {/* Sidebar - Lista de páginas - Diseño limpio tipo menú */}
-              <div className="flex flex-col w-full md:w-64 lg:w-64 shrink-0 order-2 md:order-0"
-                style={{ borderTop: "1px solid var(--gris-borde)", borderRight: "0px", background: "var(--gris-pagina)" }}>
+          {/* ══ CARD 3: EDITOR DE PÁGINAS ══ */}
+          <div className="rounded-2xl overflow-hidden fade-up"
+            style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)", minHeight: "500px" }}>
+            <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #e5e7eb", background: "#fafbfc" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", color: "#1e40af", boxShadow: "0 2px 8px rgba(30,64,175,0.12)" }}>
+                <SquarePen className="w-4.5 h-4.5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold" style={{ color: "#111827" }}>Editor de páginas</p>
+                <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>Crea y organiza el contenido de tu módulo</p>
+              </div>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: "#f0f4ff", border: "1px solid #dbeafe", color: "#1b3f7e" }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                {paginas.length} página{paginas.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="flex flex-col md:flex-row" style={{ height: "calc(100vh - 380px)", minHeight: "520px" }}>
 
-                {/* Lista de páginas - sin scroll */}
-                <div className="flex-1 py-2">
+              {/* Sidebar - Lista de páginas */}
+              <div className="flex flex-col w-full md:w-56 lg:w-60 shrink-0 order-2 md:order-0"
+                style={{ borderTop: "1px solid #e5e7eb", borderRight: "0px", background: "#f8f9fa" }}>
+
+                {/* Lista de páginas */}
+                <div className="flex-1 py-2 overflow-y-auto">
                   {paginas.map((pagina, idx) => {
                     const activa = pagina.id === paginaActivaId;
                     const tipoCfg = getTipoConfig(pagina.tipo);
                     return (
                       <div key={pagina.id}
-                        className={`group relative mx-2 mb-1 rounded-lg transition-all ${activa ? "" : "hover:bg-white/50"}`}
-                        style={activa ? { background: "var(--blanco)", border: "1.5px solid var(--azul-egm)", boxShadow: "0 2px 8px rgba(27,63,126,0.1)" } : { border: "1.5px solid transparent" }}>
+                        className={`group relative mx-2 mb-1 rounded-xl transition-all ${activa ? "" : "hover:bg-white/60"}`}
+                        style={activa ? { background: "#fff", boxShadow: "0 2px 8px rgba(27,63,126,0.1)", border: "1.5px solid #1b3f7e" } : { border: "1.5px solid transparent" }}>
                         <div className="flex items-center gap-2 px-3 py-2.5">
                           <div className="flex-1 flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => setPaginaActivaId(pagina.id)}>
-                            <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: tipoCfg.bg, color: tipoCfg.accent }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tipoCfg.bg, color: tipoCfg.accent }}>
                               {pagina.tipo === "texto" ? <TextInitial /> : pagina.tipo === "archivo" ? <FileUp /> : <SquareCheckBig />}
                             </div>
-                            <p className="text-xs font-semibold truncate" style={{ color: activa ? "var(--texto-primario)" : "var(--texto-secundario)" }}>
-                              {idx + 1}. {pagina.titulo}
-                            </p>
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold truncate" style={{ color: activa ? "#111827" : "#6b7280" }}>
+                                {idx + 1}. {pagina.titulo}
+                              </p>
+                            </div>
                           </div>
                           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             {idx > 0 && (
                               <button type="button" onClick={() => moverPagina(pagina.id, "up")}
-                                className="w-6 h-6 rounded flex items-center justify-center hover:opacity-80"
-                                style={{ color: "var(--texto-muted)" }} title="Mover arriba">
+                                className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                style={{ color: "#9ca3af" }} title="Mover arriba">
                                 <ArrowUp className="w-3.5 h-3.5" />
                               </button>
                             )}
                             {idx < paginas.length - 1 && (
                               <button type="button" onClick={() => moverPagina(pagina.id, "down")}
-                                className="w-6 h-6 rounded flex items-center justify-center hover:opacity-80"
-                                style={{ color: "var(--texto-muted)" }} title="Mover abajo">
+                                className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                style={{ color: "#9ca3af" }} title="Mover abajo">
                                 <ArrowDown className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button type="button" onClick={() => eliminarPagina(pagina.id)}
-                              className="w-6 h-6 rounded flex items-center justify-center hover:opacity-80"
+                              className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
                               style={{ color: "#dc2626" }} title="Eliminar página">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1021,13 +1090,13 @@ export default function CrearModuloPage() {
                     );
                   })}
 
-                  {/* Botón añadir página abajo del sidebar */}
-                  <div className="px-3 py-3" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                  {/* Botón añadir página */}
+                  <div className="px-3 pt-2 pb-3">
                     <button type="button" onClick={() => setMostrarSelectorTipo(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                      style={{ border: "1.5px dashed var(--gris-borde)", color: "var(--texto-muted)", background: "transparent" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.color = "var(--azul-egm)"; e.currentTarget.style.background = "var(--azul-egm-light)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-muted)"; e.currentTarget.style.background = "transparent"; }}>
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={{ border: "1.5px dashed #d1d5db", color: "#9ca3af", background: "transparent" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#1b3f7e"; e.currentTarget.style.color = "#1b3f7e"; e.currentTarget.style.background = "#eef2ff"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.color = "#9ca3af"; e.currentTarget.style.background = "transparent"; }}>
                       <Plus /> Añadir página
                     </button>
                   </div>
@@ -1039,18 +1108,18 @@ export default function CrearModuloPage() {
                 {paginaActiva ? (
                   <>
                     {/* Header del editor */}
-                    <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
+                    <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #e5e7eb", background: "#fafbfc" }}>
                       {(() => {
                         const cfg = getTipoConfig(paginaActiva.tipo);
                         return (
                           <>
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: cfg.bg, color: cfg.accent }}>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: cfg.bg, color: cfg.accent }}>
                               {cfg.icon}
                             </div>
                             <input type="text" value={paginaActiva.titulo}
                               onChange={(e) => actualizarPagina(paginaActiva.id, "titulo", e.target.value)}
                               className="flex-1 text-base font-bold bg-transparent outline-none"
-                              style={{ color: "var(--texto-primario)" }}
+                              style={{ color: "#111827" }}
                               placeholder="Título de la página" />
                             <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: cfg.bg, color: cfg.accent }}>
                               {cfg.label}
@@ -1061,38 +1130,41 @@ export default function CrearModuloPage() {
                     </div>
 
                     {/* Contenido según tipo */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                      {/* TEXTO */}
                       {paginaActiva.tipo === "texto" && (
-                        <div className="px-4 md:px-6 py-4 flex flex-col gap-3">
+                        <div className="flex flex-col gap-3 h-full">
                           <textarea
                             value={paginaActiva.contenido}
                             onChange={(e) => actualizarPagina(paginaActiva.id, "contenido", e.target.value)}
-                            placeholder="Escribe el contenido de esta página aquí...\n\nPuedes incluir texto, instrucciones, explicaciones o cualquier información que el empleado necesite leer.\n\nUsa ## para títulos y - para listas."
-                            className="w-full h-full text-sm leading-relaxed outline-none resize-none"
-                            style={{ background: "transparent", color: "var(--texto-secundario)", minHeight: "350px" }}
+                            placeholder="Escribe el contenido de esta página aquí..."
+                            className="w-full text-sm leading-relaxed outline-none resize-none"
+                            style={{ background: "transparent", color: "#6b7280", minHeight: "320px" }}
                           />
-                          <div className="text-xs" style={{ color: "var(--texto-muted)" }}>
+                          <div className="text-xs text-right" style={{ color: "#9ca3af" }}>
                             {paginaActiva.contenido.length} caracteres · {paginaActiva.contenido.split(/\s+/).filter(Boolean).length} palabras
                           </div>
                         </div>
                       )}
 
+                      {/* ARCHIVO */}
                       {paginaActiva.tipo === "archivo" && (
-                        <div className="px-6 py-6 flex flex-col gap-5">
+                        <div className="flex flex-col gap-5">
                           <div>
-                            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
-                              Descripción / Instrucciones (opcional)
+                            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#9ca3af" }}>
+                              Descripción / Instrucciones <span className="font-normal lowercase" style={{ color: "#9ca3af" }}>(opcional)</span>
                             </label>
                             <textarea value={paginaActiva.contenido}
                               onChange={(e) => actualizarPagina(paginaActiva.id, "contenido", e.target.value)}
                               placeholder="Añade contexto o instrucciones para el archivo..."
                               rows={3}
-                              className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
-                              style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
-                              onFocus={onF} onBlur={onB} />
+                              className="w-full text-sm px-4 py-3 rounded-xl outline-none transition-all resize-none"
+                              style={{ border: "1.5px solid #e5e7eb", color: "#111827", background: "#fff" }}
+                              onFocus={(e) => { e.target.style.borderColor = "#1b3f7e"; e.target.style.boxShadow = "0 0 0 3px #eef2ff"; }}
+                              onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }} />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                            <label className="block text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#9ca3af" }}>
                               Archivo <span style={{ color: "#dc2626" }}>*</span>
                             </label>
                             <input ref={inputArchivoRef} type="file" accept=".pdf,.docx,.txt,.ppt,.pptx,.mp4,.mp3,.wav,.mov" className="hidden"
@@ -1105,97 +1177,99 @@ export default function CrearModuloPage() {
                             {paginaActiva.archivoNombre || paginaActiva.archivoUrl ? (
                               <div className="flex items-center gap-3 rounded-xl px-5 py-4" style={{ background: "#fffbeb", border: "1.5px solid #fbbf24" }}>
                                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#fbbf24", color: "#fff" }}>
-                                  <File />
+                                  <File className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>
+                                  <p className="text-sm font-semibold truncate" style={{ color: "#111827" }}>
                                     {paginaActiva.archivoNombre || paginaActiva.archivoUrl}
                                   </p>
                                   {paginaActiva.archivoFile && (
-                                    <p className="text-xs" style={{ color: "var(--texto-muted)" }}>{formatBytes(paginaActiva.archivoFile.size)}</p>
+                                    <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>{formatBytes(paginaActiva.archivoFile.size)}</p>
                                   )}
                                 </div>
                                 <button type="button" onClick={() => {
                                   setPaginas((p) => p.map((pg) => pg.id === paginaActiva.id ? { ...pg, archivoFile: null, archivoNombre: null, archivoUrl: null } : pg));
-                                }} className="p-2 rounded-lg transition-colors" style={{ color: "var(--texto-muted)" }}
+                                }} className="p-2 rounded-lg transition-colors" style={{ color: "#9ca3af" }}
                                   onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}>
-                                  <Trash2 />
+                                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}>
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             ) : (
                               <div onClick={() => inputArchivoRef.current?.click()}
-                                className="rounded-xl flex flex-col items-center gap-3 cursor-pointer transition-all"
-                                style={{ border: "2px dashed var(--gris-borde)", background: "var(--gris-pagina)", minHeight: "140px", justifyContent: "center" }}>
-                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                                  <Upload />
+                                className="rounded-xl flex flex-col items-center gap-3 cursor-pointer transition-all hover:border-blue-400"
+                                style={{ border: "2px dashed #d1d5db", background: "#f9fafb", minHeight: "140px", justifyContent: "center" }}>
+                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#f3f4f6", color: "#9ca3af" }}>
+                                  <Upload className="w-5 h-5" />
                                 </div>
-                                <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: "#d97706", textDecoration: "underline" }}>selecciona</span></p>
-                                <p className="text-xs" style={{ color: "var(--texto-muted)" }}>PDF, DOCX, PPT, MP4, MP3 — máx. 10 MB</p>
+                                <p className="text-sm font-semibold" style={{ color: "#6b7280" }}>Arrastra o <span style={{ color: "#d97706", textDecoration: "underline" }}>selecciona</span></p>
+                                <p className="text-xs" style={{ color: "#9ca3af" }}>PDF, DOCX, PPT, MP4, MP3 — máx. 10 MB</p>
                               </div>
                             )}
                           </div>
                         </div>
                       )}
 
+                      {/* TEST */}
                       {paginaActiva.tipo === "test" && (
-                        <div className="px-6 py-6 flex flex-col gap-5">
+                        <div className="flex flex-col gap-5">
                           <div>
-                            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
-                              Descripción del test (opcional)
+                            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "#9ca3af" }}>
+                              Descripción del test <span className="font-normal lowercase" style={{ color: "#9ca3af" }}>(opcional)</span>
                             </label>
                             <textarea value={paginaActiva.contenido}
                               onChange={(e) => actualizarPagina(paginaActiva.id, "contenido", e.target.value)}
                               placeholder="Ej: Responde las siguientes preguntas para evaluar tus conocimientos..."
                               rows={2}
-                              className="w-full text-sm px-4 py-3 rounded-lg outline-none transition-all resize-none"
-                              style={{ border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", background: "var(--blanco)" }}
-                              onFocus={onF} onBlur={onB} />
+                              className="w-full text-sm px-4 py-3 rounded-xl outline-none transition-all resize-none"
+                              style={{ border: "1.5px solid #e5e7eb", color: "#111827", background: "#fff" }}
+                              onFocus={(e) => { e.target.style.borderColor = "#1b3f7e"; e.target.style.boxShadow = "0 0 0 3px #eef2ff"; }}
+                              onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }} />
                           </div>
                           {paginaActiva.preguntas.map((q, qi) => (
-                            <div key={qi} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
-                              <div className="px-4 py-3 flex items-center gap-3" style={{ background: "var(--gris-pagina)", borderBottom: "1px solid var(--gris-borde)" }}>
+                            <div key={qi} className="rounded-xl overflow-hidden" style={{ border: "1px solid #e5e7eb" }}>
+                              <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
                                 <span className="text-xs font-bold px-2 py-0.5 rounded-md shrink-0" style={{ background: "#dcfce7", color: "#15803d" }}>P{qi + 1}</span>
                                 <input type="text" value={q.texto}
                                   onChange={(e) => actualizarPregunta(paginaActiva.id, qi, "texto", e.target.value)}
                                   placeholder="Escribe la pregunta..."
                                   className="flex-1 text-sm bg-transparent outline-none font-medium"
-                                  style={{ color: "var(--texto-primario)" }} />
+                                  style={{ color: "#111827" }} />
                                 {paginaActiva.preguntas.length > 1 && (
                                   <button type="button" onClick={() => eliminarPregunta(paginaActiva.id, qi)}
-                                    className="p-1 rounded-lg transition-colors shrink-0" style={{ color: "var(--texto-muted)" }}
+                                    className="p-1 rounded-lg transition-colors shrink-0" style={{ color: "#9ca3af" }}
                                     onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--texto-muted)"; }}>
-                                    <Trash2 />
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9ca3af"; }}>
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
                                 )}
                               </div>
-                              <div className="p-4 grid grid-cols-2 gap-2">
+                              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {q.opciones.map((op, oi) => (
                                   <div key={oi} className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all"
-                                    style={{ border: `1.5px solid ${q.correcta === oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta === oi ? "#f0fdf4" : "var(--gris-pagina)" }}>
+                                    style={{ border: `1.5px solid ${q.correcta === oi ? "#16a34a" : "#e5e7eb"}`, background: q.correcta === oi ? "#f0fdf4" : "#f9fafb" }}>
                                     <button type="button" onClick={() => actualizarPregunta(paginaActiva.id, qi, "correcta", oi)}
                                       className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition-colors"
-                                      style={{ border: `2px solid ${q.correcta === oi ? "#16a34a" : "var(--gris-borde)"}`, background: q.correcta === oi ? "#16a34a" : "transparent", color: "#fff" }}>
-                                      {q.correcta === oi && <Check />}
+                                      style={{ border: `2px solid ${q.correcta === oi ? "#16a34a" : "#d1d5db"}`, background: q.correcta === oi ? "#16a34a" : "transparent", color: "#fff" }}>
+                                      {q.correcta === oi && <Check className="w-3 h-3" />}
                                     </button>
                                     <input type="text" value={op}
                                       onChange={(e) => actualizarPregunta(paginaActiva.id, qi, "opciones", q.opciones.map((o, j) => j === oi ? e.target.value : o))}
                                       placeholder={`Opción ${oi + 1}`}
                                       className="flex-1 text-xs bg-transparent outline-none"
-                                      style={{ color: "var(--texto-primario)" }} />
+                                      style={{ color: "#111827" }} />
                                   </div>
                                 ))}
                               </div>
-                              <p className="px-4 pb-3 text-[11px]" style={{ color: "var(--texto-muted)" }}>Haz clic en el círculo para marcar la respuesta correcta</p>
+                              <p className="px-4 pb-3 text-[11px]" style={{ color: "#9ca3af" }}>Haz clic en el círculo para marcar la respuesta correcta</p>
                             </div>
                           ))}
                           <button type="button" onClick={() => agregarPregunta(paginaActiva.id)}
                             className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
-                            style={{ border: "1.5px dashed var(--gris-borde)", color: "var(--texto-muted)", background: "var(--gris-pagina)" }}
+                            style={{ border: "1.5px dashed #d1d5db", color: "#9ca3af", background: "#f9fafb" }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#15803d"; e.currentTarget.style.color = "#15803d"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-muted)"; }}>
-                            <Plus /> Añadir pregunta
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.color = "#9ca3af"; }}>
+                            <Plus className="w-4 h-4" /> Añadir pregunta
                           </button>
                         </div>
                       )}
@@ -1203,22 +1277,22 @@ export default function CrearModuloPage() {
                   </>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-8">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2" style={{ background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-                      <TextInitial />
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1" style={{ background: "#f3f4f6", color: "#9ca3af" }}>
+                      <TextInitial className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>
+                    <p className="text-sm font-semibold" style={{ color: "#6b7280" }}>
                       {paginas.length === 0 ? "Añade la primera página" : "Selecciona una página"}
                     </p>
-                    <p className="text-xs max-w-xs" style={{ color: "var(--texto-muted)" }}>
+                    <p className="text-xs max-w-xs" style={{ color: "#9ca3af" }}>
                       {paginas.length === 0
                         ? "Haz clic en 'Añadir página' para empezar a crear el contenido de tu módulo."
                         : "Elige una página de la lista izquierda para editarla."}
                     </p>
                     {paginas.length === 0 && (
                       <button type="button" onClick={() => setMostrarSelectorTipo(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all"
-                        style={{ background: "var(--azul-egm)", color: "#fff", boxShadow: "0 4px 14px rgba(27,63,126,0.18)" }}>
-                        <Plus /> Añadir página
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
+                        style={{ background: "#1b3f7e", color: "#fff", boxShadow: "0 4px 14px rgba(27,63,126,0.18)" }}>
+                        <Plus className="w-4 h-4" /> Añadir página
                       </button>
                     )}
                   </div>
@@ -1228,76 +1302,82 @@ export default function CrearModuloPage() {
           </div>
 
           {/* ══ FOOTER ACCIONES ══ */}
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 mt-4 md:mt-6">
-            <button type="button" onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors text-center"
-              style={{ color: "var(--texto-muted)" }}>
-              Cancelar
-            </button>
-            <button type="button" onClick={guardarModulo} disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all"
-              style={{
-                background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--gris-superficie)" : "var(--verde-oliva)",
-                color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "var(--texto-muted)" : "#fff",
-                boxShadow: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "none" : "0 4px 14px rgba(45,125,78,0.2)",
-                cursor: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "not-allowed" : "pointer",
-              }}>
-              {guardando ? (
-                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</>
-              ) : (
-                <><Check />{editId ? "Actualizar módulo" : "Guardar módulo"}</>
-              )}
-            </button>
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 mt-6 pt-6" style={{ borderTop: "1px solid #e5e7eb" }}>
+            <div className="text-xs" style={{ color: "#9ca3af" }}>
+              {paginas.length > 0 && `${paginas.length} página${paginas.length !== 1 ? "s" : ""} creada${paginas.length !== 1 ? "s" : ""}`}
+              {nombre && ` · "${nombre}"`}
+            </div>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => router.push("/dashboard/admin?tab=formaciones")}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
+                style={{ color: "#6b7280", border: "1px solid #e5e7eb" }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={guardarModulo}
+                disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+                style={{
+                  background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#f3f4f6" : "#4a7c59",
+                  color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#9ca3af" : "#fff",
+                  boxShadow: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "none" : "0 4px 14px rgba(74,124,89,0.25)",
+                  cursor: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "not-allowed" : "pointer",
+                }}>
+                {guardando ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</>
+                ) : (
+                  <><Check className="w-4 h-4" />{editId ? "Actualizar módulo" : "Guardar módulo"}</>
+                )}
+              </button>
+            </div>
           </div>
 
           {errorMsg && (
-            <div className="mt-4 text-xs px-4 py-3 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-              <AlertTriangle size={16} strokeWidth={2} className="shrink-0" />
-              {errorMsg}
+            <div className="text-sm px-5 py-4 rounded-xl flex items-center gap-3 fade-up" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", boxShadow: "0 2px 8px rgba(220,38,38,0.08)" }}>
+              <AlertTriangle size={18} strokeWidth={2} className="shrink-0" />
+              <span className="flex-1">{errorMsg}</span>
+              <button type="button" onClick={() => setErrorMsg("")} className="shrink-0 hover:opacity-70">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
           {/* ══ MODAL IA ══ */}
           {mostrarIA && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+              style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
               onClick={() => { if (!generandoIA) setMostrarIA(false); }}>
-              <div className="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden fade-up"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+              <div className="w-full max-w-lg rounded-2xl overflow-hidden fade-up"
+                style={{ background: "#fff", boxShadow: "0 25px 60px rgba(0,0,0,0.2)" }}
                 onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4"
-                  style={{ borderBottom: "1px solid var(--gris-borde)", background: "linear-gradient(135deg,#f5f3ff,#ede9fe)" }}>
+                  style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg,#faf5ff,#f3e8ff)" }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
-                      <Sparkles size={16} />
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }}>
+                      <Sparkles size={18} />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Crear módulo con IA</h2>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>Describe el módulo que quieres generar</p>
+                      <h2 className="text-sm font-bold" style={{ color: "#111827" }}>Crear módulo con IA</h2>
+                      <p className="text-xs mt-0.5" style={{ color: "#8b5cf6" }}>Describe el módulo que quieres generar</p>
                     </div>
                   </div>
                   <button type="button" onClick={() => setMostrarIA(false)} disabled={generandoIA}
-                    className="w-7 h-7 flex items-center justify-center rounded-full transition-colors"
-                    style={{ color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:bg-black/5 active:bg-black/10"
+                    style={{ color: "#9ca3af" }}>
                     <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
-                {/* Body */}
                 <div className="px-6 py-5">
-                  <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--texto-muted)" }}>
+                  <label className="block text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#6b7280" }}>
                     ¿Qué módulo necesitas?
                   </label>
                   <textarea value={promptIA} onChange={(e) => setPromptIA(e.target.value)}
                     placeholder="Ej: Un módulo sobre comunicación efectiva para equipos de ventas, con técnicas de negociación y un test final de 5 preguntas"
                     rows={5}
-                    className="w-full text-sm px-4 py-3 rounded-lg outline-none resize-none transition-all"
-                    style={{ border: `1.5px solid ${errorIA ? "#dc2626" : "var(--gris-borde)"}`, color: "var(--texto-primario)", background: "var(--blanco)" }}
-                    onFocus={(e) => { e.target.style.borderColor = "var(--azul-egm)"; e.target.style.boxShadow = "0 0 0 3px var(--azul-egm-light)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "var(--gris-borde)"; e.target.style.boxShadow = "none"; }} />
-                  <div className="mt-3 flex flex-wrap gap-2">
+                    className="w-full text-sm px-4 py-3 rounded-xl outline-none resize-none transition-all"
+                    style={{ border: `1.5px solid ${errorIA ? "#dc2626" : "#e5e7eb"}`, color: "#111827", background: "#fff" }}
+                    onFocus={(e) => { e.target.style.borderColor = "#1b3f7e"; e.target.style.boxShadow = "0 0 0 3px #eef2ff"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }} />
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {[
                       "Protocolo de seguridad en planta",
                       "Atención al cliente avanzada",
@@ -1306,25 +1386,24 @@ export default function CrearModuloPage() {
                     ].map((s) => (
                       <button key={s} type="button" onClick={() => setPromptIA(s)}
                         className="text-xs px-3 py-1.5 rounded-full transition-all"
-                        style={{ border: "1px solid var(--gris-borde)", background: "var(--gris-pagina)", color: "var(--texto-secundario)" }}
+                        style={{ border: "1px solid #e5e7eb", background: "#f9fafb", color: "#6b7280" }}
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; e.currentTarget.style.color = "#7c3aed"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.color = "var(--texto-secundario)"; }}>
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#6b7280"; }}>
                         {s}
                       </button>
                     ))}
                   </div>
                   {errorIA && (
-                    <div className="mt-3 text-xs px-3 py-2 rounded-lg flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
+                    <div className="mt-3 text-xs px-3 py-2 rounded-xl flex items-center gap-2" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
                       <AlertTriangle size={14} strokeWidth={2} className="shrink-0" />
                       {errorIA}
                     </div>
                   )}
                 </div>
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
+                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
                   <button type="button" onClick={() => setMostrarIA(false)} disabled={generandoIA}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    style={{ color: "var(--texto-muted)" }}>
+                    className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-200"
+                    style={{ color: "#6b7280" }}>
                     Cancelar
                   </button>
                   <IAButton
@@ -1343,10 +1422,10 @@ export default function CrearModuloPage() {
 
           {/* ══ ÉXITO ══ */}
           {guardado && (
-            <div className="mt-6 rounded-2xl p-7 flex items-center gap-6 flex-wrap fade-up"
-              style={{ background: "linear-gradient(135deg, var(--verde-oliva), var(--exito))", boxShadow: "0 4px 24px rgba(45,125,78,0.22)" }}>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.18)" }}>
-                <Check />
+            <div className="rounded-2xl p-8 flex items-center gap-6 flex-wrap fade-up"
+              style={{ background: "linear-gradient(135deg, #4a7c59, #2d7d4e)", boxShadow: "0 8px 32px rgba(45,125,78,0.3)" }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <Check className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-xl font-bold text-white mb-1">¡Módulo {editId ? "actualizado" : "creado"} correctamente!</h2>
@@ -1356,14 +1435,12 @@ export default function CrearModuloPage() {
               </div>
               <div className="flex gap-3 shrink-0">
                 <button onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                  style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.3)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.25)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}>
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-white/25 active:bg-white/30"
+                  style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.25)" }}>
                   Ver módulos
                 </button>
-                <button onClick={resetear} className="px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
-                  style={{ background: "#fff", color: "var(--exito)" }}>
+                <button onClick={resetear} className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: "#fff", color: "#2d7d4e" }}>
                   Crear otro
                 </button>
               </div>
@@ -1375,41 +1452,40 @@ export default function CrearModuloPage() {
       {/* ══ MODAL SELECTOR DE TIPO DE PÁGINA ══ */}
       {mostrarSelectorTipo && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
           onClick={() => setMostrarSelectorTipo(false)}>
-          <div className="w-full max-w-xs md:max-w-xs rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden fade-up md:mt-0"
-            style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
+          <div className="w-full max-w-xs rounded-t-2xl md:rounded-2xl overflow-hidden fade-up"
+            style={{ background: "#fff", boxShadow: "0 25px 60px rgba(0,0,0,0.2)" }}
             onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--gris-pagina)" }}>
-              <div>
-                <h2 className="text-sm font-bold" style={{ color: "var(--texto-primario)" }}>Añadir página</h2>
+            <div className="flex items-center justify-between px-5 py-3.5"
+              style={{ borderBottom: "1px solid #e5e7eb", background: "#fafbfc" }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#eef2ff", color: "#1b3f7e" }}>
+                  <Plus className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-sm font-bold" style={{ color: "#111827" }}>Añadir página</h2>
               </div>
               <button type="button" onClick={() => setMostrarSelectorTipo(false)}
-                className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
-                style={{ color: "var(--texto-muted)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gris-borde)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                <X size={14} />
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-black/5 active:bg-black/10"
+                style={{ color: "#9ca3af" }}>
+                <X size={15} />
               </button>
             </div>
-            {/* Opciones */}
             <div className="p-3 flex flex-col gap-1.5">
               {TIPOS_PAGINA.map((tipo) => (
                 <button key={tipo.key} type="button" onClick={() => nuevaPagina(tipo.key)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all w-full"
-                  style={{ border: `1.5px solid var(--gris-borde)`, background: "var(--gris-pagina)" }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all w-full"
+                  style={{ border: "1.5px solid #e5e7eb", background: "#f9fafb" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = tipo.accent; e.currentTarget.style.background = tipo.bg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--gris-pagina)"; }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tipo.bg, color: tipo.accent }}>
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.background = "#f9fafb"; }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tipo.bg, color: tipo.accent }}>
                     {tipo.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate" style={{ color: "var(--texto-primario)" }}>{tipo.label}</p>
-                    <p className="text-[11px] truncate" style={{ color: "var(--texto-muted)" }}>{tipo.desc}</p>
+                    <p className="text-xs font-bold truncate" style={{ color: "#111827" }}>{tipo.label}</p>
+                    <p className="text-[11px] truncate" style={{ color: "#9ca3af" }}>{tipo.desc}</p>
                   </div>
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid var(--gris-borde)" }}>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ border: "2px solid #d1d5db" }}>
                     <Check size={10} strokeWidth={2.5} style={{ color: "transparent" }} />
                   </div>
                 </button>

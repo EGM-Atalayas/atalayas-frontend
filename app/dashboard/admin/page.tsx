@@ -118,10 +118,11 @@ function AdminContent() {
   const [showKpis, setShowKpis] = useState(true);
   const [showMovimiento, setShowMovimiento] = useState(true);
   const [showEstadoFormacion, setShowEstadoFormacion] = useState(true);
+  const [showProgresoModulos, setShowProgresoModulos] = useState(true);
 
-  const hayPersonalizacion = !showKpis || !showMovimiento || !showEstadoFormacion;
+  const hayPersonalizacion = !showKpis || !showMovimiento || !showEstadoFormacion || !showProgresoModulos;
   const resetVistaEstadisticas = () => {
-    setShowKpis(true); setShowMovimiento(true); setShowEstadoFormacion(true);
+    setShowKpis(true); setShowMovimiento(true); setShowEstadoFormacion(true); setShowProgresoModulos(true);
   };
   const handleExportEstadisticas = () => {
     if (!statsEmpresa) return;
@@ -155,6 +156,11 @@ function AdminContent() {
           ["En progreso", statsEmpresa.empleadosEnProgreso],
           ["Completada", statsEmpresa.empleadosCompletados],
         ],
+      },
+      {
+        id: "detalle_modulos", title: "Progreso por módulo",
+        headers: ["Módulo", "Completados", "En progreso", "Pendientes", "Total"],
+        rows: statsEmpresa.detalleModulos.map(m => [m.nombre, m.completados, m.enProgreso, m.pendientes, m.total]),
       },
     ];
     exportStats(exportFormat, {
@@ -421,6 +427,8 @@ function AdminContent() {
                 setShowMovimiento={setShowMovimiento}
                 showEstadoFormacion={showEstadoFormacion}
                 setShowEstadoFormacion={setShowEstadoFormacion}
+                showProgresoModulos={showProgresoModulos}
+                setShowProgresoModulos={setShowProgresoModulos}
                 hayPersonalizacion={hayPersonalizacion}
                 resetVistaEstadisticas={resetVistaEstadisticas}
                 showPersonalizar={showPersonalizar}

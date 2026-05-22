@@ -51,6 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       localStorage.removeItem("guest");
       localStorage.removeItem("accessToken");
+      // Limpiar progresos locales para que no se mezclen entre usuarios
+      Object.keys(localStorage).filter(k => k.startsWith("egm_")).forEach(k => localStorage.removeItem(k));
+      // Limpiar caché de React Query
+      import("@/components/providers/QueryProvider").then(m => m.queryClient?.clear());
       setUsuario(null);
       router.push("/login");
     }
