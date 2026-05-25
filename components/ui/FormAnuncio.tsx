@@ -9,7 +9,6 @@ import { IconButton } from "@/components/ui/IconButton";
 import Grainient from "@/components/ui/Grainient";
 
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const GRAD_BTN  = "linear-gradient(135deg, #2563eb 0%, #1b3f7e 100%)";
 const GRAD_EGM  = "linear-gradient(135deg, #1b3f7e 0%, #0d1b2e 100%)";
 const TAB_COLOR = "#0EA5E9"; // sky blue — mismo que el header del modal
 
@@ -27,21 +26,21 @@ const CATEGORIA_COLORS_LIGHT: Record<string, { bg: string; text: string; border:
 };
 
 const inputStyle: React.CSSProperties = {
-  border: "1px solid rgba(0,0,0,0.12)",
+  border: "1.5px solid rgba(0,0,0,0.12)",
   background: "#ffffff",
   color: "var(--texto-primario)",
   height: "44px",
   transition: "border-color 0.15s, box-shadow 0.15s",
 };
 const textareaStyle: React.CSSProperties = {
-  border: "1px solid rgba(0,0,0,0.12)",
+  border: "1.5px solid rgba(0,0,0,0.12)",
   background: "#ffffff",
   color: "var(--texto-primario)",
   transition: "border-color 0.15s, box-shadow 0.15s",
 };
 function onFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = "var(--azul-egm)";
-  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(22,50,105,0.10)";
+  e.currentTarget.style.borderColor = TAB_COLOR;
+  e.currentTarget.style.boxShadow = `0 0 0 3px ${TAB_COLOR}22`;
 }
 function onBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
@@ -97,31 +96,6 @@ function IconDoc() {
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
-  );
-}
-
-// ── SUBCOMPONENTES ────────────────────────────────────────────────────────────
-function FieldLabel({ label, required, right }: { label: string; required?: boolean; right?: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between mb-1.5" style={{ minHeight: 28 }}>
-      <label className="text-sm font-semibold" style={{ color: "var(--texto-label)" }}>
-        {label}
-        {required && (
-          <span className="relative inline-block ml-1 group" style={{ verticalAlign: "middle" }}>
-            <span style={{ color: "var(--error)", fontWeight: 700, cursor: "default" }}>*</span>
-            <span className="pointer-events-none absolute left-1/2 bottom-full mb-1.5 -translate-x-1/2
-              opacity-0 group-hover:opacity-100 transition-opacity duration-150
-              whitespace-nowrap text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-lg"
-              style={{ background: "rgba(15,23,42,0.92)", letterSpacing: "0.01em", zIndex: 200 }}>
-              Campo obligatorio
-              <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent"
-                style={{ borderTopColor: "rgba(15,23,42,0.92)" }} />
-            </span>
-          </span>
-        )}
-      </label>
-      {right}
-    </div>
   );
 }
 
@@ -408,6 +382,8 @@ export default function FormAnuncio({
   const [imagenModo, setImagenModo]     = useState<"url" | "upload">("url");
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAdj, setUploadingAdj] = useState(false);
+  const [hoverImg,    setHoverImg]      = useState(false);
+  const [hoverAdj,    setHoverAdj]      = useState(false);
   const [aiLoading, setAiLoading]       = useState<"titulo" | "contenido" | null>(null);
   const [localError, setLocalError]     = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -703,15 +679,20 @@ export default function FormAnuncio({
                   return (
                     <button key={cat} type="button"
                       onClick={() => setForm({ ...form, categoria: cat === "General" ? null : cat })}
-                      className="text-sm font-medium px-4 py-1.5 rounded-full transition-all focus:outline-none"
+                      className="text-xs font-semibold px-3.5 py-1.5 rounded-xl focus:outline-none"
                       style={{
-                        background: active ? col.bg : "transparent",
-                        color: active ? col.text : "var(--texto-muted)",
-                        border: `1.5px solid ${active ? col.border : "rgba(0,0,0,0.12)"}`,
-                        boxShadow: active ? `0 2px 8px ${col.border}55` : "none",
+                        background: active ? col.bg : "var(--blanco)",
+                        color: active ? col.text : "var(--texto-secundario)",
+                        border: `1.5px solid ${active ? col.border : "var(--gris-borde)"}`,
+                        fontWeight: active ? 700 : 500,
                         outline: "none",
                         cursor: "pointer",
-                      }}>
+                        transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = "var(--gris-superficie)"; e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; } e.currentTarget.style.transform = "scale(1.04)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = active ? col.bg : "var(--blanco)"; e.currentTarget.style.borderColor = active ? col.border : "var(--gris-borde)"; e.currentTarget.style.transform = "scale(1)"; }}
+                      onMouseDown={(e)  => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                      onMouseUp={(e)    => { e.currentTarget.style.transform = "scale(1.04)"; }}>
                       {cat}
                     </button>
                   );
@@ -779,29 +760,38 @@ export default function FormAnuncio({
                     transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-8 text-sm transition-all disabled:opacity-60 cursor-pointer"
-                    style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                    onMouseEnter={(e) => { if (!uploadingImg) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#f0f7ff"; }}}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#eff6ff"; }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}
+                    className="w-full flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer disabled:opacity-50 transition-all"
+                    style={{
+                      height: 130,
+                      borderColor: hoverImg ? TAB_COLOR : "var(--gris-borde)",
+                      background: hoverImg ? `${TAB_COLOR}08` : "var(--blanco)",
+                      color: "var(--texto-muted)",
+                      transition: "border-color 0.18s, background 0.18s",
+                    }}
+                    onMouseEnter={() => { if (!uploadingImg) setHoverImg(true); }}
+                    onMouseLeave={() => setHoverImg(false)}
+                    onDragOver={(e) => { e.preventDefault(); setHoverImg(true); }}
+                    onDragLeave={() => setHoverImg(false)}
                     onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = "var(--gris-borde)";
-                      e.currentTarget.style.background = "var(--blanco)";
+                      e.preventDefault(); setHoverImg(false);
                       const file = e.dataTransfer.files?.[0];
-                      if (file && file.type.startsWith("image/")) {
+                      if (file && file.type.startsWith("image/"))
                         handleImageUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
-                      }
                     }}>
                     {uploadingImg
                       ? <><span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
                       : <>
-                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "var(--gris-superficie)" }}>
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{
+                            background: hoverImg ? `${TAB_COLOR}15` : "var(--gris-superficie)",
+                            transition: "background 0.18s, transform 0.18s",
+                            transform: hoverImg ? "scale(1.10)" : "scale(1)",
+                          }}>
                             <IconUpload />
                           </div>
                           <div className="text-center">
-                            <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Arrastra o <span style={{ color: "var(--azul-egm)" }}>selecciona imagen</span></p>
+                            <p className="text-sm font-semibold" style={{ color: hoverImg ? "var(--texto-primario)" : "var(--texto-secundario)", transition: "color 0.18s" }}>
+                              Arrastra o <span style={{ color: TAB_COLOR }}>selecciona imagen</span>
+                            </p>
                             <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>JPG, PNG, WebP · Máximo 10 MB</p>
                           </div>
                         </>}
@@ -882,18 +872,36 @@ export default function FormAnuncio({
                 </div>
               ) : (
                 <button type="button" onClick={() => adjuntoRef.current?.click()} disabled={uploadingAdj}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors disabled:opacity-60 cursor-pointer"
-                  style={{ border: "2px dashed var(--gris-borde)", background: "var(--blanco)", color: "var(--texto-muted)" }}
-                  onMouseEnter={(e) => { if (!uploadingAdj) { e.currentTarget.style.borderColor = "var(--azul-egm)"; e.currentTarget.style.background = "#f0f7ff"; }}}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}>
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer disabled:opacity-50 transition-all"
+                  style={{
+                    borderColor: hoverAdj ? TAB_COLOR : "var(--gris-borde)",
+                    background: hoverAdj ? `${TAB_COLOR}08` : "var(--blanco)",
+                    color: "var(--texto-muted)",
+                    transition: "border-color 0.18s, background 0.18s",
+                  }}
+                  onMouseEnter={() => { if (!uploadingAdj) setHoverAdj(true); }}
+                  onMouseLeave={() => setHoverAdj(false)}
+                  onDragOver={(e) => { e.preventDefault(); if (!uploadingAdj) setHoverAdj(true); }}
+                  onDragLeave={() => setHoverAdj(false)}
+                  onDrop={(e) => {
+                    e.preventDefault(); setHoverAdj(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleAdjuntoUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+                  }}>
                   {uploadingAdj
                     ? <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span>Subiendo...</span></>
                     : <>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--gris-superficie)" }}>
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{
+                          background: hoverAdj ? `${TAB_COLOR}15` : "var(--gris-superficie)",
+                          transition: "background 0.18s, transform 0.18s",
+                          transform: hoverAdj ? "scale(1.10)" : "scale(1)",
+                        }}>
                           <IconDoc />
                         </div>
                         <div className="text-left">
-                          <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>Adjuntar PDF o Word</p>
+                          <p className="text-sm font-semibold" style={{ color: hoverAdj ? "var(--texto-primario)" : "var(--texto-secundario)", transition: "color 0.18s" }}>
+                            Arrastra o <span style={{ color: TAB_COLOR }}>adjunta PDF o Word</span>
+                          </p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PDF, DOC, DOCX · Máximo 10 MB</p>
                         </div>
                       </>}
@@ -1005,13 +1013,18 @@ export default function FormAnuncio({
         </div>
 
         {/* Footer fijo */}
-        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0"
-          style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="secondary" size="md" onClick={handleRequestClose}>
+        <div className="px-6 flex items-center justify-between gap-3 shrink-0"
+          style={{
+            borderTop: "1px solid var(--gris-borde)",
+            background: "var(--blanco)",
+            paddingTop: "1rem",
+            paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
+          }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <Button variant="secondary" size="md" className="shrink-0" onClick={handleRequestClose}>
               Cancelar
             </Button>
-            {errorMsg && <p className="text-sm truncate max-w-[160px]" style={{ color: "var(--error)" }}>{errorMsg}</p>}
+            {errorMsg && <p className="text-sm min-w-0 break-words" style={{ color: "var(--error)" }}>{errorMsg}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {editando && editando.estado === "borrador" && (

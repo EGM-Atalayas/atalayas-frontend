@@ -23,7 +23,7 @@ import { EventosAdminTab } from "@/components/eventos/EventosAdminTab";
 import { AnunciosAdminTab } from "@/components/anuncios/AnunciosAdminTab";
 import { FormacionesAdminTab } from "@/components/formaciones/FormacionesAdminTab";
 import { EmpleadosAdminTab } from "@/components/empleados/EmpleadosAdminTab";
-import { StatsTab } from "@/components/pages/StatsTab";
+import { StatsTab } from "@/components/estadisticas/StatsTab";
 import type { Usuario } from "@/lib/types/usuario";
 import { DEPARTAMENTOS } from "@/lib/constants/admin";
 

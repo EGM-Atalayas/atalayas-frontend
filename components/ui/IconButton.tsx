@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  /** "glass" → botón sobre fondos oscuros/gradiente (modales, headers)
-   *  "surface" → botón sobre fondos claros (cards, paneles) */
-  variant?: "glass" | "surface";
+  /** "glass"   → sobre fondos oscuros/gradiente (modales, headers)
+   *  "surface" → sobre fondos claros (cards, paneles)
+   *  "danger"  → eliminar / acción destructiva */
+  variant?: "glass" | "surface" | "danger";
   size?:    "sm" | "md";
   label?:   string;
 }
@@ -17,10 +18,28 @@ const SIZES = {
 
 // ── Estilos por variante y estado ─────────────────────────────────────────────
 function getStyles(
-  variant: "glass" | "surface",
+  variant: "glass" | "surface" | "danger",
   hovered: boolean,
   pressed: boolean,
 ): React.CSSProperties {
+  if (variant === "danger") {
+    return {
+      background: pressed
+        ? "#b91c1c"
+        : hovered
+        ? "#dc2626"
+        : "#fee2e2",
+      border:     pressed || hovered
+        ? "1px solid #dc2626"
+        : "1px solid rgba(220,38,38,0.20)",
+      color:      hovered || pressed ? "#fff" : "#dc2626",
+      boxShadow:  hovered && !pressed
+        ? "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"
+        : "none",
+      transform:  pressed ? "scale(0.88)" : hovered ? "scale(1.05)" : "scale(1)",
+    };
+  }
+
   if (variant === "glass") {
     return {
       background: pressed
@@ -75,7 +94,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   const computedStyle: React.CSSProperties = {
     width:          wh,
     height:         wh,
-    borderRadius:   radius,
+    borderRadius:   variant === "danger" ? "50%" : radius,
     flexShrink:     0,
     display:        "flex",
     alignItems:     "center",
@@ -96,6 +115,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   return (
     <button
       aria-label={label}
+      className={variant === "danger" ? "danger-icon-hover" : undefined}
       style={computedStyle}
       disabled={disabled}
       onMouseEnter={(e) => { if (!disabled) setHovered(true);  onMouseEnter?.(e); }}

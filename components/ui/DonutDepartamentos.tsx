@@ -18,7 +18,7 @@ export function DonutDepartamentos({ data, total, palette }: Props) {
   return (
     <div className="flex-1 flex flex-col sm:flex-row gap-6 items-center min-h-[260px]">
       {/* Donut */}
-      <div style={{ width: 240, height: 240, flexShrink: 0, position: "relative" }}>
+      <div style={{ width: 280, height: 280, flexShrink: 0, position: "relative" }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -26,7 +26,7 @@ export function DonutDepartamentos({ data, total, palette }: Props) {
               dataKey="total"
               nameKey="nombre"
               cx="50%" cy="50%"
-              innerRadius={74} outerRadius={108}
+              innerRadius={88} outerRadius={126}
               paddingAngle={2}
               animationDuration={400}
               animationEasing="ease-out"
@@ -54,52 +54,56 @@ export function DonutDepartamentos({ data, total, palette }: Props) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.12 }}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "1.7rem", fontWeight: 800, color: activeColor!, lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{active.total}</span>
-                <span className="text-center" style={{ fontSize: "0.58rem", fontWeight: 700, color: activeColor!, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.3 }}>{active.nombre}</span>
+                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "2.6rem", fontWeight: 800, color: activeColor!, lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{active.total}</span>
+                <span className="text-center" style={{ fontSize: "0.85rem", fontWeight: 700, color: activeColor!, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.3 }}>{active.nombre}</span>
               </motion.div>
             ) : (
               <motion.div key="total"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.12 }}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "1.9rem", fontWeight: 800, color: "var(--texto-primario)", lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{total}</span>
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--texto-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>activos</span>
+                <span style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: "2.6rem", fontWeight: 800, color: "var(--texto-primario)", lineHeight: 1, fontVariantNumeric: "lining-nums", letterSpacing: "-0.03em" }}>{total}</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--texto-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>activos</span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* Leyenda */}
-      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+      {/* Leyenda — 2 columnas */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 flex-1 min-w-0 content-start">
         {data.map((d, i) => {
           const color = palette[i % palette.length];
           const pct = Math.round(d.total / total * 100);
           const isActive = activeIdx === i;
           return (
             <div key={d.nombre}
-              className="flex items-center gap-2 min-w-0 rounded-lg px-2 py-1"
+              className="flex items-center gap-2 min-w-0 rounded-lg px-2 py-1.5"
               style={{
                 background: isActive ? `${color}12` : "transparent", cursor: "default",
                 transition: "background 0.15s ease"
               }}
               onMouseEnter={() => setActiveIdx(i)}
               onMouseLeave={() => setActiveIdx(null)}>
-              <span className="w-2.5 h-2.5 rounded-full shrink-0"
+              <span className="shrink-0 text-xs font-bold px-2 py-1 rounded-full"
                 style={{
-                  background: color, transform: isActive ? "scale(1.35)" : "scale(1)",
-                  transition: "transform 0.15s ease"
-                }} />
-              <span className="text-xs truncate flex-1"
+                  background: `${color}22`,
+                  color,
+                  transform: isActive ? "scale(1.08)" : "scale(1)",
+                  transition: "transform 0.15s ease",
+                  minWidth: 40,
+                  textAlign: "center",
+                }}>
+                {pct}%
+              </span>
+              <span className="text-sm truncate flex-1"
                 style={{
                   color: isActive ? "var(--texto-primario)" : "var(--texto-secundario)",
-                  fontWeight: isActive ? 600 : 500, transition: "color 0.15s ease, font-weight 0.15s ease"
+                  fontWeight: isActive ? 600 : 500, transition: "color 0.15s ease"
                 }}>
                 {d.nombre}
               </span>
-              <span className="text-xs font-bold shrink-0" style={{ minWidth: 18, textAlign: "right", color: isActive ? color : "var(--texto-primario)", transition: "color 0.15s ease" }}>{d.total}</span>
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                style={{ background: `${color}18`, color }}>{pct}%</span>
+              <span className="text-xs font-bold shrink-0" style={{ color: isActive ? color : "var(--texto-primario)", transition: "color 0.15s ease" }}>{d.total}</span>
             </div>
           );
         })}

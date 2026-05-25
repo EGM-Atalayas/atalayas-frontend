@@ -29,9 +29,9 @@ const BASE: Record<string, React.CSSProperties> = {
     boxShadow:  "none",
   },
   danger: {
-    background: "transparent",
+    background: "#fee2e2",
     color:      "#dc2626",
-    border:     "1.5px solid #dc2626",
+    border:     "1.5px solid rgba(220,38,38,0.25)",
     boxShadow:  "none",
   },
   ghost: {
@@ -121,7 +121,7 @@ const PRESSED: Record<string, React.CSSProperties> = {
 const DISABLED: Record<string, React.CSSProperties> = {
   primary:   { background: "rgba(38,82,158,0.90)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" },
   secondary: { background: "transparent",          color: "var(--texto-muted)", border: "1px solid rgba(0,0,0,0.12)" },
-  danger:    { background: "transparent",          color: "#dc2626",            border: "1.5px solid #dc2626" },
+  danger:    { background: "#fee2e2",                color: "#dc2626",            border: "1.5px solid rgba(220,38,38,0.25)" },
   ghost:     { background: "transparent",          color: "var(--azul-egm)",    border: "1px solid rgba(0,0,0,0.12)" },
   success:   { background: "#16a34a",              color: "#ffffff",            border: "1px solid rgba(255,255,255,0.18)" },
 };

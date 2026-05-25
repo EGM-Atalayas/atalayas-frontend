@@ -4,7 +4,7 @@ import { useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Loader2, MapPin, Search, Check, ImagePlus, Trash2, Globe2,
+  Loader2, MapPin, Check, ImagePlus, Trash2, Globe2, X,
 } from "lucide-react";
 import {
   crearEventoComunidad,
@@ -23,8 +23,8 @@ const TAB_COLOR = "#0F766E";
 
 const inputBase: React.CSSProperties = {
   background:    "var(--blanco)",
-  border:        "1px solid rgba(0,0,0,0.12)",
-  borderRadius:  "var(--radius-lg)",
+  border:        "1.5px solid rgba(0,0,0,0.12)",
+  borderRadius:  "var(--radius-md)",
   color:         "var(--texto-primario)",
   fontSize:      "0.875rem",
   width:         "100%",
@@ -106,6 +106,7 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
   const fileInputRef   = useRef<HTMLInputElement>(null);
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dragOver,    setDragOver]    = useState(false);
+  const [hoverImg,    setHoverImg]    = useState(false);
 
   const onSeleccionarImagen = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,9 +137,13 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
   const onLugarChange = (val: string) => {
     setLugar(val);
     setResultadosMapa([]); setErroresMapa(null);
+    // Si había coordenadas seleccionadas, las invalidamos al editar el texto
+    if (latitud !== null || longitud !== null) {
+      setLatitud(null); setLongitud(null);
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.trim().length >= 3) {
-      debounceRef.current = setTimeout(() => buscar(val), 900);
+      debounceRef.current = setTimeout(() => buscar(val), 500);
     }
   };
 
@@ -217,11 +222,7 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
               />
             </div>
             <div className="relative z-10 flex flex-col gap-0.5 min-w-0">
-              <h2 style={{
-                fontFamily: "var(--font-raleway), sans-serif",
-                fontWeight: 800, fontSize: "clamp(1.4rem, 4vw, 1.8rem)",
-                lineHeight: 1.1, letterSpacing: "-0.03em", color: "#fff", margin: 0,
-              }}>
+              <h2 className="text-2xl font-bold" style={{ color: "#fff" }}>
                 {esNuevo ? "Crear evento" : "Editar evento"}
               </h2>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
@@ -311,15 +312,15 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                         className="w-full flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer disabled:opacity-50 transition-all"
                         style={{
                           height: 130,
-                          borderColor: dragOver ? TAB_COLOR : "var(--gris-borde)",
-                          background: dragOver ? `${TAB_COLOR}08` : "var(--blanco)",
+                          borderColor: (dragOver || hoverImg) ? TAB_COLOR : "var(--gris-borde)",
+                          background: (dragOver || hoverImg) ? `${TAB_COLOR}08` : "var(--blanco)",
                           color: "var(--texto-muted)",
-                          transition: "border-color 0.18s, background 0.18s, color 0.18s",
+                          transition: "border-color 0.18s, background 0.18s",
                         }}
-                        onMouseEnter={e => { if (!subiendoImg) { const el = e.currentTarget as HTMLElement; el.style.borderColor = TAB_COLOR; el.style.background = `${TAB_COLOR}08`; } }}
-                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = dragOver ? TAB_COLOR : "var(--gris-borde)"; el.style.background = dragOver ? `${TAB_COLOR}08` : "var(--blanco)"; }}
-                        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                        onDragLeave={() => setDragOver(false)}
+                        onMouseEnter={() => { if (!subiendoImg) setHoverImg(true); }}
+                        onMouseLeave={() => setHoverImg(false)}
+                        onDragOver={e => { e.preventDefault(); setDragOver(true); setHoverImg(true); }}
+                        onDragLeave={() => { setDragOver(false); setHoverImg(false); }}
                         onDrop={e => {
                           e.preventDefault(); setDragOver(false);
                           const file = e.dataTransfer.files?.[0];
@@ -332,11 +333,15 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                         ) : (
                           <>
                             <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                              style={{ background: "var(--gris-superficie)" }}>
-                              <ImagePlus size={20} style={{ color: "var(--texto-secundario)" }} />
+                              style={{
+                                background: hoverImg ? `${TAB_COLOR}15` : "var(--gris-superficie)",
+                                transition: "background 0.18s, transform 0.18s",
+                                transform: hoverImg ? "scale(1.10)" : "scale(1)",
+                              }}>
+                              <ImagePlus size={20} style={{ color: hoverImg ? TAB_COLOR : "var(--texto-secundario)", transition: "color 0.18s" }} />
                             </div>
                             <div className="text-center">
-                              <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>
+                              <p className="text-sm font-semibold" style={{ color: hoverImg ? "var(--texto-primario)" : "var(--texto-secundario)", transition: "color 0.18s" }}>
                                 Arrastra o <span style={{ color: TAB_COLOR }}>selecciona imagen</span>
                               </p>
                               <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PNG, JPG o WebP · máx 5 MB</p>
@@ -424,43 +429,49 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                         Ubicación{" "}
                         <span style={{ color: "var(--texto-muted)", fontWeight: 400 }}>(opcional)</span>
                       </label>
-                      <div className="flex gap-2">
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                          {buscandoMapa
+                            ? <Loader2 size={15} strokeWidth={2} className="animate-spin" style={{ color: TAB_COLOR }} />
+                            : <MapPin size={15} strokeWidth={2} style={{ color: latitud !== null ? TAB_COLOR : "var(--texto-muted)" }} />
+                          }
+                        </span>
                         <input type="text" value={lugar ?? ""} onChange={e => onLugarChange(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (debounceRef.current) clearTimeout(debounceRef.current); buscar(); } }}
                           placeholder="Ej: Edificio Central EGM Atalayas, Alicante"
-                          style={{ ...inputBase, flex: 1 }} onFocus={focusOn} onBlur={focusOff} />
-                        <button type="button" onClick={() => buscar()}
-                          disabled={!lugar.trim() || buscandoMapa}
-                          className="inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shrink-0 cursor-pointer disabled:opacity-50"
-                          style={{
-                            background: "var(--gris-superficie)",
-                            border: "1px solid var(--gris-borde)",
-                            color: "var(--texto-secundario)",
-                            transition: "background 0.15s",
-                          }}
-                          onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = TAB_COLOR; el.style.color = "#fff"; el.style.borderColor = TAB_COLOR; }}
-                          onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--gris-superficie)"; el.style.color = "var(--texto-secundario)"; el.style.borderColor = "var(--gris-borde)"; }}
-                        >
-                          {buscandoMapa ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} strokeWidth={2} />}
-                          Buscar
-                        </button>
+                          style={{ ...inputBase, paddingLeft: "2.5rem", paddingRight: lugar ? "2.2rem" : "14px" }} onFocus={focusOn} onBlur={focusOff} />
+                        {lugar && (
+                          <button type="button" onClick={limpiarUbicacion}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
+                            style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+                            <X size={13} strokeWidth={2.5} />
+                          </button>
+                        )}
                       </div>
 
                       {resultadosMapa.length > 0 && (
                         <ul className="mt-2 overflow-hidden rounded-xl"
-                          style={{ border: "1px solid var(--gris-borde)" }}>
-                          {resultadosMapa.map((r, i) => (
-                            <li key={i} style={{ borderTop: i > 0 ? "1px solid var(--gris-superficie)" : "none" }}>
-                              <button type="button" onClick={() => seleccionar(r)}
-                                className="w-full text-left px-3 py-2.5 text-xs flex items-start gap-2 cursor-pointer"
-                                style={{ transition: "background 0.1s" }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${TAB_COLOR}12`; }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
-                                <MapPin size={12} strokeWidth={2} className="mt-0.5 shrink-0" style={{ color: TAB_COLOR }} />
-                                <span className="line-clamp-2" style={{ color: "var(--texto-primario)" }}>{r.etiqueta}</span>
-                              </button>
-                            </li>
-                          ))}
+                          style={{ border: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
+                          {resultadosMapa.map((r, i) => {
+                            const partes = r.etiqueta.split(",").map(s => s.trim());
+                            const nombre = partes[0];
+                            const resto  = partes.slice(1).join(", ");
+                            return (
+                              <li key={i} style={{ borderTop: i > 0 ? "1px solid var(--gris-superficie)" : "none" }}>
+                                <button type="button" onClick={() => seleccionar(r)}
+                                  className="w-full text-left px-3.5 py-2.5 flex items-center gap-2.5 cursor-pointer"
+                                  style={{ transition: "background 0.1s" }}
+                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${TAB_COLOR}10`; }}
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                                  <MapPin size={13} strokeWidth={2} className="shrink-0 mt-0.5" style={{ color: TAB_COLOR }} />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold truncate" style={{ color: "var(--texto-primario)" }}>{nombre}</p>
+                                    {resto && <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }}>{resto}</p>}
+                                  </div>
+                                </button>
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                       {erroresMapa && (
@@ -468,18 +479,11 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
                       )}
 
                       {latitud !== null && longitud !== null && (
-                        <div className="mt-3 flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold inline-flex items-center gap-1"
-                              style={{ color: "var(--exito)" }}>
-                              <Check size={12} strokeWidth={2.5} /> Ubicación seleccionada
-                            </span>
-                            <button type="button" onClick={limpiarUbicacion}
-                              className="text-xs font-semibold cursor-pointer"
-                              style={{ color: "var(--error)" }}>
-                              Quitar
-                            </button>
-                          </div>
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          <span className="text-xs font-semibold inline-flex items-center gap-1"
+                            style={{ color: "var(--exito)" }}>
+                            <Check size={12} strokeWidth={2.5} /> Ubicación confirmada
+                          </span>
                           <div className="rounded-xl overflow-hidden"
                             style={{ border: "1px solid var(--gris-borde)" }}>
                             <MapaUbicacion latitud={latitud} longitud={longitud}
@@ -515,25 +519,25 @@ export function ModalEvento({ evento, esSuperAdmin, onClose, onGuardado }: Props
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 shrink-0"
+            <div className="flex flex-col gap-2 px-5 sm:px-6 py-4 shrink-0"
               style={{
                 borderTop: "1px solid rgba(0,0,0,0.07)",
                 background: "var(--blanco)",
                 paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
               }}>
-              <Button type="button" variant="secondary" size="md" onClick={onClose} disabled={enviando}>
-                Cancelar
-              </Button>
-              <div className="flex items-center gap-2">
-                {error && (
-                  <p className="text-xs font-semibold truncate max-w-[140px]"
-                    style={{ color: "var(--error)" }}>
-                    {error}
-                  </p>
-                )}
+              {error && (
+                <p className="text-xs font-semibold px-3 py-2 rounded-lg"
+                  style={{ background: "rgba(239,68,68,0.07)", color: "var(--error)" }}>
+                  {error}
+                </p>
+              )}
+              <div className="flex items-center justify-between gap-2">
+                <Button type="button" variant="secondary" size="md" onClick={onClose} disabled={enviando}>
+                  Cancelar
+                </Button>
                 {activeTab === "informacion" ? (
                   <Button type="button" variant="primary" size="md" onClick={() => goTab("detalles")}>
-                    Detalles →
+                    Detalles
                   </Button>
                 ) : (
                   <Button type="submit" variant="primary" size="md" disabled={enviando}>
