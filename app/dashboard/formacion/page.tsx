@@ -123,7 +123,7 @@ export default function FormacionPage() {
     <div className="w-full">
       <DashboardHero prefijo="Centro de " titulo="Formación" imagenFondo="/background-formacion-empleado.webp" />
 
-      <div className="px-10 lg:px-16 pt-14 pb-16">
+      <div className="px-4 sm:px-10 lg:px-16 pt-14 pb-16">
         {/* ── Loading ───────────────────────────────────────────────────── */}
         {loading && (
           <div className="flex items-center justify-center py-20">
@@ -150,7 +150,7 @@ export default function FormacionPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       {modulosOnboarding.length > 0 && (
                         <span className="text-xs font-semibold px-3 py-1 rounded-full"
                           style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
@@ -158,7 +158,7 @@ export default function FormacionPage() {
                         </span>
                       )}
                       {/* Buscador */}
-                      <div className="relative" style={{ width: "260px" }}>
+                      <div className="relative w-full sm:w-[260px]">
                         <svg
                           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
                           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
