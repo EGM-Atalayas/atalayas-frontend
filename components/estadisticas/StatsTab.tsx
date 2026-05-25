@@ -221,6 +221,8 @@ export const StatsTab = memo(function StatsTab({
   setShowMovimiento,
   showEstadoFormacion,
   setShowEstadoFormacion,
+  showProgresoModulos,
+  setShowProgresoModulos,
   hayPersonalizacion,
   resetVistaEstadisticas,
   showPersonalizar,
@@ -251,6 +253,8 @@ export const StatsTab = memo(function StatsTab({
   setShowMovimiento: (v: boolean) => void;
   showEstadoFormacion: boolean;
   setShowEstadoFormacion: (v: boolean) => void;
+  showProgresoModulos: boolean;
+  setShowProgresoModulos: (v: boolean) => void;
   hayPersonalizacion: boolean;
   resetVistaEstadisticas: () => void;
   showPersonalizar: boolean;
@@ -361,6 +365,7 @@ export const StatsTab = memo(function StatsTab({
                     { label: "KPIs resumen", value: showKpis, set: setShowKpis },
                     { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
                     { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
+                    { label: "Estado de formación", value: showProgresoModulos, set: setShowProgresoModulos },
                   ].map(({ label, value, set }, idx) => (
                     <div key={label}
                       className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer"
@@ -455,6 +460,7 @@ export const StatsTab = memo(function StatsTab({
                       { label: "KPIs resumen", value: showKpis, set: setShowKpis },
                       { label: "Incorporaciones y salidas", value: showMovimiento, set: setShowMovimiento },
                       { label: "Empleados por departamento", value: showEstadoFormacion, set: setShowEstadoFormacion },
+                      { label: "Estado de formación", value: showProgresoModulos, set: setShowProgresoModulos },
                     ].map(({ label, value, set }, idx) => (
                       <div key={label}
                         className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer"
@@ -530,7 +536,7 @@ export const StatsTab = memo(function StatsTab({
           <div className="w-8 h-8 border-2 rounded-full animate-spin"
             style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
         </div>
-      ) : !showKpis && !showMovimiento && !showEstadoFormacion ? (
+      ) : !showKpis && !showMovimiento && !showEstadoFormacion && !showProgresoModulos ? (
         <div className="text-center py-20" style={{ color: "var(--texto-muted)" }}>
           <p className="text-sm mb-3">Todas las secciones están ocultas.</p>
           <button
@@ -735,6 +741,94 @@ export const StatsTab = memo(function StatsTab({
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* ── 3. Estado de formación por módulo ── */}
+          {showProgresoModulos && statsEmpresa.detalleModulos.length > 0 && (
+            <div className="p-6 rounded-2xl shadow-sm" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+              <div className="pb-4 mb-4" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", color: "var(--texto-primario)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                      Estado de formación
+                    </h2>
+                    <p className="text-xs mt-1" style={{ color: "var(--texto-muted)" }}>
+                      {statsEmpresa.detalleModulos.length} módulos · {statsEmpresa.kpis.pctCompletitudGlobal}% completitud global
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="overflow-x-auto pb-2" style={{ scrollbarWidth: "thin", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+                <div className="flex gap-4" style={{ minWidth: "max-content" }}>
+                  {statsEmpresa.detalleModulos.map((mod, idx) => {
+                    const PALETA_FORM = [
+                      { from: "#4338CA", to: "#0EA5E9" },
+                      { from: "#0891B2", to: "#10B981" },
+                      { from: "#6B21A8", to: "#EC4899" },
+                      { from: "#EA580C", to: "#F59E0B" },
+                    ];
+                    const ac = PALETA_FORM[idx % PALETA_FORM.length];
+                    const pctC = mod.total > 0 ? Math.round((mod.completados / mod.total) * 100) : 0;
+                    const gradId = `grad-stats-${mod.moduloId}-${idx}`;
+                    return (
+                      <div key={mod.moduloId} className="relative rounded-2xl overflow-hidden flex flex-col shrink-0"
+                        style={{
+                          width: 240, scrollSnapAlign: "start",
+                          background: `linear-gradient(135deg, ${ac.from}0d 0%, ${ac.to}05 100%), var(--blanco)`,
+                          border: "1px solid var(--gris-borde)",
+                          boxShadow: `0 4px 16px -8px ${ac.from}55`, minHeight: 240,
+                        }}>
+                        <div className="absolute top-0 left-1/2 pointer-events-none" style={{
+                          width: 220, height: 180, borderRadius: "50%",
+                          background: `radial-gradient(circle, ${ac.from}33 0%, transparent 70%)`,
+                          transform: "translate(-50%, -55%)",
+                        }} />
+                        <div className="relative z-10 flex flex-col items-center p-5 flex-1">
+                          <div className="relative shrink-0 mb-4" style={{ width: 110, height: 110 }}>
+                            <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
+                              <defs>
+                                <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor={ac.from} />
+                                  <stop offset="100%" stopColor={ac.to} />
+                                </linearGradient>
+                              </defs>
+                              <circle cx="55" cy="55" r="45" fill="none" stroke="var(--gris-superficie)" strokeWidth="8" />
+                              <circle cx="55" cy="55" r="45" fill="none" stroke={`url(#${gradId})`} strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={`${(pctC / 100) * 2 * Math.PI * 45} ${2 * Math.PI * 45}`}
+                                style={{ transition: "stroke-dasharray 0.6s ease-out", filter: `drop-shadow(0 0 6px ${ac.to}66)` }}
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className="text-2xl font-extrabold leading-none" style={{
+                                background: `linear-gradient(135deg, ${ac.from} 0%, ${ac.to} 100%)`,
+                                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                              }}>{pctC}%</span>
+                              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-semibold" style={{ color: "var(--texto-muted)" }}>completado</span>
+                            </div>
+                          </div>
+                          <p className="text-sm font-bold text-center mb-3 line-clamp-2" style={{ color: "var(--texto-primario)" }}>{mod.nombre}</p>
+                          <div className="w-full mt-auto pt-3 grid grid-cols-3 gap-1 text-center" style={{ borderTop: "1px solid var(--gris-borde)" }}>
+                            <div>
+                              <p className="text-sm font-bold" style={{ color: ac.from }}>{mod.completados}</p>
+                              <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>Hechos</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold" style={{ color: "#f59e0b" }}>{mod.enProgreso}</p>
+                              <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>En curso</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold" style={{ color: "var(--texto-muted)" }}>{mod.pendientes}</p>
+                              <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: "var(--texto-muted)" }}>Pendientes</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
 
