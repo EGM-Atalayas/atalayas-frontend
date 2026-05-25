@@ -571,11 +571,11 @@ export default function Page() {
       </div>
 
       {/* ── CUERPO: ÍNDICE + CONTENIDO ────────────────────────────────────────── */}
-      <div className="flex flex-1 w-full px-8 lg:px-12 py-8 gap-10">
+      <div className="flex flex-col lg:flex-row flex-1 w-full px-4 sm:px-8 lg:px-12 py-8 gap-6 lg:gap-10">
 
         {/* ÍNDICE LATERAL */}
         <aside
-          className="w-88 shrink-0 self-start sticky top-6 rounded-2xl overflow-hidden"
+          className="w-full lg:w-88 shrink-0 self-start lg:sticky top-6 rounded-2xl overflow-y-auto max-h-56 lg:max-h-none"
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
         >
           <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--gris-borde)" }}>
