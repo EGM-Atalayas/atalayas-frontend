@@ -148,7 +148,7 @@ export default function FormacionPage() {
     <div className="w-full">
       <DashboardHero prefijo="Centro de " titulo="Formación" imagenFondo="/background-formacion-empleado.webp" />
 
-      <div className="px-10 lg:px-16 pt-14 pb-16">
+      <div className="px-4 sm:px-10 lg:px-16 pt-14 pb-16">
         {/* ── Loading ───────────────────────────────────────────────────── */}
         {loading && (
           <div className="flex items-center justify-center py-20">
@@ -172,7 +172,7 @@ export default function FormacionPage() {
                         Tu programa de incorporación a la empresa
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       {modulosOnboarding.length > 0 && (
                         <span className="text-xs font-semibold px-3 py-1 rounded-full"
                           style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
@@ -180,7 +180,7 @@ export default function FormacionPage() {
                         </span>
                       )}
                       {/* Buscador */}
-                      <div className="relative" style={{ width: "260px" }}>
+                      <div className="relative w-full sm:w-[260px]">
                         <svg
                           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
                           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -640,7 +640,7 @@ function CourseCard({
 
   return (
     <div
-      className="rounded-2xl overflow-hidden flex group relative transition-shadow hover:shadow-md cursor-pointer"
+      className="rounded-2xl overflow-hidden flex flex-col sm:flex-row group relative transition-shadow hover:shadow-md cursor-pointer"
       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}
       onClick={() => router.push(`/dashboard/formacion/${m.moduloId}`)}
     >
@@ -656,7 +656,7 @@ function CourseCard({
       )}
 
       {/* Thumbnail — IZQUIERDA */}
-      <div className="shrink-0 relative overflow-hidden" style={{ width: "200px" }}>
+      <div className="shrink-0 relative overflow-hidden w-full sm:w-[200px] aspect-video sm:aspect-auto">
         {img ? (
           <img src={img} alt={m.nombre} className="w-full h-full object-cover absolute inset-0" />
         ) : (
