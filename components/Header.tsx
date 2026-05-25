@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { gsap } from "gsap";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,9 +20,11 @@ function getInitials(nombre: string): string {
 }
 
 export default function Header() {
+  const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAvatarError, setMobileAvatarError] = useState(false);
   const mobileOpenRef = useRef(false);          // ref espejo para closures estables
+  const justOpenedRef = useRef(false);          // evita cierre inmediato por scroll al abrir
   const menuPanelRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
   const menuItemsRef = useRef<HTMLDivElement>(null);
@@ -59,6 +62,8 @@ export default function Header() {
     }));
   }
 
+  useEffect(() => { setMounted(true); }, []);
+
   useLayoutEffect(() => {
     if (menuPanelRef.current) gsap.set(menuPanelRef.current, { xPercent: 100 });
     if (menuOverlayRef.current) gsap.set(menuOverlayRef.current, { opacity: 0, pointerEvents: "none" });
@@ -67,6 +72,8 @@ export default function Header() {
   const abrirMenu = () => {
     setMobileOpen(true);
     mobileOpenRef.current = true;
+    justOpenedRef.current = true;
+    setTimeout(() => { justOpenedRef.current = false; }, 400);
     const panel = menuPanelRef.current;
     const overlay = menuOverlayRef.current;
     const items = menuItemsRef.current ? Array.from(menuItemsRef.current.children) as HTMLElement[] : [];
@@ -112,7 +119,7 @@ export default function Header() {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 50);
-      if (y > 20 && mobileOpenRef.current) cerrarMenu();
+      if (y > 20 && mobileOpenRef.current && !justOpenedRef.current) cerrarMenu();
     };
     // Evaluar estado inicial (por si la página carga ya scrolleada)
     onScroll();
@@ -304,21 +311,22 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── Menú móvil — panel lateral GSAP ─────────────────────────────────── */}
-      <div className="lg:hidden" style={{ overflow: "hidden" }}>
+      {/* ── Menú móvil — renderizado via portal en document.body ── */}
+      {mounted && createPortal(
+        <div className="lg:hidden">
         {/* Overlay oscuro con blur */}
         <div
           ref={menuOverlayRef}
           onClick={cerrarMenu}
-          className="fixed inset-0 z-57"
-          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+          className="fixed inset-0"
+          style={{ zIndex: 9998, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
         />
 
         {/* Panel */}
         <div
           ref={menuPanelRef}
-          className="fixed top-0 right-0 h-full z-58 flex flex-col"
-          style={{ width: "100%", background: "rgba(14,34,82,1)" }}
+          className="fixed top-0 right-0 h-full flex flex-col"
+          style={{ zIndex: 9999, width: "100%", background: "rgba(14,34,82,1)" }}
         >
           {/* ── Barra superior del panel: logo + notif + X ── */}
           <div
@@ -493,7 +501,9 @@ export default function Header() {
             </div>
           </div>
         </div>
-      </div>
+        </div>,
+        document.body
+      )}
     </header>
   );
 }

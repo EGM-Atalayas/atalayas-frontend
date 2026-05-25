@@ -113,57 +113,75 @@ ${sectionsXml}
   descargar(xml, `${opts.fileName}.xml`, "application/xml;charset=utf-8");
 }
 
-export function exportStatsPdf(opts: ExportStatsOptions) {
-  const w = window.open("", "_blank", "width=1024,height=768");
-  if (!w) return;
+export async function exportStatsPdf(opts: ExportStatsOptions) {
+  const { jsPDF } = await import("jspdf");
+  const { autoTable } = await import("jspdf-autotable");
+
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const fecha = new Date().toLocaleString("es-ES");
+  const W = doc.internal.pageSize.getWidth();
+  const MARGIN = 14;
 
-  const sectionsHtml = opts.sections.map((s) => {
-    const headRow = s.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("");
-    const bodyRows = s.rows.map((row) =>
-      `<tr>${row.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`
-    ).join("");
-    return `
-      <h2>${escapeHtml(s.title)}</h2>
-      <table><thead><tr>${headRow}</tr></thead><tbody>${bodyRows}</tbody></table>
-    `;
-  }).join("");
+  // ── Cabecera ──
+  doc.setFillColor(27, 63, 126);
+  doc.rect(0, 0, W, 22, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(opts.title, MARGIN, 14);
 
-  w.document.write(`
-    <html>
-      <head>
-        <title>${escapeHtml(opts.title)}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; }
-          h1   { font-size: 22px; margin-bottom: 4px; }
-          h2   { margin-top: 28px; font-size: 16px; color: #1e293b; }
-          p    { color: #475569; margin: 2px 0; font-size: 12px; }
-          table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 12px; }
-          th, td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
-          th   { background: #f8fafc; font-weight: 600; }
-          .meta { margin-bottom: 18px; }
-        </style>
-      </head>
-      <body>
-        <h1>${escapeHtml(opts.title)}</h1>
-        <div class="meta">
-          ${opts.subtitle ? `<p><strong>${escapeHtml(opts.subtitle)}</strong></p>` : ""}
-          ${opts.filtros ? `<p>Filtros: ${escapeHtml(opts.filtros)}</p>` : ""}
-          <p>Generado: ${escapeHtml(fecha)}</p>
-        </div>
-        ${sectionsHtml}
-      </body>
-    </html>
-  `);
-  w.document.close();
-  w.focus();
-  // Pequeño retardo para asegurar que el documento se ha pintado
-  setTimeout(() => w.print(), 250);
+  if (opts.subtitle) {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(opts.subtitle, W - MARGIN, 14, { align: "right" });
+  }
+
+  // ── Meta ──
+  let y = 28;
+  doc.setTextColor(71, 85, 105);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  if (opts.filtros) {
+    doc.text(`Filtros: ${opts.filtros}`, MARGIN, y);
+    y += 5;
+  }
+  doc.text(`Generado: ${fecha}`, MARGIN, y);
+  y += 7;
+
+  // ── Secciones ──
+  for (const s of opts.sections) {
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 41, 59);
+    doc.text(s.title, MARGIN, y);
+    y += 2;
+
+    autoTable(doc, {
+      startY: y,
+      head: [s.headers],
+      body: s.rows.map(r => r.map(String)),
+      margin: { left: MARGIN, right: MARGIN },
+      styles: { fontSize: 8, cellPadding: 3, textColor: [15, 23, 42] },
+      headStyles: { fillColor: [27, 63, 126], textColor: 255, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      tableLineColor: [203, 213, 225],
+      tableLineWidth: 0.1,
+    });
+
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+
+    if (y > doc.internal.pageSize.getHeight() - 20) {
+      doc.addPage();
+      y = 16;
+    }
+  }
+
+  doc.save(`${opts.fileName}.pdf`);
 }
 
 // ─── Función unificada ───────────────────────────────────────────────────────
 
-export function exportStats(format: ExportFormat, opts: ExportStatsOptions) {
+export async function exportStats(format: ExportFormat, opts: ExportStatsOptions) {
   switch (format) {
     case "pdf": return exportStatsPdf(opts);
     case "csv": return exportStatsCsv(opts);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Calendar, Plus, MapPin, Globe2, Building2, Clock, Search, ChevronDown,
+  Calendar, Plus, MapPin, Globe2, Clock, Search, ChevronDown, X, ArrowRight,
 } from "lucide-react";
 import {
   getEventosComunidad,
@@ -15,6 +15,8 @@ import {
 import { ModalEvento } from "./ModalEvento";
 import { ModalConfirm } from "@/components/ui/ModalConfirm";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Badge } from "@/components/ui/Badge";
 
 const TAB_COLOR  = "#0F766E";
 const QK_EVENTOS = ["eventos-admin"];
@@ -39,7 +41,7 @@ function SkeletonCard() {
   return (
     <div className="flex flex-col rounded-2xl overflow-hidden animate-pulse"
       style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <div style={{ height: 110, background: "var(--gris-superficie)" }} />
+      <div style={{ height: 130, background: "var(--gris-superficie)" }} />
       <div className="flex flex-col gap-2.5 px-3.5 pt-3 pb-3.5">
         <div className="flex gap-1.5">
           <div className="h-4 rounded-md w-20" style={{ background: "var(--gris-borde)" }} />
@@ -83,15 +85,24 @@ function EventoCard({
         background:  "var(--blanco)",
         border:      "1px solid var(--gris-borde)",
         boxShadow:   "0 1px 4px rgba(0,0,0,0.04)",
-        transition:  "box-shadow 0.2s, transform 0.2s",
+        transition:  "box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease",
       }}
       onClick={onEditar}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
+      onMouseEnter={e => {
+        const c = futuro ? "#065F46" : "#374151";
+        e.currentTarget.style.boxShadow = `0 8px 28px ${c}33, 0 2px 8px rgba(0,0,0,0.06)`;
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.borderColor = `${c}35`;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = "var(--gris-borde)";
+      }}
     >
       {/* ── Cabecera ── */}
       <div className="relative w-full overflow-hidden"
-        style={{ height: 110, background: futuro ? gradFuturo : gradPasado }}>
+        style={{ height: 130, background: futuro ? gradFuturo : gradPasado }}>
 
         {/* Imagen de portada */}
         {ev.imagenUrl && (
@@ -100,28 +111,44 @@ function EventoCard({
             className="absolute inset-0 w-full h-full object-cover" />
         )}
 
-        {/* Overlay oscuro para legibilidad */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.40) 100%)" }} />
+        {/* Overlay — solo cuando hay imagen */}
+        {ev.imagenUrl && (
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.65) 100%)" }} />
+        )}
 
-        {/* Icono decorativo de fondo */}
-        <Calendar size={64} strokeWidth={0.8}
-          className="absolute -bottom-3 -right-3 pointer-events-none"
-          style={{ color: "rgba(255,255,255,0.08)" }} />
+        {/* Sin imagen: decoración igual que documentos/anuncios */}
+        {!ev.imagenUrl && (
+          <>
+            {/* Círculo decorativo — top-left */}
+            <div className="pointer-events-none absolute" style={{
+              width: 80, height: 80, borderRadius: "50%",
+              background: "rgba(255,255,255,0.12)",
+              top: -28, left: -22,
+            }} />
+            {/* Icono gigante translúcido — bottom-right */}
+            <div className="pointer-events-none absolute flex items-center justify-center" style={{
+              right: -18, bottom: -40, width: 140, height: 140,
+              opacity: 0.18, color: "#fff",
+            }}>
+              <Calendar size={100} strokeWidth={1} />
+            </div>
+          </>
+        )}
 
         {/* Fecha destacada — esquina inferior izquierda */}
-        <div className="absolute bottom-3 left-4 flex items-end gap-1.5">
+        <div className="absolute bottom-3 left-4 flex items-stretch gap-2.5">
           <span className="font-black leading-none"
-            style={{ fontSize: "2.6rem", color: "#fff", lineHeight: 1, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+            style={{ fontSize: "3.4rem", color: "#fff", lineHeight: 1, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {dia}
           </span>
-          <div className="flex flex-col pb-1">
-            <span className="font-bold uppercase tracking-widest"
-              style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.90)", letterSpacing: "0.12em" }}>
+          <div className="flex flex-col justify-between" style={{ paddingTop: "0.18em", paddingBottom: "0.22em" }}>
+            <span className="font-extrabold uppercase"
+              style={{ fontSize: "1.35rem", color: "#fff", letterSpacing: "0.06em", textShadow: "0 1px 6px rgba(0,0,0,0.5)", lineHeight: 1 }}>
               {mes}
             </span>
-            <span className="font-semibold"
-              style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em" }}>
+            <span className="font-bold"
+              style={{ fontSize: "1.2rem", color: "rgba(255,255,255,0.82)", letterSpacing: "0.03em", textShadow: "0 1px 4px rgba(0,0,0,0.4)", lineHeight: 1 }}>
               {d.getFullYear()}
             </span>
           </div>
@@ -130,63 +157,70 @@ function EventoCard({
         {/* Badge top-right */}
         <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1">
           {ev.esGlobal && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(27,63,126,0.85)", color: "#fff", backdropFilter: "blur(4px)" }}>
-              <Globe2 size={9} strokeWidth={2.5} /> EGM Global
-            </span>
+            <Badge variant="glass" icon={<Globe2 size={9} strokeWidth={2.5} />}>
+              EGM Global
+            </Badge>
           )}
           {!futuro && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(4px)" }}>
-              Finalizado
-            </span>
+            <Badge variant="glass">Finalizado</Badge>
           )}
         </div>
       </div>
 
       {/* ── Cuerpo ── */}
-      <div className="flex flex-col flex-1 px-3.5 pt-3 pb-3.5 gap-2">
+      <div className="flex flex-col flex-1 px-3.5 pt-3 pb-3.5 gap-1.5">
 
-        {/* Badge empresa */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold"
-            style={{
-              background: ev.esGlobal ? "#1B3F7E18" : `${TAB_COLOR}15`,
-              color:      ev.esGlobal ? "var(--azul-egm)" : TAB_COLOR,
-            }}>
-            {ev.esGlobal
-              ? <><Globe2 size={9} strokeWidth={2.5} />EGM Global</>
-              : <><Building2 size={9} strokeWidth={2.5} />Tu empresa</>}
-          </span>
-        </div>
+        {/* Badge empresa — solo si es evento global */}
+        {ev.esGlobal && (
+          <div className="flex items-center gap-1.5">
+            <Badge
+              variant="soft"
+              color="var(--azul-egm)"
+              icon={<Globe2 size={9} strokeWidth={2.5} />}
+              style={{ borderRadius: 6 }}
+            >
+              EGM Global
+            </Badge>
+          </div>
+        )}
 
         {/* Título */}
-        <h3 className="font-bold leading-snug line-clamp-2"
-          style={{ fontSize: "0.875rem", color: "var(--texto-primario)", minHeight: "2.6em" }}>
+        <h3 className="font-extrabold text-base leading-snug line-clamp-2"
+          style={{ color: "var(--texto-primario)", minHeight: "2.6em", letterSpacing: "-0.01em" }}>
           {ev.titulo}
         </h3>
 
         {/* Meta */}
-        <div className="flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--texto-secundario)" }}>
-            <Clock size={11} strokeWidth={2} style={{ color: futuro ? TAB_COLOR : "var(--texto-secundario)", flexShrink: 0 }} />
-            {formatHora(ev.fechaInicio)}
-            {ev.fechaFin ? ` – ${formatHora(ev.fechaFin)}` : ""}
-          </span>
-          {ev.lugar && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--texto-secundario)" }}>
-              <MapPin size={11} strokeWidth={2} style={{ color: futuro ? TAB_COLOR : "var(--texto-secundario)", flexShrink: 0 }} />
-              <span className="truncate">{ev.lugar}</span>
-            </span>
-          )}
-        </div>
+        {(() => {
+          const finDistinto = ev.fechaFin &&
+            new Date(ev.fechaFin).toDateString() !== new Date(ev.fechaInicio).toDateString();
+          return (
+            <div className="flex flex-col gap-1" style={{ minHeight: "3rem" }}>
+              <span className="inline-flex items-center gap-1.5 font-medium" style={{ fontSize: "0.875rem", color: "var(--texto-secundario)" }}>
+                <Clock size={14} strokeWidth={2} style={{ color: futuro ? TAB_COLOR : "var(--texto-secundario)", flexShrink: 0 }} />
+                {finDistinto
+                  ? <>{formatHora(ev.fechaInicio)} <ArrowRight size={11} strokeWidth={2} style={{ flexShrink: 0, color: "var(--texto-muted)" }} /> {formatFechaCorta(ev.fechaFin!)} · {formatHora(ev.fechaFin!)}</>
+                  : <>{formatHora(ev.fechaInicio)}{ev.fechaFin ? ` – ${formatHora(ev.fechaFin)}` : ""}</>
+                }
+              </span>
+              {ev.lugar ? (
+                <span className="inline-flex items-center gap-1.5 font-medium" style={{ fontSize: "0.875rem", color: "var(--texto-secundario)" }}>
+                  <MapPin size={14} strokeWidth={2} style={{ color: futuro ? TAB_COLOR : "var(--texto-secundario)", flexShrink: 0 }} />
+                  <span className="truncate">{ev.lugar.split(",")[0].trim()}</span>
+                </span>
+              ) : (
+                <span style={{ minHeight: "1.3rem" }} />
+              )}
+            </div>
+          );
+        })()}
 
         {/* Acciones */}
-        <div className="flex items-center gap-1.5 mt-auto pt-2" onClick={e => e.stopPropagation()}>
-          <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onEditar}>
+        <div className="flex items-center gap-2 mt-auto pt-2" onClick={e => e.stopPropagation()}>
+          <Button variant="primary" size="md" className="flex-1 justify-center" style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }} onClick={onEditar}>
             Editar
           </Button>
-          <Button variant="danger" size="sm" className="flex-1 justify-center" onClick={onEliminar}>
+          <Button variant="danger" size="md" className="flex-1 justify-center" onClick={onEliminar}>
             Desactivar
           </Button>
         </div>
@@ -232,9 +266,13 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
   const [confirmEliminar, setConfirmEliminar]   = useState<ComunidadEvento | null>(null);
   const [eliminando, setEliminando]             = useState(false);
 
-  if (typeof document !== "undefined") {
-    document.body.style.overflow = (modalAbierto || !!confirmEliminar) ? "hidden" : "";
-  }
+  useEffect(() => {
+    if (modalAbierto || !!confirmEliminar) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [modalAbierto, confirmEliminar]);
 
   const filtrados = eventos.filter(ev => {
     if (filtro === "proximos"    && !esFuturo(ev.fechaInicio)) return false;
@@ -309,69 +347,117 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
 
       {/* ── Toolbar ── */}
       {(() => {
-        const FILTROS = [
-          { id: "todos"       as Filtro, label: "Todos"       },
-          { id: "proximos"    as Filtro, label: "Próximos"    },
-          { id: "finalizados" as Filtro, label: "Finalizados" },
+        const FILTROS: { id: Filtro; label: string }[] = [
+          { id: "todos",       label: "Todos"       },
+          { id: "proximos",    label: "Próximos"    },
+          { id: "finalizados", label: "Finalizados" },
         ];
         const activoLabel = FILTROS.find(f => f.id === filtro)?.label ?? "Todos";
-        const searchInput = (placeholder: string) => (
-          <div className="relative flex-1 sm:flex-none" style={{ width: undefined }}>
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} strokeWidth={2} />
-            </span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={placeholder}
-              className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none"
-              style={{
-                background: "var(--blanco)",
-                border: "1.5px solid var(--gris-borde)",
-                color: "var(--texto-primario)",
-                transition: "border-color 0.15s",
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
-              onBlur={e  => e.currentTarget.style.borderColor = "var(--gris-borde)"}
-            />
-          </div>
-        );
         return (
           <div className="flex flex-col gap-2 mb-6">
             {/* Desktop */}
             <div className="hidden sm:flex items-center gap-2">
-              <div style={{ width: 260 }}>{searchInput("Buscar eventos…")}</div>
+              {/* Buscador con X dentro */}
+              <div className="relative shrink-0" style={{ width: 260 }}>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                  <Search size={15} strokeWidth={2} />
+                </span>
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Buscar eventos…"
+                  className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                  style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: search ? "2.2rem" : "14px" }}
+                  onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
+                  onBlur={e  => e.currentTarget.style.borderColor = "var(--gris-borde)"}
+                />
+                {search && (
+                  <button onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    <X size={13} strokeWidth={2.5} />
+                  </button>
+                )}
+              </div>
+
+              {/* Pills de filtro */}
               <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--gris-superficie)", border: "1px solid var(--gris-borde)" }}>
                 {FILTROS.map(({ id, label }) => {
                   const active = filtro === id;
                   return (
-                    <button key={id} type="button" onClick={() => setFiltro(id)}
+                    <motion.button key={id} type="button"
+                      onClick={() => setFiltro(prev => prev === id && id !== "todos" ? "todos" : id)}
                       className="relative text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
-                      style={{ color: active ? "var(--texto-primario)" : "var(--texto-muted)", background: "none", border: "none", transition: "color 0.15s" }}>
+                      style={{ color: active ? (id === "todos" ? "#fff" : TAB_COLOR) : "var(--texto-muted)", background: "transparent", border: "none", transition: "color 0.15s ease", zIndex: 1 }}
+                      whileTap={{ scale: 0.94 }}
+                    >
                       {active && (
                         <motion.span layoutId="ev-filtro-pill"
                           className="absolute inset-0 rounded-lg"
-                          style={{ background: "var(--blanco)", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }}
-                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          style={{ background: id === "todos" ? TAB_COLOR : `${TAB_COLOR}18`, border: id === "todos" ? "none" : `1px solid ${TAB_COLOR}40`, zIndex: -1 }}
+                          transition={{ type: "spring", stiffness: 420, damping: 32 }}
                         />
                       )}
-                      <span className="relative z-10">{label}</span>
-                    </button>
+                      {label}
+                    </motion.button>
                   );
                 })}
               </div>
+
+              {/* Limpiar filtro */}
+              <AnimatePresence>
+                {filtro !== "todos" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                  >
+                    <IconButton variant="surface" size="sm" label="Limpiar filtro" onClick={() => setFiltro("todos")}>
+                      <X size={14} strokeWidth={2.5} />
+                    </IconButton>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex-1" />
               <Button variant="primary" size="md" onClick={() => { setEditando(null); setModalAbierto(true); }}>
-                <Plus size={14} /> Crear evento
+                <Plus size={16} strokeWidth={2.5} /> Crear evento
               </Button>
             </div>
+
+            {/* Contador de resultados — fuera de la fila para no desalinear */}
+            <AnimatePresence>
+              {(search || filtro !== "todos") && eventos.length > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                  className="text-xs font-medium hidden sm:block"
+                  style={{ color: "var(--texto-muted)" }}
+                >
+                  {filtrados.length === 0 ? "Sin resultados" : `${filtrados.length} evento${filtrados.length !== 1 ? "s" : ""}`}
+                </motion.p>
+              )}
+            </AnimatePresence>
 
             {/* Móvil */}
             <div className="flex flex-col gap-2 sm:hidden">
               <div className="flex gap-2">
-                {searchInput("Buscar…")}
+                <div className="relative flex-1">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
+                    <Search size={15} strokeWidth={2} />
+                  </span>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar…"
+                    className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none"
+                    style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: search ? "2.2rem" : "14px" }} />
+                  {search && (
+                    <button onClick={() => setSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
+                      style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+                      <X size={13} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
                 <Button variant="primary" size="md" onClick={() => { setEditando(null); setModalAbierto(true); }}>
-                  <Plus size={14} />
+                  <Plus size={16} strokeWidth={2.5} /> Añadir
                 </Button>
               </div>
               {/* Dropdown filtro */}
@@ -399,22 +485,13 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
                 <>
                   <div className="fixed inset-0 z-[9998]" onClick={() => setDropOpen(false)} />
                   <div className="fixed z-[9999] rounded-xl overflow-hidden"
-                    style={{
-                      top: dropPos.top, left: dropPos.left,
-                      minWidth: Math.max(dropPos.width, 180),
-                      background: "var(--blanco)",
-                      border: "1px solid var(--gris-borde)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
-                    }}>
+                    style={{ top: dropPos.top, left: dropPos.left, minWidth: Math.max(dropPos.width, 180), background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 8px 24px rgba(0,0,0,0.13)" }}>
                     {FILTROS.map(opt => {
                       const sel = filtro === opt.id;
                       return (
                         <button key={opt.id} onClick={() => { setFiltro(opt.id); setDropOpen(false); }}
                           className="flex items-center w-full px-4 py-2.5 text-sm font-semibold cursor-pointer text-left"
-                          style={{
-                            color: sel ? TAB_COLOR : "var(--texto-primario)",
-                            background: sel ? `${TAB_COLOR}10` : "transparent",
-                          }}
+                          style={{ color: sel ? TAB_COLOR : "var(--texto-primario)", background: sel ? `${TAB_COLOR}10` : "transparent" }}
                           onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = "var(--gris-pagina)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = sel ? `${TAB_COLOR}10` : "transparent"; }}
                         >
@@ -455,41 +532,45 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
         </div>
 
       ) : filtrados.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-16 text-center gap-4">
-          <div className="flex items-center justify-center rounded-full"
-            style={{ width: 72, height: 72, background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
-            {search ? <Search size={28} strokeWidth={1.4} /> : <Calendar size={28} strokeWidth={1.4} />}
+        <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
+          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+            style={{ background: "rgba(15,118,110,0.08)" }}>
+            {search
+              ? <Search size={28} strokeWidth={1.5} style={{ color: TAB_COLOR, opacity: 0.7 }} />
+              : <Calendar size={28} strokeWidth={1.5} style={{ color: TAB_COLOR, opacity: 0.7 }} />}
           </div>
-          <div>
-            <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>
-              {search ? "Sin resultados" : "Todavía no hay eventos"}
-            </p>
-            <p className="text-sm" style={{ color: "var(--texto-muted)", maxWidth: 320, margin: "0 auto" }}>
-              {search
-                ? <>No hay eventos que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{search}"</span></>
-                : "Crea el primer evento para que los empleados puedan verlo."}
-            </p>
-          </div>
+          <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>
+            {search ? "Sin resultados" : "Todavía no hay eventos"}
+          </p>
+          <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>
+            {search
+              ? <>No hay eventos que coincidan con <span className="font-semibold" style={{ color: "var(--texto-primario)" }}>"{search}"</span></>
+              : "Crea el primer evento para que los empleados puedan verlo"}
+          </p>
           {search && (
             <button onClick={() => setSearch("")}
-              className="text-sm font-semibold px-5 py-2.5 rounded-xl cursor-pointer"
-              style={{ background: TAB_COLOR, color: "white" }}>
+              className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+              style={{ background: "rgba(15,118,110,0.08)", color: TAB_COLOR, border: `1.5px solid rgba(15,118,110,0.20)` }}>
               Ver todos
             </button>
           )}
         </div>
 
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          <AnimatePresence initial={false}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={filtro + "|" + search}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.18, ease: "easeOut" } }}
+            exit={{ opacity: 0, transition: { duration: 0.12, ease: "easeIn" } }}
+          >
             {filtrados.map((ev, idx) => (
               <motion.div
                 key={ev.eventoId}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.2, ease: "easeOut", delay: idx * 0.03 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.26, ease: [0.16, 1, 0.3, 1], delay: idx * 0.04 } }}
               >
                 <EventoCard
                   ev={ev}
@@ -498,8 +579,8 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
                 />
               </motion.div>
             ))}
-          </AnimatePresence>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       )}
 
       {/* ── Modal crear/editar ── */}

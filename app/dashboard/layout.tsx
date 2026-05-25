@@ -2,6 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+
+// Atajo oculto: Ctrl+Shift+P → abre la página de presentación
+function useShowcaseShortcut() {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "P") {
+        e.preventDefault();
+        window.open("/showcase", "_blank");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+}
 import { useAuth } from "@/context/AuthContext";
 import { API_URL, apiFetch } from "@/lib/api";
 import Header from "@/components/Header";
@@ -9,6 +23,7 @@ import ChatbotIA from "@/components/ui/ChatbotIA";
 import AppTutorial from "@/components/tutorial/AppTutorial";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  useShowcaseShortcut();
   const { usuario, guardarUsuario } = useAuth();
   const [verificando, setVerificando] = useState(true);
   const router = useRouter();

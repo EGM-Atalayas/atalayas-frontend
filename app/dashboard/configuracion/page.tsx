@@ -393,6 +393,20 @@ export default function ConfiguracionPage() {
 
         </div>
       </div>
+
+      {/* Enlace oculto al showcase — solo visible para el equipo */}
+      <div className="flex justify-center pb-8">
+        <a
+          href="/showcase"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: "0.65rem", color: "var(--gris-borde)", letterSpacing: "0.05em", textDecoration: "none", opacity: 0.4, transition: "opacity 0.2s" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.4")}
+        >
+          v1.0.0
+        </a>
+      </div>
     </div>
   );
 }
