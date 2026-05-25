@@ -702,8 +702,48 @@ export default function CrearModuloPage() {
       <div className="px-4 md:px-8 lg:px-12 py-6 md:py-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6">
 
+          {/* ══ SIDEBAR — Navegación entre tipos de creación ══ */}
+          <aside className="lg:order-2 lg:sticky lg:top-24 self-start">
+            <div className="flex lg:flex-col gap-2 rounded-2xl p-3"
+              style={{ background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
+              {[
+                { key: "ia" as VistaActiva, label: "Asistente IA", desc: "Genera contenido con IA", icon: <Sparkles className="w-5 h-5" />, gradient: "linear-gradient(135deg, #6B21A8 0%, #7C3AED 100%)" },
+                { key: "editor" as VistaActiva, label: "Editor de páginas", desc: "Crea y organiza páginas", icon: <SquarePen className="w-5 h-5" />, gradient: "linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)" },
+                { key: "bienvenida" as VistaActiva, label: "Plantilla bienvenida", desc: "Onboarding inicial", icon: <Shield className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)" },
+                { key: "config" as VistaActiva, label: "Configuración", desc: "Datos del módulo", icon: <Settings className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0F766E 0%, #06B6D4 100%)" },
+              ].map((it) => {
+                const sel = vistaActiva === it.key;
+                return (
+                  <button key={it.key} type="button" onClick={() => setVistaActiva(it.key)}
+                    className="group relative flex-1 lg:flex-none flex lg:flex-row flex-col items-center lg:items-stretch gap-2 lg:gap-3 px-3 py-3 rounded-xl text-left transition-all overflow-hidden"
+                    style={{
+                      background: sel ? it.gradient : "transparent",
+                      color: sel ? "#fff" : "#374151",
+                      boxShadow: sel ? "0 8px 20px -8px rgba(0,0,0,0.25)" : "none",
+                    }}
+                    onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "#f9fafb"; }}
+                    onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{
+                        background: sel ? "rgba(255,255,255,0.22)" : "#f3f4f6",
+                        color: sel ? "#fff" : "#6b7280",
+                        backdropFilter: sel ? "blur(6px)" : undefined,
+                      }}>
+                      {it.icon}
+                    </div>
+                    <div className="hidden lg:block flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight">{it.label}</p>
+                      <p className="text-[11px] mt-0.5 leading-tight" style={{ color: sel ? "rgba(255,255,255,0.85)" : "#9ca3af" }}>{it.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
           {/* ══ COLUMNA PRINCIPAL — contenido según vistaActiva ══ */}
-          <div className="flex flex-col gap-6 min-w-0">
+          <div className="flex flex-col gap-6 min-w-0 lg:order-1">
 
           {/* ══ VISTA: CONFIGURACIÓN ══ */}
           {vistaActiva === "config" && (
@@ -1404,46 +1444,6 @@ export default function CrearModuloPage() {
 
           </div>
           {/* ══ FIN COLUMNA PRINCIPAL ══ */}
-
-          {/* ══ SIDEBAR DERECHO — Navegación vertical ══ */}
-          <aside className="lg:sticky lg:top-24 self-start">
-            <div className="flex lg:flex-col gap-2 rounded-2xl p-3"
-              style={{ background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
-              {[
-                { key: "ia" as VistaActiva, label: "Asistente IA", desc: "Genera contenido con IA", icon: <Sparkles className="w-5 h-5" />, gradient: "linear-gradient(135deg, #6B21A8 0%, #7C3AED 100%)" },
-                { key: "editor" as VistaActiva, label: "Editor de páginas", desc: "Crea y organiza páginas", icon: <SquarePen className="w-5 h-5" />, gradient: "linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)" },
-                { key: "bienvenida" as VistaActiva, label: "Plantilla bienvenida", desc: "Onboarding inicial", icon: <Shield className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)" },
-                { key: "config" as VistaActiva, label: "Configuración", desc: "Datos del módulo", icon: <Settings className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0F766E 0%, #06B6D4 100%)" },
-              ].map((it) => {
-                const sel = vistaActiva === it.key;
-                return (
-                  <button key={it.key} type="button" onClick={() => setVistaActiva(it.key)}
-                    className="group relative flex-1 lg:flex-none flex lg:flex-row flex-col items-center lg:items-stretch gap-2 lg:gap-3 px-3 py-3 rounded-xl text-left transition-all overflow-hidden"
-                    style={{
-                      background: sel ? it.gradient : "transparent",
-                      color: sel ? "#fff" : "#374151",
-                      boxShadow: sel ? "0 8px 20px -8px rgba(0,0,0,0.25)" : "none",
-                    }}
-                    onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "#f9fafb"; }}
-                    onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{
-                        background: sel ? "rgba(255,255,255,0.22)" : "#f3f4f6",
-                        color: sel ? "#fff" : "#6b7280",
-                        backdropFilter: sel ? "blur(6px)" : undefined,
-                      }}>
-                      {it.icon}
-                    </div>
-                    <div className="hidden lg:block flex-1 min-w-0">
-                      <p className="text-sm font-bold leading-tight">{it.label}</p>
-                      <p className="text-[11px] mt-0.5 leading-tight" style={{ color: sel ? "rgba(255,255,255,0.85)" : "#9ca3af" }}>{it.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
 
         </div>
       </div>
