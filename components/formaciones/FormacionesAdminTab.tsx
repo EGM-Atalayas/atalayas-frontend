@@ -141,7 +141,7 @@ export function FormacionesAdminTab({
                 }`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => {
               for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -151,7 +151,7 @@ export function FormacionesAdminTab({
               queryClient.invalidateQueries({ queryKey: QK.modulos(empresaId) });
               onToast("Progreso de admin reiniciado");
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
             style={{
               background: "var(--blanco)",
               color: "var(--texto-muted)",
@@ -170,7 +170,7 @@ export function FormacionesAdminTab({
           </button>
           <button
             onClick={() => router.push("/dashboard/admin/modulos/crear")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
             style={{ background: "var(--azul-egm)", color: "var(--blanco)" }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.background = "var(--azul-egm-hover)")
@@ -331,7 +331,7 @@ export function FormacionesAdminTab({
 
                   {/* Actions */}
                   <div
-                    className="flex items-center justify-end gap-2 mt-4 pt-3"
+                    className="flex items-center justify-end gap-1.5 sm:gap-2 mt-4 pt-3 flex-wrap"
                     style={{ borderTop: "1px solid var(--gris-borde)" }}
                   >
                     {f.empresaId !== null ? (
@@ -340,7 +340,7 @@ export function FormacionesAdminTab({
                           onClick={() =>
                             router.push(`/dashboard/formacion/${f.moduloId}`)
                           }
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
                           style={{
                             background: "var(--verde-oliva-light)",
                             color: "var(--verde-oliva)",
@@ -350,7 +350,7 @@ export function FormacionesAdminTab({
                         </button>
                         <button
                           onClick={() => handleEditModulo(f)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
                           style={{
                             background: "var(--azul-egm-light)",
                             color: "var(--azul-egm)",
@@ -360,14 +360,14 @@ export function FormacionesAdminTab({
                         </button>
                         <button
                           onClick={() => handleDesactivarModulo(f)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
                           style={{ background: "#fef9c3", color: "#854d0e" }}
                         >
                           {f.activo ? "Desactivar" : "Activar"}
                         </button>
                         <button
                           onClick={() => handleEliminarModulo(f.moduloId, f.nombre)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
                           style={{
                             background: "var(--error-light)",
                             color: "var(--error)",

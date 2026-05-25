@@ -1258,19 +1258,19 @@ export default function CrearModuloPage() {
             </div>
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
+                className="px-3 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
                 style={{ color: "#6b7280", border: "1px solid #e5e7eb" }}>
                 Cancelar
               </button>
               <button type="button" onClick={() => guardarModulo({ comoBorrador: true })}
                 disabled={guardando}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ color: "#0F766E", border: "1.5px solid #67e8f9", background: "#ecfeff" }}>
                 Guardar como borrador
               </button>
               <button type="button" onClick={() => guardarModulo()}
                 disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                 style={{
                   background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#f3f4f6" : "#4a7c59",
                   color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#9ca3af" : "#fff",
@@ -1306,7 +1306,7 @@ export default function CrearModuloPage() {
                 onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4"
                   style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg,#faf5ff,#f3e8ff)" }}>
-                  <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }}>
                       <Sparkles size={18} />
                     </div>
