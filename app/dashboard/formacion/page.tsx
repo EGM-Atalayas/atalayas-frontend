@@ -544,8 +544,8 @@ export default function FormacionPage() {
           {/* ── Grid de módulos (2 columnas estilo curso) ──────────────── */}
           {modulosFiltrados.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {modulosFiltrados.map((m) => (
-                <CourseCard key={m.moduloId} m={m} isAdmin={isAdmin} router={router} />
+              {modulosFiltrados.map((m, idx) => (
+                <CourseCard key={m.moduloId} m={m} idx={idx} isAdmin={isAdmin} router={router} />
               ))}
             </div>
           )}
