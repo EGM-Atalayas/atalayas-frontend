@@ -25,6 +25,16 @@ interface GuiaSubStep {
   selector?: string;
   /** Label del nav del header (legacy) */
   navLabel?: string;
+  /** Ajuste extra al rect del highlight: { top?, bottom?, left?, right? } en px */
+  focusAdjust?: { top?: number; bottom?: number; left?: number; right?: number };
+  /** scrollIntoView block */
+  scrollBlock?: ScrollLogicalPosition;
+  /** Píxeles extra para desplazar el scroll hacia abajo (útil si el header fijo tapa contenido) */
+  scrollOffset?: number;
+  /** Índice (0-based) del tab de administración a clickar al avanzar a este sub-paso */
+  tabIndex?: number;
+  /** Al activar este sub-paso, abre el chatbot automáticamente */
+  openChatbot?: boolean;
 }
 
 interface GuiaStep {
@@ -72,13 +82,16 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
     title: "Formación",
     subSteps: [
       {
-        desc: 'Aquí tienes tu programa de onboarding. Cada módulo de incorporación muestra su barra de progreso para que sepas cómo vas.',
+        desc: 'Aquí tienes tu programa de formación. Arriba el onboarding con los módulos de incorporación y su progreso. Más abajo, la formación continua con todos los cursos disponibles.',
         navLabel: "Formación",
-        selector: "[class*='onboarding'], [class*='incorporacion']",
       },
       {
-        desc: 'Más abajo está la formación continua con todos los cursos disponibles. Cada curso incluye imagen, duración, descripción y un botón para empezar, continuar o descargar el certificado.',
-        selector: "[class*='continua'], [class*='cursos'], section",
+        desc: '"Onboarding" son los módulos de incorporación a tu empresa. Cada tarjeta muestra el nombre del curso, tu progreso y un botón para continuar o descargar el certificado.',
+        selector: "#onboarding",
+      },
+      {
+        desc: '"Formación continua" agrupa todos los cursos disponibles. Cada curso incluye imagen, duración, descripción y un botón para empezar, continuar o descargar el certificado. Filtra por tipo y estado.',
+        selector: "section#onboarding + div.mb-10, div[class*='lg:grid-cols-2'][class*='gap-5']",
       },
       {
         desc: 'Puedes buscar cursos por nombre, filtrar por tipo de módulo o por estado (pendiente, en progreso, completado) para encontrar lo que necesites rápidamente.',
@@ -168,6 +181,11 @@ const SUB_STEPS_EMPLEADO: GuiaStep[] = [
         desc: 'El buzón de sugerencias te permite enviar tus ideas, quejas o propuestas directamente a EGM Atalayas. Escribe tu mensaje y pulsa "Enviar".',
         selector: "div[class*='flex-col'][class*='gap-4']",
       },
+      {
+        desc: 'Por último, conoce a AtalaIA, nuestro asistente inteligente. Puedes hacerle cualquier consulta sobre la plataforma, tus cursos o lo que necesites. Está disponible en toda la plataforma.',
+        openChatbot: true,
+        selector: ".chatbot-messages",
+      },
     ],
     isLast: true,
   },
@@ -184,12 +202,27 @@ const SUB_STEPS_ADMIN: GuiaStep[] = [
         navLabel: "Inicio",
       },
       {
-        desc: 'Tienes acceso rápido a las acciones más comunes: añadir empleado, gestionar módulos, crear un nuevo módulo o publicar un anuncio.',
-        selector: "[class*='acceso'], [class*='quick'], [class*='action']",
+        desc: '"Resumen del equipo" muestra las métricas clave: el progreso medio de formación de todos tus empleados, el número de empleados activos, los que aún no tienen acceso, y los módulos publicados con su progreso.',
+        selector: "section:has(div[class*='lg:grid-cols-6'][class*='lg:grid-rows-2'])",
       },
       {
-        desc: 'En la parte inferior, los últimos comunicados publicados para que no te pierdas nada.',
-        selector: "[class*='comunicado'], [class*='anuncio'], section",
+        desc: '"Estado de formación" presenta hasta 4 módulos formativos con su progreso en gráficos de anillo. Desde aquí puedes ir a "Ver módulos" o consultar "Estadísticas detalladas".',
+        selector: "section:has(div[class*='lg:grid-cols-4'])",
+      },
+      {
+        desc: '"Acciones rápidas" te da acceso directo a las tareas más comunes: añadir un empleado, gestionar módulos formativos, crear un nuevo módulo o publicar un anuncio para toda la plantilla.',
+        selector: "div[class*='lg:col-span-2']:has(div[class*='grid-cols-2'])",
+        scrollOffset: 100,
+        focusAdjust: { bottom: 10 },
+      },
+      {
+        desc: '"Últimos comunicados" es un timeline con los anuncios más recientes de EGM Atalayas y de tu empresa. Cada comunicación muestra su fuente, fecha, título y un extracto del contenido.',
+        selector: "div[class*='lg:col-span-3']:has(div[class*='pl-8'])",
+        scrollOffset: 100,
+      },
+      {
+        desc: '"Servicios" del parque empresarial incluye coche compartido, autobús lanzadera, aparcamiento, guardería y descuentos. Pulsa en cada icono para acceder a más información.',
+        selector: "section[class*='-mx-10']",
       },
     ],
     nextNavLabel: "Administración",
@@ -205,12 +238,39 @@ const SUB_STEPS_ADMIN: GuiaStep[] = [
         navLabel: "Administración",
       },
       {
-        desc: 'En Empleados puedes gestionar tu plantilla. En Incidencias puedes reportar y hacer seguimiento. Y en Anuncios puedes crear y publicar comunicados.',
-        selector: "[class*='tab'], [role='tab'], [class*='pestana']",
+        desc: 'Empleados: gestiona tu plantilla al completo. Añade, edita o desactiva empleados, filtra por departamento y estado, y consulta quién tiene acceso activo o invitación pendiente.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(1), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 0,
       },
       {
-        desc: 'En Módulos formativos puedes crear cursos. En Documentos puedes subir y asignar archivos. Y en Estadísticas puedes exportar informes con filtros por departamento y periodo.',
-        selector: "[class*='modulo'], [class*='documento'], [class*='estadistica']",
+        desc: 'Incidencias: reporta problemas y haz seguimiento. Cada incidencia muestra estado, prioridad, asignado y fechas. Puedes filtrar por estado y prioridad.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(2), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 1,
+      },
+      {
+        desc: 'Anuncios: crea y publica comunicados para toda tu plantilla. Los borradores pendientes se muestran en un panel amarillo. Filtra por fuente, busca por texto y ordena por fecha.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(3), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 2,
+      },
+      {
+        desc: 'Eventos: organiza jornadas, networking y actividades para tu empresa. Cada evento incluye fecha, descripción y posibilidad de inscripción.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(4), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 3,
+      },
+      {
+        desc: 'Módulos formativos: crea y gestiona los cursos de formación de tu empresa. Edita módulos existentes, supervisa el progreso y consulta estadísticas por módulo.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(5), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 4,
+      },
+      {
+        desc: 'Documentos: sube y asigna archivos a tus empleados. Puedes filtrar por departamento, buscar por nombre y gestionar documentos individuales o masivos.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(6), div[class*='px-10'][class*='pt-10'] > :nth-child(3), div[class*='px-10'][class*='pt-10'] > div[style*='display']:not([style*='display: none'])",
+        tabIndex: 5,
+      },
+      {
+        desc: 'Estadísticas: exporta informes con KPIs de tu empresa: total empleados, altas y bajas, tasa de rotación, completitud de formación y progreso por módulo. Filtra por departamento, estado y periodo.',
+        selector: "div[class*='mb-8'] > div[class*='gap-1'] > button:nth-child(7), div[class*='px-10'][class*='pt-10'] > :nth-child(3)",
+        tabIndex: 6,
       },
     ],
     nextNavLabel: "Formación",
@@ -229,6 +289,10 @@ const SUB_STEPS_ADMIN: GuiaStep[] = [
         desc: 'La sección de onboarding muestra el programa de incorporación, y la formación continua incluye todos los cursos disponibles con filtros por tipo y estado.',
         selector: "[class*='onboarding'], [class*='cursos'], section",
       },
+      {
+        desc: '"Formación continua" agrupa todos los cursos disponibles para tu equipo. Cada curso muestra imagen, duración, descripción y un botón para continuar o descargar el certificado. Puedes filtrar por tipo de módulo y estado.',
+        selector: "section#onboarding + div.mb-10, div[class*='lg:grid-cols-2'][class*='gap-5']",
+      },
     ],
     nextNavLabel: "Comunicación",
     nextRoute: "/dashboard/comunicacion",
@@ -243,8 +307,8 @@ const SUB_STEPS_ADMIN: GuiaStep[] = [
         navLabel: "Comunicación",
       },
       {
-        desc: 'Puedes filtrar por fuente (EGM o tu empresa), buscar por texto y ordenar por fecha. Los borradores pendientes aparecen en un panel amarillo destacado.',
-        selector: "[class*='filter'], [class*='filtro'], input",
+        desc: 'Toda la sección de comunicación. Las tarjetas destacadas con imagen muestran las publicaciones principales. Más abajo, los comunicados ordenados por fecha con filtros por fuente (EGM o tu empresa), buscador por texto y ordenación. Los borradores pendientes aparecen en un panel amarillo.',
+        selector: "div[class*='px-6'][class*='pt-8'][class*='pb-20']",
       },
     ],
     nextNavLabel: "Comunidad",
@@ -290,8 +354,13 @@ const SUB_STEPS_ADMIN: GuiaStep[] = [
         navLabel: "Tu perfil",
       },
       {
-        desc: 'También tienes acceso al buzón de sugerencias para enviar tus ideas.',
-        selector: "[class*='sugerencia'], [class*='suggestion'], form",
+        desc: 'El "Buzón de sugerencias" te permite enviar tus ideas, quejas o propuestas directamente a EGM Atalayas. Escribe tu mensaje (máx. 500 caracteres) y pulsa "Enviar".',
+        selector: "div:has(> .buzon-card)",
+      },
+      {
+        desc: 'Por último, conoce a AtalaIA, nuestro asistente inteligente. Puedes hacerle cualquier consulta sobre la plataforma, tus empleados, formación o lo que necesites. Está disponible en toda la plataforma.',
+        openChatbot: true,
+        selector: ".chatbot-messages",
       },
     ],
     isLast: true,
@@ -354,6 +423,11 @@ const SUB_STEPS_SUPERADMIN: GuiaStep[] = [
       {
         desc: 'Supervisa la comunidad global. Aquí todas las empresas pueden acceder a Eventos, Servicios del parque empresarial y Ventajas y descuentos.',
         navLabel: "Comunidad",
+      },
+      {
+        desc: 'Por último, conoce a AtalaIA, nuestro asistente inteligente. Puedes hacerle cualquier consulta sobre la plataforma, empresas, usuarios o lo que necesites. Está disponible en toda la plataforma.',
+        openChatbot: true,
+        selector: ".chatbot-messages",
       },
     ],
     isLast: true,
@@ -424,6 +498,7 @@ export default function AppTutorial() {
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrolledKeyRef = useRef<string>("");
   const lsKey = userId ? `${LS_KEY_PREFIX}${userId}` : null;
 
   useEffect(() => {
@@ -496,12 +571,18 @@ export default function AppTutorial() {
     setTargetRect(r);
     setTooltipSide(window.innerHeight - r.bottom < 240 ? "top" : "bottom");
 
+    const PAD = 10;
+    const adj = subStep.focusAdjust ?? {};
+    const padL = PAD + (adj.left ?? 0);
+    const padR = PAD + (adj.right ?? 0);
+    const padT = PAD + (adj.top ?? 0);
+    const padB = PAD + (adj.bottom ?? 0);
     setHighlightStyle({
       position: "fixed",
-      left: r.left,
-      top: r.top,
-      width: r.width,
-      height: r.height,
+      left: r.left - padL,
+      top: r.top - padT,
+      width: r.width + padL + padR,
+      height: r.height + padT + padB,
       borderRadius: 8,
       boxShadow: "0 0 0 9999px rgba(0,0,0,0.55), 0 0 0 2px rgba(37,99,235,0.5), 0 0 24px rgba(37,99,235,0.3)",
       pointerEvents: "none",
@@ -509,8 +590,30 @@ export default function AppTutorial() {
       transition: "all 0.35s ease",
     });
 
-    elements[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!subStep.openChatbot) {
+      const stepKey = `${stepIdx}-${subStepIdx}`;
+      if (scrolledKeyRef.current !== stepKey) {
+        scrolledKeyRef.current = stepKey;
+        elements[0].scrollIntoView({ behavior: "smooth", block: subStep.scrollBlock ?? "center" });
+        const offset = subStep.scrollOffset;
+        if (offset) {
+          setTimeout(() => window.scrollBy({ top: offset, behavior: "smooth" }), 100);
+        }
+      }
+    }
   }, [visible, active, stepIdx, subStepIdx, steps]);
+
+  useEffect(() => {
+    const cur = steps[stepIdx];
+    if (!cur) return;
+    const subStep = cur.subSteps[subStepIdx];
+    if (!subStep?.openChatbot) return;
+    const timer = setTimeout(() => {
+      const btn = document.querySelector<HTMLElement>("[data-chatbot-fab] button");
+      if (btn) btn.click();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [stepIdx, subStepIdx, steps]);
 
   useEffect(() => {
     measure();
@@ -531,7 +634,16 @@ export default function AppTutorial() {
     const cur = steps[stepIdx];
     if (!cur) return;
     if (subStepIdx < cur.subSteps.length - 1) {
-      setSubStepIdx((prev) => prev + 1);
+      const nextIdx = subStepIdx + 1;
+      setSubStepIdx(nextIdx);
+      const nextSubStep = cur.subSteps[nextIdx];
+      if (nextSubStep.tabIndex !== undefined) {
+        const tabBar = document.querySelector("div[class*='mb-8'] > div[class*='gap-1']");
+        if (tabBar) {
+          const btn = tabBar.children[nextSubStep.tabIndex] as HTMLElement;
+          btn?.click();
+        }
+      }
     } else {
       if (cur.isLast) {
         if (lsKey) localStorage.setItem(lsKey, "COMPLETED");
