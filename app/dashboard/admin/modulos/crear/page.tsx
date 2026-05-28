@@ -526,7 +526,7 @@ export default function CrearModuloPage() {
           descripcion: descripcion.trim(),
           tipoModulo: mapTipoToBackend(categoria),
           activo: activoEnvio,
-          empresaId: usuario?.empresaId ?? null,
+          empresaId: editId && moduloEditando ? moduloEditando.empresaId : (usuario?.empresaId ?? null),
           idioma,
           duracion,
           audiencia,
@@ -1434,7 +1434,10 @@ export default function CrearModuloPage() {
                   style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.25)" }}>
                   Ver módulos
                 </button>
-                <button onClick={resetear} className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
+                <button onClick={() => {
+                  if (editId) { router.push("/dashboard/admin/modulos/crear"); }
+                  else { resetear(); }
+                }} className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{ background: "#fff", color: "#2d7d4e" }}>
                   Crear otro
                 </button>

@@ -334,60 +334,45 @@ export function FormacionesAdminTab({
                     className="flex items-center justify-end gap-1.5 sm:gap-2 mt-4 pt-3 flex-wrap"
                     style={{ borderTop: "1px solid var(--gris-borde)" }}
                   >
-                    {f.empresaId !== null ? (
-                      <>
-                        <button
-                          onClick={() =>
-                            router.push(`/dashboard/formacion/${f.moduloId}`)
-                          }
-                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
-                          style={{
-                            background: "var(--verde-oliva-light)",
-                            color: "var(--verde-oliva)",
-                          }}
-                        >
-                          Ver
-                        </button>
-                        <button
-                          onClick={() => handleEditModulo(f)}
-                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
-                          style={{
-                            background: "var(--azul-egm-light)",
-                            color: "var(--azul-egm)",
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDesactivarModulo(f)}
-                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
-                          style={{ background: "#fef9c3", color: "#854d0e" }}
-                        >
-                          {f.activo ? "Desactivar" : "Activar"}
-                        </button>
-                        <button
-                          onClick={() => handleEliminarModulo(f.moduloId, f.nombre)}
-                          className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
-                          style={{
-                            background: "var(--error-light)",
-                            color: "var(--error)",
-                          }}
-                        >
-                          Eliminar
-                        </button>
-                      </>
-                    ) : (
-                      <span
-                        className="text-xs font-medium px-2.5 py-1 rounded-lg"
-                        style={{
-                          background: "var(--gris-superficie)",
-                          color: "var(--texto-muted)",
-                          border: "1px solid var(--gris-borde)",
-                        }}
-                      >
-                        Solo lectura
-                      </span>
-                    )}
+                    <button
+                      onClick={() =>
+                        router.push(`/dashboard/formacion/${f.moduloId}`)
+                      }
+                      className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: "var(--verde-oliva-light)",
+                        color: "var(--verde-oliva)",
+                      }}
+                    >
+                      Ver
+                    </button>
+                    <button
+                      onClick={() => handleEditModulo(f)}
+                      className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: "var(--azul-egm-light)",
+                        color: "var(--azul-egm)",
+                      }}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDesactivarModulo(f)}
+                      className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{ background: "#fef9c3", color: "#854d0e" }}
+                    >
+                      {f.activo ? "Desactivar" : "Activar"}
+                    </button>
+                    <button
+                      onClick={() => handleEliminarModulo(f.moduloId, f.nombre)}
+                      className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: "var(--error-light)",
+                        color: "var(--error)",
+                      }}
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 </div>
               </div>
