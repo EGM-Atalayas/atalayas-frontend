@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, createContext, useContext } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { gsap } from "gsap";
-import { UserPlus, GraduationCap, Megaphone, BarChart3, FolderOpen, Sparkles, Bot, Users, ListTodo, Repeat, GitBranch, MessageSquare, KanbanSquare, Rocket } from "lucide-react";
+import { UserPlus, GraduationCap, Megaphone, BarChart3, FolderOpen, Sparkles, Bot, Users, ListTodo, Repeat, GitBranch, MessageSquare, KanbanSquare, Rocket, Smartphone } from "lucide-react";
 
 // ── Datos — rellenar antes del evento ────────────────────────────────────────
 const VIDEO_URL  = ""; // https://player.vimeo.com/video/XXXXXXX
@@ -11,23 +11,23 @@ const QR_URL     = "https://atalayas-egm.vercel.app";
 const FOTO_GRUPO = ""; // "/foto-equipo.jpg"
 
 const EQUIPO = [
-  { nombre: "Erik Vidal",       rol: "Full-stack", email: "erikvidalzemba@gmail.com",     foto: "/showcase/equipo/erik.jpeg" },
-  { nombre: "Francisco Baeza",  rol: "Frontend",   email: "franciscobaezasanchez@gmail.com", foto: "/showcase/equipo/fran.jpeg" },
-  { nombre: "Eloy Pérez",       rol: "Frontend",   email: "eloyperezinglada@gmail.com",   foto: "/showcase/equipo/eloy.jpeg" },
-  { nombre: "César Alonso",     rol: "Backend",    email: "cealonspont@gmail.com",        foto: "/showcase/equipo/cesar.jpeg" },
-  { nombre: "Martina Vargas",   rol: "Full-stack", email: "martinavargastroche06@gmail.com", foto: "/showcase/equipo/martina.jpeg" },
+  { nombre: "Erik Vidal",       rol: "Full-stack", desc: "El que conectó el front con el back sin que nada explotara",     email: "erikvidalzemba@gmail.com",        foto: "/showcase/equipo/erik.jpeg" },
+  { nombre: "Francisco Baeza",  rol: "Frontend",   desc: "Convirtió los diseños en pantallas que dan ganas de usar",       email: "franciscobaezasanchez@gmail.com", foto: "/showcase/equipo/fran.jpeg" },
+  { nombre: "Eloy Pérez",       rol: "Frontend",   desc: "El ojo crítico que no dejaba pasar nada feo en pantalla",        email: "eloyperezinglada@gmail.com",      foto: "/showcase/equipo/eloy.jpeg" },
+  { nombre: "Martina Vargas",   rol: "Full-stack", desc: "De las primeras en tirar código y de las últimas en rendirse",   email: "martinavargastroche06@gmail.com", foto: "/showcase/equipo/martina.jpeg" },
+  { nombre: "César Alonso",     rol: "Backend",    desc: "Hizo que los datos llegaran donde tenían que llegar, siempre",   email: "cealonspont@gmail.com",           foto: "/showcase/equipo/cesar.jpeg" },
 ];
 
-const TECNOLOGIAS: { nombre: string; rol: string; color: string; capa: "Frontend" | "Backend" | "Infra" | "IA"; logo?: string; logoSize?: number }[] = [
-  { nombre: "Next.js",      rol: "Framework UI",   color: "#FFFFFF", capa: "Frontend", logo: "/showcase/logos/nextjs.png" },
-  { nombre: "React",        rol: "Componentes",    color: "#61DAFB", capa: "Frontend", logo: "/showcase/logos/react.png" },
-  { nombre: "TypeScript",   rol: "Tipado seguro",  color: "#7DD3FC", capa: "Frontend", logo: "/showcase/logos/typescript.png", logoSize: 38 },
-  { nombre: "Tailwind",     rol: "Estilado",       color: "#06B6D4", capa: "Frontend", logo: "/showcase/logos/tailwind.png" },
-  { nombre: "Node.js",      rol: "Runtime backend",color: "#8CC84B", capa: "Backend", logo: "/showcase/logos/nodejs.png", logoSize: 38 },
-  { nombre: "PostgreSQL",   rol: "Base de datos",  color: "#A5B4FC", capa: "Backend", logo: "/showcase/logos/postgresql.png" },
-  { nombre: "Supabase",     rol: "Storage & Auth", color: "#3FCF8E", capa: "Infra",   logo: "/showcase/logos/supabase.png" },
-  { nombre: "Vercel",       rol: "Despliegue",     color: "#FFFFFF", capa: "Infra",   logo: "/showcase/logos/vercel.png" },
-  { nombre: "Claude IA",    rol: "Generación",     color: "#D97757", capa: "IA",      logo: "/showcase/logos/claude.png" },
+const TECNOLOGIAS: { nombre: string; rol: string; color: string; capa: "Frontend" | "Backend" | "Infra" | "IA"; logo?: string; logoSize?: number; logoBottom?: number; logoRight?: number }[] = [
+  { nombre: "Next.js",      rol: "La estructura de la web",     color: "#18181B", capa: "Frontend", logo: "/showcase/logos/nextjs.png" },
+  { nombre: "React",        rol: "Lo que ves en pantalla",      color: "#61DAFB", capa: "Frontend", logo: "/showcase/logos/react.png" },
+  { nombre: "TypeScript",   rol: "Código sin errores",          color: "#7DD3FC", capa: "Frontend", logo: "/showcase/logos/typescript.png", logoSize: 140, logoBottom: 0, logoRight: -5 },
+  { nombre: "Tailwind",     rol: "El diseño y los estilos",     color: "#06B6D4", capa: "Frontend", logo: "/showcase/logos/tailwind.png" },
+  { nombre: "Node.js",      rol: "El motor del servidor",       color: "#4ADE80", capa: "Backend", logo: "/showcase/logos/nodejs.png", logoSize: 110 },
+  { nombre: "PostgreSQL",   rol: "Donde se guardan los datos",  color: "#A5B4FC", capa: "Backend", logo: "/showcase/logos/postgresql.png" },
+  { nombre: "Supabase",     rol: "Archivos, accesos y más",     color: "#16803C", capa: "Infra",   logo: "/showcase/logos/supabase.png", logoSize: 95, logoBottom: 25 },
+  { nombre: "Vercel",       rol: "Publica la app en la nube",   color: "#475569", capa: "Infra",   logo: "/showcase/logos/vercel.png", logoSize: 150, logoBottom: -10 },
+  { nombre: "Claude IA",    rol: "Inteligencia artificial",     color: "#D97757", capa: "IA",      logo: "/showcase/logos/claude.png" },
 ];
 
 const NUMEROS = [
@@ -56,8 +56,8 @@ const BORDER = "rgba(255,255,255,0.12)";
 // Tema por slide — bg + accent vibrantes y variados
 const SLIDE_THEMES: { bg: string; accent: string }[] = [
   { bg: "#1E1B4B", accent: "#FFD166" }, // 0 — Portada · indigo nocturno + oro suave
-  { bg: "#2563EB", accent: "#FEF3C7" }, // 1 — Sobre Atalayas · azul vivo + cream
-  { bg: "#DB2777", accent: "#FEF3C7" }, // 2 — El problema · hot pink + cream
+  { bg: "#2563EB", accent: "#FEF08A" }, // 1 — Sobre Atalayas · azul vivo + amarillo pastel
+  { bg: "#FB345F", accent: "#FEF3C7" }, // 2 — El problema · rojo pastel + cream
   { bg: "#059669", accent: "#FEF9C3" }, // 3 — La solución · esmeralda + lemon cream
   { bg: "#06B6D4", accent: "#ECFEFF" }, // 4 — Demo · cian fresco + cyan claro
   { bg: "#6D28D9", accent: "#EDE9FE" }, // 5 — Tecnologías · violeta vivo + lavanda
@@ -139,77 +139,72 @@ function Slide2() {
   const sectores = ["Industria", "Logística", "Comercio", "Servicios técnicos", "Construcción"];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 gap-14">
-      <Label>Sobre Atalayas</Label>
+    <div className="flex flex-col items-center justify-center h-full px-8 gap-24">
+
 
       <motion.h2
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1 }}
+        style={{ fontSize: "clamp(4rem, 9.2vw, 8.2rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 0.95 }}
       >
-        Una <span style={{ color: accent }}>ciudad empresarial</span><br />
+        El <span style={{ color: accent }}>área empresarial</span><br />
         de referencia en Alicante
       </motion.h2>
 
       {/* Stats grandes */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 w-full max-w-7xl">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 w-full max-w-[85vw]">
         {stats.map((s, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + i * 0.08, duration: 0.55, ease: [0.22,1,0.36,1] }}
-            className="flex flex-col items-center justify-center py-12 px-5 rounded-3xl text-center"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+            className="flex flex-col items-center justify-center py-12 px-6 rounded-3xl text-center"
+            style={{ background: "rgba(255,255,255,0.08)", border: `1.5px solid rgba(255,255,255,0.22)` }}>
             <div className="flex items-baseline gap-1.5">
-              <span style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.6rem)", fontWeight: 900, color: accent, lineHeight: 0.95, letterSpacing: "-0.035em" }}>
+              <span style={{ fontSize: "clamp(3.6rem, 6.5vw, 6rem)", fontWeight: 900, color: "#FEF08A", lineHeight: 0.95, letterSpacing: "-0.035em" }}>
                 {s.valor}
               </span>
-              <span style={{ fontSize: "clamp(1.4rem, 2.2vw, 2rem)", fontWeight: 700, color: "rgba(255,255,255,0.55)" }}>
+              <span style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.4rem)", fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
                 {s.unidad}
               </span>
             </div>
-            <span style={{ fontSize: "clamp(0.95rem, 1.2vw, 1.1rem)", fontWeight: 600, color: MUTED, marginTop: 14, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ fontSize: "clamp(1.4rem, 1.7vw, 1.8rem)", fontWeight: 700, color: "rgba(255,255,255,0.9)", marginTop: 28, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
               {s.label}
             </span>
           </motion.div>
         ))}
       </div>
 
-      {/* Sectores como chips */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.5 }}
-        className="flex flex-wrap gap-3 justify-center">
-        {sectores.map((sec) => (
-          <span key={sec}
-            className="font-semibold px-5 py-2.5 rounded-full"
-            style={{ background: `${accent}1f`, color: accent, border: `1.5px solid ${accent}55`, fontSize: "clamp(0.95rem, 1.3vw, 1.15rem)" }}>
-            {sec}
-          </span>
-        ))}
-      </motion.div>
     </div>
   );
 }
 
 function Slide3() {
   const accent = useAccent();
+  // Todos los bocadillos con cola abajo
+  const tail = { bottom: -9, left: "30%", right: "auto", top: "auto" };
   const quejas = [
-    // Lado izquierdo — esparcidos
-    { txt: "Cada vez que entra alguien, empezamos de cero.",                       rot: -3, pos: { top: "3%",   left: "8%"  } },
-    { txt: "No sabemos si el empleado ha entendido los protocolos.",               rot: -2, pos: { top: "45%",  left: "0%"  } },
-    { txt: "Si alguien se va, perdemos conocimiento.",                             rot: -5, pos: { bottom: "4%", left: "14%" } },
-    // Lado derecho — esparcidos
-    { txt: "La formación depende de que alguien tenga tiempo.",                    rot:  4, pos: { top: "6%",   right: "12%" } },
-    { txt: "La documentación está en carpetas, emails o en la cabeza de alguien.", rot:  3, pos: { top: "42%",  right: "0%"  } },
-    { txt: "Comunicamos cosas importantes y no sabemos si llegan.",                rot:  5, pos: { bottom: "2%", right: "6%"  } },
+    // Arriba
+    // Arriba — 4 bocadillos en 2 filas escalonadas
+    { txt: "¿El nuevo ha leído el protocolo?",                          rot: -4, pos: { top: 50,  left: 50 },         w: 310, z: 4 },
+    { txt: "Cada vez que entra alguien nuevo empezamos desde cero",     rot: -1, pos: { top: 100, left: "27%" },      w: 330, z: 3 },
+    { txt: "Mandamos el aviso por email y la mitad no se enteró",       rot:  2, pos: { top: 50,  right: "27%" },     w: 320, z: 3 },
+    { txt: "Tenemos tres grupos de WhatsApp y ninguno funciona bien",   rot:  6, pos: { top: 98,  right: 50 },        w: 310, z: 4 },
+    // Laterales
+    { txt: "Ni sé quiénes son nuestros vecinos de edificio",            rot: -4, pos: { top: "38%", left: 50 },       w: 300, z: 2 },
+    { txt: "Nadie documentó cómo se hacen las cosas",                   rot:  5, pos: { top: "38%", right: 50 },      w: 305, z: 2 },
+    // Abajo
+    { txt: "¿Dónde pongo una incidencia del parking? Nadie lo sabe",   rot: -5, pos: { bottom: 50, left: 50 },        w: 310, z: 4 },
+    { txt: "Los eventos del área nos enteramos tarde o por casualidad", rot:  1, pos: { bottom: 100, left: "27%" },   w: 330, z: 3 },
+    { txt: "No sé si el empleado leyó el aviso",                        rot:  3, pos: { bottom: 50, right: "27%" },   w: 315, z: 3 },
+    { txt: "Si alguien se va nos llevamos el conocimiento con él",      rot:  5, pos: { bottom: 98, right: 50 },      w: 310, z: 4 },
   ];
 
   return (
     <div className="relative flex flex-col items-center justify-center h-full px-8 gap-8 overflow-hidden">
-      <Label>El problema</Label>
-
       <motion.h2
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3.2rem, 7.2vw, 5.6rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1, maxWidth: 1100, zIndex: 5 }}
+        style={{ fontSize: "clamp(4rem, 8.5vw, 7rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1.0, maxWidth: 1200, zIndex: 5 }}
       >
-        Lo que escuchamos de las<br />
-        <span style={{ color: accent }}>empresas del área</span>
+        Lo que frena a las<br />
+        <span style={{ color: "transparent", WebkitTextStroke: "3px #ffffff" }}>empresas del área</span>
       </motion.h2>
 
       {/* Bocadillos de queja flotando */}
@@ -219,29 +214,30 @@ function Slide3() {
           initial={{ opacity: 0, scale: 0.85, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.4 + i * 0.12, duration: 0.55, ease: [0.22,1,0.36,1] }}
-          className="absolute max-w-[260px] sm:max-w-[300px] px-6 py-4 rounded-2xl"
+          className="absolute px-6 py-5"
           style={{
             ...q.pos,
+            width: q.w,
+            zIndex: q.z,
             transform: `rotate(${q.rot}deg)`,
             background: "#fff",
-            color: "#0b2147",
-            boxShadow: "0 14px 40px -10px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.15)",
+            color: "#1a1a1a",
+            borderRadius: "1.8rem",
+            boxShadow: "0 20px 50px -10px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.12)",
             fontWeight: 600,
-            fontSize: "clamp(1.25rem, 1.9vw, 1.6rem)",
+            fontSize: "clamp(1.4rem, 1.8vw, 1.7rem)",
             lineHeight: 1.35,
           }}
         >
           {q.txt}
-          {/* Cola del bocadillo */}
+          {/* Cola abajo */}
           <span style={{
             position: "absolute",
-            bottom: -8,
-            left: q.rot > 0 ? "20%" : "auto",
-            right: q.rot > 0 ? "auto" : "20%",
+            ...tail,
             width: 16, height: 16,
             background: "#fff",
             transform: "rotate(45deg)",
-            boxShadow: "4px 4px 8px -4px rgba(0,0,0,0.15)",
+            boxShadow: "3px 3px 6px -3px rgba(0,0,0,0.10)",
           }} />
         </motion.div>
       ))}
@@ -362,74 +358,87 @@ function Slide5() {
 function Slide6() {
   const accent = useAccent();
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-8 gap-10 overflow-hidden">
-      <Label>El stack</Label>
+    <div className="relative flex flex-col items-center justify-center h-full px-10 gap-24 overflow-hidden"
+      style={{ background: "#7C3AED" }}>
 
       <motion.h2
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3rem, 6.6vw, 5.2rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1 }}
+        style={{ fontSize: "clamp(3.4rem, 7vw, 5.8rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1.1 }}
       >
-        Construido con <span style={{ color: accent }}>lo último</span>
+        El stack que{" "}
+        <span style={{
+          color: "#7C3AED",
+          background: "#ffffff",
+          borderRadius: "0.15em",
+          padding: "0.05em 0.25em",
+          display: "inline-block",
+        }}>
+          lo hace posible
+        </span>
       </motion.h2>
 
       {/* Grid grande de tecnologías */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-5 w-full max-w-6xl">
-        {TECNOLOGIAS.map(({ nombre, rol, color, capa, logo, logoSize }, i) => (
-          <motion.div
-            key={nombre}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.12 + i * 0.06, duration: 0.5, ease: [0.22,1,0.36,1] }}
-            className="relative rounded-2xl overflow-hidden p-6 sm:p-7 flex flex-col gap-3 transition-transform hover:-translate-y-1"
-            style={{
-              background: `linear-gradient(135deg, ${color}1f 0%, ${color}08 100%), ${CARD}`,
-              border: `1px solid ${color}40`,
-              minHeight: 190,
-            }}
-          >
-            {/* Halo de color en esquina */}
-            <div style={{
-              position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%",
-              background: `radial-gradient(circle, ${color}33 0%, transparent 70%)`,
-            }} />
+      <div className="grid grid-cols-3 gap-14 w-full px-16">
+        {TECNOLOGIAS.map(({ nombre, rol, color, capa, logo, logoSize, logoBottom, logoRight }, i) => {
+          const capaColor: Record<string, string> = {
+            Frontend: "#60A5FA", Backend: "#4ADE80", Infra: "#FB923C", IA: "#F472B6"
+          };
+          const cc = capaColor[capa] ?? "#fff";
+          return (
+            <motion.div
+              key={nombre}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.12 + i * 0.06, duration: 0.5, ease: [0.22,1,0.36,1] }}
+              className="relative rounded-3xl overflow-hidden flex flex-col gap-4 transition-transform hover:-translate-y-1"
+              style={{
+                background: `linear-gradient(145deg, ${color}58 0%, ${color}30 100%), rgba(255,255,255,0.08)`,
+                border: `1.5px solid rgba(255,255,255,0.15)`,
+                boxShadow: `0 6px 24px rgba(0,0,0,0.3)`,
+                minHeight: 175,
+                padding: "18px 22px 16px",
+              }}
+            >
+              {/* Logo de fondo — marca de agua */}
+              {logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logo} alt="" style={{
+                  position: "absolute", bottom: logoBottom ?? 10, right: logoRight ?? 14,
+                  width: logoSize ?? 110, height: logoSize ?? 110, objectFit: "contain",
+                  opacity: 0.65,
+                  filter: "brightness(0) invert(1)",
+                }} />
+              )}
 
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {logo && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={logo}
-                    alt={nombre}
-                    style={{
-                      width: logoSize ?? 28,
-                      height: logoSize ?? 28,
-                      objectFit: "contain",
-                      filter: `drop-shadow(0 0 6px rgba(255,255,255,0.6)) drop-shadow(0 2px 6px ${color}66)`,
-                    }}
-                  />
-                )}
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: `${color}cc`, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+              {/* Badge categoría */}
+              <div className="relative z-10">
+                <span style={{
+                  fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.2em",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.9)",
+                  background: "rgba(255,255,255,0.15)",
+                  padding: "4px 12px", borderRadius: "6px",
+                  display: "inline-block",
+                }}>
                   {capa}
                 </span>
               </div>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, boxShadow: `0 0 12px ${color}` }} />
-            </div>
-            <div className="relative z-10 mt-auto">
-              <p style={{
-                fontSize: "clamp(2rem, 3.2vw, 2.8rem)",
-                fontWeight: 900,
-                color,
-                letterSpacing: "-0.02em",
-                lineHeight: 1,
-              }}>
-                {nombre}
-              </p>
-              <p style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.6)", marginTop: 8, fontWeight: 500 }}>
-                {rol}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+
+              {/* Nombre + descripción */}
+              <div className="relative z-10 mt-auto flex flex-col gap-1.5">
+                <p style={{
+                  fontSize: "clamp(2.1rem, 3.1vw, 2.9rem)",
+                  fontWeight: 900, color: "#ffffff",
+                  letterSpacing: "-0.03em", lineHeight: 1,
+                }}>
+                  {nombre}
+                </p>
+                <p style={{ fontSize: "1.2rem", color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>
+                  {rol}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -558,20 +567,25 @@ function Slide8() {
 function Slide9() {
   const accent = useAccent();
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 gap-10">
+    <div className="relative flex flex-col items-center justify-center h-full px-8 gap-10 overflow-hidden" style={{ background: "#2563EB", paddingTop: "2%", paddingBottom: "2%" }}>
+      {/* Decorative circles — filled */}
+      <div style={{ position: "absolute", top: "-12%", left: "-8%", width: 420, height: 420, borderRadius: "50%", background: "rgba(255,255,255,0.07)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "-15%", right: "-6%", width: 500, height: 500, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+      {/* Decorative circles — border only */}
+      <div style={{ position: "absolute", bottom: "8%", left: "3%", width: 120, height: 120, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.12)", pointerEvents: "none" }} />
       <motion.h2
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3rem, 6.6vw, 5.2rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1 }}
+        style={{ fontSize: "clamp(5rem, 10vw, 8rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1 }}
       >
-        <span style={{ color: accent }}>Contacto</span>
+        <span style={{ color: "#fff" }}>Contacto</span>
       </motion.h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full" style={{ maxWidth: "98vw" }}>
-        {EQUIPO.map(({ nombre, email, foto }, i) => (
+      <div className="grid grid-cols-5 gap-10 w-full px-10">
+        {[1, 2, 0, 3, 4].map(idx => EQUIPO[idx]).map(({ nombre, email, foto }, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.07 * i, duration: 0.5 }}
             className="flex flex-col items-center gap-4 p-5 rounded-3xl text-center overflow-hidden"
             style={{ background: CARD, border: `1px solid ${BORDER}`, minHeight: 340 }}>
-            <div className="w-32 h-32 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+            <div className="w-44 h-44 rounded-full overflow-hidden flex items-center justify-center shrink-0"
               style={{ background: "rgba(27,63,126,0.5)", border: "3px solid rgba(255,255,255,0.15)" }}>
               {foto ? (
                 <img src={foto} alt={nombre} className="w-full h-full object-cover" />
@@ -582,15 +596,15 @@ function Slide9() {
               )}
             </div>
             <div className="w-full">
-              <p style={{ fontSize: "clamp(1.05rem, 1.3vw, 1.3rem)", fontWeight: 700, color: "#fff", lineHeight: 1.25, whiteSpace: "nowrap" }}>
+              <p style={{ fontSize: "clamp(1.6rem, 2.2vw, 2.2rem)", fontWeight: 700, color: "#fff", lineHeight: 1.25, whiteSpace: "nowrap" }}>
                 {nombre}
               </p>
               <p style={{
-                fontSize: "clamp(0.72rem, 0.85vw, 0.92rem)",
-                color: accent,
+                fontSize: "clamp(0.8rem, 0.95vw, 1rem)",
+                color: "#ffffff",
                 marginTop: 8,
-                lineHeight: 1.3,
-                whiteSpace: "nowrap",
+                lineHeight: 1.4,
+                wordBreak: "break-all",
                 letterSpacing: "-0.01em",
               }}>
                 {email}
@@ -599,10 +613,14 @@ function Slide9() {
           </motion.div>
         ))}
       </div>
-      <div className="flex flex-col items-center gap-2">
-        <div className="p-4 rounded-2xl" style={{ background: "#fff" }}>
+      <div className="flex flex-col items-center gap-8" style={{ marginTop: "4%" }}>
+        <div className="flex items-center gap-3">
+          <Smartphone size={36} color="#fff" strokeWidth={2.5} />
+          <p style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1 }}>Escanea para visitar la plataforma</p>
+        </div>
+        <div className="p-4 rounded-2xl" style={{ background: "#fff", boxShadow: "0 0 40px rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.2)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/showcase/qrcode.svg" alt="QR plataforma" width={160} height={160} />
+          <img src="/showcase/qrcode.svg" alt="QR plataforma" width={210} height={210} />
         </div>
         <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.04em" }}>{QR_URL}</p>
       </div>
@@ -631,126 +649,199 @@ function Label({ children }: { children: React.ReactNode }) {
 function SlideMetodologia() {
   const accent = useAccent();
   const pilares = [
-    { Icon: KanbanSquare,   titulo: "Sprints semanales",     desc: "Planificación, tareas claras y demos" },
-    { Icon: GitBranch,      titulo: "Git + Pull Requests",   desc: "Code review en cada cambio importante" },
-    { Icon: MessageSquare,  titulo: "Dailies + Discord",     desc: "Comunicación constante y sin fricción" },
-    { Icon: Rocket,         titulo: "Despliegue continuo",   desc: "Cada merge se ve online al instante" },
+    { Icon: KanbanSquare,  titulo: "Sprints semanales",   desc: "Tareas repartidas y objetivos claros cada semana", tool: "Notion",  toolColor: "#EC4899" },
+    { Icon: GitBranch,     titulo: "Git + Pull Requests", desc: "Nadie sube código sin revisión previa",            tool: "GitHub",  toolColor: "#94A3B8" },
+    { Icon: MessageSquare, titulo: "Reuniones + Discord", desc: "Canal siempre abierto para decidir al momento",    tool: "Discord", toolColor: "#818CF8" },
+    { Icon: Rocket,        titulo: "Despliegue continuo", desc: "Cada mejora aprobada se publica automáticamente",  tool: "Vercel",  toolColor: "#6EE7B7" },
+  ];
+  const retos = [
+    { Icon: Bot,      titulo: "IA inestable",  color: "#F87171" },
+    { Icon: Users,    titulo: "Comunicación",  color: "#FBBF24" },
+    { Icon: ListTodo, titulo: "Organización",  color: "#60A5FA" },
+    { Icon: Repeat,   titulo: "Reasignación",  color: "#A78BFA" },
   ];
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-8 gap-10 overflow-hidden">
-      <Label>Cómo trabajamos</Label>
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3.2rem, 7.2vw, 5.6rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1 }}
-      >
-        Metodología <span style={{ color: accent }}>real</span>
-      </motion.h2>
+    <div className="relative flex flex-col h-full px-12 py-10 gap-6 overflow-hidden">
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5 w-full max-w-6xl">
-        {pilares.map(({ Icon, titulo, desc }, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.15 + i * 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
-            className="relative rounded-2xl overflow-hidden p-6 sm:p-7 flex flex-col gap-4 transition-transform hover:-translate-y-1"
-            style={{
-              background: `linear-gradient(135deg, ${accent}1f 0%, ${accent}08 100%), ${CARD}`,
-              border: `1px solid ${accent}40`,
-              minHeight: 230,
-            }}
-          >
-            <div style={{
-              position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%",
-              background: `radial-gradient(circle, ${accent}33 0%, transparent 70%)`,
-            }} />
-            <div className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center"
-              style={{ background: `${accent}26`, color: accent, border: `1px solid ${accent}40` }}>
-              <Icon className="w-7 h-7" />
-            </div>
-            <div className="relative z-10 mt-auto">
-              <p style={{ fontSize: "clamp(1.2rem, 1.7vw, 1.45rem)", fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>
-                {titulo}
-              </p>
-              <p style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.7)", marginTop: 8, fontWeight: 500, lineHeight: 1.5 }}>
-                {desc}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+      {/* Título */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
+        className="flex flex-col items-center gap-2 shrink-0">
+        <h2 style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.4rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1 }}>
+          Así lo{" "}
+          <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: "0.15em", padding: "0.02em 0.22em", display: "inline-block" }}>
+            construimos
+          </span>
+        </h2>
+        <p style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.6)", fontWeight: 500, textAlign: "center" }}>
+          Un proyecto real desde cero, aprendiendo en cada paso
+        </p>
+      </motion.div>
+
+      {/* Layout 2 columnas */}
+      <div className="grid grid-cols-2 gap-6 w-full flex-1 min-h-0">
+
+        {/* Izquierda — 4 pilares en 2x2 */}
+        <div className="grid grid-cols-2 gap-4">
+          {pilares.map(({ Icon, titulo, desc, tool, toolColor }, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.09, duration: 0.5, ease: [0.22,1,0.36,1] }}
+              className="relative rounded-2xl flex flex-col justify-between overflow-hidden"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                border: `1.5px solid ${toolColor}55`,
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                padding: "20px 18px 18px",
+                boxShadow: `0 4px 24px rgba(0,0,0,0.25)`,
+              }}
+            >
+              {/* Icono */}
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `${toolColor}28`, color: toolColor }}>
+                <Icon className="w-6 h-6" />
+              </div>
+
+              {/* Texto */}
+              <div className="flex flex-col gap-1 mt-3">
+                <p style={{ fontSize: "1.05rem", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>{titulo}</p>
+                <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.4 }}>{desc}</p>
+              </div>
+
+              {/* Tool badge */}
+              <span style={{
+                position: "absolute", top: 14, right: 14,
+                fontSize: "0.6rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase",
+                color: toolColor, background: `${toolColor}20`,
+                padding: "3px 8px", borderRadius: "5px",
+              }}>{tool}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Derecha — el camino */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.7, ease: [0.22,1,0.36,1] }}
+          className="flex flex-col gap-4 rounded-3xl"
+          style={{ background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)", padding: "24px 24px 20px", boxShadow: "0 4px 32px rgba(0,0,0,0.2)" }}
+        >
+          {/* Título derecha */}
+          <p style={{ fontSize: "clamp(1.3rem, 2vw, 1.7rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.02em", lineHeight: 1.1, flexShrink: 0 }}>
+            El camino no fue{" "}
+            <span style={{ color: accent }}>recto</span>
+          </p>
+
+          {/* Dibujo */}
+          <div className="flex-1 flex items-center justify-center min-h-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/showcase/dibujo.png" alt="El camino" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+          </div>
+
+          {/* Retos */}
+          <div className="grid grid-cols-2 gap-2.5 shrink-0">
+            {retos.map(({ Icon, titulo, color }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.55 + i * 0.1, duration: 0.4, ease: [0.22,1,0.36,1] }}
+                className="flex items-center gap-2.5 rounded-xl"
+                style={{ background: `${color}18`, border: `1px solid ${color}40`, padding: "10px 14px" }}
+              >
+                <Icon className="w-4 h-4 shrink-0" style={{ color }} />
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>{titulo}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
       </div>
-
-      <motion.p
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.6 }}
-        style={{ fontSize: "clamp(1.05rem, 1.5vw, 1.3rem)", color: "rgba(255,255,255,0.6)", textAlign: "center", letterSpacing: "0.05em" }}
-      >
-        GitHub · Discord · Vercel · Render
-      </motion.p>
     </div>
   );
 }
 
-// ── NUEVA: El equipo — 5 personas detrás del proyecto ─────────────────────────
+// ── El equipo — 5 personas detrás del proyecto ───────────────────────────────
 function SlideEquipo() {
   const accent = useAccent();
+  // Martina, Eloy, Erik arriba — Fran, César abajo
+  const orden = [3, 2, 0, 1, 4]; // Martina, Eloy, Erik, Fran, César
+  const equipoOrdenado = orden.map(i => EQUIPO[i]);
+  const fila1 = equipoOrdenado.slice(0, 3);
+  const fila2 = equipoOrdenado.slice(3, 5);
+  const Tarjeta = ({ nombre, rol, desc, foto }: { nombre: string; rol: string; desc: string; foto: string }, i: number) => (
+    <motion.div
+      key={i}
+      initial={{ opacity: 0, y: 24, scale: 0.93 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.12 + i * 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
+      className="relative rounded-3xl overflow-hidden transition-transform hover:-translate-y-1 h-full"
+      style={{ border: `1px solid rgba(164,209,207,0.3)` }}
+    >
+      {/* Foto fondo completo */}
+      {foto
+        ? <img src={foto} alt={nombre} className="absolute inset-0 w-full h-full object-cover object-center" />
+        : <div className="absolute inset-0 flex items-center justify-center" style={{ background: `${accent}33` }}>
+            <span style={{ fontSize: "4rem", fontWeight: 900, color: accent }}>{nombre.split(" ").slice(0,2).map((n: string)=>n[0]).join("")}</span>
+          </div>
+      }
+
+      {/* Gradiente difuminado inferior */}
+      <div className="absolute inset-0" style={{
+        background: `linear-gradient(to top, rgba(5,25,22,0.95) 0%, rgba(5,25,22,0.4) 20%, transparent 36%)`,
+      }} />
+
+      {/* Texto sobre el gradiente */}
+      <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 flex flex-col gap-2">
+        <p style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{nombre}</p>
+        <span style={{
+          fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
+          color: "rgba(255,255,255,0.9)", background: "rgba(255,255,255,0.15)",
+          padding: "5px 12px", borderRadius: "6px", display: "inline-block", alignSelf: "flex-start",
+        }}>{rol}</span>
+      </div>
+    </motion.div>
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 gap-10">
-      <Label>El equipo</Label>
+    <div className="flex flex-col h-full px-24 py-10 gap-0 overflow-hidden items-center" style={{ paddingBottom: "8%", background: "#0D9E7A" }}>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 w-full max-w-6xl">
-        {EQUIPO.map(({ nombre, rol, foto }, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.15 + i * 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
-            className="relative rounded-3xl overflow-hidden p-8 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1"
-            style={{
-              background: `linear-gradient(180deg, ${accent}1f 0%, ${accent}05 100%), ${CARD}`,
-              border: `1px solid ${accent}40`,
-              minHeight: 360,
-            }}
-          >
-            <div style={{
-              position: "absolute", top: -30, left: "50%", width: 180, height: 180, borderRadius: "50%",
-              background: `radial-gradient(circle, ${accent}33 0%, transparent 70%)`,
-              transform: "translateX(-50%)",
-            }} />
+      {/* Título */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22,1,0.36,1] }}
+        className="flex items-center justify-between w-full shrink-0" style={{ marginTop: "4%" }}>
+        <h2 style={{ fontSize: "clamp(4rem, 8vw, 7rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 1 }}>
+          El equipo detrás
+        </h2>
+        {/* Separador vertical + subtítulo */}
+        <div className="flex items-center gap-5">
+          <div style={{ width: 2, height: 70, background: "rgba(255,255,255,0.25)", borderRadius: 2 }} />
+          <div className="flex flex-col gap-1 text-right">
+            <p style={{ fontSize: "1.7rem", fontWeight: 800, color: "rgba(255,255,255,0.9)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+              Talento local formado en
+            </p>
+            <p style={{ fontSize: "1.7rem", fontWeight: 900, color: accent, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+              Alicante Futura
+            </p>
+          </div>
+        </div>
+      </motion.div>
 
-            <div className="relative z-10 w-36 h-36 rounded-full overflow-hidden flex items-center justify-center shrink-0"
-              style={{
-                background: `linear-gradient(135deg, ${accent}aa 0%, ${accent}55 100%)`,
-                border: `3px solid ${accent}88`,
-                boxShadow: `0 10px 32px -4px ${accent}66`,
-              }}>
-              {foto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={foto} alt={nombre} className="w-full h-full object-cover" />
-              ) : (
-                <span style={{ fontSize: "2.6rem", fontWeight: 900, color: "#fff", letterSpacing: "0.02em" }}>
-                  {nombre.split(" ").slice(0, 2).map(n => n[0]).join("")}
-                </span>
-              )}
-            </div>
+      {/* Bloque de tarjetas */}
+      <div className="flex flex-col gap-12 w-full shrink-0" style={{ marginTop: "4%", height: "78%" }}>
 
-            <div className="relative z-10">
-              <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>
-                {nombre}
-              </p>
-              <p style={{ fontSize: "1.15rem", fontWeight: 700, color: accent, marginTop: 8, textTransform: "uppercase", letterSpacing: "0.12em" }}>
-                {rol}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+        {/* Fila 1 — 3 tarjetas */}
+        <div className="grid grid-cols-3 gap-12 min-h-0" style={{ flex: 1 }}>
+          {fila1.map((p, i) => Tarjeta(p, i))}
+        </div>
+
+        {/* Fila 2 — 2 tarjetas, mismo ancho total */}
+        <div className="grid grid-cols-2 gap-12 min-h-0" style={{ flex: 1 }}>
+          {fila2.map((p, i) => Tarjeta(p, i + 3))}
+        </div>
+
       </div>
 
-      <motion.p
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0, duration: 0.6 }}
-        style={{ fontSize: "clamp(1.1rem, 1.6vw, 1.4rem)", color: "rgba(255,255,255,0.65)", textAlign: "center", fontWeight: 500 }}
-      >
-        Talento formado en el bootcamp
-      </motion.p>
     </div>
   );
 }
@@ -817,8 +908,8 @@ function WaveTransition({ onMidpoint, onComplete, color = "#EEF2D0" }: {
 }
 
 // ── Slides array ──────────────────────────────────────────────────────────────
-const SLIDES = [Slide1, Slide2, Slide3, Slide4, Slide5, Slide6, SlideMetodologia, Slide7, SlideEquipo, Slide8, Slide9];
-const SLIDE_LABELS = ["Portada", "Sobre Atalayas", "El problema", "La solución", "Demo", "Tecnologías", "Metodología", "El camino", "El equipo", "Cierre", "Contacto"];
+const SLIDES = [Slide1, Slide2, Slide3, Slide4, Slide5, SlideEquipo, Slide6, SlideMetodologia, Slide8, Slide9];
+const SLIDE_LABELS = ["Portada", "Sobre Atalayas", "El problema", "La solución", "Demo", "El equipo", "Tecnologías", "El camino", "Cierre", "Contacto"];
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function ShowcasePage() {
