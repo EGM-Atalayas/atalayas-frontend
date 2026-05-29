@@ -11,11 +11,11 @@ const QR_URL     = "https://atalayas-egm.vercel.app";
 const FOTO_GRUPO = ""; // "/foto-equipo.jpg"
 
 const EQUIPO = [
-  { nombre: "Erik Vidal",       rol: "Full-stack", desc: "El que conectó el front con el back sin que nada explotara",     email: "erikvidalzemba@gmail.com",        foto: "/showcase/equipo/erik.jpeg" },
-  { nombre: "Francisco Baeza",  rol: "Frontend",   desc: "Convirtió los diseños en pantallas que dan ganas de usar",       email: "franciscobaezasanchez@gmail.com", foto: "/showcase/equipo/fran.jpeg" },
-  { nombre: "Eloy Pérez",       rol: "Frontend",   desc: "El ojo crítico que no dejaba pasar nada feo en pantalla",        email: "eloyperezinglada@gmail.com",      foto: "/showcase/equipo/eloy.jpeg" },
-  { nombre: "Martina Vargas",   rol: "Full-stack", desc: "De las primeras en tirar código y de las últimas en rendirse",   email: "martinavargastroche06@gmail.com", foto: "/showcase/equipo/martina.jpeg" },
-  { nombre: "César Alonso",     rol: "Backend",    desc: "Hizo que los datos llegaran donde tenían que llegar, siempre",   email: "cealonspont@gmail.com",           foto: "/showcase/equipo/cesar.jpeg" },
+  { nombre: "Erik Vidal",       rol: "Full-stack", desc: "El que conectó el front con el back sin que nada explotara",     email: "erikvidalzemba@gmail.com",        foto: "/showcase/equipo/erik.jpeg",    fotoEquipo: "/showcase/elequipo/erik-equipo.jpg" },
+  { nombre: "Francisco Baeza",  rol: "Frontend",   desc: "Convirtió los diseños en pantallas que dan ganas de usar",       email: "franciscobaezasanchez@gmail.com", foto: "/showcase/equipo/fran.jpeg",    fotoEquipo: "/showcase/elequipo/fran-equipo.jpg" },
+  { nombre: "Eloy Pérez",       rol: "Frontend",   desc: "El ojo crítico que no dejaba pasar nada feo en pantalla",        email: "eloyperezinglada@gmail.com",      foto: "/showcase/equipo/eloy.jpeg",    fotoEquipo: "/showcase/elequipo/eloy-equipo.jpg" },
+  { nombre: "Martina Vargas",   rol: "Full-stack", desc: "De las primeras en tirar código y de las últimas en rendirse",   email: "martinavargastroche06@gmail.com", foto: "/showcase/equipo/martina.jpeg", fotoEquipo: "/showcase/elequipo/martina-equipo.jpg" },
+  { nombre: "César Alonso",     rol: "Backend",    desc: "Hizo que los datos llegaran donde tenían que llegar, siempre",   email: "cealonspont@gmail.com",           foto: "/showcase/equipo/cesar.jpeg",   fotoEquipo: "/showcase/elequipo/cesar-equipo.jpg" },
 ];
 
 const TECNOLOGIAS: { nombre: string; rol: string; color: string; capa: "Frontend" | "Backend" | "Infra" | "IA"; logo?: string; logoSize?: number; logoBottom?: number; logoRight?: number }[] = [
@@ -37,13 +37,13 @@ const NUMEROS = [
   { valor: "8+", label: "módulos\nfuncionales" },
 ];
 
-const FUNCIONALIDADES: { Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; titulo: string; desc: string }[] = [
-  { Icon: UserPlus,      titulo: "Onboarding estructurado",  desc: "Cada empleado tiene su proceso desde el día 1. Sin improvisación." },
-  { Icon: GraduationCap, titulo: "Formación modular",         desc: "PRL, calidad, protocolos y formación específica por empresa." },
-  { Icon: Megaphone,     titulo: "Comunicación centralizada", desc: "Anuncios, comunicados y eventos en un solo lugar." },
-  { Icon: BarChart3,     titulo: "Panel y estadísticas",      desc: "Movimientos de plantilla, formación completada, datos reales." },
-  { Icon: FolderOpen,    titulo: "Gestión documental",        desc: "Documentos organizados y accesibles para toda la organización." },
-  { Icon: Sparkles,      titulo: "IA integrada",              desc: "Chatbot de consulta para empleados. Sin saturar a RRHH." },
+const FUNCIONALIDADES: { Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; titulo: string; desc: string; video?: string }[] = [
+  { Icon: UserPlus,      titulo: "Onboarding estructurado",  desc: "Cada empleado tiene su proceso desde el día 1. Sin improvisación.",   video: "/showcase/videos/onboarding.mp4" },
+  { Icon: GraduationCap, titulo: "Formación modular",         desc: "PRL, calidad, protocolos y formación específica por empresa.",        video: "/showcase/videos/formacion.mp4" },
+  { Icon: Megaphone,     titulo: "Comunicación centralizada", desc: "Anuncios, comunicados y eventos en un solo lugar.",                   video: "/showcase/videos/comunicacion.mp4" },
+  { Icon: BarChart3,     titulo: "Panel y estadísticas",      desc: "Movimientos de plantilla, formación completada, datos reales.",       video: "/showcase/videos/panel.mp4" },
+  { Icon: FolderOpen,    titulo: "Gestión documental",        desc: "Documentos organizados y accesibles para toda la organización.",      video: "/showcase/videos/documental.mp4" },
+  { Icon: Sparkles,      titulo: "IA integrada",              desc: "Chatbot de consulta para empleados. Sin saturar a RRHH.",             video: "/showcase/videos/ia.mp4" },
 ];
 
 // ── Estilos base ─────────────────────────────────────────────────────────────
@@ -53,19 +53,18 @@ const MUTED  = "rgba(255,255,255,0.38)";
 const CARD   = "rgba(255,255,255,0.06)";
 const BORDER = "rgba(255,255,255,0.12)";
 
-// Tema por slide — bg + accent vibrantes y variados
+// Tema por slide — bg + accent vibrantes y variados (alineados con SLIDES array)
 const SLIDE_THEMES: { bg: string; accent: string }[] = [
   { bg: "#1E1B4B", accent: "#FFD166" }, // 0 — Portada · indigo nocturno + oro suave
   { bg: "#2563EB", accent: "#FEF08A" }, // 1 — Sobre Atalayas · azul vivo + amarillo pastel
   { bg: "#FB345F", accent: "#FEF3C7" }, // 2 — El problema · rojo pastel + cream
   { bg: "#059669", accent: "#FEF9C3" }, // 3 — La solución · esmeralda + lemon cream
-  { bg: "#06B6D4", accent: "#ECFEFF" }, // 4 — Demo · cian fresco + cyan claro
+  { bg: "#BE185D", accent: "#FCE7F3" }, // 4 — El equipo · rosa magenta + rose pálido
   { bg: "#6D28D9", accent: "#EDE9FE" }, // 5 — Tecnologías · violeta vivo + lavanda
   { bg: "#FB923C", accent: "#FFF7ED" }, // 6 — Metodología · naranja claro + cream cálido
   { bg: "#A78BFA", accent: "#F5F3FF" }, // 7 — El camino · lavanda suave + violeta pálido
-  { bg: "#BE185D", accent: "#FCE7F3" }, // 8 — El equipo · rosa magenta + rose pálido
-  { bg: "#0E7490", accent: "#CFFAFE" }, // 9 — Cierre · cian profundo + cyan claro
-  { bg: "#1B3F7E", accent: "#C3F8B4" }, // 10 — Contacto · azul corporativo EGM + lima de marca
+  { bg: "#0E7490", accent: "#CFFAFE" }, // 8 — Cierre · cian profundo + cyan claro
+  { bg: "#1B3F7E", accent: "#C3F8B4" }, // 9 — Contacto · azul corporativo EGM + lima de marca
 ];
 
 // Contexto para que cada slide acceda al accent actual
@@ -247,6 +246,40 @@ function Slide3() {
 
 function Slide4() {
   const accent = useAccent();
+  const [videoActivo, setVideoActivo] = useState<{ titulo: string; src: string } | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Al montar el modal, pedir fullscreen al elemento <video>
+  useEffect(() => {
+    if (!videoActivo || !videoRef.current) return;
+    const v = videoRef.current as HTMLVideoElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+      mozRequestFullScreen?: () => Promise<void>;
+      msRequestFullscreen?: () => Promise<void>;
+      webkitEnterFullscreen?: () => void; // iOS
+    };
+    const enter = async () => {
+      try {
+        if (v.requestFullscreen) await v.requestFullscreen();
+        else if (v.webkitRequestFullscreen) await v.webkitRequestFullscreen();
+        else if (v.mozRequestFullScreen) await v.mozRequestFullScreen();
+        else if (v.msRequestFullscreen) await v.msRequestFullscreen();
+        else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+      } catch { /* el usuario denegó o el navegador no soporta */ }
+    };
+    // Pequeño delay para asegurar que el <video> está visible
+    const id = window.setTimeout(enter, 80);
+    // Al salir de fullscreen → cerrar el modal
+    const onFsChange = () => {
+      if (!document.fullscreenElement) setVideoActivo(null);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener("fullscreenchange", onFsChange);
+    };
+  }, [videoActivo]);
+
   return (
     <div className="relative flex flex-col items-center justify-center h-full px-8 gap-10 overflow-hidden">
       <Label>La solución</Label>
@@ -264,39 +297,52 @@ function Slide4() {
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.9, delay: 0.25, ease: [0.22,1,0.36,1] }}
-        className="relative w-full max-w-4xl rounded-2xl overflow-hidden"
+        className="relative w-full max-w-6xl rounded-3xl overflow-hidden"
         style={{
           background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 100%)",
           border: `1px solid ${BORDER}`,
           boxShadow: "0 30px 80px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06) inset",
-          aspectRatio: "16/9.5",
-          maxHeight: "55vh",
+          aspectRatio: "16/9",
+          maxHeight: "65vh",
         }}
       >
         {/* Barra de browser */}
-        <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "rgba(255,255,255,0.04)", borderBottom: `1px solid ${BORDER}` }}>
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
-          <div className="ml-4 px-3 py-1 rounded-md flex items-center gap-1.5" style={{ background: "rgba(255,255,255,0.06)", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+        <div className="flex items-center gap-3 px-5 py-3.5" style={{ background: "rgba(255,255,255,0.04)", borderBottom: `1px solid ${BORDER}` }}>
+          <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
+          <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
+          <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
+          <div className="ml-5 px-4 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgba(255,255,255,0.06)", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
             <span>🔒</span> atalayas-egm.vercel.app
           </div>
         </div>
 
         {/* Contenido del mock — grid de "módulos" con iconos */}
-        <div className="p-6 sm:p-8 grid grid-cols-3 gap-4 h-[calc(100%-44px)]">
+        <div className="p-8 sm:p-10 grid grid-cols-3 gap-6 h-[calc(100%-56px)]">
           {FUNCIONALIDADES.map((f, i) => (
-            <motion.div
+            <motion.button
               key={i}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (f.video) setVideoActivo({ titulo: f.titulo, src: f.video });
+              }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + i * 0.08, duration: 0.45, ease: [0.22,1,0.36,1] }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl"
+              whileHover={{ scale: 1.04 }}
+              className="group relative flex flex-col items-center justify-center gap-4 rounded-2xl cursor-pointer overflow-hidden transition-colors p-4"
               style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}` }}
             >
-              <f.Icon className="w-7 h-7 sm:w-9 sm:h-9" style={{ color: accent }} />
-              <span style={{ fontSize: "clamp(0.85rem, 1.2vw, 1.1rem)", fontWeight: 700, color: "#fff", textAlign: "center", padding: "0 0.5rem" }}>{f.titulo}</span>
-            </motion.div>
+              <f.Icon className="w-12 h-12 sm:w-14 sm:h-14" style={{ color: accent }} />
+              <span style={{ fontSize: "clamp(1.15rem, 1.6vw, 1.5rem)", fontWeight: 700, color: "#fff", textAlign: "center", lineHeight: 1.2 }}>{f.titulo}</span>
+              {/* Play indicator que aparece al hover */}
+              <span className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ width: 36, height: 36, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#0b2147">
+                  <polygon points="6,3 21,12 6,21" />
+                </svg>
+              </span>
+            </motion.button>
           ))}
         </div>
       </motion.div>
@@ -308,6 +354,57 @@ function Slide4() {
       >
         Onboarding · Formación · Comunicación · Documentación · IA
       </motion.p>
+
+      {/* Modal de vídeo */}
+      <AnimatePresence>
+        {videoActivo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 100 }}
+            onClick={(e) => { e.stopPropagation(); setVideoActivo(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ duration: 0.35, ease: [0.22,1,0.36,1] }}
+              className="relative w-full max-w-5xl mx-6 rounded-2xl overflow-hidden"
+              style={{ background: "#000", boxShadow: `0 30px 80px -10px ${accent}55` }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4" style={{ background: "rgba(255,255,255,0.04)", borderBottom: `1px solid ${BORDER}` }}>
+                <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>{videoActivo.titulo}</span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setVideoActivo(null); }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ color: "#fff" }}
+                  aria-label="Cerrar"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {/* Video */}
+              <video
+                ref={videoRef}
+                src={videoActivo.src}
+                controls
+                autoPlay
+                loop
+                playsInline
+                style={{ width: "100%", height: "auto", maxHeight: "75vh", display: "block", background: "#000" }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -645,118 +742,125 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── NUEVA: Metodología de trabajo ─────────────────────────────────────────────
+// ── Metodología de trabajo ────────────────────────────────────────────────────
 function SlideMetodologia() {
-  const accent = useAccent();
   const pilares = [
     { Icon: KanbanSquare,  titulo: "Sprints semanales",   desc: "Tareas repartidas y objetivos claros cada semana", tool: "Notion",  toolColor: "#EC4899" },
     { Icon: GitBranch,     titulo: "Git + Pull Requests", desc: "Nadie sube código sin revisión previa",            tool: "GitHub",  toolColor: "#94A3B8" },
     { Icon: MessageSquare, titulo: "Reuniones + Discord", desc: "Canal siempre abierto para decidir al momento",    tool: "Discord", toolColor: "#818CF8" },
     { Icon: Rocket,        titulo: "Despliegue continuo", desc: "Cada mejora aprobada se publica automáticamente",  tool: "Vercel",  toolColor: "#6EE7B7" },
   ];
+  return (
+    <div className="relative flex flex-col items-center justify-center h-full px-12 py-10 gap-10 overflow-hidden">
+      <Label>Metodología</Label>
+
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
+        style={{ fontSize: "clamp(3rem, 6.6vw, 5.2rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1 }}
+      >
+        Así{" "}
+        <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: "0.15em", padding: "0.02em 0.22em", display: "inline-block" }}>
+          trabajamos
+        </span>
+      </motion.h2>
+
+      {/* 4 pilares en grid 2x2 (más grandes ahora con todo el ancho) */}
+      <div className="grid grid-cols-2 gap-5 w-full max-w-5xl">
+        {pilares.map(({ Icon, titulo, desc, tool, toolColor }, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 + i * 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
+            className="relative rounded-3xl flex flex-col gap-4 overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.07)",
+              border: `1.5px solid ${toolColor}55`,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              padding: "28px 26px 24px",
+              boxShadow: "0 4px 28px rgba(0,0,0,0.25)",
+              minHeight: 200,
+            }}
+          >
+            {/* Icono */}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
+              style={{ background: `${toolColor}28`, color: toolColor }}>
+              <Icon className="w-8 h-8" />
+            </div>
+
+            {/* Texto */}
+            <div className="flex flex-col gap-1.5">
+              <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff", lineHeight: 1.15 }}>{titulo}</p>
+              <p style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>{desc}</p>
+            </div>
+
+            {/* Tool badge */}
+            <span style={{
+              position: "absolute", top: 18, right: 18,
+              fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase",
+              color: toolColor, background: `${toolColor}20`,
+              padding: "5px 11px", borderRadius: "6px",
+            }}>{tool}</span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── El camino — los retos del proyecto ────────────────────────────────────────
+function SlideCamino() {
+  const accent = useAccent();
   const retos = [
-    { Icon: Bot,      titulo: "IA inestable",  color: "#F87171" },
-    { Icon: Users,    titulo: "Comunicación",  color: "#FBBF24" },
-    { Icon: ListTodo, titulo: "Organización",  color: "#60A5FA" },
-    { Icon: Repeat,   titulo: "Reasignación",  color: "#A78BFA" },
+    { Icon: Bot,      titulo: "IA inestable",  color: "#FCA5A5" }, // rosa coral claro
+    { Icon: Users,    titulo: "Comunicación",  color: "#FDE68A" }, // amarillo pastel
+    { Icon: ListTodo, titulo: "Organización",  color: "#7DD3FC" }, // cian claro
+    { Icon: Repeat,   titulo: "Reasignación",  color: "#FBA5DA" }, // rosa magenta claro (distinto del bg)
   ];
   return (
-    <div className="relative flex flex-col h-full px-12 py-10 gap-6 overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center h-full px-12 py-10 gap-8 overflow-hidden">
+      <Label>El camino</Label>
 
-      {/* Título */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        className="flex flex-col items-center gap-2 shrink-0">
-        <h2 style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.4rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1 }}>
-          Así lo{" "}
-          <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: "0.15em", padding: "0.02em 0.22em", display: "inline-block" }}>
-            construimos
-          </span>
-        </h2>
-        <p style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.6)", fontWeight: 500, textAlign: "center" }}>
-          Un proyecto real desde cero, aprendiendo en cada paso
-        </p>
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
+        style={{ fontSize: "clamp(3rem, 6.6vw, 5.2rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 1 }}
+      >
+        El camino no fue <span style={{ color: accent }}>recto</span>
+      </motion.h2>
+
+      {/* Dibujo */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9, delay: 0.3, ease: [0.22,1,0.36,1] }}
+        className="flex-1 flex items-center justify-center w-full max-w-3xl min-h-0"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/showcase/dibujo.png" alt="El camino" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
       </motion.div>
 
-      {/* Layout 2 columnas */}
-      <div className="grid grid-cols-2 gap-6 w-full flex-1 min-h-0">
-
-        {/* Izquierda — 4 pilares en 2x2 */}
-        <div className="grid grid-cols-2 gap-4">
-          {pilares.map(({ Icon, titulo, desc, tool, toolColor }, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.09, duration: 0.5, ease: [0.22,1,0.36,1] }}
-              className="relative rounded-2xl flex flex-col justify-between overflow-hidden"
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                border: `1.5px solid ${toolColor}55`,
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                padding: "20px 18px 18px",
-                boxShadow: `0 4px 24px rgba(0,0,0,0.25)`,
-              }}
-            >
-              {/* Icono */}
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${toolColor}28`, color: toolColor }}>
-                <Icon className="w-6 h-6" />
-              </div>
-
-              {/* Texto */}
-              <div className="flex flex-col gap-1 mt-3">
-                <p style={{ fontSize: "1.05rem", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>{titulo}</p>
-                <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.4 }}>{desc}</p>
-              </div>
-
-              {/* Tool badge */}
-              <span style={{
-                position: "absolute", top: 14, right: 14,
-                fontSize: "0.6rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase",
-                color: toolColor, background: `${toolColor}20`,
-                padding: "3px 8px", borderRadius: "5px",
-              }}>{tool}</span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Derecha — el camino */}
-        <motion.div
-          initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.7, ease: [0.22,1,0.36,1] }}
-          className="flex flex-col gap-4 rounded-3xl"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)", padding: "24px 24px 20px", boxShadow: "0 4px 32px rgba(0,0,0,0.2)" }}
-        >
-          {/* Título derecha */}
-          <p style={{ fontSize: "clamp(1.3rem, 2vw, 1.7rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.02em", lineHeight: 1.1, flexShrink: 0 }}>
-            El camino no fue{" "}
-            <span style={{ color: accent }}>recto</span>
-          </p>
-
-          {/* Dibujo */}
-          <div className="flex-1 flex items-center justify-center min-h-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/showcase/dibujo.png" alt="El camino" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-          </div>
-
-          {/* Retos */}
-          <div className="grid grid-cols-2 gap-2.5 shrink-0">
-            {retos.map(({ Icon, titulo, color }, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.55 + i * 0.1, duration: 0.4, ease: [0.22,1,0.36,1] }}
-                className="flex items-center gap-2.5 rounded-xl"
-                style={{ background: `${color}18`, border: `1px solid ${color}40`, padding: "10px 14px" }}
-              >
-                <Icon className="w-4 h-4 shrink-0" style={{ color }} />
-                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>{titulo}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
+      {/* Retos en fila */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 w-full max-w-6xl shrink-0">
+        {retos.map(({ Icon, titulo, color }, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.85, y: 14 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.6 + i * 0.1, duration: 0.45, ease: [0.22,1,0.36,1] }}
+            className="flex flex-col items-center gap-3 rounded-2xl text-center"
+            style={{
+              background: "rgba(255,255,255,0.95)",
+              border: `2px solid ${color}`,
+              padding: "22px 18px",
+              boxShadow: `0 8px 24px -8px ${color}66`,
+            }}
+          >
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
+              style={{ background: color, color: "#0f172a" }}>
+              <Icon className="w-9 h-9" strokeWidth={2.5} />
+            </div>
+            <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "#0f172a", letterSpacing: "-0.01em" }}>{titulo}</span>
+          </motion.div>
+        ))}
       </div>
     </div>
   );
@@ -767,7 +871,11 @@ function SlideEquipo() {
   const accent = useAccent();
   // Martina, Eloy, Erik arriba — Fran, César abajo
   const orden = [3, 2, 0, 1, 4]; // Martina, Eloy, Erik, Fran, César
-  const equipoOrdenado = orden.map(i => EQUIPO[i]);
+  // Para SlideEquipo usamos fotoEquipo (foto de equipo, más grande)
+  const equipoOrdenado = orden.map(i => {
+    const p = EQUIPO[i];
+    return { ...p, foto: p.fotoEquipo ?? p.foto };
+  });
   const fila1 = equipoOrdenado.slice(0, 3);
   const fila2 = equipoOrdenado.slice(3, 5);
   const Tarjeta = ({ nombre, rol, desc, foto }: { nombre: string; rol: string; desc: string; foto: string }, i: number) => (
@@ -908,8 +1016,8 @@ function WaveTransition({ onMidpoint, onComplete, color = "#EEF2D0" }: {
 }
 
 // ── Slides array ──────────────────────────────────────────────────────────────
-const SLIDES = [Slide1, Slide2, Slide3, Slide4, Slide5, SlideEquipo, Slide6, SlideMetodologia, Slide8, Slide9];
-const SLIDE_LABELS = ["Portada", "Sobre Atalayas", "El problema", "La solución", "Demo", "El equipo", "Tecnologías", "El camino", "Cierre", "Contacto"];
+const SLIDES = [Slide1, Slide2, Slide3, Slide4, SlideEquipo, Slide6, SlideMetodologia, SlideCamino, Slide8, Slide9];
+const SLIDE_LABELS = ["Portada", "Sobre Atalayas", "El problema", "La solución", "El equipo", "Tecnologías", "Metodología", "El camino", "Cierre", "Contacto"];
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function ShowcasePage() {
