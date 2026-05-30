@@ -25,7 +25,7 @@ const TECNOLOGIAS: { nombre: string; rol: string; color: string; capa: "Frontend
   { nombre: "Tailwind",     rol: "El diseño y los estilos",     color: "#06B6D4", capa: "Frontend", logo: "/showcase/logos/tailwind.png" },
   { nombre: "Node.js",      rol: "El motor del servidor",       color: "#4ADE80", capa: "Backend", logo: "/showcase/logos/nodejs.png", logoSize: 110 },
   { nombre: "PostgreSQL",   rol: "Donde se guardan los datos",  color: "#A5B4FC", capa: "Backend", logo: "/showcase/logos/postgresql.png" },
-  { nombre: "Supabase",     rol: "Archivos, accesos y más",     color: "#16803C", capa: "Infra",   logo: "/showcase/logos/supabase.png", logoSize: 95, logoBottom: 25 },
+  { nombre: "Spring Boot",  rol: "Framework del servidor",      color: "#6DB33F", capa: "Backend", logo: "/showcase/logos/spring.png",  logoSize: 95, logoBottom: 25 },
   { nombre: "Vercel",       rol: "Publica la app en la nube",   color: "#475569", capa: "Infra",   logo: "/showcase/logos/vercel.png", logoSize: 150, logoBottom: -10 },
   { nombre: "Claude IA",    rol: "Inteligencia artificial",     color: "#D97757", capa: "IA",      logo: "/showcase/logos/claude.png" },
 ];
@@ -62,9 +62,10 @@ const SLIDE_THEMES: { bg: string; accent: string }[] = [
   { bg: "#065F46", accent: "#FEF9C3" }, // 4 — La solución
   { bg: "#6D28D9", accent: "#EDE9FE" }, // 5 — Tecnologías
   { bg: "#4F46E5", accent: "#C7D2FE" }, // 6 — El recorrido
-  { bg: "#1D195B", accent: "#C4B5FD" }, // 7 — Cierre
-  { bg: "#2563EB", accent: "#FEF08A" }, // 8 — Preguntas
-  { bg: "#2563EB", accent: "#FEF08A" }, // 9 — Contacto
+  { bg: "#0F172A", accent: "#FCD34D" }, // 7 — Visitas
+  { bg: "#1D195B", accent: "#C4B5FD" }, // 8 — Cierre
+  { bg: "#2563EB", accent: "#FEF08A" }, // 9 — Preguntas
+  { bg: "#2563EB", accent: "#FEF08A" }, // 10 — Contacto
 ];
 
 // Contexto para que cada slide acceda al accent actual
@@ -188,6 +189,32 @@ function Slide2() {
 
 function Slide3() {
   const accent = useAccent();
+  const [videoAbierto, setVideoAbierto] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!videoAbierto || !videoRef.current) return;
+    const v = videoRef.current as HTMLVideoElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+      mozRequestFullScreen?: () => Promise<void>;
+      msRequestFullscreen?: () => Promise<void>;
+      webkitEnterFullscreen?: () => void;
+    };
+    const enter = async () => {
+      try {
+        if (v.requestFullscreen) await v.requestFullscreen();
+        else if (v.webkitRequestFullscreen) await v.webkitRequestFullscreen();
+        else if (v.mozRequestFullScreen) await v.mozRequestFullScreen();
+        else if (v.msRequestFullscreen) await v.msRequestFullscreen();
+        else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+      } catch { /* el usuario denegó o el navegador no soporta */ }
+    };
+    const id = window.setTimeout(enter, 80);
+    const onFsChange = () => { if (!document.fullscreenElement) setVideoAbierto(false); };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => { clearTimeout(id); document.removeEventListener("fullscreenchange", onFsChange); };
+  }, [videoAbierto]);
+
   // Todos los bocadillos con cola abajo
   const tail = { bottom: -9, left: "30%", right: "auto", top: "auto" };
   const quejas = [
@@ -219,12 +246,15 @@ function Slide3() {
 
       {/* Bocadillos de queja flotando */}
       {quejas.map((q, i) => (
-        <motion.div
+        <motion.button
           key={i}
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setVideoAbierto(true); }}
           initial={{ opacity: 0, scale: 0.85, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.4 + i * 0.12, duration: 0.55, ease: [0.22,1,0.36,1] }}
-          className="absolute px-6 py-5"
+          whileHover={{ scale: 1.05, zIndex: 20 }}
+          className="absolute px-6 py-5 text-left"
           style={{
             ...q.pos,
             width: q.w,
@@ -237,6 +267,7 @@ function Slide3() {
             fontWeight: 600,
             fontSize: "clamp(1.4rem, 1.8vw, 1.7rem)",
             lineHeight: 1.35,
+            cursor: "pointer",
           }}
         >
           {q.txt}
@@ -249,8 +280,56 @@ function Slide3() {
             transform: "rotate(45deg)",
             boxShadow: "3px 3px 6px -3px rgba(0,0,0,0.10)",
           }} />
-        </motion.div>
+        </motion.button>
       ))}
+
+      {/* Modal de vídeo */}
+      <AnimatePresence>
+        {videoAbierto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 100 }}
+            onClick={() => setVideoAbierto(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ duration: 0.35, ease: [0.22,1,0.36,1] }}
+              className="relative w-full max-w-5xl mx-6 rounded-2xl overflow-hidden"
+              style={{ background: "#000", boxShadow: `0 30px 80px -10px ${accent}55` }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4" style={{ background: "rgba(255,255,255,0.04)", borderBottom: `1px solid ${BORDER}` }}>
+                <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>El problema</span>
+                <button
+                  type="button"
+                  onClick={() => setVideoAbierto(false)}
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ color: "#fff" }}
+                  aria-label="Cerrar"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <video
+                ref={videoRef}
+                src="/showcase/videos/problema.mp4"
+                autoPlay
+                loop
+                playsInline
+                style={{ width: "100%", height: "auto", maxHeight: "75vh", display: "block", background: "#000" }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -913,6 +992,65 @@ function SlideMetodologia() {
   );
 }
 
+// ── Visitas a empresas ────────────────────────────────────────────────────────
+function SlideVisitas() {
+  const accent = useAccent();
+  const fotos = [
+    "/showcase/visitas/foto1.png",
+    "/showcase/visitas/foto2.png",
+    "/showcase/visitas/foto3.png",
+    "/showcase/visitas/foto4.png",
+    "/showcase/visitas/foto5.png",
+  ];
+  return (
+    <div className="relative flex flex-col h-full overflow-hidden" style={{ padding: "3.5% 5% 3.5% 5%" }}>
+
+      {/* Título */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
+        className="shrink-0" style={{ marginBottom: "3%" }}
+      >
+        <span style={{ color: accent, fontSize: "clamp(0.95rem, 1.4vw, 1.2rem)", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+          Área empresarial
+        </span>
+        <h2 style={{ fontSize: "clamp(3rem, 6vw, 5.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.92, marginTop: "0.12em" }}>
+          Salimos a<br />conocerlos.
+        </h2>
+      </motion.div>
+
+      {/* Galería: foto grande a la izquierda + 4 en grid a la derecha */}
+      <div className="flex flex-1 min-h-0" style={{ gap: "1.5%", alignItems: "stretch" }}>
+
+        {/* Foto grande */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          style={{ width: "48%", borderRadius: 20, overflow: "hidden", flexShrink: 0 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={fotos[0]} alt="Visita empresa" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+        </motion.div>
+
+        {/* Grid 2×2 */}
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: "1.5%" }}>
+          {fotos.slice(1).map((src, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              style={{ borderRadius: 16, overflow: "hidden" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Visita empresa ${i + 2}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </motion.div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ── El equipo — 5 personas detrás del proyecto ───────────────────────────────
 function SlideEquipo() {
   const accent = useAccent();
@@ -1063,8 +1201,8 @@ function WaveTransition({ onMidpoint, onComplete, color = "#EEF2D0" }: {
 }
 
 // ── Slides array ──────────────────────────────────────────────────────────────
-const SLIDES = [Slide1, SlideEquipo, Slide2, Slide3, Slide4, Slide6, SlideMetodologia, Slide8, SlidePreguntas, Slide9];
-const SLIDE_LABELS = ["Portada", "El equipo", "Sobre Atalayas", "El problema", "La solución", "Tecnologías", "El recorrido", "Cierre", "Preguntas", "Contacto"];
+const SLIDES = [Slide1, SlideEquipo, Slide2, Slide3, Slide4, Slide6, SlideMetodologia, SlideVisitas, Slide8, SlidePreguntas, Slide9];
+const SLIDE_LABELS = ["Portada", "El equipo", "Sobre Atalayas", "El problema", "La solución", "Tecnologías", "El recorrido", "Visitas", "Cierre", "Preguntas", "Contacto"];
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function ShowcasePage() {
