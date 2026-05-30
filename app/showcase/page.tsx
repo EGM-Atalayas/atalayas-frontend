@@ -7,7 +7,7 @@ import { UserPlus, GraduationCap, Megaphone, BarChart3, FolderOpen, Sparkles, Bo
 
 // ── Datos — rellenar antes del evento ────────────────────────────────────────
 const VIDEO_URL  = ""; // https://player.vimeo.com/video/XXXXXXX
-const QR_URL     = "https://atalayas-egm.vercel.app";
+const QR_URL     = "https://atalayas-egm.es";
 const FOTO_GRUPO = ""; // "/foto-equipo.jpg"
 
 const EQUIPO = [
@@ -55,16 +55,16 @@ const BORDER = "rgba(255,255,255,0.12)";
 
 // Tema por slide — bg + accent vibrantes y variados (alineados con SLIDES array)
 const SLIDE_THEMES: { bg: string; accent: string }[] = [
-  { bg: "#1E1B4B", accent: "#FFD166" }, // 0 — Portada · indigo nocturno + oro suave
-  { bg: "#2563EB", accent: "#FEF08A" }, // 1 — Sobre Atalayas · azul vivo + amarillo pastel
-  { bg: "#FB345F", accent: "#FEF3C7" }, // 2 — El problema · rojo pastel + cream
-  { bg: "#059669", accent: "#FEF9C3" }, // 3 — La solución · esmeralda + lemon cream
-  { bg: "#BE185D", accent: "#FCE7F3" }, // 4 — El equipo · rosa magenta + rose pálido
-  { bg: "#6D28D9", accent: "#EDE9FE" }, // 5 — Tecnologías · violeta vivo + lavanda
-  { bg: "#4F46E5", accent: "#C7D2FE" }, // 6 — El recorrido · índigo medio + lavanda claro
-  { bg: "#1D195B", accent: "#C4B5FD" }, // 7 — Cierre · índigo profundo + lavanda
-  { bg: "#2563EB", accent: "#FEF08A" }, // 8 — Preguntas · azul vivo
-  { bg: "#2563EB", accent: "#FEF08A" }, // 9 — Contacto · azul vivo
+  { bg: "#1E1B4B", accent: "#FFD166" }, // 0 — Portada
+  { bg: "#BE185D", accent: "#FCE7F3" }, // 1 — El equipo
+  { bg: "#2563EB", accent: "#FEF08A" }, // 2 — Sobre Atalayas
+  { bg: "#FB345F", accent: "#FEF3C7" }, // 3 — El problema
+  { bg: "#065F46", accent: "#FEF9C3" }, // 4 — La solución
+  { bg: "#6D28D9", accent: "#EDE9FE" }, // 5 — Tecnologías
+  { bg: "#4F46E5", accent: "#C7D2FE" }, // 6 — El recorrido
+  { bg: "#1D195B", accent: "#C4B5FD" }, // 7 — Cierre
+  { bg: "#2563EB", accent: "#FEF08A" }, // 8 — Preguntas
+  { bg: "#2563EB", accent: "#FEF08A" }, // 9 — Contacto
 ];
 
 // Contexto para que cada slide acceda al accent actual
@@ -75,54 +75,65 @@ const useAccent = () => useContext(SlideThemeCtx).accent;
 function Slide1() {
   const accent = useAccent();
   return (
-    <div className="relative flex flex-col items-center justify-start h-full text-center px-8 pt-16 overflow-hidden">
-      {/* Imagen recortada — cubre la mitad inferior */}
+    <div className="relative flex flex-col h-full overflow-hidden">
+
+      {/* Imagen de fondo completa */}
       <motion.div
-        initial={{ opacity: 0, y: "100%" }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.6, ease: "easeOut" } }}
-        className="absolute pointer-events-none"
+        initial={{ opacity: 0, scale: 1.05 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute inset-0 pointer-events-none"
         style={{
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "75%",
           backgroundImage: "url('/showcase-cutout.png')",
           backgroundSize: "cover",
           backgroundPosition: "center center",
           mixBlendMode: "screen",
-          maskImage: "radial-gradient(ellipse 80% 90% at 50% 100%, black 40%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 80% 90% at 50% 100%, black 40%, transparent 100%)",
         }}
       />
 
-      {/* Gradiente inferior para que el texto resalte sobre la imagen */}
+      {/* Gradiente oscuro izquierda para que el texto se lea */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: "linear-gradient(to bottom, rgba(16,64,160,1) 0%, rgba(16,64,160,0.7) 25%, rgba(16,64,160,0.0) 55%)",
+        background: "linear-gradient(to right, rgba(16,40,140,0.95) 0%, rgba(16,40,140,0.75) 45%, rgba(16,40,140,0.2) 100%)",
+      }} />
+      {/* Gradiente inferior */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "linear-gradient(to top, rgba(16,40,140,0.7) 0%, transparent 40%)",
       }} />
 
-      {/* Texto — arriba */}
+      {/* Logos — arriba izquierda */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 flex flex-col items-center gap-3"
+        transition={{ duration: 0.7, delay: 0.1 }}
+        className="relative z-10 flex items-center gap-6"
+        style={{ padding: "4% 6% 0" }}
       >
-        <div className="flex items-center gap-6">
-          <img src="/logo.webp" alt="Atalayas" style={{ height: 44, width: "auto", filter: "brightness(0) invert(1)", opacity: 0.9 }} />
-          <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.25)" }} />
-          <img src="/alicante-futura-logo.png" alt="Alicante Futura Lab" style={{ height: 44, width: "auto", opacity: 0.85 }} />
-        </div>
-        <h1 style={{ fontSize: "clamp(3.2rem, 9vw, 7.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.95, marginTop: "0.2em" }}>
-          EGM<br />Atalayas
-        </h1>
-        <p style={{ fontSize: "clamp(1.3rem, 2.8vw, 1.9rem)", color: accent, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <img src="/logo.webp" alt="Atalayas" style={{ height: 60, width: "auto", filter: "brightness(0) invert(1)", opacity: 0.9 }} />
+        <div style={{ width: 1, height: 44, background: "rgba(255,255,255,0.3)" }} />
+        <img src="/alicante-futura-logo.png" alt="Alicante Futura Lab" style={{ height: 60, width: "auto", opacity: 0.85 }} />
+      </motion.div>
+
+      {/* Contenido principal — izquierda, centrado verticalmente */}
+      <motion.div
+        initial={{ opacity: 0, x: -30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 flex flex-col flex-1 justify-center"
+        style={{ padding: "0 6% 8%" }}
+      >
+        <p style={{ fontSize: "clamp(1.5rem, 2.4vw, 2.2rem)", color: "#B8C94A", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "0.5em" }}>
           Ciudad Empresarial
         </p>
-        <p style={{ fontSize: "clamp(1rem, 1.9vw, 1.35rem)", color: "rgba(255,255,255,0.65)", maxWidth: 560, lineHeight: 1.55, fontWeight: 400, marginTop: "0.2em" }}>
-          Plataforma digital de onboarding, formación y gestión interna para empresas
-        </p>
+        <h1 style={{ fontSize: "clamp(5.5rem, 13vw, 12rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.9 }}>
+          EGM<br />Atalayas
+        </h1>
+        <span style={{
+          display: "inline-block", marginTop: "0.8em",
+          fontSize: "clamp(1.4rem, 2vw, 1.8rem)", fontWeight: 900, color: "#fff",
+          letterSpacing: "0.25em", textTransform: "uppercase",
+        }}>GRUPO 2002</span>
       </motion.div>
+
     </div>
   );
 }
@@ -282,15 +293,16 @@ function Slide4() {
 
   return (
     <div className="relative flex flex-col items-center justify-center h-full px-8 gap-10 overflow-hidden">
-      <Label>La solución</Label>
-
-      <motion.h2
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.7em" }}>
+        <span style={{ color: accent, fontSize: "clamp(0.85rem, 1.2vw, 1.1rem)", fontWeight: 800, letterSpacing: "0.24em", textTransform: "uppercase" }}>Nuestra solución</span>
+        <motion.h2
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3.2rem, 7.2vw, 5.6rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.035em", lineHeight: 1, maxWidth: 1100, zIndex: 5 }}
+        style={{ fontSize: "clamp(3.8rem, 7vw, 6.5rem)", fontWeight: 900, color: "#fff", textAlign: "center", letterSpacing: "-0.04em", lineHeight: 0.88, maxWidth: 1100, zIndex: 5 }}
       >
         Una plataforma.<br />
         <span style={{ color: accent }}>Todo conectado.</span>
       </motion.h2>
+      </div>
 
       {/* Mockup central — ventana de navegador con resumen visual de módulos */}
       <motion.div
@@ -312,7 +324,7 @@ function Slide4() {
           <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
           <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.18)" }} />
           <div className="ml-5 px-4 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgba(255,255,255,0.06)", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
-            <span>🔒</span> atalayas-egm.vercel.app
+            <span>🔒</span> atalayas-egm.es
           </div>
         </div>
 
@@ -347,13 +359,6 @@ function Slide4() {
         </div>
       </motion.div>
 
-      {/* Tagline inferior */}
-      <motion.p
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.6 }}
-        style={{ fontSize: "clamp(1.1rem, 1.7vw, 1.45rem)", color: "rgba(255,255,255,0.6)", textAlign: "center", letterSpacing: "0.02em" }}
-      >
-        Onboarding · Formación · Comunicación · Documentación · IA
-      </motion.p>
 
       {/* Modal de vídeo */}
       <AnimatePresence>
@@ -640,20 +645,21 @@ function Slide7() {
 }
 
 function Slide8() {
+  const accent = useAccent();
   const reflexiones = [
     "Aprendimos a organizarnos cuando más falta hacía.",
     "Un cliente real nos enseñó más que cualquier ejercicio.",
     "Cada problema tuvo su solución. Aunque costara encontrarla.",
   ];
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-16 text-center overflow-hidden" style={{ gap: "11rem" }}>
+    <div className="relative flex flex-col items-center justify-center h-full px-16 text-center overflow-hidden" style={{ gap: "7rem", paddingTop: "4%", paddingBottom: "8%" }}>
       <div style={{ position: "absolute", top: "-20%", right: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "-20%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
       <motion.p
         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22,1,0.36,1] }}
-        style={{ fontSize: "clamp(3rem, 5.5vw, 5rem)", fontWeight: 900, color: "#fff", lineHeight: 1.2, letterSpacing: "-0.03em", maxWidth: 1000 }}
+        style={{ fontSize: "clamp(3.8rem, 7vw, 6.5rem)", fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.04em", maxWidth: 1200 }}
       >
-        Con las ganas de quien empieza y la dedicación de quien lo da todo
+        Con las <span style={{ color: "#fff", WebkitTextStroke: "2px rgba(255,255,255,0.5)", fontStyle: "italic" }}>ganas</span> de quien empieza y la <span style={{ color: "#fff", WebkitTextStroke: "2px rgba(255,255,255,0.5)", fontStyle: "italic" }}>dedicación</span> de quien lo da todo
       </motion.p>
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }}
@@ -662,7 +668,7 @@ function Slide8() {
       >
         {reflexiones.map((r, i) => (
           <div key={i} className="flex items-center" style={{ flex: 1 }}>
-            <p style={{ fontSize: "clamp(1.3rem, 1.8vw, 1.7rem)", color: "rgba(255,255,255,0.88)", fontWeight: 500, fontStyle: "italic", letterSpacing: "-0.01em", textAlign: "center", width: "100%", padding: "0 2rem" }}>
+            <p style={{ fontSize: "clamp(1.5rem, 2vw, 2rem)", color: "#fff", fontWeight: 600, fontStyle: "italic", letterSpacing: "-0.01em", textAlign: "center", width: "100%", padding: "0 3.5rem" }}>
               "{r}"
             </p>
             {i < reflexiones.length - 1 && (
@@ -717,7 +723,7 @@ function Slide9() {
             <div className="w-44 h-44 rounded-full overflow-hidden flex items-center justify-center shrink-0"
               style={{ background: "rgba(27,63,126,0.5)", border: "3px solid rgba(255,255,255,0.15)" }}>
               {foto ? (
-                <img src={foto} alt={nombre} className="w-full h-full object-cover" style={{ objectPosition: nombre === "Francisco Baeza" ? "center 30%" : nombre === "Erik Vidal" ? "center 20%" : "center center", transform: nombre === "Erik Vidal" ? "scale(1.15)" : "scale(1)" }} />
+                <img src={foto} alt={nombre} className="w-full h-full object-cover" style={{ objectPosition: nombre === "Francisco Baeza" ? "center 30%" : nombre === "Erik Vidal" ? "center 20%" : nombre === "Eloy Pérez" ? "center 15%" : nombre === "Martina Vargas" ? "-10% 0%" : "center center", transform: nombre === "Erik Vidal" ? "scale(1.15)" : nombre === "Martina Vargas" ? "scale(1.35)" : "scale(1)" }} />
               ) : (
                 <span style={{ fontSize: "2.4rem", fontWeight: 800, color: "rgba(255,255,255,0.6)" }}>
                   {nombre.split(" ").slice(0, 2).map(n => n[0]).join("")}
@@ -778,69 +784,129 @@ function Label({ children }: { children: React.ReactNode }) {
 function SlideMetodologia() {
   const accent = useAccent();
   const pilares = [
-    { Icon: KanbanSquare,  titulo: "Sprints semanales",   desc: "Nos repartíamos el trabajo cada semana con objetivos claros",  toolColor: "#EC4899" },
-    { Icon: GitBranch,     titulo: "Git + Pull Requests", desc: "Nadie subía código sin revisión del equipo",                   toolColor: "#94A3B8" },
-    { Icon: MessageSquare, titulo: "Reuniones + Discord", desc: "Canal siempre abierto para tomar decisiones rápido",           toolColor: "#818CF8" },
-    { Icon: Rocket,        titulo: "Despliegue continuo", desc: "Cada mejora aprobada se publicaba automáticamente",            toolColor: "#6EE7B7" },
+    { Icon: KanbanSquare,  titulo: "Sprints semanales",      desc: "Objetivos claros cada semana",                toolColor: "#EC4899" },
+    { Icon: GitBranch,     titulo: "Revisión entre pares",   desc: "Nada se publicaba sin revisión del equipo",   toolColor: "#94A3B8" },
+    { Icon: MessageSquare, titulo: "Comunicación constante", desc: "Decisiones en tiempo real, sin bloqueos",     toolColor: "#818CF8" },
+    { Icon: Rocket,        titulo: "Entrega continua",       desc: "Cada mejora aprobada se publicaba sola",      toolColor: "#6EE7B7" },
   ];
   const retos = [
-    { Icon: Repeat,   titulo: "Reasignación",  desc: "Llegamos a este proyecto desde otro a mitad de camino", color: "#FBA5DA" },
-    { Icon: Bot,      titulo: "IA inestable",  desc: "Las herramientas de IA no siempre respondían como esperábamos", color: "#FCA5A5" },
-    { Icon: Users,    titulo: "Comunicación",  desc: "Coordinarse en remoto tiene su ciencia",                  color: "#FDE68A" },
-    { Icon: ListTodo, titulo: "Organización",  desc: "Aprendimos a priorizar sobre la marcha",                  color: "#7DD3FC" },
+    { Icon: Repeat,   titulo: "Reasignación",             desc: "Llegamos a este proyecto a mitad de camino",  color: "#FBA5DA" },
+    { Icon: Bot,      titulo: "Herramientas en evolución", desc: "Tecnología que cambiaba mientras la usábamos", color: "#FCA5A5" },
+    { Icon: Users,    titulo: "Comunicación",             desc: "Coordinarse en remoto tiene su ciencia",       color: "#FDE68A" },
+    { Icon: ListTodo, titulo: "Organización",             desc: "Aprendimos a priorizar sobre la marcha",       color: "#7DD3FC" },
   ];
   return (
-    <div className="relative flex flex-col h-full overflow-hidden" style={{ padding: "3% 6% 3% 6%", gap: "5%" }}>
+    <div className="relative flex flex-col h-full overflow-hidden" style={{ padding: "3.5% 5% 3.5% 5%" }}>
 
-      {/* Título — una línea */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="shrink-0">
-        <span className="font-bold uppercase" style={{ color: accent, fontSize: "clamp(0.9rem, 1.3vw, 1.1rem)", letterSpacing: "0.2em" }}>Nuestro recorrido</span>
-        <h2 style={{ fontSize: "clamp(2.4rem, 4vw, 3.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 1, marginTop: "0.2em", whiteSpace: "nowrap" }}>
-          El plan y lo que pasó de verdad
+      {/* ── Dibujo — fondo completo, contain para ver la curva entera ────────── */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
+        className="absolute pointer-events-none"
+        style={{ inset: 0, zIndex: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/showcase/dibujo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+      </motion.div>
+
+      {/* ── Título ─────────────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
+        className="shrink-0" style={{ zIndex: 1, marginBottom: "6.5%" }}
+      >
+        <span style={{ color: accent, fontSize: "clamp(0.95rem, 1.4vw, 1.2rem)", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+          Nuestro recorrido
+        </span>
+        <h2 style={{ fontSize: "clamp(3.8rem, 7vw, 6.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.92, marginTop: "0.12em" }}>
+          Planeamos.<br />Nos adaptamos.
         </h2>
       </motion.div>
 
-      {/* Tarjetas arriba — cómo nos organizamos en fila */}
-      <div className="flex gap-3 shrink-0">
-        {pilares.map(({ Icon, titulo, desc, toolColor }, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08, duration: 0.5 }}
-            className="relative flex flex-col justify-between rounded-2xl px-5 py-4 flex-1 overflow-hidden"
-            style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.15)", minHeight: 110 }}>
-            <div className="flex items-start justify-between">
-              <span style={{ fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: toolColor, background: `${toolColor}30`, padding: "3px 10px", borderRadius: 6 }}>Organización</span>
-              <Icon className="w-8 h-8 opacity-30" style={{ color: toolColor }} />
-            </div>
-            <div>
-              <p style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{titulo}</p>
-              <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.4 }}>{desc}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {/* ── Cuerpo: panel izq · espacio central · panel der ───────────────────── */}
+      <div className="flex flex-1 min-h-0" style={{ gap: 0, position: "relative", zIndex: 1, alignItems: "flex-start", paddingBottom: "2%" }}>
 
-      {/* Dibujo — medio */}
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9, delay: 0.3 }}
-        className="flex items-center justify-center flex-1 min-h-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/showcase/dibujo.png" alt="El camino" style={{ maxWidth: "72%", maxHeight: "100%", objectFit: "contain" }} />
-      </motion.div>
+        {/* Panel izquierdo */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.22,1,0.36,1] }}
+          style={{
+            width: "38%", borderRadius: 20,
+            background: "rgba(255,255,255,0.18)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            backdropFilter: "blur(14px)",
+            padding: "28px 28px",
+            display: "flex", flexDirection: "column",
+            alignSelf: "stretch",
+          }}
+        >
+          <p style={{ fontSize: "clamp(2.4rem, 3.2vw, 3.2rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: 20, textAlign: "center", borderBottom: "2px solid rgba(255,255,255,0.5)", paddingBottom: 14 }}>
+            CÓMO TRABAJAMOS
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-around" }}>
+          {pilares.map(({ Icon, titulo, desc, toolColor }, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 + i * 0.08 }}
+              style={{
+                display: "flex", gap: 16, alignItems: "center",
+                flex: 1,
+                borderBottom: i < pilares.length - 1 ? "1px solid rgba(255,255,255,0.10)" : "none",
+              }}
+            >
+              <div style={{ width: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon style={{ width: 44, height: 44, color: "#fff", strokeWidth: 1.6, opacity: 0.85 }} />
+              </div>
+              <div>
+                <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: "-0.02em" }}>{titulo}</p>
+                <p style={{ fontSize: "1.15rem", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginTop: 8, lineHeight: 1.45 }}>{desc}</p>
+              </div>
+            </motion.div>
+          ))}
+          </div>
+        </motion.div>
 
-      {/* Tarjetas abajo — lo que encontramos en fila */}
-      <div className="flex gap-3 shrink-0">
-        {retos.map(({ Icon, titulo, desc, color }, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
-            className="relative flex flex-col justify-between rounded-2xl px-5 py-4 flex-1 overflow-hidden"
-            style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.15)", minHeight: 110 }}>
-            <div className="flex items-start justify-between">
-              <span style={{ fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: color, background: `${color}30`, padding: "3px 10px", borderRadius: 6 }}>Imprevisto</span>
-              <Icon className="w-8 h-8 opacity-30" style={{ color: color }} strokeWidth={2} />
-            </div>
-            <div>
-              <p style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{titulo}</p>
-              <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.4 }}>{desc}</p>
-            </div>
-          </motion.div>
-        ))}
+        {/* Centro vacío — dibujo visible */}
+        <div className="flex-1" />
+
+        {/* Panel derecho */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: [0.22,1,0.36,1] }}
+          style={{
+            width: "38%", borderRadius: 20,
+            background: "rgba(255,255,255,0.18)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            backdropFilter: "blur(14px)",
+            padding: "28px 28px",
+            display: "flex", flexDirection: "column",
+            alignSelf: "stretch",
+          }}
+        >
+          <p style={{ fontSize: "clamp(2.4rem, 3.2vw, 3.2rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: 20, textAlign: "center", borderBottom: "2px solid rgba(255,255,255,0.5)", paddingBottom: 14 }}>
+            IMPREVISTOS
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-around" }}>
+          {retos.map(({ Icon, titulo, desc, color }, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 + i * 0.08 }}
+              style={{
+                display: "flex", gap: 16, alignItems: "center", flexDirection: "row",
+                flex: 1,
+                borderBottom: i < retos.length - 1 ? "1px solid rgba(255,255,255,0.10)" : "none",
+              }}
+            >
+              <div style={{ width: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon style={{ width: 44, height: 44, color: "#fff", strokeWidth: 1.6, opacity: 0.85 }} />
+              </div>
+              <div style={{ textAlign: "left", flex: 1 }}>
+                <p style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: "-0.02em" }}>{titulo}</p>
+                <p style={{ fontSize: "1.15rem", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginTop: 8, lineHeight: 1.45 }}>{desc}</p>
+              </div>
+            </motion.div>
+          ))}
+          </div>
+        </motion.div>
+
       </div>
 
     </div>
@@ -870,7 +936,7 @@ function SlideEquipo() {
     >
       {/* Foto fondo completo */}
       {foto
-        ? <img src={foto} alt={nombre} className="absolute inset-0 w-full h-full object-cover object-center" />
+        ? <img src={foto} alt={nombre} className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: nombre === "Martina Vargas" ? "-200% 0%" : nombre === "Francisco Baeza" ? "center 75%" : nombre === "César Alonso" ? "center 50%" : "center center", transform: nombre === "Martina Vargas" ? "scale(1.4)" : nombre === "Eloy Pérez" ? "scale(1.2)" : "scale(1)" }} />
         : <div className="absolute inset-0 flex items-center justify-center" style={{ background: `${accent}33` }}>
             <span style={{ fontSize: "4rem", fontWeight: 900, color: accent }}>{nombre.split(" ").slice(0,2).map((n: string)=>n[0]).join("")}</span>
           </div>
@@ -909,7 +975,7 @@ function SlideEquipo() {
             <p style={{ fontSize: "1.7rem", fontWeight: 800, color: "rgba(255,255,255,0.9)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
               Talento local formado en
             </p>
-            <p style={{ fontSize: "1.7rem", fontWeight: 900, color: accent, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            <p style={{ fontSize: "1.7rem", fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
               Alicante Futura
             </p>
           </div>
@@ -997,8 +1063,8 @@ function WaveTransition({ onMidpoint, onComplete, color = "#EEF2D0" }: {
 }
 
 // ── Slides array ──────────────────────────────────────────────────────────────
-const SLIDES = [Slide1, Slide2, Slide3, Slide4, SlideEquipo, Slide6, SlideMetodologia, Slide8, SlidePreguntas, Slide9];
-const SLIDE_LABELS = ["Portada", "Sobre Atalayas", "El problema", "La solución", "El equipo", "Tecnologías", "El recorrido", "Cierre", "Preguntas", "Contacto"];
+const SLIDES = [Slide1, SlideEquipo, Slide2, Slide3, Slide4, Slide6, SlideMetodologia, Slide8, SlidePreguntas, Slide9];
+const SLIDE_LABELS = ["Portada", "El equipo", "Sobre Atalayas", "El problema", "La solución", "Tecnologías", "El recorrido", "Cierre", "Preguntas", "Contacto"];
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function ShowcasePage() {
