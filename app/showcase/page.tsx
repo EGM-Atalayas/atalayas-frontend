@@ -56,7 +56,7 @@ const BORDER = "rgba(255,255,255,0.12)";
 // Tema por slide — bg + accent vibrantes y variados (alineados con SLIDES array)
 const SLIDE_THEMES: { bg: string; accent: string }[] = [
   { bg: "#1E1B4B", accent: "#FFD166" }, // 0 — Portada
-  { bg: "#BE185D", accent: "#FCE7F3" }, // 1 — El equipo
+  { bg: "#0D9E7A", accent: "#D1FAE5" }, // 1 — El equipo
   { bg: "#2563EB", accent: "#FEF08A" }, // 2 — Sobre Atalayas
   { bg: "#FB345F", accent: "#FEF3C7" }, // 3 — El problema
   { bg: "#065F46", accent: "#FEF9C3" }, // 4 — La solución
@@ -105,6 +105,7 @@ function Slide1() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
         transition={{ duration: 0.7, delay: 0.1 }}
         className="relative z-10 flex items-center gap-6"
         style={{ padding: "4% 6% 0" }}
@@ -114,10 +115,11 @@ function Slide1() {
         <img src="/alicante-futura-logo.png" alt="Alicante Futura Lab" style={{ height: 60, width: "auto", opacity: 0.85 }} />
       </motion.div>
 
-      {/* Contenido principal — izquierda, centrado verticalmente */}
+      {/* Contenido principal — sale antes que la imagen de fondo */}
       <motion.div
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, y: -30 }}
         transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 flex flex-col flex-1 justify-center"
         style={{ padding: "0 6% 8%" }}
@@ -250,9 +252,9 @@ function Slide3() {
           key={i}
           type="button"
           onClick={(e) => { e.stopPropagation(); setVideoAbierto(true); }}
-          initial={{ opacity: 0, scale: 0.85, y: 12 }}
+          initial={{ opacity: 0, scale: 0.85, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ delay: 0.4 + i * 0.12, duration: 0.55, ease: [0.22,1,0.36,1] }}
+          transition={{ delay: 0.5 + i * 0.75, duration: 0.85, ease: [0.22,1,0.36,1] }}
           whileHover={{ scale: 1.05, zIndex: 20 }}
           className="absolute px-6 py-5 text-left"
           style={{
@@ -570,7 +572,7 @@ function Slide6() {
               key={nombre}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.12 + i * 0.06, duration: 0.5, ease: [0.22,1,0.36,1] }}
+              transition={{ delay: 0.3 + i * 0.18, duration: 0.75, ease: [0.22,1,0.36,1] }}
               className="relative rounded-3xl overflow-hidden flex flex-col gap-4 transition-transform hover:-translate-y-1"
               style={{
                 background: `linear-gradient(145deg, ${color}58 0%, ${color}30 100%), rgba(255,255,255,0.08)`,
@@ -738,7 +740,7 @@ function Slide8() {
         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22,1,0.36,1] }}
         style={{ fontSize: "clamp(3.8rem, 7vw, 6.5rem)", fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.04em", maxWidth: 1200 }}
       >
-        Con las <span style={{ color: "#fff", WebkitTextStroke: "2px rgba(255,255,255,0.5)", fontStyle: "italic" }}>ganas</span> de quien empieza y la <span style={{ color: "#fff", WebkitTextStroke: "2px rgba(255,255,255,0.5)", fontStyle: "italic" }}>dedicación</span> de quien lo da todo
+        Con las <span style={{ color: "transparent", WebkitTextStroke: "3px #ffffff", fontStyle: "italic" }}>ganas</span> de quien empieza y la <span style={{ color: "transparent", WebkitTextStroke: "3px #ffffff", fontStyle: "italic" }}>dedicación</span> de quien lo da todo
       </motion.p>
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }}
@@ -1010,30 +1012,32 @@ function SlideVisitas() {
         initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
         className="shrink-0" style={{ marginBottom: "3%" }}
       >
-        <span style={{ color: accent, fontSize: "clamp(0.95rem, 1.4vw, 1.2rem)", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase" }}>
-          Área empresarial
-        </span>
-        <h2 style={{ fontSize: "clamp(3rem, 6vw, 5.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.92, marginTop: "0.12em" }}>
-          Salimos a<br />conocerlos.
+        <h2 style={{ fontSize: "clamp(2.4rem, 4.5vw, 4.5rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 0.92, whiteSpace: "nowrap" }}>
+          Fuimos a verlo con nuestros ojos
         </h2>
       </motion.div>
 
-      {/* Galería: foto grande a la izquierda + 4 en grid a la derecha */}
-      <div className="flex flex-1 min-h-0" style={{ gap: "1.5%", alignItems: "stretch" }}>
+      {/* Galería: foto izquierda + 2×2 derecha */}
+      <div className="flex flex-1 min-h-0" style={{ gap: "3%", alignItems: "stretch" }}>
 
         {/* Foto grande */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          style={{ width: "48%", borderRadius: 20, overflow: "hidden", flexShrink: 0 }}
+          style={{ width: "46%", borderRadius: 20, overflow: "hidden", flexShrink: 0 }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={fotos[0]} alt="Visita empresa" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+          <img src={fotos[3]} alt="Visita empresa" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
         </motion.div>
 
         {/* Grid 2×2 */}
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: "1.5%" }}>
-          {fotos.slice(1).map((src, i) => (
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: "3%", height: "100%" }}>
+          {[
+            { src: fotos[0], pos: "12% center", imgStyle: {} },
+            { src: fotos[1], pos: "75% center", imgStyle: {} },
+            { src: fotos[2], pos: "30% center", imgStyle: { transform: "scale(1.12)" } },
+            { src: fotos[4], pos: "center center", imgStyle: {} },
+          ].map(({ src, pos, imgStyle }, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
@@ -1041,7 +1045,7 @@ function SlideVisitas() {
               style={{ borderRadius: 16, overflow: "hidden" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`Visita empresa ${i + 2}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, ...imgStyle }} />
             </motion.div>
           ))}
         </div>
@@ -1066,9 +1070,9 @@ function SlideEquipo() {
   const Tarjeta = ({ nombre, rol, desc, foto }: { nombre: string; rol: string; desc: string; foto: string }, i: number) => (
     <motion.div
       key={i}
-      initial={{ opacity: 0, y: 24, scale: 0.93 }}
+      initial={{ opacity: 0, y: 50, scale: 0.93 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.12 + i * 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
+      transition={{ delay: 0.8 + i * 0.22, duration: 0.85, ease: [0.22,1,0.36,1] }}
       className="relative rounded-3xl overflow-hidden transition-transform hover:-translate-y-1 h-full"
       style={{ border: `1px solid rgba(164,209,207,0.3)` }}
     >
@@ -1100,8 +1104,8 @@ function SlideEquipo() {
   return (
     <div className="flex flex-col h-full px-24 py-10 gap-0 overflow-hidden items-center" style={{ paddingBottom: "8%", background: "#0D9E7A" }}>
 
-      {/* Título */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22,1,0.36,1] }}
+      {/* Título — aparece primero */}
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1, ease: [0.22,1,0.36,1] }}
         className="flex items-center justify-between w-full shrink-0" style={{ marginTop: "4%" }}>
         <h2 style={{ fontSize: "clamp(4rem, 8vw, 7rem)", fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", lineHeight: 1 }}>
           El equipo detrás
@@ -1165,20 +1169,20 @@ function WaveTransition({ onMidpoint, onComplete, color = "#EEF2D0" }: {
 
     // Estado 1 — Oculta a la izquierda (colapsada como una línea fuera de la pantalla)
     const HIDDEN_LEFT  = "M -20 0 L -20 0 C -20 33, -20 66, -20 100 L -20 100 Z";
-    // Estado 2 — Cubre toda la pantalla, curva bulging hacia la derecha (fuera de pantalla)
-    const COVER        = "M -5  0 L 105 0 C 125 33, 125 66, 105 100 L -5  100 Z";
-    // Estado 3 — Curva flip: ahora bulge hacia la izquierda (concava por la derecha)
-    const COVER_FLIP   = "M -5  0 L 105 0 C 85  33, 85  66, 105 100 L -5  100 Z";
-    // Estado 4 — Sale por la derecha (colapsada)
+    // Estado 2 — Cubre toda la pantalla, curva bulging más pronunciada
+    const COVER        = "M -5  0 L 105 0 C 135 33, 135 66, 105 100 L -5  100 Z";
+    // Estado 3 — Curva flip más cóncava
+    const COVER_FLIP   = "M -5  0 L 105 0 C 78  33, 78  66, 105 100 L -5  100 Z";
+    // Estado 4 — Sale por la derecha
     const HIDDEN_RIGHT = "M 120 0 L 120 0 C 120 33, 120 66, 120 100 L 120 100 Z";
 
     gsap.set(path, { attr: { d: HIDDEN_LEFT } });
 
     const tl = gsap.timeline({ onComplete: () => onCompleteRef.current() });
-    tl.to(path, { attr: { d: COVER },        duration: 0.55, ease: "power2.inOut" });
+    tl.to(path, { attr: { d: COVER },        duration: 0.85, ease: "power3.inOut" });
     tl.add(() => onMidpointRef.current());
-    tl.to(path, { attr: { d: COVER_FLIP },   duration: 0.15, ease: "power1.inOut" });
-    tl.to(path, { attr: { d: HIDDEN_RIGHT }, duration: 0.55, ease: "power2.inOut" });
+    tl.to(path, { attr: { d: COVER_FLIP },   duration: 0.22, ease: "power2.inOut" });
+    tl.to(path, { attr: { d: HIDDEN_RIGHT }, duration: 0.75, ease: "power3.inOut" });
 
     return () => { tl.kill(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1273,65 +1277,71 @@ export default function ShowcasePage() {
 
   // Variants por slide — cada una tiene su propio estilo de entrada/salida
   const SLIDE_TRANSITIONS = [
-    // 0 — Portada: slide vertical
+    // 0 — Portada: entra desde abajo, sale hacia arriba con fade
     {
-      enter:  (d: number) => ({ opacity: 0, y: d > 0 ? "100%" : "-100%" }),
-      center: { opacity: 1, y: 0 },
-      exit:   (d: number) => ({ opacity: 0, y: d > 0 ? "-100%" : "100%" }),
+      enter:  { opacity: 0, y: "6%", scale: 1.04 },
+      center: { opacity: 1, y: 0, scale: 1 },
+      exit:   { opacity: 0, y: "-4%", scale: 0.98, filter: "blur(6px)" },
     },
-    // 1 — Sobre Atalayas: zoom in
+    // 1 — El equipo: zoom suave desde el centro, exit rápido
     {
-      enter:  { opacity: 0, scale: 0.85 },
-      center: { opacity: 1, scale: 1 },
-      exit:   { opacity: 0, scale: 1.15 },
+      enter:  { opacity: 0, scale: 0.88, filter: "blur(8px)" },
+      center: { opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit:   { opacity: 0, scale: 1.04, filter: "blur(4px)", transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
     },
-    // 2 — El problema: slide horizontal
+    // 2 — Sobre Atalayas: entrada lenta desde abajo
     {
-      enter:  (d: number) => ({ opacity: 0, x: d > 0 ? "100%" : "-100%" }),
-      center: { opacity: 1, x: 0 },
-      exit:   (d: number) => ({ opacity: 0, x: d > 0 ? "-100%" : "100%" }),
+      enter:  { opacity: 0, y: "5%", scale: 0.97, filter: "blur(8px)", transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+      exit:   (d: number) => ({ opacity: 0, x: d > 0 ? "-50%" : "50%", scale: 0.95 }),
     },
-    // 3 — La solución: blur fade
+    // 3 — El problema: sale a la izquierda como cerrar una página
     {
-      enter:  { opacity: 0, filter: "blur(20px) brightness(0.6)" },
-      center: { opacity: 1, filter: "blur(0px) brightness(1)" },
-      exit:   { opacity: 0, filter: "blur(20px) brightness(0.6)" },
+      enter:  { opacity: 0, filter: "blur(16px) brightness(0.5)", scale: 0.96 },
+      center: { opacity: 1, filter: "blur(0px) brightness(1)", scale: 1 },
+      exit:   (d: number) => ({ opacity: 0, x: d > 0 ? "-30%" : "30%", scale: 0.96, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }),
     },
-    // 4 — Demo: rotate + scale
+    // 4 — La solución: entra desde la derecha como abrir una URL, luego zoom al browser
     {
-      enter:  { opacity: 0, scale: 0.7, rotate: -8 },
-      center: { opacity: 1, scale: 1, rotate: 0 },
-      exit:   { opacity: 0, scale: 1.1, rotate: 8 },
+      enter:  (d: number) => ({ opacity: 0, x: d > 0 ? "40%" : "-40%", scale: 0.97, transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] } }),
+      center: { opacity: 1, x: 0, scale: 1 },
+      exit:   { opacity: 0, scale: 0.88, filter: "blur(10px)", transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
     },
-    // 5 — Tecnologías: slide vertical desde arriba
+    // 5 — Tecnologías: emerge desde detrás — como abrir el capó
     {
-      enter:  { opacity: 0, y: "-100%" },
-      center: { opacity: 1, y: 0 },
-      exit:   { opacity: 0, y: "100%" },
+      enter:  { opacity: 0, scale: 1.08, filter: "blur(10px)", transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit:   { opacity: 0, scale: 0.9, filter: "blur(12px)", transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
     },
-    // 6 — Metodología: slide horizontal desde la izquierda
+    // 6 — El recorrido: emerge desde el centro como abriendo un libro
     {
-      enter:  (d: number) => ({ opacity: 0, x: d > 0 ? "-100%" : "100%" }),
-      center: { opacity: 1, x: 0 },
-      exit:   (d: number) => ({ opacity: 0, x: d > 0 ? "100%" : "-100%" }),
+      enter:  { opacity: 0, scale: 0.92, filter: "blur(8px)", transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit:   (d: number) => ({ opacity: 0, x: d > 0 ? "-40%" : "40%", scale: 0.96, filter: "blur(6px)" }),
     },
-    // 7 — Cierre: fade + scale suave
+    // 7 — Visitas: entra con zoom suave como abrir un álbum de fotos
     {
-      enter:  { opacity: 0, scale: 0.95 },
-      center: { opacity: 1, scale: 1 },
-      exit:   { opacity: 0, scale: 0.95 },
+      enter:  { opacity: 0, scale: 1.06, filter: "blur(8px)", transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit:   { opacity: 0, scale: 0.94, filter: "blur(10px) brightness(0.7)", transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
     },
-    // 8 — Preguntas: blur cinematográfico
+    // 8 — Cierre: emerge despacio desde oscuro — como encender una luz
     {
-      enter:  { opacity: 0, filter: "blur(24px) brightness(0.7)" },
-      center: { opacity: 1, filter: "blur(0px) brightness(1)" },
-      exit:   { opacity: 0, filter: "blur(24px) brightness(0.7)" },
+      enter:  { opacity: 0, scale: 0.97, filter: "blur(16px) brightness(0.3)", transition: { duration: 1.3, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, scale: 1, filter: "blur(0px) brightness(1)" },
+      exit:   { opacity: 0, scale: 1.04, filter: "blur(8px)", transition: { duration: 0.5, ease: "easeIn" } },
     },
-    // 9 — Contacto: zoom de cámara continuo
+    // 9 — Preguntas: irrumpe con impacto — zoom desde grande
     {
-      enter:  { opacity: 0, scale: 1.18 },
-      center: { opacity: 1, scale: 1 },
-      exit:   { opacity: 0, scale: 0.92 },
+      enter:  { opacity: 0, scale: 1.22, filter: "blur(16px)", transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit:   { opacity: 0, y: "5%", scale: 0.97, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+    },
+    // 10 — Contacto: desliza desde abajo suavemente — mismo mundo azul
+    {
+      enter:  { opacity: 0, y: "8%", filter: "blur(6px)", transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] } },
+      center: { opacity: 1, y: 0, filter: "blur(0px)" },
+      exit:   { opacity: 0, y: "-5%", filter: "blur(6px)" },
     },
   ];
 
@@ -1354,7 +1364,7 @@ export default function ShowcasePage() {
         background: theme.bg,
         fontFamily: "var(--font-poppins), sans-serif",
         cursor: "pointer",
-        transition: "background-color 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+        transition: "background-color 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
       }}
       onClick={(e) => {
         // No avanzar si el click es sobre los dots
@@ -1372,7 +1382,7 @@ export default function ShowcasePage() {
           initial={waveActive ? false : "enter"}
           animate={waveActive ? false : "center"}
           exit={waveActive ? undefined : "exit"}
-          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: current === 1 ? 1.6 : 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0 flex flex-col"
           style={{ paddingBottom: 0 }}
         >
