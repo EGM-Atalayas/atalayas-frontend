@@ -508,14 +508,14 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:flex-none sm:w-64">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar empleado…"
               value={empSearchInput}
               onChange={(e) => { setEmpSearchInput(e.target.value); setEmpPage(0); }}
-              className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
               style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: empSearchInput ? "2.2rem" : "14px" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--tab-empleados)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}

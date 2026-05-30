@@ -360,13 +360,13 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
               {/* Buscador con X dentro */}
               <div className="relative shrink-0" style={{ width: 260 }}>
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                  <Search size={15} strokeWidth={2} />
+                  <Search size={16} strokeWidth={2} />
                 </span>
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Buscar eventos…"
-                  className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                  className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
                   style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: search ? "2.2rem" : "14px" }}
                   onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
                   onBlur={e  => e.currentTarget.style.borderColor = "var(--gris-borde)"}
@@ -443,10 +443,10 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                    <Search size={15} strokeWidth={2} />
+                    <Search size={16} strokeWidth={2} />
                   </span>
                   <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar…"
-                    className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none"
+                    className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none"
                     style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: search ? "2.2rem" : "14px" }} />
                   {search && (
                     <button onClick={() => setSearch("")}
@@ -470,7 +470,7 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
                   }
                   setDropOpen(v => !v);
                 }}
-                className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer"
+                className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-semibold rounded-2xl cursor-pointer"
                 style={{
                   background: "var(--blanco)",
                   border: `1.5px solid ${filtro !== "todos" ? TAB_COLOR : "var(--gris-borde)"}`,
@@ -484,18 +484,19 @@ export function EventosAdminTab({ esSuperAdmin = false }: Props) {
               {dropOpen && createPortal(
                 <>
                   <div className="fixed inset-0 z-[9998]" onClick={() => setDropOpen(false)} />
-                  <div className="fixed z-[9999] rounded-xl overflow-hidden"
+                  <div className="fixed z-[9999] rounded-2xl overflow-hidden"
                     style={{ top: dropPos.top, left: dropPos.left, minWidth: Math.max(dropPos.width, 180), background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 8px 24px rgba(0,0,0,0.13)" }}>
-                    {FILTROS.map(opt => {
+                    {FILTROS.map((opt, idx) => {
                       const sel = filtro === opt.id;
                       return (
                         <button key={opt.id} onClick={() => { setFiltro(opt.id); setDropOpen(false); }}
-                          className="flex items-center w-full px-4 py-2.5 text-sm font-semibold cursor-pointer text-left"
-                          style={{ color: sel ? TAB_COLOR : "var(--texto-primario)", background: sel ? `${TAB_COLOR}10` : "transparent" }}
+                          className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold cursor-pointer"
+                          style={{ color: sel ? TAB_COLOR : "var(--texto-primario)", background: sel ? `${TAB_COLOR}12` : "transparent", borderBottom: idx < FILTROS.length - 1 ? "1px solid var(--gris-borde)" : "none" }}
                           onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = "var(--gris-pagina)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = sel ? `${TAB_COLOR}10` : "transparent"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = sel ? `${TAB_COLOR}12` : "transparent"; }}
                         >
-                          {opt.label}
+                          <span>{opt.label}</span>
+                          {sel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: TAB_COLOR }} />}
                         </button>
                       );
                     })}

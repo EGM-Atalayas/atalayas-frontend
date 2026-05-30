@@ -246,14 +246,14 @@ export function AnunciosAdminTab({ empresaId, onToast }: Props) {
         <div className="hidden sm:flex items-center gap-2">
           <div className="relative" style={{ width: 260 }}>
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar anuncio…"
               value={anuncioSearch}
               onChange={(e) => setAnuncioSearch(e.target.value)}
-              className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
               style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: anuncioSearch ? "2.2rem" : "14px" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
@@ -317,14 +317,14 @@ export function AnunciosAdminTab({ empresaId, onToast }: Props) {
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                <Search size={15} />
+                <Search size={16} />
               </span>
               <input
                 type="text"
                 placeholder="Buscar anuncio…"
                 value={anuncioSearch}
                 onChange={(e) => setAnuncioSearch(e.target.value)}
-                className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
                 style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: anuncioSearch ? "2.2rem" : "14px" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
@@ -595,7 +595,7 @@ function AnuncioSelect({ value, onChange, options, placeholder, accentColor }: {
         ref={triggerRef}
         type="button"
         onClick={() => { calcPos(); setOpen(p => !p); }}
-        className="w-full flex items-center gap-2 rounded-xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
+        className="w-full flex items-center gap-2 rounded-2xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
         style={{
           background: "var(--blanco)",
           border: `1.5px solid ${isActive || open ? accentColor : "var(--gris-borde)"}`,
@@ -626,27 +626,28 @@ function AnuncioSelect({ value, onChange, options, placeholder, accentColor }: {
                 zIndex: 9999,
                 background: "#ffffff",
                 border: "1px solid rgba(0,0,0,0.10)",
-                borderRadius: "12px",
+                borderRadius: "16px",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                 overflow: "hidden",
               }}
             >
-              {[{ id: "", label: placeholder }, ...options].map((opt) => {
+              {[{ id: "", label: placeholder }, ...options].map((opt, idx, arr) => {
                 const isSel = value === opt.id;
                 return (
                   <button key={opt.id} type="button"
                     onClick={() => { onChange(opt.id); setOpen(false); }}
-                    className="w-full text-left px-3.5 py-2.5 text-sm cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-sm font-semibold cursor-pointer"
                     style={{
-                      background: isSel ? `${accentColor}15` : "transparent",
+                      background: isSel ? `${accentColor}12` : "transparent",
                       color: isSel ? accentColor : "var(--texto-primario)",
-                      fontWeight: isSel ? 600 : 400,
+                      borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none",
                       transition: "background 0.1s",
                     }}
                     onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
-                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = isSel ? `${accentColor}12` : "transparent"; }}
                   >
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {isSel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
                   </button>
                 );
               })}

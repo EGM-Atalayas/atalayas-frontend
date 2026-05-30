@@ -2,6 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useState, useMemo, useRef } from "react";
 import { gsap } from "gsap";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/logo.webp";
@@ -345,55 +346,63 @@ function NoticiaModal({ item, onClose }: { item: UnifiedItem; onClose: () => voi
   );
 }
 
-function NewsCard({ item }: { item: UnifiedItem }) {
+function NewsCard({ item, featured = false }: { item: UnifiedItem; featured?: boolean }) {
   const tagColor = TAG_COLORS[item.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
   const { full } = formatDate(item.fecha);
 
   return (
-    <Link href={`/noticias/${item.id}`} style={{ textDecoration: "none" }}>
-    <article
-      className="group cursor-pointer rounded-2xl overflow-hidden flex flex-col h-full"
-      style={{ background: "#fff", border: "1px solid #e5e7eb", transition: "box-shadow 0.2s ease, transform 0.2s ease" }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
-    >
-      {/* Imagen */}
-      <div className="w-full overflow-hidden shrink-0" style={{ aspectRatio: "16/9", background: "#f1f5f9" }}>
-        {item.imagenUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imagenUrl}
-            alt={item.titulo}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 9 4-4 4 4 4-4 4 4"/>
-            </svg>
+    <Link href={`/noticias/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+      <article
+        className="group cursor-pointer pb-6"
+        style={{ borderBottom: "1px solid #e5e7eb" }}
+      >
+        {/* Imagen */}
+        {item.imagenUrl && (
+          <div className="w-full overflow-hidden rounded-lg mb-3" style={{ aspectRatio: featured ? "16/9" : "3/2" }}>
+            <img
+              src={item.imagenUrl}
+              alt={item.titulo}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
           </div>
         )}
-      </div>
 
-      {/* Contenido */}
-      <div className="flex flex-col flex-1 p-5 gap-2">
-        <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full self-start"
-          style={{ background: tagColor.bg, color: tagColor.color }}
-        >
-          {item.categoria}
-        </span>
-        <h3 className="font-bold text-base leading-snug line-clamp-3" style={{ color: "#111827" }}>
-          {item.titulo}
-        </h3>
-        <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "#6b7280" }}>
-          {item.extracto}
-        </p>
-        {full && (
-          <p className="text-xs mt-auto pt-1" style={{ color: "#9ca3af" }}>{full}</p>
-        )}
-      </div>
-    </article>
+        {/* Contenido — con borde izquierdo si no hay imagen */}
+        <div className={!item.imagenUrl ? "flex gap-3" : ""}>
+          {!item.imagenUrl && (
+            <div className="w-[3px] rounded-full shrink-0 self-stretch" style={{ background: tagColor.color }} />
+          )}
+          <div className="flex flex-col gap-1 flex-1">
+            {/* Categoría */}
+            <div className="flex items-center gap-2">
+              {item.imagenUrl && <span className="shrink-0 w-[3px] h-3.5 rounded-full" style={{ background: tagColor.color }} />}
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: tagColor.color }}>
+                {item.categoria}
+              </span>
+            </div>
+
+            {/* Título */}
+            <h3
+              className={`font-bold leading-snug group-hover:underline decoration-1 underline-offset-2 ${featured ? "text-2xl" : "text-lg"}`}
+              style={{ color: "var(--texto-primario, #111827)" }}
+            >
+              {item.titulo}
+            </h3>
+
+            {/* Extracto solo en featured */}
+            {featured && (
+              <p className="text-sm leading-relaxed mt-1 line-clamp-2" style={{ color: "#6b7280" }}>
+                {item.extracto}
+              </p>
+            )}
+
+            {/* Fecha */}
+            {full && (
+              <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>{full}</p>
+            )}
+          </div>
+        </div>
+      </article>
     </Link>
   );
 }
@@ -496,6 +505,7 @@ export default function NoticiasPublicasPage() {
   const [activeTab,     setActiveTab]     = useState<TabKey>("todos");
   const [search,        setSearch]        = useState("");
   const [mobileMenuOpen,  setMobileMenuOpen]  = useState(false);
+  const [filterOpen,      setFilterOpen]      = useState(false);
   const [scrolled,        setScrolled]        = useState(false);
   const menuPanelRef = useRef<HTMLDivElement>(null);
   const menuOverlayRef = useRef<HTMLDivElement>(null);
@@ -529,6 +539,13 @@ export default function NoticiasPublicasPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const close = () => setFilterOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [filterOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -581,21 +598,23 @@ export default function NoticiasPublicasPage() {
   }, [allItems]);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--fondo-pagina, #f9fafb)", fontFamily: "'Instrument Sans', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--fondo-pagina, #f9fafb)", fontFamily: "'Instrument Sans', sans-serif" }}>
 
       {/* ── Hero + Nav unificados ─────────────────────────────────────────── */}
-      <section className="relative w-full min-h-[60vh] flex flex-col overflow-hidden">
+      <section className="relative w-full min-h-[55vh] sm:min-h-[70vh] flex flex-col overflow-hidden">
 
         {/* Background image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/noticias-hero.jpg"
+          src="/noticias-hero.webp"
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover z-0"
+          style={{ objectPosition: "right center" }}
         />
         {/* Dark overlay */}
-        <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.55)" }} />
+        <div className="absolute inset-0 z-[1]" style={{ background: "rgba(0,0,0,0.52)" }} />
+        <div className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.75) 100%)" }} />
 
         {/* Nav desktop — fixed, transparente en top, blur al scroll */}
         <nav
@@ -632,24 +651,21 @@ export default function NoticiasPublicasPage() {
           </Link>
           <button className="p-1 flex items-center justify-center" onClick={abrirMenu} aria-label="Abrir menú">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
         </div>
 
         {/* Hero text */}
-        <div className="relative z-20 flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 pb-20 pt-40">
-          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-4">
-            Blog · Noticias · Eventos · Comunicados
-          </p>
+        <div className="relative z-20 flex-1 flex flex-col justify-end px-8 sm:px-16 lg:px-24 pb-10 pt-40">
           <h1
-            className="text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-[0.95] max-w-4xl"
+            className="text-[4.2rem] sm:text-7xl md:text-8xl text-white font-normal leading-[0.92] max-w-4xl"
             style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-2px" }}
           >
-            Mantente al día con Atalayas.
+            Todo lo que pasa en Atalayas
           </h1>
-          <p className="mt-6 text-base sm:text-lg text-white/60 max-w-xl leading-relaxed">
-            Toda la actualidad del Área Empresarial: noticias, eventos, comunicados y más.
+          <p className="mt-5 text-base sm:text-lg text-white/80 max-w-sm leading-relaxed">
+            Mantente informado con las últimas noticias, eventos y comunicados de Atalayas
           </p>
         </div>
 
@@ -657,12 +673,12 @@ export default function NoticiasPublicasPage() {
 
       {/* Mobile menu panel */}
       <div className="md:hidden">
-        <div ref={menuOverlayRef} onClick={cerrarMenu} className="fixed inset-0 z-[57]" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} />
-        <div ref={menuPanelRef} className="fixed top-0 right-0 h-full z-[58] flex flex-col" style={{ width: "100%", background: "#fff" }}>
+        <div ref={menuOverlayRef} onClick={cerrarMenu} className="fixed inset-0 z-[61]" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} />
+        <div ref={menuPanelRef} className="fixed top-0 right-0 h-full z-[62] flex flex-col" style={{ width: "100%", background: "#fff" }}>
           <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto" />
+            <Image src={logo} alt="Atalayas EGM" className="h-10 w-auto" style={{ filter: "none" }} />
             <button onClick={cerrarMenu} aria-label="Cerrar menú" className="p-1">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
@@ -679,51 +695,112 @@ export default function NoticiasPublicasPage() {
 
       {/* ── Filters bar ──────────────────────────────────────────────────── */}
       <div
-        className="w-full px-6 sm:px-12 lg:px-20 py-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        className="w-full px-6 sm:px-12 lg:px-20 py-5 mt-6 flex flex-row items-center gap-3"
         style={{ background: "var(--fondo-pagina, #f9fafb)" }}
       >
-        {/* Tab pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 flex-nowrap">
-          {TAB_LABELS.map(({ key, label }) => {
-            const active = activeTab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all whitespace-nowrap shrink-0${active ? " liquid-glass" : ""}`}
+        {/* Dropdown filtro — idéntico al admin */}
+        <div className="relative w-auto shrink-0">
+          <motion.button
+            onClick={(e) => { e.stopPropagation(); setFilterOpen((v) => !v); }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl focus:outline-none"
+            style={{
+              background: "var(--blanco, #fff)",
+              border: `1.5px solid ${filterOpen ? "#1B3F7E" : "var(--gris-borde, #e5e7eb)"}`,
+              cursor: "pointer",
+              transition: "border-color 0.18s",
+            }}
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1B3F7E" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
+            </svg>
+            <span className="flex-1 text-left text-sm font-bold" style={{ color: "var(--texto-primario, #111827)" }}>
+              {TAB_LABELS.find((t) => t.key === activeTab)?.label}
+            </span>
+            <motion.span
+              animate={{ rotate: filterOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ color: "var(--texto-muted, #6b7280)", display: "flex" }}
+            >
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </motion.span>
+          </motion.button>
+
+          <AnimatePresence>
+            {filterOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                transition={{ duration: 0.18, ease: [0.34, 1.2, 0.64, 1] }}
+                className="absolute left-0 top-full mt-2 rounded-2xl overflow-hidden z-30"
+                style={{ minWidth: "180px" }}
                 style={{
-                  background:  active ? "rgba(27,63,126,0.25)" : "white",
-                  color:       active ? "#1B3F7E" : "var(--texto-muted, #6b7280)",
-                  borderColor: active ? "rgba(27,63,126,0.3)" : "var(--gris-borde, #e5e7eb)",
-                  boxShadow:   active ? "0 2px 12px rgba(27,63,126,0.15)" : "none",
+                  background: "var(--blanco, #fff)",
+                  border: "1px solid var(--gris-borde, #e5e7eb)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
                 }}
               >
-                {label}
-                <span className="opacity-60 tabular-nums" style={{ fontSize: "10px" }}>
-                  {counts[key]}
-                </span>
-              </button>
-            );
-          })}
+                {TAB_LABELS.map(({ key, label }, idx) => {
+                  const active = activeTab === key;
+                  return (
+                    <motion.button
+                      key={key}
+                      onClick={() => { setActiveTab(key); setFilterOpen(false); }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold focus:outline-none"
+                      style={{
+                        background: active ? "#1B3F7E12" : "transparent",
+                        borderBottom: idx < TAB_LABELS.length - 1 ? "1px solid var(--gris-borde, #e5e7eb)" : "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span className="flex-1 text-left" style={{ color: active ? "#1B3F7E" : "var(--texto-primario, #111827)" }}>
+                        {label}
+                      </span>
+                      <span className="ml-auto flex items-center gap-1.5">
+                        {counts[key] > 0 && (
+                          <span
+                            className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold leading-none tabular-nums"
+                            style={{ background: active ? "#1B3F7E" : "var(--gris-borde, #e5e7eb)", color: active ? "#fff" : "var(--texto-muted, #6b7280)" }}
+                          >
+                            {counts[key]}
+                          </span>
+                        )}
+                        {active && (
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1B3F7E" }} />
+                        )}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Search */}
-        <div className="relative sm:ml-auto w-full sm:w-64">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+        <div className="relative flex-1 ml-auto">
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
             type="text"
-            placeholder="Buscar…"
+            placeholder="Buscar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-full text-sm border outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-2xl text-base outline-none transition-all"
             style={{
-              background:  "white",
-              borderColor: "var(--gris-borde, #e5e7eb)",
-              color:       "var(--texto-primario, #111827)",
-              fontFamily:  "'Instrument Sans', sans-serif",
+              background:   "white",
+              border:       `1.5px solid ${search ? "#1B3F7E" : "var(--gris-borde, #e5e7eb)"}`,
+              color:        "var(--texto-primario, #111827)",
+              fontFamily:   "'Instrument Sans', sans-serif",
+              boxShadow:    search ? "0 4px 16px rgba(27,63,126,0.08)" : "none",
             }}
+            onFocus={(e) => { e.currentTarget.style.border = "1.5px solid #1B3F7E"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(27,63,126,0.08)"; }}
+            onBlur={(e) => { if (!search) { e.currentTarget.style.border = "1.5px solid var(--gris-borde, #e5e7eb)"; e.currentTarget.style.boxShadow = "none"; } }}
           />
         </div>
       </div>
@@ -732,9 +809,19 @@ export default function NoticiasPublicasPage() {
       <main className="w-full px-6 sm:px-12 lg:px-20 py-12">
 
         {loading && (
-          <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <div className="w-10 h-10 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
-            <p className="text-sm" style={{ color: "var(--texto-muted, #6b7280)" }}>Cargando contenido…</p>
+          <div className="flex flex-col gap-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex flex-col gap-3 pb-8" style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <div className="w-full rounded-lg animate-pulse" style={{ aspectRatio: i === 0 ? "16/9" : "3/2", background: "#f1f5f9" }} />
+                <div className="flex items-center gap-2">
+                  <div className="w-[3px] h-3.5 rounded-full animate-pulse" style={{ background: "#e5e7eb" }} />
+                  <div className="h-3 w-16 rounded animate-pulse" style={{ background: "#e5e7eb" }} />
+                </div>
+                <div className="h-5 rounded animate-pulse" style={{ background: "#f1f5f9", width: i === 0 ? "85%" : "70%" }} />
+                {i === 0 && <div className="h-5 rounded animate-pulse" style={{ background: "#f1f5f9", width: "60%" }} />}
+                <div className="h-3 w-24 rounded animate-pulse" style={{ background: "#f1f5f9" }} />
+              </div>
+            ))}
           </div>
         )}
 
@@ -752,21 +839,40 @@ export default function NoticiasPublicasPage() {
 
         {!loading && filtered.length > 0 && (
           <>
-            <p className="mb-6 text-xs" style={{ color: "var(--texto-muted, #6b7280)" }}>
-              Mostrando {filtered.length} {filtered.length === 1 ? "publicación" : "publicaciones"}
-              {activeTab !== "todos" && ` en ${TAB_LABELS.find((t) => t.key === activeTab)?.label}`}
-              {search && ` para «${search}»`}
-            </p>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <span className="w-[3px] h-5 rounded-full" style={{ background: "#1B3F7E" }} />
+                <h2 className="text-xl font-bold" style={{ color: "var(--texto-primario, #111827)" }}>
+                  {activeTab === "todos" ? "Últimas publicaciones" : TAB_LABELS.find((t) => t.key === activeTab)?.label}
+                </h2>
+              </div>
+              <p className="text-xs" style={{ color: "var(--texto-muted, #6b7280)" }}>
+                {filtered.length} {filtered.length === 1 ? "publicación" : "publicaciones"}
+                {search && ` · «${search}»`}
+              </p>
+            </div>
 
-            {/* Grid 3 columnas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((item) => (
-                <NewsCard key={item.id} item={item} />
+            <div className="flex flex-col gap-8">
+              {filtered.map((item, idx) => (
+                <NewsCard key={item.id} item={item} featured={idx === 0} />
               ))}
             </div>
           </>
         )}
       </main>
+
+      {/* ── Botón volver arriba ──────────────────────────────────────────── */}
+      {scrolled && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Volver arriba"
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 50, width: 44, height: 44, borderRadius: "50%", background: "#1B3F7E", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(27,63,126,0.3)" }}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} style={{ display: "block" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      )}
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer

@@ -606,14 +606,14 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
           {/* Buscador compacto — X dentro del input para limpiar búsqueda */}
           <div className="relative shrink-0" style={{ width: 260 }}>
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar incidencia…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
               style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: search ? "2.2rem" : "14px" }}
               onFocus={e => e.currentTarget.style.borderColor = TAB_COLOR}
               onBlur={e => e.currentTarget.style.borderColor = "var(--gris-borde)"}
@@ -703,10 +703,10 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
           <div className="flex gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                <Search size={15} />
+                <Search size={16} />
               </span>
               <input type="text" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none"
+                className="w-full pl-9 pr-8 py-2.5 text-sm rounded-2xl outline-none"
                 style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }} />
               {search && (
                 <button
@@ -736,7 +736,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                     }
                     setFiltroDropOpen(v => !v);
                   }}
-                  className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer"
+                  className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-semibold rounded-2xl cursor-pointer"
                   style={{
                     background: "var(--blanco)",
                     border: `1.5px solid ${activo ? activo.border : "var(--gris-borde)"}`,
@@ -754,7 +754,7 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                   <>
                     <div className="fixed inset-0 z-[9998]" onClick={() => setFiltroDropOpen(false)} />
                     <div
-                      className="fixed z-[9999] rounded-xl overflow-hidden"
+                      className="fixed z-[9999] rounded-2xl overflow-hidden"
                       style={{
                         top: filtroDropPos.top,
                         left: filtroDropPos.left,
@@ -765,23 +765,28 @@ export default function IncidenciasAdminTab({ empresaId, esSuperadmin }: Props) 
                       }}
                     >
                       {[{ value: "todas", label: "Todos los estados", Icon: null as any, color: "var(--texto-primario)", bg: "transparent" },
-                        ...ESTADOS].map(opt => {
+                        ...ESTADOS].map((opt, idx, arr) => {
                         const isSelected = filtro === opt.value;
+                        const accentColor = isSelected && opt.value !== "todas" ? opt.color : TAB_COLOR;
                         return (
                           <button
                             key={opt.value}
                             onClick={() => { setFiltro(opt.value); setFiltroDropOpen(false); }}
-                            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm font-semibold cursor-pointer text-left"
+                            className="flex items-center justify-between gap-3 w-full px-4 py-3 text-sm font-semibold cursor-pointer"
                             style={{
-                              color: isSelected ? opt.color : "var(--texto-primario)",
-                              background: isSelected ? (("bg" in opt && opt.bg !== "transparent") ? opt.bg : "var(--gris-superficie)") : "transparent",
+                              color: isSelected ? (opt.value !== "todas" ? opt.color : TAB_COLOR) : "var(--texto-primario)",
+                              background: isSelected ? `${opt.value !== "todas" ? opt.color : TAB_COLOR}12` : "transparent",
+                              borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none",
                               transition: "background 0.1s",
                             }}
-                            onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "var(--gris-superficie)"; }}
+                            onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "var(--gris-pagina)"; }}
                             onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                           >
-                            {opt.Icon && <opt.Icon size={13} strokeWidth={2.3} style={{ color: opt.color }} />}
-                            {opt.label}
+                            <span className="flex items-center gap-2">
+                              {opt.Icon && <opt.Icon size={13} strokeWidth={2.3} style={{ color: opt.color }} />}
+                              {opt.label}
+                            </span>
+                            {isSelected && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
                           </button>
                         );
                       })}

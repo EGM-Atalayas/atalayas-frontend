@@ -242,14 +242,14 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
         <div className="hidden sm:flex items-center gap-2">
           <div className="relative" style={{ width: 260 }}>
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar documento…"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
               style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: busqueda ? "2.2rem" : "14px" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
@@ -317,14 +317,14 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                <Search size={15} />
+                <Search size={16} />
               </span>
               <input
                 type="text"
                 placeholder="Buscar documento…"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+                className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
                 style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: busqueda ? "2.2rem" : "14px" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
@@ -341,29 +341,13 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
               <Plus size={16} strokeWidth={2.5} /> Añadir
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <DocSelect
-                value={filtroTipos.size === 1 ? Array.from(filtroTipos)[0] : ""}
-                onChange={(v) => setFiltroTipos(v ? new Set([v as TipoDocumento]) : new Set())}
-                options={TIPOS.map(t => ({ id: t, label: TIPO_DOCUMENTO_LABEL[t] }))}
-                placeholder="Todos los tipos"
-                accentColor={TAB_COLOR}
-              />
-            </div>
-            <AnimatePresence>
-              {hayFiltrosActivos && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                >
-                  <IconButton variant="surface" size="sm" label="Limpiar filtros" onClick={limpiarFiltros}>
-                    <X size={14} strokeWidth={2.5} />
-                  </IconButton>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <DocSelectMulti
+            values={filtroTipos}
+            onChange={setFiltroTipos}
+            options={TIPOS.map(t => ({ id: t, label: TIPO_DOCUMENTO_LABEL[t] }))}
+            placeholder="Todos los tipos"
+            accentColor={TAB_COLOR}
+          />
         </div>
 
         {/* Contador de resultados */}
@@ -1896,6 +1880,117 @@ function ModalAsignaciones({
   );
 }
 
+// ─── DocSelectMulti — dropdown con multi-selección para móvil ────────────────
+function DocSelectMulti({ values, onChange, options, placeholder, accentColor }: {
+  values: Set<TipoDocumento>;
+  onChange: (v: Set<TipoDocumento>) => void;
+  options: { id: string; label: string }[];
+  placeholder: string;
+  accentColor: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  function calcPos() {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + window.scrollY + 6, left: r.left, width: r.width });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOut(e: MouseEvent) {
+      const t = e.target as Node;
+      if (!wrapRef.current?.contains(t) && !dropdownRef.current?.contains(t)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOut);
+    return () => document.removeEventListener("mousedown", onClickOut);
+  }, [open]);
+
+  const label = values.size === 0
+    ? placeholder
+    : values.size === 1
+      ? options.find(o => o.id === Array.from(values)[0])?.label ?? placeholder
+      : `${values.size} tipos seleccionados`;
+
+  return (
+    <div ref={wrapRef} className="relative w-full">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => { calcPos(); setOpen(p => !p); }}
+        className="w-full flex items-center gap-2 rounded-2xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
+        style={{
+          background: "var(--blanco)",
+          border: `1.5px solid ${values.size > 0 || open ? accentColor : "var(--gris-borde)"}`,
+          color: values.size > 0 ? accentColor : "var(--texto-primario)",
+          transition: "border-color 0.15s, color 0.15s",
+        }}
+      >
+        <span className="flex-1 text-left truncate">{label}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}
+          style={{ display: "flex", flexShrink: 0, color: values.size > 0 ? accentColor : "var(--texto-muted)" }}>
+          <ChevronDown size={13} strokeWidth={2.5} />
+        </motion.span>
+      </button>
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -4, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                top: pos.top,
+                left: Math.min(pos.left, window.innerWidth - Math.max(pos.width, 180) - 12),
+                width: Math.max(pos.width, 180),
+                zIndex: 9999,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.10)",
+                borderRadius: "16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                overflow: "hidden",
+              }}
+            >
+              {options.map((opt, idx) => {
+                const isSel = values.has(opt.id as TipoDocumento);
+                return (
+                  <button key={opt.id} type="button"
+                    onClick={() => {
+                      const next = new Set(values);
+                      isSel ? next.delete(opt.id as TipoDocumento) : next.add(opt.id as TipoDocumento);
+                      onChange(next);
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-sm font-semibold cursor-pointer"
+                    style={{
+                      background: isSel ? `${accentColor}12` : "transparent",
+                      color: isSel ? accentColor : "var(--texto-primario)",
+                      borderBottom: idx < options.length - 1 ? "1px solid var(--gris-borde)" : "none",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isSel ? `${accentColor}12` : "transparent"; }}
+                  >
+                    <span>{opt.label}</span>
+                    {isSel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 // ─── DocSelect — dropdown estilizado igual que StatsSelect ───────────────────
 function DocSelect({ value, onChange, options, placeholder, accentColor }: {
   value: string;
@@ -1934,7 +2029,7 @@ function DocSelect({ value, onChange, options, placeholder, accentColor }: {
         ref={triggerRef}
         type="button"
         onClick={() => { calcPos(); setOpen(p => !p); }}
-        className="w-full flex items-center gap-2 rounded-xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
+        className="w-full flex items-center gap-2 rounded-2xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
         style={{
           background: "var(--blanco)",
           border: `1.5px solid ${isActive || open ? accentColor : "var(--gris-borde)"}`,
@@ -1965,27 +2060,28 @@ function DocSelect({ value, onChange, options, placeholder, accentColor }: {
                 zIndex: 9999,
                 background: "#ffffff",
                 border: "1px solid rgba(0,0,0,0.10)",
-                borderRadius: "12px",
+                borderRadius: "16px",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                 overflow: "hidden",
               }}
             >
-              {[{ id: "", label: placeholder }, ...options].map((opt) => {
+              {[{ id: "", label: placeholder }, ...options].map((opt, idx, arr) => {
                 const isSel = value === opt.id;
                 return (
                   <button key={opt.id} type="button"
                     onClick={() => { onChange(opt.id); setOpen(false); }}
-                    className="w-full text-left px-3.5 py-2.5 text-sm cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-sm font-semibold cursor-pointer"
                     style={{
-                      background: isSel ? `${accentColor}15` : "transparent",
+                      background: isSel ? `${accentColor}12` : "transparent",
                       color: isSel ? accentColor : "var(--texto-primario)",
-                      fontWeight: isSel ? 600 : 400,
+                      borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none",
                       transition: "background 0.1s",
                     }}
                     onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
-                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = isSel ? `${accentColor}12` : "transparent"; }}
                   >
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {isSel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
                   </button>
                 );
               })}

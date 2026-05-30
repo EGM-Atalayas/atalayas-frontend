@@ -227,7 +227,7 @@ export default function NoticiaDetallePage() {
         <Link href="/"><Image src={logo} alt="Atalayas EGM" className="h-10 w-auto brightness-0 invert" /></Link>
         <button className="p-1 flex items-center justify-center" onClick={abrirMenu} aria-label="Abrir menú">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
       </div>
@@ -272,44 +272,49 @@ export default function NoticiaDetallePage() {
 
       {!loading && item && (
         <>
-          <main className="w-full max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 pt-32 pb-16">
+          {/* Imagen de borde a borde, debajo del header */}
+          {item.imagenUrl && (
+            <div className="w-full overflow-hidden" style={{ aspectRatio: "16/9", marginTop: "72px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
+            </div>
+          )}
 
-            {/* Imagen */}
-            {item.imagenUrl && (
-              <div className="w-full rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "21/9" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imagenUrl} alt={item.titulo} className="w-full h-full object-cover" />
-              </div>
-            )}
+          <main className="w-full max-w-2xl mx-auto px-6 sm:px-8 pb-16 pt-8">
 
             {/* Categoría + fecha */}
             <div className="flex items-center gap-3 mb-4">
               {tagColor && (
-                <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                  style={{ background: tagColor.bg, color: tagColor.color }}>
-                  {item.categoria}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-[3px] h-3.5 rounded-full" style={{ background: tagColor.color }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: tagColor.color }}>
+                    {item.categoria}
+                  </span>
+                </div>
               )}
               <span className="text-sm" style={{ color: "#9ca3af" }}>{formatFull(item.fecha)}</span>
             </div>
 
             {/* Título */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-8" style={{ color: "#111827" }}>
+            <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-8" style={{ color: "#111827" }}>
               {item.titulo}
             </h1>
 
-            {/* Divisor */}
-            <div className="mb-8" style={{ borderTop: "1px solid #e5e7eb" }} />
+            <div className="mb-8" />
 
             {/* Contenido */}
-            <div style={{ fontSize: "1rem", color: "#374151", lineHeight: 1.85, overflowWrap: "break-word" }}>
+            <div className="noticia-body" style={{ fontSize: "1rem", color: "#374151", lineHeight: 1.85, overflowWrap: "break-word" }}>
               {renderMarkdown(item.contenido)}
             </div>
+            <style>{`.noticia-body a { color: #1B3F7E; text-decoration: underline; text-underline-offset: 3px; }`}</style>
 
             {/* Recursos */}
             {(embedUrl || item.adjuntoUrl || item.enlaceUrl) && (
-              <div className="mt-10 pt-8 flex flex-col gap-4" style={{ borderTop: "1px solid #e5e7eb" }}>
-                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#9ca3af" }}>Recursos adjuntos</p>
+              <div className="mt-10 flex flex-col gap-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-[3px] h-3.5 rounded-full" style={{ background: "#9ca3af" }} />
+                  <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#9ca3af" }}>Recursos adjuntos</p>
+                </div>
                 {embedUrl && (
                   <div className="rounded-2xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
                     <iframe src={embedUrl} className="w-full h-full" allowFullScreen style={{ border: "none" }} />
@@ -317,22 +322,28 @@ export default function NoticiaDetallePage() {
                 )}
                 {item.adjuntoUrl && (
                   <a href={item.adjuntoUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                    style={{ background: "#f1f5f9", border: "1px solid #e5e7eb", textDecoration: "none" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#dbeafe" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-colors"
+                    style={{ background: "#f8fafc", border: "1.5px solid #e5e7eb", textDecoration: "none" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#eff6ff")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "#f8fafc")}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1B3F7E" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </div>
-                    <span className="text-sm font-medium" style={{ color: "#2563eb" }}>{item.adjuntoNombre ?? "Ver documento"}</span>
+                    <span className="text-sm font-semibold flex-1" style={{ color: "#1B3F7E" }}>{item.adjuntoNombre ?? "Ver documento"}</span>
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#1B3F7E" strokeWidth={2} style={{ opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                   </a>
                 )}
                 {item.enlaceUrl && (
                   <a href={item.enlaceUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                    style={{ background: "#f1f5f9", border: "1px solid #e5e7eb", textDecoration: "none" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#dbeafe" }}>
-                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-colors"
+                    style={{ background: "#f8fafc", border: "1.5px solid #e5e7eb", textDecoration: "none" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#eff6ff")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "#f8fafc")}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1B3F7E" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     </div>
-                    <span className="text-sm font-medium" style={{ color: "#2563eb" }}>{item.enlaceTexto ?? "Ver enlace"}</span>
+                    <span className="text-sm font-semibold flex-1" style={{ color: "#1B3F7E" }}>{item.enlaceTexto ?? "Ver enlace"}</span>
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#1B3F7E" strokeWidth={2} style={{ opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/></svg>
                   </a>
                 )}
               </div>
@@ -345,31 +356,28 @@ export default function NoticiaDetallePage() {
 
       {/* ── Noticias recientes ── */}
       {recientes.length > 0 && (
-        <section className="w-full px-6 sm:px-12 lg:px-16 py-16" style={{ background: "#f9fafb", borderTop: "1px solid #e5e7eb" }}>
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl font-bold mb-8" style={{ color: "#111827" }}>Noticias recientes</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <section className="w-full py-12 px-6 sm:px-8" style={{ background: "#f9fafb", borderTop: "1px solid #e5e7eb" }}>
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Noticias recientes</h2>
+            <div className="flex flex-col gap-8">
               {recientes.map((r) => {
+                const rTagColor = TAG_COLORS[r.categoria] ?? { bg: "#F1F5F9", color: "#475569" };
                 return (
-                  <Link key={r.id} href={`/noticias/${r.id}`} style={{ textDecoration: "none" }}>
-                    <article
-                      className="group relative rounded-2xl overflow-hidden cursor-pointer"
-                      style={{ aspectRatio: "4/3", background: "#1a1a2e", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 16px 40px rgba(0,0,0,0.2)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-                    >
-                      {/* Imagen de fondo */}
+                  <Link key={r.id} href={`/noticias/${r.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    <article className="group cursor-pointer pb-8" style={{ borderBottom: "1px solid #e5e7eb" }}>
                       {r.imagenUrl && (
-                        <img src={r.imagenUrl} alt={r.titulo}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          style={{ opacity: 0.85 }} />
+                        <div className="w-full overflow-hidden rounded-lg mb-3" style={{ aspectRatio: "3/2", background: "#f1f5f9" }}>
+                          <img src={r.imagenUrl} alt={r.titulo}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        </div>
                       )}
-                      {/* Gradiente inferior */}
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)" }} />
-                      {/* Texto */}
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        <h3 className="font-bold text-base leading-snug text-white">{r.titulo}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-[3px] h-3.5 rounded-full shrink-0" style={{ background: rTagColor.color }} />
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: rTagColor.color }}>{r.categoria}</span>
                       </div>
+                      <h3 className="font-bold text-xl leading-snug group-hover:underline decoration-1 underline-offset-2" style={{ color: "#111827" }}>
+                        {r.titulo}
+                      </h3>
                     </article>
                   </Link>
                 );
