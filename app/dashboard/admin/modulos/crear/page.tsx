@@ -233,6 +233,8 @@ export default function CrearModuloPage() {
   const [paginaActivaId, setPaginaActivaId] = useState<number | null>(null);
 
   // ── UI state ──────────────────────────────────────────────────────────────
+  type VistaActiva = "ia" | "editor" | "bienvenida" | "config";
+  const [vistaActiva, setVistaActiva] = useState<VistaActiva>("config");
   const [mostrarSelectorTipo, setMostrarSelectorTipo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -472,8 +474,10 @@ export default function CrearModuloPage() {
     return nuevas;
   }
 
-  const guardarModulo = async () => {
+  const guardarModulo = async (opts?: { comoBorrador?: boolean }) => {
     if (!nombre.trim()) { setErrorMsg("El nombre del módulo es obligatorio"); return; }
+    if (opts?.comoBorrador) setActivo(false);
+    const activoEnvio = opts?.comoBorrador ? false : activo;
     setGuardando(true); setErrorMsg("");
     try {
       // Generar contenido IA para tipos seleccionados
@@ -521,8 +525,8 @@ export default function CrearModuloPage() {
           nombre: nombre.trim(),
           descripcion: descripcion.trim(),
           tipoModulo: mapTipoToBackend(categoria),
-          activo,
-          empresaId: usuario?.empresaId ?? null,
+          activo: activoEnvio,
+          empresaId: editId && moduloEditando ? moduloEditando.empresaId : (usuario?.empresaId ?? null),
           idioma,
           duracion,
           audiencia,
@@ -670,13 +674,6 @@ export default function CrearModuloPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 Volver
               </Link>
-              <div className="hidden sm:flex items-center gap-2.5">
-                <span className="text-sm" style={{ color: "#9ca3af" }}>Creación de módulos</span>
-                <svg className="w-3.5 h-3.5" style={{ color: "#d1d5db" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                <span className="text-sm font-semibold" style={{ color: "#1b3f7e" }}>
-                  {editId ? "Editar módulo" : "Nuevo módulo"}
-                </span>
-              </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -701,15 +698,56 @@ export default function CrearModuloPage() {
         </div>
       </div>
 
-      {/* ══ CUERPO PRINCIPAL ══ */}
+      {/* ══ CUERPO PRINCIPAL — Layout con sidebar vertical de navegación ══ */}
       <div className="px-4 md:px-8 lg:px-12 py-6 md:py-8">
-        <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6">
 
-          {/* ══ GRID SUPERIOR: CONFIG + IA ══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ══ SIDEBAR — Navegación entre tipos de creación ══ */}
+          <aside className="lg:order-2 lg:sticky lg:top-24 self-start">
+            <div className="flex lg:flex-col gap-2 rounded-2xl p-3"
+              style={{ background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
+              {[
+                { key: "ia" as VistaActiva, label: "Asistente IA", desc: "Genera contenido con IA", icon: <Sparkles className="w-5 h-5" />, gradient: "linear-gradient(135deg, #6B21A8 0%, #7C3AED 100%)" },
+                { key: "editor" as VistaActiva, label: "Editor de páginas", desc: "Crea y organiza páginas", icon: <SquarePen className="w-5 h-5" />, gradient: "linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)" },
+                { key: "bienvenida" as VistaActiva, label: "Plantilla bienvenida", desc: "Onboarding inicial", icon: <Shield className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)" },
+                { key: "config" as VistaActiva, label: "Configuración", desc: "Datos del módulo", icon: <Settings className="w-5 h-5" />, gradient: "linear-gradient(135deg, #0F766E 0%, #06B6D4 100%)" },
+              ].map((it) => {
+                const sel = vistaActiva === it.key;
+                return (
+                  <button key={it.key} type="button" onClick={() => setVistaActiva(it.key)}
+                    className="group relative flex-1 lg:flex-none flex lg:flex-row flex-col items-center lg:items-stretch gap-2 lg:gap-3 px-3 py-3 rounded-xl text-left transition-all overflow-hidden"
+                    style={{
+                      background: sel ? it.gradient : "transparent",
+                      color: sel ? "#fff" : "#374151",
+                      boxShadow: sel ? "0 8px 20px -8px rgba(0,0,0,0.25)" : "none",
+                    }}
+                    onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "#f9fafb"; }}
+                    onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{
+                        background: sel ? "rgba(255,255,255,0.22)" : "#f3f4f6",
+                        color: sel ? "#fff" : "#6b7280",
+                        backdropFilter: sel ? "blur(6px)" : undefined,
+                      }}>
+                      {it.icon}
+                    </div>
+                    <div className="hidden lg:block flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight">{it.label}</p>
+                      <p className="text-[11px] mt-0.5 leading-tight" style={{ color: sel ? "rgba(255,255,255,0.85)" : "#9ca3af" }}>{it.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
 
-            {/* ══ COLUMNA IZQUIERDA (2/3): CONFIGURACIÓN ══ */}
-            <div className="lg:col-span-2 rounded-2xl overflow-hidden card-hover fade-up"
+          {/* ══ COLUMNA PRINCIPAL — contenido según vistaActiva ══ */}
+          <div className="flex flex-col gap-6 min-w-0 lg:order-1">
+
+          {/* ══ VISTA: CONFIGURACIÓN ══ */}
+          {vistaActiva === "config" && (
+            <div className="rounded-2xl overflow-hidden card-hover fade-up"
               style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
               <div className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", color: "#1e40af", boxShadow: "0 2px 8px rgba(30,64,175,0.12)" }}>
@@ -867,16 +905,6 @@ export default function CrearModuloPage() {
                       )}
                     </div>
 
-                    {/* Toggle activo */}
-                    <div className="flex items-center justify-between px-5 py-3.5 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: "#111827" }}>Módulo activo</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
-                          {activo ? "Visible para los empleados" : "Oculto para los empleados"}
-                        </p>
-                      </div>
-                      <Toggle value={activo} onChange={setActivo} />
-                    </div>
                   </div>
                   <PortadaUpload
                     preview={portadaPreview}
@@ -887,129 +915,88 @@ export default function CrearModuloPage() {
                 </div>
               </div>
             </div>
+          )}
 
-            {/* ══ COLUMNA DERECHA (1/3): ASISTENTE IA ══ */}
-            {!editId && (
-              <div className="rounded-2xl overflow-hidden card-hover fade-up"
-                style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
-                <div className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #faf5ff, #f3e8ff)" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.2)" }}>
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Asistente IA</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#8b5cf6" }}>Crea contenido automáticamente</p>
-                  </div>
+          {/* ══ VISTA: ASISTENTE IA ══ */}
+          {vistaActiva === "ia" && !editId && (
+            <div className="rounded-2xl overflow-hidden card-hover fade-up"
+              style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}>
+              <div className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #faf5ff, #f3e8ff)" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.2)" }}>
+                  <Sparkles className="w-5 h-5" />
                 </div>
-                <div className="px-5 py-5">
-                  {/* Botón crear módulo completo */}
-                  <button type="button" onClick={() => setMostrarIA(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] mb-5"
-                    style={{ border: "1.5px solid #ddd6fe", background: "linear-gradient(135deg, #faf5ff, #f3e8ff)", boxShadow: "0 2px 8px rgba(124,58,237,0.08)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }}>
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold" style={{ color: "#6d28d9" }}>Módulo completo</p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: "#8b5cf6" }}>Describe y la IA lo genera</p>
-                    </div>
-                  </button>
-
-                  {/* Separador */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9ca3af" }}>Contenido</span>
-                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
-                  </div>
-
-                  <div className="mb-4">
-                    <PdfUpload
-                      file={pdfFile}
-                      onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
-                      onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
-                    />
-                  </div>
-
-                  {nombre.trim() || pdfFile ? (
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {[
-                        { key: "descripcion" as AiTipo, label: "Descripción", icon: "📝", desc: "Corta y profesional" },
-                        { key: "test" as AiTipo, label: "Test", icon: "✅", desc: "5 preguntas" },
-                        { key: "podcast" as AiTipo, label: "Podcast", icon: "🎙️", desc: "5-7 minutos" },
-                        { key: "video" as AiTipo, label: "Vídeo", icon: "🎬", desc: "Slides" },
-                        { key: "documento" as AiTipo, label: "Documento", icon: "📑", desc: "Completo" },
-                      ].map((opt) => {
-                        const sel = aiSeleccionadas[opt.key];
-                        return (
-                          <button key={opt.key} type="button"
-                            onClick={() => setAiSeleccionadas((p) => ({ ...p, [opt.key]: !p[opt.key] }))}
-                            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-center transition-all ${sel ? "ai-pop" : ""}`}
-                            style={{
-                              border: `1.5px solid ${sel ? "#7c3aed" : "#e5e7eb"}`,
-                              background: sel ? "#f5f3ff" : "#f9fafb",
-                              color: sel ? "#5b21b6" : "#374151",
-                            }}>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-lg">{opt.icon}</span>
-                              {sel && <Check className="w-3 h-3 shrink-0" style={{ color: "#7c3aed" }} />}
-                            </div>
-                            <span className="text-xs font-semibold">{opt.label}</span>
-                            <span className="text-[10px]" style={{ color: sel ? "#7c3aed" : "#9ca3af" }}>{opt.desc}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-
-                  {/* Presentación */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9ca3af" }}>Presentación</span>
-                    <div className="flex-1" style={{ borderTop: "1px solid #e5e7eb" }} />
-                  </div>
-
-                  <button type="button" onClick={() => setPresentacionPanelOpen(!presentacionPanelOpen)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
-                    style={{ border: `1.5px solid ${presentacionPanelOpen ? "#ddd6fe" : "#e5e7eb"}`, background: presentacionPanelOpen ? "#f5f3ff" : "#f9fafb" }}>
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: gradVioleta, color: "#fff" }}>
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: "#111827" }}>
-                        {presentacionGuardada ? `Presentación lista — ${presentacionGuardada.slides.length} slides` : "Presentación con IA"}
-                      </p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: "#9ca3af" }}>
-                        {presentacionGuardada ? "Generada desde PDF" : "Genera slides desde un PDF"}
-                      </p>
-                    </div>
-                  </button>
-
-                  {presentacionPanelOpen && (
-                    <div className="mt-3 p-4 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-                      <PresentationCreator
-                        moduleTitle={nombre}
-                        onSave={(slides, themeId) => {
-                          setPresentacionGuardada({ slides, themeId });
-                          setPresentacionPanelOpen(false);
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {aiError && (
-                    <div className="mt-4 text-xs px-3 py-3 rounded-xl flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-                      <Sparkles size={16} strokeWidth={2} className="shrink-0" />
-                      <span className="flex-1">{aiError}</span>
-                      <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
-                    </div>
-                  )}
+                <div className="flex-1">
+                  <p className="text-sm font-bold" style={{ color: "#5b21b6" }}>Asistente IA</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#8b5cf6" }}>Genera contenido automáticamente</p>
                 </div>
               </div>
-            )}
-          </div>
+              <div className="px-6 py-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: "modulo", label: "Módulo completo", desc: "Describe y la IA lo genera", icon: <Sparkles className="w-6 h-6" />, gradient: "linear-gradient(135deg, #6B21A8 0%, #7C3AED 100%)", disabled: false, onClick: () => setMostrarIA(true) },
+                    { key: "presentacion", label: "Presentación con IA", desc: "Genera slides desde un PDF", icon: <SquarePen className="w-6 h-6" />, gradient: "linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)", disabled: false, onClick: () => setPresentacionPanelOpen(true) },
+                    { key: "podcast", label: "Podcast con IA", desc: "Audio de 5–7 minutos", icon: <File className="w-6 h-6" />, gradient: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)", disabled: false, onClick: () => setAiSeleccionadas((p) => ({ ...p, podcast: !p.podcast })) },
+                    { key: "video", label: "Vídeo con IA", desc: "Próximamente", icon: <FileUp className="w-6 h-6" />, gradient: "linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%)", disabled: true, onClick: () => {} },
+                  ].map((opt) => (
+                    <button key={opt.key} type="button" onClick={opt.onClick} disabled={opt.disabled}
+                      className={`relative group rounded-2xl p-5 text-left transition-all overflow-hidden ${opt.disabled ? "cursor-not-allowed opacity-60" : "hover:-translate-y-1 cursor-pointer"}`}
+                      style={{
+                        background: "#fff",
+                        border: "1.5px solid #e5e7eb",
+                        boxShadow: opt.disabled ? "none" : "0 4px 14px -8px rgba(0,0,0,0.15)",
+                        minHeight: 140,
+                      }}>
+                      {/* Halo */}
+                      {!opt.disabled && (
+                        <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: opt.gradient, opacity: 0.10, filter: "blur(8px)" }} />
+                      )}
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110" style={{ background: opt.gradient, color: "#fff", boxShadow: opt.disabled ? "none" : "0 6px 16px -4px rgba(0,0,0,0.25)" }}>
+                          {opt.icon}
+                        </div>
+                        <p className="text-base font-bold mb-1" style={{ color: "#111827" }}>{opt.label}</p>
+                        <p className="text-xs" style={{ color: "#6b7280" }}>{opt.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-          {/* ══ PLANTILLA BIENVENIDA (solo Onboarding) ══ */}
-          {categoria === "ONBOARDING" && (
+                {/* PDF Upload — necesario para Podcast/Vídeo */}
+                <div className="mt-6 pt-6" style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#6b7280" }}>Material base (PDF)</p>
+                  <PdfUpload
+                    file={pdfFile}
+                    onFile={(f) => { setPdfFile(f); setPdfPreview(URL.createObjectURL(f)); }}
+                    onRemove={() => { setPdfFile(null); setPdfPreview(""); }}
+                  />
+                </div>
+
+                {presentacionPanelOpen && (
+                  <div className="mt-4 p-4 rounded-xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                    <PresentationCreator
+                      moduleTitle={nombre}
+                      onSave={(slides, themeId) => {
+                        setPresentacionGuardada({ slides, themeId });
+                        setPresentacionPanelOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {aiError && (
+                  <div className="mt-4 text-xs px-3 py-3 rounded-xl flex items-center gap-2 fade-up" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                    <Sparkles size={16} strokeWidth={2} className="shrink-0" />
+                    <span className="flex-1">{aiError}</span>
+                    <button type="button" onClick={() => setAiError("")} className="shrink-0 hover:opacity-70" style={{ color: "#1d4ed8" }}><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+          {/* ══ VISTA: PLANTILLA DE BIENVENIDA ══ */}
+          {vistaActiva === "bienvenida" && (
             <div className="fade-up">
               <BienvenidaTemplatePanel
                 nombreEmpresa={usuario?.nombreEmpresa || ""}
@@ -1022,7 +1009,8 @@ export default function CrearModuloPage() {
             </div>
           )}
 
-          {/* ══ CARD 3: EDITOR DE PÁGINAS ══ */}
+          {/* ══ VISTA: EDITOR DE PÁGINAS ══ */}
+          {vistaActiva === "editor" && (
           <div className="rounded-2xl overflow-hidden fade-up"
             style={{ background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)", minHeight: "500px" }}>
             <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #e5e7eb", background: "#fafbfc" }}>
@@ -1300,6 +1288,7 @@ export default function CrearModuloPage() {
               </div>
             </div>
           </div>
+          )}
 
           {/* ══ FOOTER ACCIONES ══ */}
           <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 mt-6 pt-6" style={{ borderTop: "1px solid #e5e7eb" }}>
@@ -1309,13 +1298,19 @@ export default function CrearModuloPage() {
             </div>
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => router.push("/dashboard/admin?tab=formaciones")}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
+                className="px-3 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:bg-gray-200"
                 style={{ color: "#6b7280", border: "1px solid #e5e7eb" }}>
                 Cancelar
               </button>
-              <button type="button" onClick={guardarModulo}
+              <button type="button" onClick={() => guardarModulo({ comoBorrador: true })}
+                disabled={guardando}
+                className="inline-flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: "#0F766E", border: "1.5px solid #67e8f9", background: "#ecfeff" }}>
+                Guardar como borrador
+              </button>
+              <button type="button" onClick={() => guardarModulo()}
                 disabled={guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean))}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                 style={{
                   background: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#f3f4f6" : "#4a7c59",
                   color: guardando || (paginas.length === 0 && !Object.values(aiSeleccionadas).some(Boolean)) ? "#9ca3af" : "#fff",
@@ -1351,7 +1346,7 @@ export default function CrearModuloPage() {
                 onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4"
                   style={{ borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg,#faf5ff,#f3e8ff)" }}>
-                  <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: gradVioleta, color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }}>
                       <Sparkles size={18} />
                     </div>
@@ -1439,13 +1434,20 @@ export default function CrearModuloPage() {
                   style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.25)" }}>
                   Ver módulos
                 </button>
-                <button onClick={resetear} className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
+                <button onClick={() => {
+                  if (editId) { router.push("/dashboard/admin/modulos/crear"); }
+                  else { resetear(); }
+                }} className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{ background: "#fff", color: "#2d7d4e" }}>
                   Crear otro
                 </button>
               </div>
             </div>
           )}
+
+          </div>
+          {/* ══ FIN COLUMNA PRINCIPAL ══ */}
+
         </div>
       </div>
 

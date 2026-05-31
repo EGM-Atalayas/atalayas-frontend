@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { Badge } from "@/components/ui/Badge";
 import Grainient from "@/components/ui/Grainient";
 import { ModalConfirm } from "@/components/ui/ModalConfirm";
 import { ModalResetPassword } from "@/components/ui/ModalResetPassword";
@@ -147,6 +148,23 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
 
   function formatFecha(iso: string) {
     return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  // Color de departamento por hash — funciona con nombres custom
+  const DPTO_COLORS = [
+    { color: "#0284C7", bg: "#E0F2FE" }, // sky
+    { color: "#7C3AED", bg: "#EDE9FE" }, // violet
+    { color: "#0F766E", bg: "#CCFBF1" }, // teal
+    { color: "#B45309", bg: "#FEF3C7" }, // amber
+    { color: "#BE185D", bg: "#FCE7F3" }, // pink
+    { color: "#15803D", bg: "#DCFCE7" }, // green
+    { color: "#C2410C", bg: "#FFEDD5" }, // orange
+    { color: "#1D4ED8", bg: "#DBEAFE" }, // blue
+  ];
+  function dptoBadge(nombre: string) {
+    let h = 0;
+    for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) & 0xffff;
+    return DPTO_COLORS[h % DPTO_COLORS.length];
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -465,7 +483,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
 
               {/* Footer */}
               <div className="flex flex-col sm:flex-row sm:justify-between gap-2.5 px-5 sm:px-6 py-4 shrink-0"
-                style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+                style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "var(--blanco)", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
                 <Button type="button" variant="secondary" className="w-full sm:w-auto order-2 sm:order-1"
                   onClick={() => { setShowFormEmpleado(false); setErrorEmpleado(null); }} disabled={guardandoEmpleado}>
                   Cancelar
@@ -481,86 +499,105 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
       </AnimatePresence>
 
       {/* Barra de herramientas */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-8">
-        {/* Buscador */}
-        <div className="flex flex-col w-full sm:w-64 shrink-0" style={{ minHeight: 48 }}>
-          <div className="relative">
+      <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
+
+      <div className="flex flex-col gap-2 mb-8">
+
+        {/* Fila 1: buscador + botón Añadir */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar empleado…"
               value={empSearchInput}
               onChange={(e) => { setEmpSearchInput(e.target.value); setEmpPage(0); }}
-              className="w-full pl-9 pr-8 py-2.5 text-sm rounded-xl outline-none transition-colors"
-              style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
+              style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: empSearchInput ? "2.2rem" : "14px" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--tab-empleados)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
             />
             {empSearch && (
               <button
                 onClick={() => { setEmpSearch(""); setEmpSearchInput(""); setEmpPage(0); }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center"
                 style={{ color: "var(--texto-muted)", background: "none", border: "none", cursor: "pointer", padding: 2 }}
               >
                 <X size={13} strokeWidth={2.5} />
               </button>
             )}
           </div>
-          <p className="text-xs pl-1 mt-1.5 transition-opacity duration-150"
-            style={{ color: "var(--texto-muted)", opacity: empSearch ? 1 : 0, pointerEvents: empSearch ? "auto" : "none" }}>
-            {empleadosFiltrados.length === 0
-              ? "Sin resultados"
-              : `${empleadosFiltrados.length} resultado${empleadosFiltrados.length !== 1 ? "s" : ""} para "${empSearch}"`}
-          </p>
-        </div>
 
-        {/* Botones */}
-        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
-          <input ref={inputImportRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) importarEmpleados(f); }} />
-          <Button variant="success" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}
-            style={{ flexShrink: 0 }}>
-            {importando
-              ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              : <><Upload size={15} /><span className="hidden sm:inline">&nbsp;Importar Excel</span></>}
-          </Button>
-          <Button variant="success" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}
-            style={{ flexShrink: 0 }}>
-            {exportando
-              ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              : <><Download size={15} /><span className="hidden sm:inline">&nbsp;Exportar Excel</span></>}
-          </Button>
-          <Button variant="primary" size="md" className="flex-1 sm:flex-none" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
-            <Plus size={15} />
+          {/* Importar + Exportar — solo desktop */}
+          <div className="hidden sm:flex items-center gap-2 ml-auto">
+            <Button variant="success" size="md" disabled={importando} onClick={() => inputImportRef.current?.click()}>
+              {importando
+                ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <><Upload size={16} strokeWidth={2.5} />&nbsp;Importar Excel</>}
+            </Button>
+            <Button variant="success" size="md" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}>
+              {exportando
+                ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <><Download size={16} strokeWidth={2.5} />&nbsp;Exportar Excel</>}
+            </Button>
+          </div>
+
+          <Button variant="primary" size="md" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
+            <Plus size={16} strokeWidth={2.5} />
             <span className="hidden sm:inline">Añadir empleado</span>
             <span className="sm:hidden">Añadir</span>
           </Button>
         </div>
+
+        {/* Fila 2 móvil: Importar + Exportar */}
+        <div className="flex gap-2 sm:hidden">
+          <Button variant="success" size="md" className="flex-1 justify-center" disabled={importando} onClick={() => inputImportRef.current?.click()}>
+            {importando
+              ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              : <><Upload size={16} strokeWidth={2.5} />&nbsp;Importar</>}
+          </Button>
+          <Button variant="success" size="md" className="flex-1 justify-center" disabled={exportando || empleados.length === 0} onClick={exportarEmpleadosExcel}>
+            {exportando
+              ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              : <><Download size={16} strokeWidth={2.5} />&nbsp;Exportar</>}
+          </Button>
+        </div>
+
+        {/* Contador de resultados */}
+        <p className="text-xs pl-1 transition-opacity duration-150"
+          style={{ color: "var(--texto-muted)", opacity: empSearch ? 1 : 0, pointerEvents: empSearch ? "auto" : "none" }}>
+          {empleadosFiltrados.length === 0
+            ? "Sin resultados"
+            : `${empleadosFiltrados.length} resultado${empleadosFiltrados.length !== 1 ? "s" : ""} para "${empSearch}"`}
+        </p>
       </div>
 
       {/* Tabla — ocupa todo el ancho */}
       <div>
         <div className="rounded-2xl overflow-hidden"
-          style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+          style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
           {cargandoEmpleados ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-6 h-6 border-2 rounded-full animate-spin"
                 style={{ borderColor: "var(--gris-borde)", borderTopColor: "var(--azul-egm)" }} />
             </div>
           ) : empleados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 sm:py-24 px-6 rounded-2xl text-center"
+            <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
               style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: "var(--azul-egm-light)" }}>
-                <Users size={30} style={{ color: "var(--azul-egm)" }} strokeWidth={1.5} />
+                style={{ background: "rgba(27,63,126,0.08)" }}>
+                <Users size={28} strokeWidth={1.5} style={{ color: "var(--azul-egm)", opacity: 0.7 }} />
               </div>
               <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>No hay empleados todavía</p>
               <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>Añade el primer empleado a tu empresa</p>
-              <Button variant="primary" size="md" onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}>
-                <Plus size={14} /> Añadir empleado
-              </Button>
+              <button onClick={() => { setShowFormEmpleado(true); setErrorEmpleado(null); }}
+                className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                style={{ background: "rgba(27,63,126,0.08)", color: "var(--azul-egm)", border: "1.5px solid rgba(27,63,126,0.20)" }}>
+                Añadir empleado
+              </button>
             </div>
           ) : empleadosFiltrados.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 sm:py-16 px-6 rounded-2xl text-center"
@@ -592,7 +629,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                     <col style={{ width: "12%" }} />
                   </colgroup>
                   <thead>
-                    <tr style={{ background: "var(--azul-egm-light)", borderBottom: "1px solid var(--surface-border)" }}>
+                    <tr style={{ background: "linear-gradient(90deg, #1e4d8c 0%, #2563b0 100%)", borderBottom: "2px solid #163d72" }}>
                       {([
                         { label: "Empleado", col: "nombre" as EmpSortCol, cls: "pl-16 pr-6 text-left" },
                         { label: "Puesto", col: "puesto" as EmpSortCol, cls: "px-6    text-left" },
@@ -600,10 +637,10 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                         { label: "Perfil", col: "perfil" as EmpSortCol, cls: "px-6    text-left" },
                         { label: "Estado", col: "estado" as EmpSortCol, cls: "px-6 text-left" },
                       ]).map(({ label, col, cls }) => (
-                        <th key={label} className={`py-3.5 ${cls}`} style={{ color: "var(--azul-egm)" }}>
+                        <th key={label} className={`py-4 ${cls}`} style={{ color: "#ffffff" }}>
                           <button
                             onClick={() => toggleEmpSort(col!)}
-                            className="inline-flex items-center gap-1 focus:outline-none select-none uppercase tracking-wider text-sm font-bold"
+                            className="inline-flex items-center gap-1 focus:outline-none select-none uppercase tracking-wider text-sm font-extrabold"
                             style={{ cursor: "pointer", background: "none", border: "none", padding: 0, color: "inherit", fontFamily: "inherit" }}
                           >
                             {label}
@@ -630,11 +667,11 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                           transition={{ duration: 0.12, ease: "easeOut" }}
                           className="cursor-pointer"
                           style={{
-                            borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--surface-border)" : "none",
-                            borderLeft: `3px solid ${empleadoSeleccionado?.usuarioId === e.usuarioId ? "var(--azul-egm)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa"}`,
+                            borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE) - 1 ? "1px solid var(--gris-borde)" : "none",
+                            borderLeft: `3px solid ${empleadoSeleccionado?.usuarioId === e.usuarioId ? "var(--azul-egm)" : idx % 2 === 0 ? "#ffffff" : "#f7f9fc"}`,
                             background: empleadoSeleccionado?.usuarioId === e.usuarioId
                               ? "var(--azul-egm-light)"
-                              : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
+                              : idx % 2 === 0 ? "#ffffff" : "#f7f9fc",
                             transition: "border-left-color 0.15s, background 0.15s",
                           }}
                           onClick={() => setEmpleadoSeleccionado(
@@ -642,11 +679,11 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                           )}
                           onMouseEnter={(el) => {
                             if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
-                              el.currentTarget.style.background = "var(--gris-superficie)";
+                              el.currentTarget.style.background = "#d6e0f8";
                           }}
                           onMouseLeave={(el) => {
                             if (empleadoSeleccionado?.usuarioId !== e.usuarioId)
-                              el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f5f7fa";
+                              el.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f7f9fc";
                           }}
                         >
                           <td className="py-3.5 pl-16 pr-6">
@@ -668,34 +705,35 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-6 text-base" style={{ color: "var(--texto-secundario)" }}>
-                            {e.puestoTrabajo ?? <span style={{ color: "var(--texto-muted)" }}>-</span>}
+                          <td className="py-3.5 px-6">
+                            {e.puestoTrabajo
+                              ? <span className="text-base font-medium" style={{ color: "var(--texto-primario)" }}>{e.puestoTrabajo}</span>
+                              : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
                           </td>
                           <td className="py-3.5 px-6">
-                            {e.departamento ? (
-                              <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                                style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
-                                {DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento}
-                              </span>
-                            ) : (
-                              <span className="text-base" style={{ color: "var(--texto-muted)" }}>-</span>
-                            )}
+                            {e.departamento ? (() => {
+                              const label = DEPARTAMENTOS.find((d) => d.id === e.departamento)?.label ?? e.departamento;
+                              const pal = dptoBadge(label);
+                              return <Badge variant="soft" size="md" color={pal.color} bg={pal.bg}>{label}</Badge>;
+                            })() : <span className="text-base" style={{ color: "var(--texto-muted)" }}>-</span>}
                           </td>
                           <td className="py-3.5 px-6">
-                            <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                              style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
-                                ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
-                                : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                            <Badge
+                              variant="soft" size="md"
+                              color={e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#B45309" : "#6366F1"}
+                              bg={e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#FEF3C7" : "#EEF2FF"}
+                            >
                               {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
-                            </span>
+                            </Badge>
                           </td>
                           <td className="py-3.5 px-6">
-                            <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                              style={e.activo
-                                ? { background: "var(--exito-light)", color: "var(--exito)" }
-                                : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                            <Badge
+                              variant="soft" size="md"
+                              color={e.activo ? "var(--exito)" : "#64748B"}
+                              bg={e.activo ? "#DCFCE7" : "#F1F5F9"}
+                            >
                               {e.activo ? "Activo" : "Inactivo"}
-                            </span>
+                            </Badge>
                           </td>
                         </motion.tr>
                       ))}
@@ -707,7 +745,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                   const totalPages = Math.ceil(empleadosFiltrados.length / PAGE_SIZE);
                   const pages = Array.from({ length: totalPages }, (_, i) => i);
                   return (
-                    <div className="flex items-center justify-center gap-1 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
+                    <div className="flex items-center justify-center gap-1 px-5 py-4" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                       {/* Botón anterior */}
                       <motion.button
                         onClick={() => setEmpPage(p => Math.max(0, p - 1))}
@@ -715,7 +753,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                         whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
                         whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
                         className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
+                        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: empPage === 0 ? "default" : "pointer" }}
                       >
                         <ChevronLeft size={15} strokeWidth={2} />
                         Anterior
@@ -730,7 +768,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                             whileHover={p !== empPage ? { scale: 1.08, background: "var(--gris-superficie)" } : {}}
                             whileTap={{ scale: 0.92 }}
                             animate={p === empPage
-                              ? { background: "#1B3F7E", color: "#ffffff" }
+                              ? { background: "var(--azul-egm)", color: "#ffffff" }
                               : { background: "transparent", color: "var(--texto-secundario)" }
                             }
                             transition={{ duration: 0.18, ease: [0.34, 1.2, 0.64, 1] }}
@@ -747,7 +785,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                         whileHover={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
                         whileTap={(empPage + 1) * PAGE_SIZE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
                         className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length ? "default" : "pointer" }}
+                        style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: (empPage + 1) * PAGE_SIZE >= empleadosFiltrados.length ? "default" : "pointer" }}
                       >
                         Siguiente
                         <ChevronRight size={15} strokeWidth={2} />
@@ -771,9 +809,9 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       onClick={() => setEmpleadoSeleccionado(isSelected ? null : e)}
                       style={{
                         padding: "12px 16px",
-                        borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE_MOBILE) - 1 ? "1px solid var(--surface-border)" : "none",
+                        borderBottom: idx < Math.min(empleadosFiltrados.length, PAGE_SIZE_MOBILE) - 1 ? "1px solid var(--gris-borde)" : "none",
                         borderLeft: `3px solid ${isSelected ? "var(--azul-egm)" : "transparent"}`,
-                        background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#f5f7fa",
+                        background: isSelected ? "var(--azul-egm-light)" : idx % 2 === 0 ? "#ffffff" : "#f7f9fc",
                         transition: "border-left-color 0.15s, background 0.15s",
                       }}
                     >
@@ -793,12 +831,13 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                           <p className="text-sm font-semibold truncate min-w-0 flex-1" style={{ color: "var(--texto-primario)" }}>
                             {e.nombre} {e.apellidos}
                           </p>
-                          <span className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
-                            style={e.codigoRol === "ROLE_ADMIN_EMPRESA"
-                              ? { background: "var(--verde-oliva-light)", color: "var(--verde-oliva)" }
-                              : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                          <Badge
+                            variant="soft"
+                            color={e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#B45309" : "#6366F1"}
+                            bg={e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#FEF3C7" : "#EEF2FF"}
+                          >
                             {e.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Admin" : "Emp."}
-                          </span>
+                          </Badge>
                         </div>
                         <p className="text-xs truncate mt-0.5" style={{ color: "var(--texto-muted)" }}>
                           {e.puestoTrabajo ? `${e.puestoTrabajo} · ${e.email}` : e.email}
@@ -812,14 +851,14 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                 })}
                 {/* Paginación móvil empleados */}
                 {empleadosFiltrados.length > PAGE_SIZE_MOBILE && (
-                  <div className="flex items-center justify-center gap-2 px-5 py-4" style={{ borderTop: "1px solid var(--surface-border)" }}>
+                  <div className="flex items-center justify-center gap-2 px-5 py-4" style={{ borderTop: "1px solid var(--gris-borde)" }}>
                     <motion.button
                       onClick={() => setEmpPage(p => Math.max(0, p - 1))}
                       disabled={empPage === 0}
                       whileHover={empPage !== 0 ? { scale: 1.05 } : {}}
                       whileTap={empPage !== 0 ? { scale: 0.95 } : {}}
                       className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: empPage === 0 ? "default" : "pointer" }}
+                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: empPage === 0 ? "default" : "pointer" }}
                     ><ChevronLeft size={15} strokeWidth={2} /></motion.button>
                     <span className="text-sm font-semibold px-2" style={{ color: "var(--texto-secundario)" }}>
                       {empPage + 1} / {Math.ceil(empleadosFiltrados.length / PAGE_SIZE_MOBILE)}
@@ -830,7 +869,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       whileHover={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 1.05 } : {}}
                       whileTap={(empPage + 1) * PAGE_SIZE_MOBILE < empleadosFiltrados.length ? { scale: 0.95 } : {}}
                       className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-sm font-semibold disabled:opacity-30"
-                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--surface-border)", cursor: (empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length ? "default" : "pointer" }}
+                      style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", cursor: (empPage + 1) * PAGE_SIZE_MOBILE >= empleadosFiltrados.length ? "default" : "pointer" }}
                     ><ChevronRight size={15} strokeWidth={2} /></motion.button>
                   </div>
                 )}
@@ -872,7 +911,9 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
               {/* Header slide-over */}
               <div className="px-6 flex items-center justify-between shrink-0"
                 style={{ height: 80, background: "var(--azul-egm)" }}>
-                <h3 className="text-xl font-bold" style={{ color: "#ffffff" }}>Ficha de empleado</h3>
+                <h3 style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "1.3rem", letterSpacing: "-0.02em", color: "#ffffff", margin: 0 }}>
+                  {editandoEmpleado ? "Editando empleado" : "Ficha de empleado"}
+                </h3>
                 <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
               </div>
 
@@ -886,7 +927,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       className="flex flex-col gap-6 px-6 py-6"
                     >
                       {/* Avatar mini — reactivo al formulario */}
-                      <div className="flex items-center gap-3 py-4 px-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                      <div className="flex items-center gap-3 py-4 px-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                         <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold shrink-0"
                           style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "2px solid var(--azul-egm)" }}>
                           {getInitials(
@@ -906,7 +947,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       </div>
 
                       {/* Campos */}
-                      <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                      <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                         {[
                           { key: "nombre", label: "Nombre" },
                           { key: "apellidos", label: "Apellidos" },
@@ -933,18 +974,16 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                     >
                       {/* Avatar + contacto */}
                       <div className="flex flex-col items-center gap-3 py-6 px-4 rounded-2xl"
-                        style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                        style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                         {/* Avatar con dot de estado */}
                         <div className="relative">
-                          <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shrink-0"
+                          <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold shrink-0"
                             style={{ background: "var(--azul-egm-light)", color: "var(--azul-egm)", border: "3px solid var(--azul-egm)" }}>
                             {getInitials(empleadoSeleccionado.nombre, empleadoSeleccionado.apellidos)}
                           </div>
-                          <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full border-2 border-white"
-                            style={{ background: empleadoSeleccionado.activo ? "var(--exito)" : "var(--texto-muted)" }} />
                         </div>
                         <div className="text-center">
-                          <p className="text-base font-bold" style={{ color: "var(--texto-primario)" }}>
+                          <p className="text-xl font-bold" style={{ color: "var(--texto-primario)", letterSpacing: "-0.01em" }}>
                             {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidos}
                           </p>
                           <p className="text-sm mt-0.5" style={{ color: "var(--texto-muted)" }}>{empleadoSeleccionado.email}</p>
@@ -952,41 +991,43 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       </div>
 
                       {/* Datos */}
-                      <div className="flex flex-col gap-0" style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--surface-border)" }}>
+                      <div className="flex flex-col gap-0" style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--gris-borde)" }}>
                         {/* Estado */}
-                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
                           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Estado</span>
-                          <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                            style={empleadoSeleccionado.activo
-                              ? { background: "var(--exito-light)", color: "var(--exito)" }
-                              : { background: "var(--gris-superficie)", color: "var(--texto-muted)" }}>
+                          <Badge
+                            variant="soft" size="md"
+                            color={empleadoSeleccionado.activo ? "var(--exito)" : "#64748B"}
+                            bg={empleadoSeleccionado.activo ? "#DCFCE7" : "#F1F5F9"}
+                          >
                             {empleadoSeleccionado.activo ? "Activo" : "Inactivo"}
-                          </span>
+                          </Badge>
                         </div>
                         {/* Perfil */}
-                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
                           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Perfil</span>
-                          <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                            style={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA"
-                              ? { background: "rgba(180,83,9,0.10)", color: "#B45309" }
-                              : { background: "var(--azul-egm-light)", color: "var(--azul-egm)" }}>
+                          <Badge
+                            variant="soft" size="md"
+                            color={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#B45309" : "#6366F1"}
+                            bg={empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "#FEF3C7" : "#EEF2FF"}
+                          >
                             {empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado"}
-                          </span>
+                          </Badge>
                         </div>
                         {/* Departamento */}
-                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
                           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Departamento</span>
-                          {empleadoSeleccionado.departamento
-                            ? <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
-                              {DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento}
-                            </span>
-                            : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
+                          {empleadoSeleccionado.departamento ? (() => {
+                            const label = DEPARTAMENTOS.find((d) => d.id === empleadoSeleccionado.departamento)?.label ?? empleadoSeleccionado.departamento;
+                            const pal = dptoBadge(label);
+                            return <Badge variant="soft" size="md" color={pal.color} bg={pal.bg}>{label}</Badge>;
+                          })() : <span className="text-sm" style={{ color: "var(--texto-muted)" }}>-</span>}
                         </div>
                         {/* Puesto */}
                         {empleadoSeleccionado.puestoTrabajo && (
-                          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
                             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Puesto</span>
-                            <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(78,109,126,0.10)", color: "#4E6D7E" }}>
+                            <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
                               {empleadoSeleccionado.puestoTrabajo}
                             </span>
                           </div>
@@ -994,8 +1035,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                         {/* Alta */}
                         <div className="flex items-center justify-between px-5 py-4" style={{ background: "var(--blanco)" }}>
                           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>Alta</span>
-                          <span className="text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: "var(--gris-superficie)", color: "var(--texto-secundario)" }}>
+                          <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>
                             {formatFecha(empleadoSeleccionado.fechaRegistro)}
                           </span>
                         </div>
@@ -1007,7 +1047,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
 
               {/* Footer acciones */}
               <div className="px-6 py-5 flex flex-col gap-2.5 shrink-0"
-                style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)" }}>
+                style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)" }}>
                 {editandoEmpleado ? (
                   <div className="flex gap-2.5">
                     <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
@@ -1024,7 +1064,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                     <Button variant="primary" size="md" onClick={iniciarEditEmpleado}>
                       Editar empleado
                     </Button>
-                    <Button variant="ghost" size="md"
+                    <Button variant="secondary" size="md"
                       onClick={() => setResetPass({ usuarioId: empleadoSeleccionado.usuarioId, nombre: empleadoSeleccionado.nombre })}>
                       Resetear contraseña
                     </Button>
@@ -1064,7 +1104,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                 style={{ background: "var(--azul-egm)" }}>
                 <div className="px-5 pt-2 pb-5">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+                    <p style={{ fontFamily: "var(--font-raleway), sans-serif", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em", color: "#ffffff", margin: 0 }}>
                       {editandoEmpleado ? "Editando empleado" : "Ficha de empleado"}
                     </p>
                     <IconButton variant="glass" label="Cerrar" onClick={() => { setEmpleadoSeleccionado(null); setEditandoEmpleado(false); }} />
@@ -1101,7 +1141,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       className="px-4 py-4">
-                      <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--surface-border)" }}>
+                      <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
                         {/* Nombre + Apellidos en fila */}
                         <div className="grid grid-cols-2 gap-3">
                           <EmpCampo label="Nombre"
@@ -1130,22 +1170,30 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                       initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       className="px-4 py-4">
-                      <div className="flex flex-col gap-0 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--surface-border)" }}>
-                        {[
-                          { label: "Estado", value: empleadoSeleccionado.activo ? "Activo" : "Inactivo", badge: empleadoSeleccionado.activo ? { bg: "var(--exito-light)", color: "var(--exito)" } : { bg: "var(--gris-superficie)", color: "var(--texto-muted)" } },
-                          { label: "Perfil", value: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? "Administrador" : "Empleado", badge: empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA" ? { bg: "rgba(180,83,9,0.10)", color: "#B45309" } : { bg: "var(--azul-egm-light)", color: "var(--azul-egm)" } },
-                          { label: "Departamento", value: DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label, badge: { bg: "var(--lima-light)", color: "var(--verde-oliva)" } },
-                          { label: "Puesto", value: empleadoSeleccionado.puestoTrabajo, badge: { bg: "rgba(78,109,126,0.10)", color: "#4E6D7E" } },
-                          { label: "Alta", value: formatFecha(empleadoSeleccionado.fechaRegistro), badge: { bg: "var(--gris-superficie)", color: "var(--texto-secundario)" } },
-                        ].map(({ label, value, badge }, idx, arr) => (
-                          <div key={label} className="flex items-center justify-between px-4 py-3"
-                            style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--surface-border)" : "none", background: "var(--blanco)" }}>
-                            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{label}</span>
-                            {value
-                              ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{value}</span>
-                              : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>-</span>}
-                          </div>
-                        ))}
+                      <div className="flex flex-col gap-0 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--gris-borde)" }}>
+                        {(() => {
+                          const dptoLabel = DEPARTAMENTOS.find(d => d.id === empleadoSeleccionado.departamento)?.label;
+                          const dptoPalette = dptoLabel ? dptoBadge(dptoLabel) : { color: "#4E6D7E", bg: "#EDF2F4" };
+                          const isAdmin = empleadoSeleccionado.codigoRol === "ROLE_ADMIN_EMPRESA";
+                          const rows: { label: string; value?: string; badge?: { bg: string; color: string } }[] = [
+                            { label: "Estado",       value: empleadoSeleccionado.activo ? "Activo" : "Inactivo",  badge: empleadoSeleccionado.activo ? { bg: "#DCFCE7", color: "var(--exito)" } : { bg: "#F1F5F9", color: "#64748B" } },
+                            { label: "Perfil",       value: isAdmin ? "Administrador" : "Empleado",               badge: isAdmin ? { bg: "#FEF3C7", color: "#B45309" } : { bg: "#EEF2FF", color: "#6366F1" } },
+                            { label: "Departamento", value: dptoLabel,                                            badge: { bg: dptoPalette.bg, color: dptoPalette.color } },
+                            { label: "Puesto",       value: empleadoSeleccionado.puestoTrabajo ?? undefined,       badge: { bg: "#EDF2F4", color: "#4E6D7E" } },
+                            { label: "Alta",         value: formatFecha(empleadoSeleccionado.fechaRegistro) },
+                          ];
+                          return rows.map(({ label, value, badge }, idx, arr) => (
+                            <div key={label} className="flex items-center justify-between px-4 py-3"
+                              style={{ borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none", background: "var(--blanco)" }}>
+                              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--texto-muted)" }}>{label}</span>
+                              {value
+                                ? badge
+                                  ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>{value}</span>
+                                  : <span className="text-sm font-semibold" style={{ color: "var(--texto-primario)" }}>{value}</span>
+                                : <span className="text-xs" style={{ color: "var(--texto-muted)" }}>-</span>}
+                            </div>
+                          ));
+                        })()}
                       </div>
                     </motion.div>
                   )}
@@ -1154,7 +1202,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
 
               {/* Footer fijo */}
               <div className="px-5 py-4 shrink-0"
-                style={{ borderTop: "1px solid var(--surface-border)", background: "var(--blanco)", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+                style={{ borderTop: "1px solid var(--gris-borde)", background: "var(--blanco)", paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
                 {editandoEmpleado ? (
                   <div className="flex gap-2.5">
                     <Button variant="secondary" size="md" className="flex-1" onClick={() => setEditandoEmpleado(false)}>
@@ -1171,7 +1219,7 @@ export function EmpleadosAdminTab({ empleados, cargandoEmpleados, empresaId, onT
                     <Button variant="primary" size="md" className="w-full" onClick={iniciarEditEmpleado}>
                       Editar empleado
                     </Button>
-                    <Button variant="ghost" size="md" className="w-full"
+                    <Button variant="secondary" size="md" className="w-full"
                       onClick={() => setResetPass({ usuarioId: empleadoSeleccionado.usuarioId, nombre: empleadoSeleccionado.nombre })}>
                       Resetear contraseña
                     </Button>
@@ -1294,7 +1342,7 @@ function EmpSelect({ label, value, onChange, options, placeholder = "Sin departa
           height: "44px",
           borderColor: open ? "var(--azul-egm)" : "rgba(0,0,0,0.12)",
           boxShadow: open ? "0 0 0 3px rgba(22,50,105,0.08)" : "none",
-          background: "#ffffff",
+          background: "var(--blanco)",
           color: selected ? "var(--texto-primario)" : "var(--texto-placeholder)",
           textAlign: "left",
         }}
@@ -1324,7 +1372,7 @@ function EmpSelect({ label, value, onChange, options, placeholder = "Sin departa
                 left: pos.left,
                 width: pos.width,
                 zIndex: 9999,
-                background: "#ffffff",
+                background: "var(--blanco)",
                 border: "1px solid rgba(0,0,0,0.10)",
                 borderRadius: "10px",
                 boxShadow: "0 -8px 24px rgba(0,0,0,0.12)",
@@ -1398,7 +1446,7 @@ function EmpCampo({ label, value, onChange, placeholder, required, type = "text"
             paddingRight: isPassword ? "40px" : "14px",
             borderColor: foco ? "var(--azul-egm)" : "rgba(0,0,0,0.12)",
             boxShadow: foco ? "0 0 0 3px rgba(22,50,105,0.08)" : "none",
-            background: "#ffffff",
+            background: "var(--blanco)",
             color: "var(--texto-primario)",
           }}
         />

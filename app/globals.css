@@ -123,6 +123,16 @@ body::-webkit-scrollbar,
   --info:             #1B3F7E;
   --info-light:       #E8EEF8;
 
+  /* ── Badges de empleado ── */
+  --badge-admin:        #B45309;   /* rol administrador — ámbar */
+  --badge-admin-light:  #FEF3C7;
+  --badge-empleado:     #1B3F7E;   /* rol empleado — azul egm */
+  --badge-empleado-light:#E8EEF8;
+  --badge-dpto:         #0EA5E9;   /* departamento — sky */
+  --badge-dpto-light:   #E0F2FE;
+  --badge-puesto:       #4E6D7E;   /* puesto de trabajo — pizarra */
+  --badge-puesto-light: #EDF2F4;
+
   /* ════════════════════════════════════════════
      TABS — ADMIN PANEL (acento por pestaña)
   ════════════════════════════════════════════ */
@@ -303,6 +313,20 @@ body::-webkit-scrollbar,
   --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
 }
+
+/* ── IconButton danger — sacudida del icono al hover ────────────────────────── */
+@keyframes icon-shake {
+  0%, 100% { transform: rotate(0deg)   translateY(0); }
+  15%       { transform: rotate(-14deg) translateY(-1px); }
+  35%       { transform: rotate(12deg)  translateY(0); }
+  55%       { transform: rotate(-9deg)  translateY(-1px); }
+  75%       { transform: rotate(6deg)   translateY(0); }
+}
+.danger-icon-hover:hover svg {
+  animation: icon-shake 0.42s ease forwards;
+  transform-origin: top center;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   * {

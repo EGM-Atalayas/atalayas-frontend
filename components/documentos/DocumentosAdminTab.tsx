@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import {
   listarDocumentosEmpresa, subirDocumento, desactivarDocumento, listarAsignaciones, editarDocumento, asignarDocumento, desasignarDocumento,
 } from "@/lib/api/documentos";
@@ -19,10 +19,11 @@ import {
 } from "@/lib/types/documentos";
 import {
   FileText, Upload, Trash2, Check, X, AlertTriangle, ChevronDown,
-  Users, Building2, Globe, Plus, Search, CheckCircle2, Clock, Download,
+  Users, Building2, Globe, Plus, Search, CheckCircle2, Clock, Download, ArrowRight, ArrowLeft, PenLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { Badge } from "@/components/ui/Badge";
 import Grainient from "@/components/ui/Grainient";
 import { ModalConfirm } from "@/components/ui/ModalConfirm";
 
@@ -241,18 +242,25 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
         <div className="hidden sm:flex items-center gap-2">
           <div className="relative" style={{ width: 260 }}>
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-              <Search size={15} />
+              <Search size={16} />
             </span>
             <input
               type="text"
               placeholder="Buscar documento…"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
-              style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+              className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
+              style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: busqueda ? "2.2rem" : "14px" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
             />
+            {busqueda && (
+              <button type="button" onClick={() => setBusqueda("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--texto-muted)", cursor: "pointer", background: "none", border: "none", padding: 0 }}>
+                <X size={13} strokeWidth={2.5} />
+              </button>
+            )}
           </div>
 
           {/* Pills */}
@@ -264,7 +272,7 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
                   key={t}
                   onClick={() => toggleTipo(t)}
                   className="relative text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer whitespace-nowrap"
-                  style={{ color: active ? "#fff" : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1, border: "none", background: "transparent" }}
+                  style={{ color: active ? TAB_COLOR : "var(--texto-muted)", transition: "color 0.15s ease", zIndex: 1, border: "none", background: "transparent" }}
                   whileTap={{ scale: 0.94 }}
                 >
                   <AnimatePresence>
@@ -274,7 +282,7 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
                         initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                         transition={{ type: "spring", stiffness: 420, damping: 32 }}
                         className="absolute inset-0 rounded-lg"
-                        style={{ background: TAB_COLOR, zIndex: -1 }}
+                        style={{ background: `${TAB_COLOR}18`, border: `1px solid ${TAB_COLOR}40`, zIndex: -1 }}
                       />
                     )}
                   </AnimatePresence>
@@ -287,26 +295,20 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
           {/* Botón limpiar */}
           <AnimatePresence>
             {hayFiltrosActivos && (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                 transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                onClick={limpiarFiltros}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full focus:outline-none cursor-pointer shrink-0"
-                title="Limpiar filtros"
-                style={{ background: `${TAB_COLOR}1a`, border: `1.5px solid ${TAB_COLOR}38`, color: TAB_COLOR, transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s ease, transform 0.18s ease" }}
-                onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = `${TAB_COLOR}30`; el.style.boxShadow = `0 0 0 3px ${TAB_COLOR}20`; el.style.borderColor = `${TAB_COLOR}60`; el.style.transform = "scale(1.10)"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = `${TAB_COLOR}1a`; el.style.boxShadow = "none"; el.style.borderColor = `${TAB_COLOR}38`; el.style.transform = "scale(1)"; }}
-                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.88)"; }}
-                onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.10)"; }}
               >
-                <X size={14} strokeWidth={2.5} />
-              </motion.button>
+                <IconButton variant="surface" size="sm" label="Limpiar filtros" onClick={limpiarFiltros}>
+                  <X size={14} strokeWidth={2.5} />
+                </IconButton>
+              </motion.div>
             )}
           </AnimatePresence>
 
           <div className="flex-1" />
           <Button variant="primary" size="md" onClick={() => setShowSubir(true)}>
-            <Plus size={14} /> Subir documento
+            <Plus size={16} strokeWidth={2.5} /> Subir documento
           </Button>
         </div>
 
@@ -315,50 +317,54 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--texto-muted)" }}>
-                <Search size={15} />
+                <Search size={16} />
               </span>
               <input
                 type="text"
                 placeholder="Buscar documento…"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl outline-none transition-colors"
-                style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)" }}
+                className="w-full pl-10 py-2.5 text-base rounded-2xl outline-none transition-colors"
+                style={{ background: "var(--blanco)", border: "1.5px solid var(--gris-borde)", color: "var(--texto-primario)", paddingRight: busqueda ? "2.2rem" : "14px" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = TAB_COLOR)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "var(--gris-borde)")}
               />
+              {busqueda && (
+                <button type="button" onClick={() => setBusqueda("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--texto-muted)", cursor: "pointer", background: "none", border: "none", padding: 0 }}>
+                  <X size={13} strokeWidth={2.5} />
+                </button>
+              )}
             </div>
             <Button variant="primary" size="md" onClick={() => setShowSubir(true)}>
-              <Plus size={14} />
+              <Plus size={16} strokeWidth={2.5} /> Añadir
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <DocSelect
-                value={filtroTipos.size === 1 ? Array.from(filtroTipos)[0] : ""}
-                onChange={(v) => setFiltroTipos(v ? new Set([v as TipoDocumento]) : new Set())}
-                options={TIPOS.map(t => ({ id: t, label: TIPO_DOCUMENTO_LABEL[t] }))}
-                placeholder="Todos los tipos"
-                accentColor={TAB_COLOR}
-              />
-            </div>
-            <AnimatePresence>
-              {hayFiltrosActivos && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                  onClick={limpiarFiltros}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-full focus:outline-none cursor-pointer shrink-0"
-                  title="Limpiar filtros"
-                  style={{ background: `${TAB_COLOR}1a`, border: `1.5px solid ${TAB_COLOR}38`, color: TAB_COLOR }}
-                >
-                  <X size={14} strokeWidth={2.5} />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
+          <DocSelectMulti
+            values={filtroTipos}
+            onChange={setFiltroTipos}
+            options={TIPOS.map(t => ({ id: t, label: TIPO_DOCUMENTO_LABEL[t] }))}
+            placeholder="Todos los tipos"
+            accentColor={TAB_COLOR}
+          />
         </div>
 
+        {/* Contador de resultados */}
+        <AnimatePresence>
+          {hayFiltrosActivos && !cargando && documentos.length > 0 && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="text-xs font-medium"
+              style={{ color: "var(--texto-muted)" }}
+            >
+              {docsFiltrados.length === 0
+                ? "Sin resultados"
+                : <>{docsFiltrados.length} documento{docsFiltrados.length !== 1 ? "s" : ""}</>}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Contenido ── */}
@@ -393,15 +399,17 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
           style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)" }}>
           <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-5"
             style={{ background: `${TAB_COLOR}12` }}>
-            <FileText size={30} style={{ color: TAB_COLOR }} strokeWidth={1.5} />
+            <FileText size={28} style={{ color: TAB_COLOR, opacity: 0.7 }} strokeWidth={1.5} />
           </div>
           <p className="text-lg font-bold mb-1.5" style={{ color: "var(--texto-primario)" }}>Todavía no hay documentos</p>
           <p className="text-sm mb-6 max-w-xs" style={{ color: "var(--texto-muted)", lineHeight: 1.6 }}>
             Sube nóminas, contratos o certificados y asígnalos a tus empleados
           </p>
-          <Button variant="primary" size="md" onClick={() => setShowSubir(true)}>
-            <Plus size={14} /> Subir primer documento
-          </Button>
+          <button onClick={() => setShowSubir(true)}
+            className="text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+            style={{ background: `${TAB_COLOR}12`, color: TAB_COLOR, border: `1.5px solid ${TAB_COLOR}30` }}>
+            Subir primer documento
+          </button>
         </div>
       ) : docsFiltrados.length === 0 ? (
         /* Sin resultados */
@@ -430,128 +438,110 @@ export function DocumentosAdminTab({ empresaId, empleados, departamentos, docume
         </div>
       ) : (
         /* Grid de document cards */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={busqueda + "|" + [...filtroTipos].sort().join(",")}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.18, ease: "easeOut" } }}
+            exit={{ opacity: 0, transition: { duration: 0.12, ease: "easeIn" } }}
+          >
           {docsFiltrados.map((d, idx) => {
             const color     = TIPO_DOCUMENTO_COLOR[d.tipo];
             const asignados = d.totalAsignados ?? 0;
             const firmados  = d.totalFirmados  ?? 0;
             return (
               <motion.div key={d.documentoId}
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28, ease: "easeOut", delay: idx * 0.05 }}
+                transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1], delay: idx * 0.04 }}
                 className="flex flex-col rounded-2xl overflow-hidden"
-                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.2s ease, transform 0.2s ease" }}
-                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                style={{ background: "var(--blanco)", border: "1px solid var(--gris-borde)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 8px 28px ${color.text}22, 0 2px 8px rgba(0,0,0,0.06)`; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = `${color.text}35`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = "var(--gris-borde)"; }}
               >
                 {/* Cabecera coloreada */}
-                <div className="relative flex items-center justify-center overflow-hidden" style={{
-                  height: 88,
-                  background: `linear-gradient(135deg, ${color.bg} 0%, ${color.text}22 100%)`,
+                <div className="relative overflow-hidden" style={{
+                  height: 110,
+                  background: `linear-gradient(135deg, ${color.bg} 0%, ${color.text}30 100%)`,
                 }}>
-                  {/* Círculo decorativo grande — esquina inferior derecha */}
-                  <div className="absolute" style={{
-                    width: 110, height: 110,
-                    borderRadius: "50%",
-                    background: `${color.text}14`,
-                    bottom: -38, right: -28,
-                  }} />
-                  {/* Círculo decorativo pequeño — esquina superior izquierda */}
-                  <div className="absolute" style={{
-                    width: 56, height: 56,
-                    borderRadius: "50%",
-                    background: `${color.text}0e`,
-                    top: -20, left: -14,
-                  }} />
-                  {/* Icono en contenedor blanco semitransparente */}
-                  <div className="relative flex items-center justify-center rounded-2xl"
-                    style={{
-                      width: 44, height: 44,
-                      background: "rgba(255,255,255,0.72)",
-                      boxShadow: `0 2px 12px ${color.text}20`,
-                      backdropFilter: "blur(4px)",
-                    }}>
-                    <FileText size={22} strokeWidth={1.5} style={{ color: color.text }} />
+                  {/* Círculo decorativo — esquina superior izquierda */}
+                  <div className="pointer-events-none absolute" style={{ width: 80, height: 80, borderRadius: "50%", background: `${color.text}18`, top: -28, left: -22 }} />
+                  {/* Icono GIGANTE translúcido al fondo — igual que ventajas */}
+                  <div className="pointer-events-none absolute flex items-center justify-center" style={{ right: -18, bottom: -42, width: 140, height: 140, opacity: 0.18, color: color.text }}>
+                    <FileText size={100} strokeWidth={1} />
                   </div>
-                  {/* Badge tipo */}
-                  <span className="absolute top-2.5 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(255,255,255,0.88)", color: color.text }}>
+                  {/* Badge tipo — izquierda */}
+                  <Badge variant="glass" className="absolute top-2.5 left-3">
                     {TIPO_DOCUMENTO_LABEL[d.tipo]}
+                  </Badge>
+                  {/* Badge asignados — derecha */}
+                  <span className="absolute top-2.5 right-3 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.28)", color: color.text, backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.35)" }}>
+                    <Users size={10} strokeWidth={2.2} />
+                    {asignados} {asignados === 1 ? "asignado" : "asignados"}
                   </span>
-                  {/* Badge firma */}
-                  {d.requiereFirma && (
-                    <span className="absolute top-2.5 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(255,255,255,0.88)", color: "#92400e" }}>
-                      ✍ Firma
-                    </span>
-                  )}
                 </div>
 
                 {/* Cuerpo */}
-                <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3 gap-2">
+                <div className="flex flex-col flex-1 px-3 pt-3 pb-3 gap-2">
                   {/* Fecha */}
-                  <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
+                  <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--texto-muted)" }}>
                     {new Date(d.fechaSubida).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
                   {/* Título */}
-                  <h3 className="font-bold text-sm leading-snug line-clamp-2" style={{ color: "var(--texto-primario)", minHeight: "2.6em" }}>
+                  <h3 className="font-extrabold text-base leading-snug line-clamp-2" style={{ color: "var(--texto-primario)" }}>
                     {d.titulo}
                   </h3>
-                  {/* Descripción */}
-                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#6B7A8D", minHeight: "2.6em" }}>
-                    {d.descripcion ? d.descripcion.trim().slice(0, 110) + (d.descripcion.length > 110 ? "…" : "") : "Sin descripción"}
-                  </p>
+                  {/* Descripción — detecta UUIDs/URLs internas y los oculta */}
+                  {(() => {
+                    const desc = d.descripcion?.trim();
+                    const esLegible = desc && !/^[a-z]+:[a-z]+:[0-9a-f-]{30,}/i.test(desc) && !/^https?:\/\//i.test(desc);
+                    return (
+                      <p className="text-xs leading-relaxed line-clamp-2" style={{
+                        color: esLegible ? "var(--texto-secundario)" : "var(--texto-muted)",
+                        fontStyle: esLegible ? "normal" : "italic",
+                      }}>
+                        {esLegible ? desc!.slice(0, 110) + (desc!.length > 110 ? "…" : "") : "Sin descripción"}
+                      </p>
+                    );
+                  })()}
 
-                  {/* Stats asignados / firmados */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
-                      {asignados} {asignados === 1 ? "asignado" : "asignados"}
+                  {/* Indicador de firma */}
+                  {d.requiereFirma && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full self-start"
+                      style={{
+                        background: asignados > 0 && firmados === asignados
+                          ? "rgba(5,150,105,0.10)"
+                          : "rgba(217,119,6,0.10)",
+                        color: asignados > 0 && firmados === asignados ? "#059669" : "#D97706",
+                      }}>
+                      <PenLine size={9} strokeWidth={2.2} />
+                      {asignados > 0 ? `${firmados}/${asignados} firmados` : "Requiere firma"}
                     </span>
-                    {d.requiereFirma && asignados > 0 && (
-                      <>
-                        <span style={{ color: "#D1D5DB", fontSize: 10 }}>·</span>
-                        <span className="text-[11px]" style={{ color: "#9CA3AF" }}>
-                          {firmados} firmado{firmados !== 1 ? "s" : ""}
-                        </span>
-                      </>
-                    )}
-                  </div>
+                  )}
 
                   {/* Acciones */}
-                  <div className="flex items-center gap-1.5 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="primary" size="sm" className="flex-1 justify-center" style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }} onClick={() => abrirEditar(d)}>
+                  <div className="flex items-center gap-2 mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="primary" size="md" className="flex-1 justify-center" style={{ background: "var(--azul-egm)", color: "#fff", border: "none" }} onClick={() => abrirEditar(d)}>
                       Editar
                     </Button>
-                    <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={() => abrirAsignaciones(d)}>
+                    <Button variant="secondary" size="md" className="flex-1 justify-center" onClick={() => abrirAsignaciones(d)}>
                       Asignados
                     </Button>
-                    <motion.button
-                      title="Descargar documento"
-                      onClick={() => window.open(d.archivoUrl, "_blank")}
-                      whileTap={{ scale: 0.88 }}
-                      className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
-                      style={{ borderRadius: "50%", background: "var(--gris-superficie)", color: "var(--texto-secundario)", border: "1px solid var(--gris-borde)", transition: "background 0.15s ease, box-shadow 0.18s" }}
-                      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--azul-egm)"; el.style.color = "#fff"; el.style.borderColor = "var(--azul-egm)"; el.style.boxShadow = "0 4px 14px rgba(22,50,105,0.25)"; }}
-                      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--gris-superficie)"; el.style.color = "var(--texto-secundario)"; el.style.borderColor = "var(--gris-borde)"; el.style.boxShadow = "none"; }}>
-                      <Download size={13} strokeWidth={2} />
-                    </motion.button>
-                    <motion.button
-                      title="Eliminar documento"
-                      onClick={() => setConfirmEliminar(d)}
-                      whileTap={{ scale: 0.88 }}
-                      className="flex items-center justify-center w-8 h-8 shrink-0 cursor-pointer"
-                      style={{ borderRadius: "50%", background: "var(--error-light)", color: "var(--error)", border: "1px solid rgba(220,38,38,0.15)", transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.18s var(--ease-spring)" }}
-                      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error)"; el.style.color = "#fff"; el.style.borderColor = "var(--error)"; el.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35), 0 0 0 3px rgba(220,38,38,0.15)"; }}
-                      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--error-light)"; el.style.color = "var(--error)"; el.style.borderColor = "rgba(220,38,38,0.15)"; el.style.boxShadow = "none"; }}>
-                      <Trash2 size={13} strokeWidth={2} />
-                    </motion.button>
+                    <IconButton variant="surface" size="md" label="Descargar documento" onClick={() => window.open(d.archivoUrl, "_blank")}>
+                      <Download size={16} strokeWidth={2} />
+                    </IconButton>
+                    <IconButton variant="danger" size="md" label="Eliminar documento" onClick={() => setConfirmEliminar(d)}>
+                      <Trash2 size={16} strokeWidth={2} />
+                    </IconButton>
                   </div>
                 </div>
               </motion.div>
             );
           })}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       )}
 
       {/* ── Modal: Subir documento ── */}
@@ -682,6 +672,7 @@ function ModalSubirDocumento({
   const [paso, setPaso]                   = useState<1 | 2>(1);
   const [file, setFile]                   = useState<File | null>(null);
   const [dragging, setDragging]           = useState(false);
+  const [hoverDrop, setHoverDrop]         = useState(false);
   const [titulo, setTitulo]               = useState("");
   const [descripcion, setDescripcion]     = useState("");
   const [tipo, setTipo]                   = useState<TipoDocumento>("NOMINA");
@@ -733,10 +724,19 @@ function ModalSubirDocumento({
     }
   };
 
-  const inputCls = "w-full text-sm rounded-lg outline-none border transition-all duration-150";
-  const inputSty = { height: 44, paddingLeft: 14, paddingRight: 14, borderColor: "rgba(0,0,0,0.12)", background: "#ffffff", color: "var(--texto-primario)" };
+  const inputCls = "w-full text-sm rounded-lg outline-none transition-all duration-150";
+  const inputSty: React.CSSProperties = { height: 44, paddingLeft: 14, paddingRight: 14, border: "1.5px solid rgba(0,0,0,0.12)", background: "#ffffff", color: "var(--texto-primario)" };
   const labelCls = "block text-sm font-semibold mb-1.5";
   const labelSty = { color: "var(--texto-label)" };
+  const reqStar = (
+    <span className="relative group ml-0.5 inline-block" style={{ color: "#ef4444" }}>
+      *
+      <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        style={{ background: "#1f2937", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.18)", zIndex: 99 }}>
+        Obligatorio
+      </span>
+    </span>
+  );
 
   return (
     <motion.div
@@ -781,7 +781,7 @@ function ModalSubirDocumento({
         </div>
 
         {/* ── Cuerpo scrollable con transición entre pasos ── */}
-        <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
+        <div className="overflow-y-auto flex-1" style={{ minHeight: 0, opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto", transition: "opacity 0.2s ease" }}>
           <AnimatePresence mode="wait" initial={false}>
             {paso === 1 ? (
               <motion.div
@@ -793,20 +793,21 @@ function ModalSubirDocumento({
               >
                 {/* Zona de archivo */}
                 <div>
-                  <label className={labelCls} style={labelSty}>Archivo <span style={{ color: "var(--error)" }}>*</span></label>
+                  <label className={labelCls} style={labelSty}>Archivo {reqStar}</label>
                   <div
                     onClick={() => !file && fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                    onDragLeave={() => setDragging(false)}
-                    onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-                    onMouseEnter={(e) => { if (!file) { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.background = `${tabColor}0D`; }}}
-                    onMouseLeave={(e) => { if (!file && !dragging) { e.currentTarget.style.borderColor = "var(--gris-borde)"; e.currentTarget.style.background = "var(--blanco)"; }}}
-                    className="rounded-xl transition-all"
+                    onDragOver={(e) => { e.preventDefault(); setDragging(true); setHoverDrop(true); }}
+                    onDragLeave={() => { setDragging(false); setHoverDrop(false); }}
+                    onDrop={(e) => { e.preventDefault(); setDragging(false); setHoverDrop(false); handleFile(e.dataTransfer.files[0]); }}
+                    onMouseEnter={() => { if (!file) setHoverDrop(true); }}
+                    onMouseLeave={() => { setHoverDrop(false); }}
+                    className="rounded-xl"
                     style={{
-                      border: `2px dashed ${dragging ? tabColor : file ? tabColor : "var(--gris-borde)"}`,
-                      background: dragging ? `${tabColor}0D` : file ? `${tabColor}08` : "var(--blanco)",
+                      border: `2px dashed ${(dragging || hoverDrop) ? tabColor : file ? tabColor : "var(--gris-borde)"}`,
+                      background: (dragging || hoverDrop) ? `${tabColor}08` : file ? `${tabColor}08` : "var(--blanco)",
                       cursor: file ? "default" : "pointer",
                       padding: file ? "12px 16px" : "28px 16px",
+                      transition: "border-color 0.18s, background 0.18s",
                     }}
                   >
                     <input ref={fileInputRef} type="file" accept="application/pdf,image/*" className="hidden"
@@ -828,11 +829,15 @@ function ModalSubirDocumento({
                     ) : (
                       <div className="flex flex-col items-center gap-2 text-center">
                         <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                          style={{ background: "var(--gris-superficie)" }}>
-                          <Upload size={20} style={{ color: "var(--texto-muted)" }} />
+                          style={{
+                            background: hoverDrop ? `${tabColor}15` : "var(--gris-superficie)",
+                            transform: hoverDrop ? "scale(1.10)" : "scale(1)",
+                            transition: "background 0.18s, transform 0.18s",
+                          }}>
+                          <Upload size={20} style={{ color: hoverDrop ? tabColor : "var(--texto-muted)", transition: "color 0.18s" }} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold" style={{ color: "var(--texto-secundario)" }}>
+                          <p className="text-sm font-semibold" style={{ color: hoverDrop ? "var(--texto-primario)" : "var(--texto-secundario)", transition: "color 0.18s" }}>
                             Arrastra o <span style={{ color: tabColor }}>selecciona un archivo</span>
                           </p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--texto-muted)" }}>PDF o imagen · Máximo 25 MB</p>
@@ -844,12 +849,12 @@ function ModalSubirDocumento({
 
                 {/* Título */}
                 <div>
-                  <label className={labelCls} style={labelSty}>Título <span style={{ color: "var(--error)" }}>*</span></label>
+                  <label className={labelCls} style={labelSty}>Título {reqStar}</label>
                   <input
                     type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)}
                     placeholder="Ej: Nómina octubre 2026"
                     className={inputCls} style={inputSty}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(78,109,126,0.10)"; }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                     onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                 </div>
@@ -861,7 +866,7 @@ function ModalSubirDocumento({
                     value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
                     rows={3} placeholder="Instrucciones o comentario para el empleado"
                     className={`${inputCls} resize-none`} style={{ ...inputSty, height: "auto", paddingTop: 10, paddingBottom: 10 }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(78,109,126,0.10)"; }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                     onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                 </div>
@@ -975,7 +980,7 @@ function ModalSubirDocumento({
 
                 {/* Asignar a */}
                 <div>
-                  <label className={labelCls} style={labelSty}>Asignar a <span style={{ color: "var(--error)" }}>*</span></label>
+                  <label className={labelCls} style={labelSty}>Asignar a {reqStar}</label>
                   <div className="flex gap-2 mb-3">
                     {([
                       { id: "empleados",     label: "Empleados",       icon: Users     },
@@ -993,7 +998,7 @@ function ModalSubirDocumento({
                             border:     `1.5px solid ${active ? tabColor : "var(--gris-borde)"}`,
                             cursor: "pointer",
                           }}>
-                          <Icon size={12} className="shrink-0 hidden sm:block" />
+                          <Icon size={14} className="shrink-0" />
                           {opt.label}
                         </button>
                       );
@@ -1018,13 +1023,13 @@ function ModalSubirDocumento({
                               value={busqueda}
                               onChange={(e) => setBusqueda(e.target.value)}
                               placeholder="Buscar empleado…"
-                              className="w-full text-sm rounded-lg outline-none border transition-all"
+                              className="w-full text-sm rounded-lg outline-none transition-all"
                               style={{
                                 height: 36, paddingLeft: 30, paddingRight: busqueda ? 28 : 10,
-                                borderColor: "rgba(0,0,0,0.12)", background: "#fff",
+                                border: "1.5px solid rgba(0,0,0,0.12)", background: "#fff",
                                 color: "var(--texto-primario)",
                               }}
-                              onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}1A`; }}
+                              onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                               onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                             />
                             {busqueda && (
@@ -1179,41 +1184,42 @@ function ModalSubirDocumento({
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0"
-          style={{ borderTop: "1px solid rgba(0,0,0,0.08)", background: "#ffffff" }}>
-          {/* Izquierda: Cancelar (paso 1) o Volver (paso 2) */}
-          {paso === 1 ? (
-            <Button variant="secondary" size="md" onClick={onCancel}>
-              Cancelar
-            </Button>
-          ) : (
-            <Button variant="secondary" size="md" onClick={() => setPaso(1)}>
-              ← Volver
-            </Button>
-          )}
+        <div className="shrink-0" style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "var(--blanco)" }}>
+          <div className="px-6 py-4 flex items-center justify-between gap-3" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+            {/* Izquierda: Cancelar (paso 1) o Volver (paso 2) */}
+            {paso === 1 ? (
+              <Button variant="secondary" size="md" onClick={onCancel}>
+                Cancelar
+              </Button>
+            ) : (
+              <Button variant="secondary" size="md" onClick={() => setPaso(1)}>
+                <ArrowLeft size={15} /> Volver
+              </Button>
+            )}
 
-          {/* Derecha: Siguiente (paso 1) o Subir (paso 2) */}
-          {paso === 1 ? (
-            <Button
-              variant="primary" size="md"
-              disabled={!puedeSiguiente}
-              onClick={() => setPaso(2)}
-              style={{ minWidth: 130 }}
-            >
-              Siguiente →
-            </Button>
-          ) : (
-            <Button
-              variant="primary" size="md"
-              disabled={!puedeEnviar || enviando}
-              onClick={submit}
-              style={{ minWidth: 148 }}
-            >
-              {enviando
-                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Subiendo…</>
-                : <><Upload size={14} /> Subir documento</>}
-            </Button>
-          )}
+            {/* Derecha: Siguiente (paso 1) o Subir (paso 2) */}
+            {paso === 1 ? (
+              <Button
+                variant="primary" size="md"
+                disabled={!puedeSiguiente}
+                onClick={() => setPaso(2)}
+                style={{ minWidth: 130 }}
+              >
+                Siguiente <ArrowRight size={15} />
+              </Button>
+            ) : (
+              <Button
+                variant="primary" size="md"
+                disabled={!puedeEnviar || enviando}
+                onClick={submit}
+                style={{ minWidth: 148 }}
+              >
+                {enviando
+                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Subiendo…</>
+                  : <><Upload size={14} /> Subir documento</>}
+              </Button>
+            )}
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -1305,10 +1311,19 @@ function ModalEditarDocumento({
     nuevosDptosSel.size > 0 ||
     (destino === "todos" && destinoInicial !== "todos");
 
-  const inputCls = "w-full text-sm rounded-lg outline-none border transition-all duration-150";
-  const inputSty = { height: 44, paddingLeft: 14, paddingRight: 14, borderColor: "rgba(0,0,0,0.12)", background: "#ffffff", color: "var(--texto-primario)" };
+  const inputCls = "w-full text-sm rounded-lg outline-none transition-all duration-150";
+  const inputSty: React.CSSProperties = { height: 44, paddingLeft: 14, paddingRight: 14, border: "1.5px solid rgba(0,0,0,0.12)", background: "#ffffff", color: "var(--texto-primario)" };
   const labelCls = "block text-sm font-semibold mb-1.5";
   const labelSty = { color: "var(--texto-label)" };
+  const reqStar = (
+    <span className="relative group ml-0.5 inline-block" style={{ color: "#ef4444" }}>
+      *
+      <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        style={{ background: "#1f2937", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.18)", zIndex: 99 }}>
+        Obligatorio
+      </span>
+    </span>
+  );
 
   return (
     <motion.div
@@ -1350,7 +1365,7 @@ function ModalEditarDocumento({
         </div>
 
         {/* ── Cuerpo ── */}
-        <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
+        <div className="overflow-y-auto flex-1" style={{ minHeight: 0, opacity: guardando ? 0.5 : 1, pointerEvents: guardando ? "none" : "auto", transition: "opacity 0.2s ease" }}>
           <AnimatePresence mode="wait" initial={false}>
             {paso === 1 ? (
               <motion.div key="paso1"
@@ -1360,10 +1375,10 @@ function ModalEditarDocumento({
                 style={{ paddingTop: 20, paddingBottom: 20, display: "flex", flexDirection: "column", gap: 20 }}>
 
                 <div>
-                  <label className={labelCls} style={labelSty}>Título <span style={{ color: "var(--error)" }}>*</span></label>
+                  <label className={labelCls} style={labelSty}>Título {reqStar}</label>
                   <input type="text" value={form.titulo} onChange={(e) => onFormChange({ ...form, titulo: e.target.value })}
                     placeholder="Nombre del documento" className={inputCls} style={inputSty}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(78,109,126,0.12)"; }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                     onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                 </div>
@@ -1375,7 +1390,7 @@ function ModalEditarDocumento({
                   <textarea value={form.descripcion} onChange={(e) => onFormChange({ ...form, descripcion: e.target.value })}
                     placeholder="Instrucciones o comentario para el empleado" rows={3}
                     className={`${inputCls} resize-none`} style={{ ...inputSty, height: "auto", paddingTop: 10, paddingBottom: 10 }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(78,109,126,0.12)"; }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                     onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                 </div>
@@ -1426,7 +1441,6 @@ function ModalEditarDocumento({
                   );
                 })()}
 
-                {error && <p className="text-sm px-4 py-3 rounded-xl" style={{ background: "var(--error-light)", color: "var(--error)" }}>{error}</p>}
               </motion.div>
             ) : (
               <motion.div key="paso2"
@@ -1464,7 +1478,7 @@ function ModalEditarDocumento({
                         <button key={opt.id} type="button" onClick={() => { setDestino(opt.id); setBusqueda(""); }}
                           className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap"
                           style={{ background: active ? tabColor : "var(--blanco)", color: active ? "white" : "var(--texto-secundario)", border: `1.5px solid ${active ? tabColor : "var(--gris-borde)"}`, cursor: "pointer" }}>
-                          <Icon size={12} className="shrink-0 hidden sm:block" />
+                          <Icon size={14} className="shrink-0" />
                           {opt.label}
                         </button>
                       );
@@ -1498,7 +1512,7 @@ function ModalEditarDocumento({
                               placeholder="Buscar empleado…"
                               className="w-full text-sm rounded-lg outline-none border transition-all"
                               style={{ height: 36, paddingLeft: 30, paddingRight: busqueda ? 28 : 10, borderColor: "rgba(0,0,0,0.12)", background: "#fff", color: "var(--texto-primario)" }}
-                              onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}1A`; }}
+                              onFocus={(e) => { e.currentTarget.style.borderColor = tabColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${tabColor}22`; }}
                               onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
                             />
                             {busqueda && (
@@ -1666,33 +1680,37 @@ function ModalEditarDocumento({
           </AnimatePresence>
         </div>
 
-        {/* ── Error en paso 2 ── */}
-        {paso === 2 && error && (
-          <div className="px-4 sm:px-6 pb-0 pt-3 shrink-0">
-            <p className="text-sm px-4 py-3 rounded-xl" style={{ background: "var(--error-light)", color: "var(--error)" }}>{error}</p>
-          </div>
-        )}
-
         {/* ── Footer ── */}
-        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0"
-          style={{ borderTop: "1px solid rgba(0,0,0,0.08)", background: "#ffffff" }}>
-          {paso === 1
-            ? <Button variant="secondary" size="md" onClick={onClose}>Cancelar</Button>
-            : <Button variant="secondary" size="md" onClick={() => setPaso(1)}>← Volver</Button>
-          }
-          {paso === 1 ? (
-            <Button variant="primary" size="md" disabled={!form.titulo.trim()} onClick={() => setPaso(2)} style={{ minWidth: 130 }}>
-              Siguiente →
-            </Button>
-          ) : (
-            <Button variant="primary" size="md" disabled={guardando}
-              onClick={() => onGuardar(hayCambiosAsig ? { nuevosUsersSel, nuevosDptosSel, destino, asignarATodos: destino === "todos" && !esGlobal, eliminarIds: eliminadosIds, notificar } : undefined)}
-              style={{ minWidth: 148 }}>
-              {guardando
-                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Guardando…</>
-                : "Guardar cambios"}
-            </Button>
-          )}
+        <div className="shrink-0" style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "var(--blanco)" }}>
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                className="px-6 pt-3"
+              >
+                <p className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.07)", color: "var(--error)" }}>{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="px-6 py-4 flex items-center justify-between gap-3" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+            {paso === 1
+              ? <Button variant="secondary" size="md" onClick={onClose}>Cancelar</Button>
+              : <Button variant="secondary" size="md" onClick={() => setPaso(1)}><ArrowLeft size={15} /> Volver</Button>
+            }
+            {paso === 1 ? (
+              <Button variant="primary" size="md" disabled={!form.titulo.trim()} onClick={() => setPaso(2)} style={{ minWidth: 130 }}>
+                Siguiente <ArrowRight size={15} />
+              </Button>
+            ) : (
+              <Button variant="primary" size="md" disabled={guardando}
+                onClick={() => onGuardar(hayCambiosAsig ? { nuevosUsersSel, nuevosDptosSel, destino, asignarATodos: destino === "todos" && !esGlobal, eliminarIds: eliminadosIds, notificar } : undefined)}
+                style={{ minWidth: 148 }}>
+                {guardando
+                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Guardando…</>
+                  : "Guardar cambios"}
+              </Button>
+            )}
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -1734,23 +1752,39 @@ function ModalAsignaciones({
         style={{ background: "var(--gris-panel)", maxHeight: "80dvh", boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header con gradiente del tipo */}
-        <div className="relative px-6 py-5 shrink-0"
-          style={{ background: `linear-gradient(135deg, ${color.text}cc, ${color.text}88)` }}>
-          <div className="absolute inset-0 opacity-10"
-            style={{ backgroundImage: `radial-gradient(circle, white 1px, transparent 1px)`, backgroundSize: "20px 20px" }} />
-          <div className="relative flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Asignaciones</p>
-              <h3 className="font-bold text-lg" style={{ color: "#fff" }}>{documento.titulo}</h3>
-            </div>
-            <IconButton variant="glass" label="Cerrar" onClick={onClose} />
+        {/* ── Header sólido — igual que detalle de incidencias ── */}
+        <div className="shrink-0 flex items-start justify-between px-5 sm:px-6 pt-5 pb-5"
+          style={{ background: color.text }}>
+          <div className="flex-1 min-w-0 pr-4 flex flex-col gap-2">
+            {/* Chip tipo */}
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full self-start"
+              style={{ background: "rgba(255,255,255,0.20)", color: "#fff", border: "1px solid rgba(255,255,255,0.28)" }}>
+              <FileText size={11} strokeWidth={2.5} />
+              {TIPO_DOCUMENTO_LABEL[documento.tipo]}
+            </span>
+            {/* Título */}
+            <h2 style={{
+              fontFamily: "var(--font-raleway), sans-serif",
+              fontWeight: 800,
+              fontSize: "clamp(1.1rem, 3vw, 1.4rem)",
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+              color: "#fff",
+              margin: 0,
+            }}>
+              {documento.titulo}
+            </h2>
+            {/* Meta */}
+            <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.70)" }}>
+              Subido el {new Date(documento.fechaSubida).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
           </div>
+          <IconButton variant="glass" label="Cerrar" onClick={onClose} />
         </div>
 
         {/* KPIs */}
         {!cargando && (
-          <div className="shrink-0 px-5 pt-4 pb-4" style={{ background: "var(--gris-panel)", borderBottom: "1px solid var(--gris-borde)" }}>
+          <div className="shrink-0 px-5 pt-4 pb-4" style={{ background: "var(--blanco)", borderBottom: "1px solid var(--gris-borde)" }}>
             <div className="grid grid-cols-3 rounded-2xl" style={{ border: "1px solid var(--gris-borde)" }}>
               {([
                 { label: "Asignados", value: asignaciones.length, color: color.text,              bg: `${color.text}12`, prefix: ""  },
@@ -1797,10 +1831,12 @@ function ModalAsignaciones({
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gris-superficie)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "var(--blanco)")}>
                     {/* Avatar */}
+                    {(() => { const pal = avatarColor(`${a.nombre}${a.apellidos}`); return (
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
-                      style={{ background: color.bg, color: color.text }}>
+                      style={{ background: pal.bg, color: pal.color }}>
                       {initials}
                     </div>
+                    ); })()}
                     {/* Nombre + departamento */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate leading-tight" style={{ color: "var(--texto-primario)" }}>
@@ -1808,7 +1844,7 @@ function ModalAsignaciones({
                       </p>
                       {a.departamento && (
                         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ background: "rgba(14,165,233,0.10)", color: "#0EA5E9" }}>
+                          style={{ background: dptoColorFull(a.departamento).bg, color: dptoColorFull(a.departamento).color }}>
                           {a.departamento}
                         </span>
                       )}
@@ -1841,6 +1877,117 @@ function ModalAsignaciones({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// ─── DocSelectMulti — dropdown con multi-selección para móvil ────────────────
+function DocSelectMulti({ values, onChange, options, placeholder, accentColor }: {
+  values: Set<TipoDocumento>;
+  onChange: (v: Set<TipoDocumento>) => void;
+  options: { id: string; label: string }[];
+  placeholder: string;
+  accentColor: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  function calcPos() {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + window.scrollY + 6, left: r.left, width: r.width });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOut(e: MouseEvent) {
+      const t = e.target as Node;
+      if (!wrapRef.current?.contains(t) && !dropdownRef.current?.contains(t)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOut);
+    return () => document.removeEventListener("mousedown", onClickOut);
+  }, [open]);
+
+  const label = values.size === 0
+    ? placeholder
+    : values.size === 1
+      ? options.find(o => o.id === Array.from(values)[0])?.label ?? placeholder
+      : `${values.size} tipos seleccionados`;
+
+  return (
+    <div ref={wrapRef} className="relative w-full">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => { calcPos(); setOpen(p => !p); }}
+        className="w-full flex items-center gap-2 rounded-2xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
+        style={{
+          background: "var(--blanco)",
+          border: `1.5px solid ${values.size > 0 || open ? accentColor : "var(--gris-borde)"}`,
+          color: values.size > 0 ? accentColor : "var(--texto-primario)",
+          transition: "border-color 0.15s, color 0.15s",
+        }}
+      >
+        <span className="flex-1 text-left truncate">{label}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}
+          style={{ display: "flex", flexShrink: 0, color: values.size > 0 ? accentColor : "var(--texto-muted)" }}>
+          <ChevronDown size={13} strokeWidth={2.5} />
+        </motion.span>
+      </button>
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -4, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                top: pos.top,
+                left: Math.min(pos.left, window.innerWidth - Math.max(pos.width, 180) - 12),
+                width: Math.max(pos.width, 180),
+                zIndex: 9999,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.10)",
+                borderRadius: "16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                overflow: "hidden",
+              }}
+            >
+              {options.map((opt, idx) => {
+                const isSel = values.has(opt.id as TipoDocumento);
+                return (
+                  <button key={opt.id} type="button"
+                    onClick={() => {
+                      const next = new Set(values);
+                      isSel ? next.delete(opt.id as TipoDocumento) : next.add(opt.id as TipoDocumento);
+                      onChange(next);
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-sm font-semibold cursor-pointer"
+                    style={{
+                      background: isSel ? `${accentColor}12` : "transparent",
+                      color: isSel ? accentColor : "var(--texto-primario)",
+                      borderBottom: idx < options.length - 1 ? "1px solid var(--gris-borde)" : "none",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isSel ? `${accentColor}12` : "transparent"; }}
+                  >
+                    <span>{opt.label}</span>
+                    {isSel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
   );
 }
 
@@ -1882,7 +2029,7 @@ function DocSelect({ value, onChange, options, placeholder, accentColor }: {
         ref={triggerRef}
         type="button"
         onClick={() => { calcPos(); setOpen(p => !p); }}
-        className="w-full flex items-center gap-2 rounded-xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
+        className="w-full flex items-center gap-2 rounded-2xl pl-3 pr-2.5 h-10 text-sm font-semibold cursor-pointer focus:outline-none"
         style={{
           background: "var(--blanco)",
           border: `1.5px solid ${isActive || open ? accentColor : "var(--gris-borde)"}`,
@@ -1913,27 +2060,28 @@ function DocSelect({ value, onChange, options, placeholder, accentColor }: {
                 zIndex: 9999,
                 background: "#ffffff",
                 border: "1px solid rgba(0,0,0,0.10)",
-                borderRadius: "12px",
+                borderRadius: "16px",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                 overflow: "hidden",
               }}
             >
-              {[{ id: "", label: placeholder }, ...options].map((opt) => {
+              {[{ id: "", label: placeholder }, ...options].map((opt, idx, arr) => {
                 const isSel = value === opt.id;
                 return (
                   <button key={opt.id} type="button"
                     onClick={() => { onChange(opt.id); setOpen(false); }}
-                    className="w-full text-left px-3.5 py-2.5 text-sm cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-sm font-semibold cursor-pointer"
                     style={{
-                      background: isSel ? `${accentColor}15` : "transparent",
+                      background: isSel ? `${accentColor}12` : "transparent",
                       color: isSel ? accentColor : "var(--texto-primario)",
-                      fontWeight: isSel ? 600 : 400,
+                      borderBottom: idx < arr.length - 1 ? "1px solid var(--gris-borde)" : "none",
                       transition: "background 0.1s",
                     }}
                     onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--gris-pagina)"; }}
-                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                    onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = isSel ? `${accentColor}12` : "transparent"; }}
                   >
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {isSel && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accentColor }} />}
                   </button>
                 );
               })}
