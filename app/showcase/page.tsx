@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, createContext, useContext } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, type Variants } from "motion/react";
 import { gsap } from "gsap";
 import { UserPlus, GraduationCap, Megaphone, BarChart3, FolderOpen, Sparkles, Bot, Users, ListTodo, Repeat, GitBranch, MessageSquare, KanbanSquare, Rocket, Smartphone } from "lucide-react";
 
@@ -1276,7 +1276,7 @@ export default function ShowcasePage() {
   const SlideComponent = SLIDES[current];
 
   // Variants por slide — cada una tiene su propio estilo de entrada/salida
-  const SLIDE_TRANSITIONS = [
+  const SLIDE_TRANSITIONS: Variants[] = [
     // 0 — Portada: entra desde abajo, sale hacia arriba con fade
     {
       enter:  { opacity: 0, y: "6%", scale: 1.04 },

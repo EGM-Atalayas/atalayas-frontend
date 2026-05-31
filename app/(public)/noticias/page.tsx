@@ -736,8 +736,8 @@ export default function NoticiasPublicasPage() {
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.18, ease: [0.34, 1.2, 0.64, 1] }}
                 className="absolute left-0 top-full mt-2 rounded-2xl overflow-hidden z-30"
-                style={{ minWidth: "180px" }}
                 style={{
+                  minWidth: "180px",
                   background: "var(--blanco, #fff)",
                   border: "1px solid var(--gris-borde, #e5e7eb)",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
